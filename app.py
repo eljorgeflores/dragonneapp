@@ -45,6 +45,8 @@ from reportlab.pdfbase.pdfmetrics import stringWidth
 APP_NAME = "DRAGONNÉ"
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / "data" / "profitpilot.db"
+# Asegurar que la carpeta de base de datos exista también en entornos como Render
+DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 UPLOAD_DIR = BASE_DIR / "uploads"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 ALLOWED_UPLOAD_EXTENSIONS = {".csv", ".xlsx", ".xls", ".xlsm"}
