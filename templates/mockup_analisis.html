@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}Mockup: Resultado del análisis — DRAGONNÉ{% endblock %}
+{% block body %}
+<div class="page-mockup-analisis">
+  <div class="app-shell mockup-shell">
+    <header class="app-topbar">
+      <div class="mockup-topbar-inner">
+        <div>
+          <div class="brand">
+            <img class="brand-logo" style="margin:0" src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" />
+          </div>
+          <div class="muted">Hotel Ejemplo · Boutique · Plan Pro+</div>
+        </div>
+        <div class="top-actions">
+          <a href="/" class="btn btn-secondary btn-sm">Volver al inicio</a>
+        </div>
+      </div>
+    </header>
+
+    <div class="mockup-demo-container">
+      {% include '_demo_resultado_analisis.html' %}
+      <p class="muted mockup-footer-cta">Esta es una vista de ejemplo. <a href="/signup">Crear cuenta</a> para subir tus propios reportes y recibir análisis reales.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}{{ row['title'] }} — DRAGONNÉ{% endblock %}
+{% block content %}
+<section class="pricing-hero">
+  <div class="eyebrow">Análisis guardado</div>
+  <h1>{{ row['title'] }}</h1>
+  <p class="lead">{{ row['created_at'][:10] }} · {{ row['file_count'] }} archivos · {{ row['date_span_days'] or 0 }} días de rango detectado</p>
+</section>
+<section class="section-grid two dashboard-grid">
+  <article class="feature-card large">
+    <div class="eyebrow">Resumen detectado</div>
+    <h2>Señales base</h2>
+    <div class="kpi-grid two-col">
+      <div class="kpi-box"><span>Revenue</span><strong>{{ summary['combined']['totals'].get('revenue', 0) }}</strong></div>
+      <div class="kpi-box"><span>Margen estimado</span><strong>{{ summary['combined']['totals'].get('estimated_margin', 0) }}</strong></div>
+      <div class="kpi-box"><span>Room nights</span><strong>{{ summary['combined']['totals'].get('room_nights', 0) }}</strong></div>
+      <div class="kpi-box"><span>ADR est.</span><strong>{{ summary['combined']['totals'].get('adr_estimated', '—') }}</strong></div>
+    </div>
+  </article>
+  <article class="feature-card large soft">
+    <div class="eyebrow">Resumen ejecutivo</div>
+    <h2>Lectura IA</h2>
+    <div class="stack-list">
+      {% for item in analysis['executive_summary'] %}
+        <div class="result-card">{{ item }}</div>
+      {% endfor %}
+    </div>
+  </article>
+</section>
+<section class="section-grid two dashboard-grid">
+  <article class="feature-card large">
+    <div class="eyebrow">Insights</div>
+    <div class="stack-list">
+      {% for item in analysis['insights'] %}
+        <div class="result-card"><strong>{{ item['title'] }}</strong><p>{{ item['why_it_matters'] }}</p><small>{{ item['evidence'] }}</small></div>
+      {% endfor %}
+    </div>
+  </article>
+  <article class="feature-card large">
+    <div class="eyebrow">Recomendaciones</div>
+    <div class="stack-list">
+      {% for item in analysis['recommendations'] %}
+        <div class="result-card"><strong>{{ item['title'] }}</strong><p>{{ item['action'] }}</p><small>{{ item['expected_impact'] }}</small></div>
+      {% endfor %}
+    </div>
+  </article>
+</section>
+{% endblock %}

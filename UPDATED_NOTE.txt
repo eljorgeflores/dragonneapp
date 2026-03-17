@@ -1,0 +1,1 @@
+Updated templates/marketing.html with corrected standalone landing that extends base.html and renders the visible mock in the hero.

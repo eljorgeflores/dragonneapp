@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% block title %}Mi cuenta — DRAGONNÉ{% endblock %}
+{% block body %}
+<div class="app-shell">
+  <header class="app-topbar">
+    <div class="app-topbar-inner">
+      <a href="/app" class="brand-link">
+        <img class="brand-logo" src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" />
+      </a>
+      <div class="app-context muted">Mi cuenta</div>
+      <div class="top-actions">
+        <a href="/app" class="btn btn-secondary btn-sm">Volver al panel</a>
+        <form method="post" action="/logout" class="logout-form"><button class="btn btn-secondary btn-sm" type="submit">Salir</button></form>
+      </div>
+    </div>
+  </header>
+
+  <div class="app-content">
+    <h1 class="dashboard-page-title">Mi cuenta</h1>
+    <p class="dashboard-page-desc muted">Datos de tu perfil, edición y suscripción.</p>
+
+    <section class="account-section light-card account-section--profile">
+      <h2 class="account-section-title">Tu perfil</h2>
+      <dl class="account-dl">
+        <dt>Hotel</dt>
+        <dd>{{ user.hotel_name or '—' }}</dd>
+        <dt>Contacto</dt>
+        <dd>{{ user.contact_name or '—' }}</dd>
+        <dt>Correo</dt>
+        <dd>{{ user.email }}</dd>
+        <dt>Tamaño</dt>
+        <dd>{{ user.hotel_size or '—' }}</dd>
+        <dt>Categoría</dt>
+        <dd>{{ user.hotel_category or '—' }}</dd>
+        <dt>Estrellas</dt>
+        <dd>{% if user.hotel_stars %}{{ user.hotel_stars }} estrella(s){% else %}—{% endif %}</dd>
+        <dt>Ubicación</dt>
+        <dd>{{ user.hotel_location or '—' }}</dd>
+        <dt>Ubicación en el destino</dt>
+        <dd>{{ user.hotel_location_context or '—' }}</dd>
+        <dt>PMS</dt>
+        <dd>{{ user.hotel_pms or '—' }}</dd>
+        <dt>Channel manager</dt>
+        <dd>{{ user.hotel_channel_manager or '—' }}</dd>
+        <dt>Booking engine</dt>
+        <dd>{{ user.hotel_booking_engine or '—' }}</dd>
+        <dt>Otras tecnologías</dt>
+        <dd>{{ user.hotel_tech_other or '—' }}</dd>
+        <dt>Google My Business</dt>
+        <dd>{% if user.hotel_google_business_url %}<a href="{{ user.hotel_google_business_url }}" target="_blank" rel="noopener">Ver perfil</a>{% else %}—{% endif %}</dd>
+        <dt>Expedia</dt>
+        <dd>{% if user.hotel_expedia_url %}<a href="{{ user.hotel_expedia_url }}" target="_blank" rel="noopener">Ver listado</a>{% else %}—{% endif %}</dd>
+        <dt>Booking.com</dt>
+        <dd>{% if user.hotel_booking_url %}<a href="{{ user.hotel_booking_url }}" target="_blank" rel="noopener">Ver listado</a>{% else %}—{% endif %}</dd>
+        <dt>Plan actual</dt>
+        <dd><span class="pill {% if user.plan == 'pro' %}pill-pro{% endif %}{% if user.plan == 'pro_plus' %} pill-pro-plus{% endif %}">Plan {{ plan_label }}</span></dd>
+      </dl>
+      <p><a href="/onboarding" class="btn btn-secondary btn-sm">Editar datos del hotel</a></p>
+    </section>
+
+    <section class="account-section light-card">
+      <h2 class="account-section-title">Facturación y planes</h2>
+
+      <div class="account-subscription-summary">
+        <h3 class="account-subtitle">Tu suscripción</h3>
+        <dl class="account-dl account-dl--compact">
+          <dt>Plan actual</dt>
+          <dd><span class="pill {% if user.plan == 'pro' %}pill-pro{% endif %}{% if user.plan == 'pro_plus' %}pill-pro-plus{% endif %}">Plan {{ plan_label }}</span></dd>
+          <dt>Estado</dt>
+          <dd>{% if user.plan == 'free' %}Sin suscripción activa{% else %}Activo · Facturación mensual{% endif %}</dd>
+        </dl>
+        <p class="muted small" style="margin-top:12px">Actualiza tu método de pago, descarga facturas o cambia de plan cuando quieras.</p>
+        <p style="margin-top:8px">
+          <button type="button" class="btn btn-secondary btn-sm" id="openPortalBtnAccount" {% if not user.stripe_customer_id %}disabled{% endif %}>Ver facturas y método de pago</button>
+        </p>
+        <p class="muted small" style="margin-top:8px; font-size:0.8rem">Pagos procesados de forma segura por un proveedor certificado PCI.</p>
+      </div>
+
+      <h3 class="account-subtitle">Elegir plan</h3>
+      <p class="muted small" style="margin-bottom:14px">Selecciona el plan que quieres. Al confirmar, añadirás tu método de pago y tu suscripción empezará de inmediato.</p>
+      <div class="account-plans">
+        <div class="account-plan-card {% if user.plan == 'pro' %}account-plan-current{% endif %}">
+          <div class="account-plan-name">Pro</div>
+          <div class="account-plan-price">{{ monthly_price }} USD <span>/mes</span></div>
+          <ul class="account-plan-benefits clean-list muted">
+            <li>Hasta 90 días por reporte</li>
+            <li>Más archivos y análisis guardados</li>
+            <li>Comparación de tendencias en el tiempo</li>
+          </ul>
+          {% if user.plan == 'free' %}
+          <button type="button" class="btn btn-primary full account-upgrade-btn" data-billing-cycle="monthly" data-plan-tier="pro">Confirmar Pro — {{ monthly_price }} USD/mes</button>
+          {% elif user.plan == 'pro' %}
+          <span class="pill pill-pro">Tu plan actual</span>
+          {% else %}
+          <button type="button" class="btn btn-secondary full account-upgrade-btn" data-billing-cycle="monthly" data-plan-tier="pro">Cambiar a Pro</button>
+          {% endif %}
+        </div>
+        <div class="account-plan-card {% if user.plan == 'pro_plus' %}account-plan-current{% endif %}">
+          <div class="account-plan-name">Pro+</div>
+          <div class="account-plan-price">{{ premium_monthly_price }} USD <span>/mes</span></div>
+          <ul class="account-plan-benefits clean-list muted">
+            <li>Máximo rango: 180 días</li>
+            <li>Máxima capacidad de análisis guardados</li>
+            <li>Prioridad en nuevas funciones</li>
+          </ul>
+          {% if user.plan == 'pro_plus' %}
+          <span class="pill pill-pro-plus">Tu plan actual</span>
+          {% else %}
+          <button type="button" class="btn btn-primary full account-upgrade-btn" data-billing-cycle="monthly" data-plan-tier="pro_plus">Confirmar Pro+ — {{ premium_monthly_price }} USD/mes</button>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+<script>
+(function() {
+  var portalBtn = document.getElementById('openPortalBtnAccount');
+  if (portalBtn && !portalBtn.disabled) {
+    portalBtn.addEventListener('click', function() {
+      var btn = portalBtn;
+      btn.disabled = true;
+      btn.textContent = 'Abriendo…';
+      fetch('/billing/create-portal-session', { method: 'POST' })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.ok && d.url) window.location.href = d.url;
+          else { btn.disabled = false; btn.textContent = 'Ver facturas y método de pago'; alert(d.detail || 'No se pudo abrir.'); }
+        })
+        .catch(function() { portalBtn.disabled = false; portalBtn.textContent = 'Ver facturas y método de pago'; alert('Error de conexión.'); });
+    });
+  }
+  document.querySelectorAll('.account-upgrade-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var cycle = btn.getAttribute('data-billing-cycle') || 'monthly';
+      var tier = btn.getAttribute('data-plan-tier') || 'pro';
+      var body = new FormData();
+      body.append('billing_cycle', cycle);
+      body.append('plan_tier', tier);
+      fetch('/billing/create-checkout-session', { method: 'POST', body: body })
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (d.ok && d.url) window.location.href = d.url;
+          else alert(d.error || 'No se pudo abrir el checkout.');
+        })
+        .catch(function() { alert('Error de conexión.'); });
+    });
+  });
+})();
+</script>
+{% endblock %}

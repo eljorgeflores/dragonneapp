@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% block title %}DRAGONNÉ — Analiza reportes hoteleros{% endblock %}
+{% block content %}
+<header class="site-header container">
+  <div class="brand"><img class="brand-logo" style="margin:0" src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" /></div>
+  <nav>
+    {% if user %}
+      <a href="/dashboard" class="link">Dashboard</a>
+    {% else %}
+      <a href="/login" class="link">Entrar</a>
+      <a href="/signup" class="button small">Empezar gratis</a>
+    {% endif %}
+  </nav>
+</header>
+
+<section class="hero container">
+  <div class="hero-copy">
+    <span class="eyebrow">Revenue, distribución y margen en claro</span>
+    <h1>Sube tus reportes del PMS o channel manager y entiende qué canal te deja dinero.</h1>
+    <p>DRAGONNÉ interpreta exports en Excel, CSV o Sheets y te devuelve insights accionables en español latino, con lenguaje hotelero real: mix de canal, dependencia OTA, margen estimado, cancelación y oportunidades comerciales.</p>
+    <div class="hero-actions">
+      <a href="/signup" class="button">Crear cuenta gratis</a>
+      <a href="#pricing" class="button secondary">Ver planes</a>
+    </div>
+    <div class="badge-row">
+      <span class="badge">Hasta 3 reportes gratis</span>
+      <span class="badge">Hasta 3 meses por análisis</span>
+      <span class="badge">Diseñado para hoteles independientes</span>
+    </div>
+  </div>
+  <div class="hero-card glass">
+    <div class="metric-card">
+      <div class="label">Hallazgo principal</div>
+      <div class="big-text">Booking vende mucho, pero no siempre deja el mejor margen.</div>
+    </div>
+    <div class="mini-grid">
+      <div class="mini-card"><span>Mix OTA</span><strong>62%</strong></div>
+      <div class="mini-card"><span>Margen estimado</span><strong>$184,250</strong></div>
+      <div class="mini-card"><span>Cancelación OTA</span><strong>18.4%</strong></div>
+      <div class="mini-card"><span>Oportunidad</span><strong>Canal directo</strong></div>
+    </div>
+  </div>
+</section>
+
+<section class="container feature-strip">
+  <div class="feature-card">
+    <h3>Drag & drop real</h3>
+    <p>CSV, XLSX, XLS y XLSM. Sube el reporte tal cual sale del PMS o channel manager.</p>
+  </div>
+  <div class="feature-card">
+    <h3>Interpretación inteligente</h3>
+    <p>Te traduce el reporte a lenguaje ejecutivo y hotelero, no a tablas crudas.</p>
+  </div>
+  <div class="feature-card">
+    <h3>Paywall simple</h3>
+    <p>Gratis hasta 3 meses. Más histórico, más reportes o futuras conexiones, con Pro.</p>
+  </div>
+</section>
+
+<section class="container" id="pricing">
+  <div class="section-head">
+    <span class="eyebrow">Planes</span>
+    <h2>Empieza gratis. Escala cuando el análisis ya te esté dando valor.</h2>
+  </div>
+  <div class="pricing-grid">
+    <div class="pricing-card">
+      <h3>Gratis</h3>
+      <div class="price">$0</div>
+      <ul>
+        <li>Hasta 3 reportes</li>
+        <li>Hasta 3 meses por análisis</li>
+        <li>Insights y recomendaciones base</li>
+        <li>Conexión PMS/channel bloqueada — muy pronto</li>
+      </ul>
+      <a href="/signup" class="button secondary full">Comenzar</a>
+    </div>
+    <div class="pricing-card featured">
+      <div class="pill">Más popular</div>
+      <h3>Pro mensual</h3>
+      <div class="price">US$19<span>/mes</span></div>
+      <ul>
+        <li>Más reportes</li>
+        <li>Más histórico y futuro</li>
+        <li>Recomendaciones más profundas</li>
+        <li>Acceso prioritario a futuras integraciones</li>
+      </ul>
+      <a href="/signup" class="button full">Empezar ahora</a>
+    </div>
+    <div class="pricing-card">
+      <h3>Pro+</h3>
+      <div class="price">US$49<span>/mes</span></div>
+      <ul>
+        <li>Todo Pro y más</li>
+        <li>Máxima capacidad</li>
+        <li>Prioridad en nuevas funciones</li>
+      </ul>
+      <a href="/signup" class="button secondary full">Pro+</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

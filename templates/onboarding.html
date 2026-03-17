@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% block title %}Datos de tu hotel — DRAGONNÉ{% endblock %}
+{% block canonical %}{% if app_url %}{{ app_url }}/onboarding{% endif %}{% endblock %}
+{% block body %}
+<div class="auth-shell">
+  <div class="auth-card light-card">
+    <div class="brand brand-center">
+      <img class="brand-logo" src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" />
+    </div>
+    <h1>{% if editing %}Editar datos de tu hotel{% else %}Cuéntanos de tu hotel{% endif %}</h1>
+    <p class="muted center">{% if editing %}Actualiza la información para personalizar tus análisis.{% else %}Con esto personalizamos tus análisis y recomendaciones.{% endif %}</p>
+    {% if error %}<div class="alert error">{{ error }}</div>{% endif %}
+    <form method="post" class="auth-form two-col">
+      <div>
+        <label>Nombre del hotel</label>
+        <input type="text" name="hotel_name" required placeholder="Ej. Hotel Marina" value="{{ user.hotel_name or '' }}" />
+      </div>
+      <div>
+        <label>Nombre de contacto</label>
+        <input type="text" name="contact_name" required placeholder="Tu nombre o el de quien gestiona" value="{{ user.contact_name or '' }}" />
+      </div>
+      <div>
+        <label>Tamaño del hotel</label>
+        <select name="hotel_size" required>
+          <option value="">Selecciona</option>
+          <option value="pequeño (&lt;=40 llaves)" {% if user and user.hotel_size == 'pequeño (<=40 llaves)' %}selected{% endif %}>Pequeño (≤40 llaves)</option>
+          <option value="mediano (41-120 llaves)" {% if user and user.hotel_size == 'mediano (41-120 llaves)' %}selected{% endif %}>Mediano (41–120 llaves)</option>
+          <option value="grande (&gt;120 llaves)" {% if user and user.hotel_size == 'grande (>120 llaves)' %}selected{% endif %}>Grande (&gt;120 llaves)</option>
+          <option value="resort / all-inclusive" {% if user and user.hotel_size == 'resort / all-inclusive' %}selected{% endif %}>Resort / all-inclusive</option>
+        </select>
+      </div>
+      <div>
+        <label>Categoría</label>
+        <select name="hotel_category" required>
+          <option value="">Selecciona</option>
+          <option value="boutique" {% if user and user.hotel_category == 'boutique' %}selected{% endif %}>Boutique</option>
+          <option value="de negocios" {% if user and user.hotel_category == 'de negocios' %}selected{% endif %}>De negocios</option>
+          <option value="hotel de ciudad" {% if user and user.hotel_category == 'hotel de ciudad' %}selected{% endif %}>Hotel de ciudad</option>
+          <option value="resort" {% if user and user.hotel_category == 'resort' %}selected{% endif %}>Resort</option>
+          <option value="económico / budget" {% if user and user.hotel_category == 'económico / budget' %}selected{% endif %}>Económico / Budget</option>
+          <option value="all-inclusive" {% if user and user.hotel_category == 'all-inclusive' %}selected{% endif %}>All-inclusive</option>
+          <option value="lujo / luxury" {% if user and user.hotel_category == 'lujo / luxury' %}selected{% endif %}>Lujo / Luxury</option>
+        </select>
+      </div>
+      <div>
+        <label>Estrellas</label>
+        <select name="hotel_stars">
+          <option value="0" {% if not user or (user.hotel_stars or 0) == 0 %}selected{% endif %}>Selecciona</option>
+          <option value="1" {% if user and user.hotel_stars == 1 %}selected{% endif %}>1 estrella</option>
+          <option value="2" {% if user and user.hotel_stars == 2 %}selected{% endif %}>2 estrellas</option>
+          <option value="3" {% if user and user.hotel_stars == 3 %}selected{% endif %}>3 estrellas</option>
+          <option value="4" {% if user and user.hotel_stars == 4 %}selected{% endif %}>4 estrellas</option>
+          <option value="5" {% if user and user.hotel_stars == 5 %}selected{% endif %}>5 estrellas</option>
+        </select>
+      </div>
+      <div class="full-span">
+        <label>Ciudad y país</label>
+        <input type="text" name="hotel_location" required placeholder="Ej. Mérida, México" value="{{ user.hotel_location or '' }}" />
+      </div>
+      <div class="full-span">
+        <label>Ubicación en el destino</label>
+        <select name="hotel_location_context">
+          <option value="">Selecciona (opcional)</option>
+          <option value="centro" {% if user and user.hotel_location_context == 'centro' %}selected{% endif %}>Centro</option>
+          <option value="zona turística" {% if user and user.hotel_location_context == 'zona turística' %}selected{% endif %}>Zona turística</option>
+          <option value="periferia" {% if user and user.hotel_location_context == 'periferia' %}selected{% endif %}>Periferia</option>
+        </select>
+        <p class="muted small" style="margin-top:6px">Ayuda al algoritmo a afinar recomendaciones (ej. centro vs periferia).</p>
+      </div>
+
+      <h3 class="onboarding-section-label">Stack tecnológico (opcional)</h3>
+      <p class="muted small full-span" style="margin-top:0; margin-bottom:10px">Con esto afinamos mejor las recomendaciones y preparamos futuras integraciones.</p>
+      <div>
+        <label>PMS</label>
+        <input type="text" name="hotel_pms" placeholder="Ej. Mews, Cloudbeds, Opera" value="{{ user.hotel_pms or '' }}" />
+      </div>
+      <div>
+        <label>Channel manager</label>
+        <input type="text" name="hotel_channel_manager" placeholder="Ej. SiteMinder, RateGain" value="{{ user.hotel_channel_manager or '' }}" />
+      </div>
+      <div>
+        <label>Booking engine</label>
+        <input type="text" name="hotel_booking_engine" placeholder="Ej. Synxis, Direct" value="{{ user.hotel_booking_engine or '' }}" />
+      </div>
+      <div class="full-span">
+        <label>Otras tecnologías</label>
+        <input type="text" name="hotel_tech_other" placeholder="Ej. Revenue manager, CRM, Reputation" value="{{ user.hotel_tech_other or '' }}" />
+      </div>
+
+      <h3 class="onboarding-section-label">Presencia online (opcional)</h3>
+      <p class="muted small full-span" style="margin-top:0; margin-bottom:10px">Enlaces a tu perfil o listado. El algoritmo los usa como contexto para personalizar reportes (no se comparten con terceros).</p>
+      <div class="full-span">
+        <label>Google My Business</label>
+        <input type="url" name="hotel_google_business_url" placeholder="https://g.page/..." value="{{ user.hotel_google_business_url or '' }}" />
+      </div>
+      <div>
+        <label>Tu hotel en Expedia</label>
+        <input type="url" name="hotel_expedia_url" placeholder="https://www.expedia.com/..." value="{{ user.hotel_expedia_url or '' }}" />
+      </div>
+      <div>
+        <label>Tu hotel en Booking.com</label>
+        <input type="url" name="hotel_booking_url" placeholder="https://www.booking.com/..." value="{{ user.hotel_booking_url or '' }}" />
+      </div>
+
+      <div class="full-span">
+        <button class="btn btn-primary full" type="submit">{% if editing %}Guardar cambios{% else %}Continuar al panel{% endif %}</button>
+      </div>
+    </form>
+    {% if editing %}<p class="muted center" style="margin-top:12px"><a href="/app/account">Volver a Mi cuenta</a></p>{% endif %}
+  </div>
+</div>
+{% endblock %}

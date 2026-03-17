@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+{% block title %}DRAGONNÉ — Panel{% endblock %}
+{% block body %}
+<div class="app-shell">
+  <header class="app-topbar">
+    <div class="app-topbar-inner">
+      <a href="/app" class="brand-link">
+        <img class="brand-logo" src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" />
+      </a>
+      <div class="app-context muted">
+        {{ user['hotel_name'] }}{% if user['hotel_category'] %} · {{ user['hotel_category'] }}{% endif %}{% if user['hotel_size'] %} · {{ user['hotel_size'] }}{% endif %}{% if user['hotel_location'] %} · {{ user['hotel_location'] }}{% endif %}
+        <span class="plan-badge-inline pill {% if user['plan'] == 'pro' %}pill-pro{% endif %}{% if user['plan'] == 'pro_plus' %} pill-pro-plus{% endif %}">Plan {{ plan_label }}</span>
+      </div>
+      <div class="top-actions">
+        <a href="/app/account" class="btn btn-secondary btn-sm">Mi cuenta</a>
+        <button class="btn btn-secondary btn-sm" id="openPortalBtn" {% if not user['stripe_customer_id'] %}disabled{% endif %}>Facturación</button>
+        <form method="post" action="/logout" class="logout-form"><button class="btn btn-secondary btn-sm" type="submit">Salir</button></form>
+      </div>
+    </div>
+  </header>
+
+  <div class="app-content">
+  <section class="dashboard-welcome">
+    <h1 class="dashboard-page-title">Panel</h1>
+    <p class="dashboard-page-desc muted">Sube reportes de tu PMS o channel manager y recibe lectura comercial en minutos. Plan {{ plan_label }}: {% if user['plan'] == 'pro_plus' %}máxima capacidad.{% elif user['plan'] == 'pro' %}hasta 90 días, más archivos y análisis guardados.{% else %}hasta {{ free_max_days }} días, {{ free_max_files }} archivo por análisis, {{ free_max_analyses }} análisis guardados.{% endif %}</p>
+  </section>
+
+  <main class="dashboard-grid">
+    <section class="upload-card light-card">
+      <div class="section-head">
+        <div>
+          <h2>Nuevo análisis</h2>
+          <p class="muted">100% español latino. Diseño para operaciones hoteleras reales.</p>
+        </div>
+      </div>
+      {% if can_upload %}
+      <form id="analyzeForm" class="analyze-form">
+        <label>Contexto del negocio (opcional)</label>
+        <textarea name="business_context" rows="4" placeholder="Ejemplo: Queremos crecer canal directo en fines de semana, bajar dependencia OTA en temporada alta y empujar estancias mínimas de 2 noches en vacaciones."></textarea>
+
+        <label>Reportes</label>
+        <div class="dropzone light" id="dropzone">
+          <input id="files" name="files" type="file" multiple accept=".csv,.xlsx,.xls,.xlsm" required />
+          <div>
+            <strong>Arrastra aquí tus reportes</strong>
+            <p>PMS, channel manager, motor o reportes exportados desde Google Sheets.</p>
+          </div>
+        </div>
+        <div id="fileList" class="file-list"></div>
+
+        <div class="button-row">
+          <button class="btn btn-primary" type="submit">Analizar reportes</button>
+        </div>
+      </form>
+      {% else %}
+      <div class="upload-limit-block">
+        <p class="limit-reason">{{ limit_reason }}</p>
+        <p class="muted small">Para seguir generando análisis, mejora tu plan o escríbenos.</p>
+        <div class="limit-actions">
+          {% if invite_upgrade %}
+            {% if user['plan'] == 'free' %}
+          <button type="button" class="btn btn-primary" data-billing-cycle="monthly" data-plan-tier="pro">Pásate a Pro</button>
+            {% else %}
+          <button type="button" class="btn btn-primary" data-billing-cycle="monthly" data-plan-tier="pro_plus">Subir a Pro+</button>
+            {% endif %}
+          {% endif %}
+          {% if invite_contact and contact_email %}
+          <a href="mailto:{{ contact_email }}" class="btn btn-secondary">Contáctanos</a>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+    </section>
+
+    <aside class="side-panel light-card">
+      <h3>Qué te entrega</h3>
+      <ul class="clean-list">
+        <li>Resumen ejecutivo entendible para dueño o GM</li>
+        <li>Métricas clave con lectura comercial</li>
+        <li>Hallazgos prioritarios</li>
+        <li>Riesgos detectados</li>
+        <li>Recomendaciones accionables</li>
+      </ul>
+      <h3>Qué viene después</h3>
+      <ul class="clean-list">
+        <li>Más histórico y comparación entre periodos</li>
+        <li>Mejor lectura de canal directo vs metasearch</li>
+      </ul>
+    </aside>
+  </main>
+
+  <section class="integrations-card light-card integrations-card--locked" aria-label="Conectar DRAGONNÉ a tu stack tecnológico">
+    <div class="section-head">
+      <div>
+        <h2>Conectar PMS / Channel</h2>
+        <p class="muted">Conecta DRAGONNÉ a tu stack tecnológico para leer tu operación en tiempo real y dejar de subir archivos a mano.</p>
+      </div>
+      <div class="integrations-lock-pill">
+        <span class="integrations-lock-dot"></span>
+        <span>Módulo bloqueado</span>
+        <button type="button" class="integrations-help" aria-label="Más información sobre este módulo" title="Este módulo estará disponible muy pronto. Podrás conectar DRAGONNÉ a tu PMS y channel manager para recibir recomendaciones accionables en tiempo real desde el asistente inteligente.">?</button>
+      </div>
+    </div>
+    <div class="integrations-card__blurred-wrap">
+      <div class="integrations-card__blurred">
+        <div class="integrations-logos">
+      <div class="integration-logo integration-logo--locked" title="Mews — próximamente"><img src="/static/branding/integrations/mews.svg" alt="Mews" /></div>
+      <div class="integration-logo integration-logo--locked" title="Cloudbeds — próximamente"><img src="/static/branding/integrations/cloudbeds.svg" alt="Cloudbeds" /></div>
+      <div class="integration-logo integration-logo--locked" title="SiteMinder — próximamente"><img src="/static/branding/integrations/siteminder.svg" alt="SiteMinder" /></div>
+      <div class="integration-logo integration-logo--locked" title="Little Hotelier — próximamente"><img src="/static/branding/integrations/littlehotelier.svg" alt="Little Hotelier" /></div>
+      <div class="integration-logo integration-logo--locked" title="Yanolja — próximamente"><img src="/static/branding/integrations/yanolja.svg" alt="Yanolja" /></div>
+      <div class="integration-logo integration-logo--locked" title="Shiji — próximamente"><img src="/static/branding/integrations/shiji.svg" alt="Shiji" /></div>
+        </div>
+      </div>
+      <div class="integrations-lock-icon" aria-hidden="true">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      </div>
+    </div>
+  </section>
+
+  <section class="results-card results-card-tablero light-card hidden" id="resultsCard">
+    <div class="section-head">
+      <div>
+        <h2>Resultado del análisis</h2>
+        <p class="muted" id="resultMeta"></p>
+      </div>
+      <div class="results-actions">
+        <span id="planBadge" class="pill"></span>
+        <button class="btn btn-secondary btn-sm" id="downloadPdfBtn" disabled>Descargar PDF</button>
+      </div>
+    </div>
+    <div id="paywall" class="upgrade-banner hidden"></div>
+    <div class="results-tablero" id="resultsLayout">
+      <div id="resultsLoading" class="results-loading hidden" aria-live="polite">
+        <img src="/static/branding/dragonne-wordmark.png" alt="" class="results-loading-logo" width="140" height="32" />
+        <p class="muted">Analizando…</p>
+      </div>
+      <div class="results-tablero-inner" id="tableroContent">
+        <div class="tablero-kpis" id="tableroKpis"></div>
+        <div class="tablero-col tablero-col-left" id="tableroLeft"></div>
+        <div class="tablero-col tablero-col-center" id="tableroCenter"></div>
+        <div class="tablero-col tablero-col-right" id="tableroRight"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="history-card light-card">
+    <div class="section-head">
+      <div>
+        <h2>Historial reciente</h2>
+        <p class="muted">Tus últimos análisis guardados.</p>
+      </div>
+    </div>
+    {% if analyses %}
+    <div class="history-table">
+      <div class="history-header">
+        <span>Fecha</span>
+        <span>Archivos</span>
+        <span>Días</span>
+        <span>Reportes</span>
+      </div>
+      <div class="history-grid" id="historyGrid">
+        {% for item in analyses %}
+        <button class="history-item" data-analysis-id="{{ item.id }}">
+          <span class="history-col history-col-date">{{ item.created_at }}</span>
+          <span class="history-col history-col-files">{{ item.file_count }}</span>
+          <span class="history-col history-col-days">{{ item.days_covered }}</span>
+          <span class="history-col history-col-reports">{{ item.reports_detected }}</span>
+        </button>
+        {% endfor %}
+      </div>
+    </div>
+    {% else %}
+    <div class="empty-state" id="historyEmpty">Todavía no has corrido análisis. Sube tu primer reporte para empezar.</div>
+    {% endif %}
+  </section>
+  </div>
+</div>
+{% endblock %}

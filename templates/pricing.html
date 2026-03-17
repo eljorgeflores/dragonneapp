@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Planes — DRAGONNÉ{% endblock %}
+{% block content %}
+<section class="pricing-hero">
+  <div class="eyebrow">Facturación</div>
+  <h1>Activa DRAGONNÉ Pro</h1>
+  <p class="lead">Abre más histórico, elimina el tope del plan gratis y deja lista tu cuenta para crecer con nuevas capas del producto.</p>
+</section>
+<section class="section-grid two pricing-grid">
+  <article class="price-card featured">
+    <div class="plan-badge">Mensual</div>
+    <h2>Pro mensual</h2>
+    <div class="price">USD {{ monthly_price }}<span>/mes</span></div>
+    <ul class="clean-list compact">
+      <li>Más de 3 meses por análisis</li>
+      <li>Más paquetes guardados</li>
+      <li>Listo para evolucionar con conectores</li>
+      <li>Seguimiento continuo del desempeño comercial</li>
+    </ul>
+    <a class="btn btn-primary full" href="/signup">Crear cuenta y elegir Pro</a>
+  </article>
+</section>
+{% endblock %}

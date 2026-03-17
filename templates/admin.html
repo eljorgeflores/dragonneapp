@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block title %}Admin — DRAGONNÉ{% endblock %}
+{% block body %}
+<div class="app-shell">
+  <header class="app-topbar">
+    <div>
+      <div class="brand"><img class="brand-logo" style="margin:0" src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" /></div>
+      <div class="muted">Panel admin · {{ current_user['email'] }}</div>
+    </div>
+    <div class="top-actions">
+      <a href="/admin/admins" class="btn btn-secondary btn-sm">Administradores</a>
+      <a href="/admin/api" class="btn btn-secondary btn-sm">Acceso API</a>
+      <a href="/app" class="btn btn-secondary btn-sm">Volver al panel</a>
+    </div>
+  </header>
+
+  <section class="dashboard-hero light-card">
+    <div>
+      <div class="eyebrow">Visión general</div>
+      <h1>Uso de clientes y actividad en DRAGONNÉ.</h1>
+      <p class="lede small">Mira qué hoteles están activos, cada cuándo entran, cuánto analizan y qué tan enganchados están con el producto.</p>
+    </div>
+    <div class="hero-plan-box">
+      <div class="pill">Snapshot</div>
+      <div class="mini-kpis">
+        <div>
+          <span>Hoteles</span>
+          <strong>{{ totals.total_hotels }}</strong>
+        </div>
+        <div>
+          <span>Usuarios con login reciente (&lt;=30 días)</span>
+          <strong>{{ totals.active_last_30d }}</strong>
+        </div>
+      </div>
+      <div class="mini-highlight">
+        <p class="muted">Total análisis: {{ totals.total_analyses }} · Reportes subidos: {{ totals.total_files }}.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="history-card light-card">
+    <div class="section-head">
+      <div>
+        <h2>Hoteles y usuarios</h2>
+        <p class="muted">Ordenados por actividad reciente.</p>
+      </div>
+    </div>
+    <div class="history-grid" style="grid-template-columns: 1fr 1fr;">
+      {% for u in users %}
+      <a href="/admin/users/{{ u.id }}" class="history-item">
+        <div class="history-top">
+          <strong>{{ u.hotel_name }}</strong>
+          <span>{{ u.email }}</span>
+        </div>
+        <p>
+          Plan {{ u.plan_label }} · {{ u.total_analyses }} análisis · {{ u.total_files }} reportes.
+        </p>
+        <div class="history-meta">
+          <span>Creado: {{ u.created_at[:10] }}</span>
+          <span>Último login: {{ u.last_login_at or 'Nunca' }}</span>
+          <span>Logins: {{ u.login_count }}</span>
+          <span>Última actividad: {{ u.last_activity or 'Sin datos' }}</span>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}
+

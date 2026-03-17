@@ -1,0 +1,8 @@
+reservation_id,booking_date,check_in,check_out,channel,status,room_nights,adr,net_room_revenue,commission,payment_cost
+R001,2026-01-05,2026-02-01,2026-02-03,Booking,Confirmed,2,2450,4900,735,0
+R002,2026-01-06,2026-02-02,2026-02-04,Directo Web,Confirmed,2,2650,5300,0,159
+R003,2026-01-07,2026-02-05,2026-02-08,Expedia,Cancelled,3,2100,6300,945,0
+R004,2026-01-08,2026-02-10,2026-02-12,Directo WhatsApp,Confirmed,2,2300,4600,0,138
+R005,2026-01-08,2026-02-11,2026-02-14,Booking,Confirmed,3,2400,7200,1080,0
+R006,2026-01-09,2026-02-15,2026-02-17,Hotelbeds,Confirmed,2,1950,3900,585,0
+R007,2026-01-10,2026-02-18,2026-02-21,Directo Web,Confirmed,3,2800,8400,0,252

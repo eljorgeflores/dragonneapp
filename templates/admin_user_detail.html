@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% block title %}Cliente — DRAGONNÉ{% endblock %}
+{% block body %}
+<div class="app-shell">
+  <header class="app-topbar">
+    <div>
+      <div class="brand"><img class="brand-logo" style="margin:0" src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" /></div>
+      <div class="muted">Detalle de cliente · {{ user['hotel_name'] }} ({{ user['email'] }})</div>
+    </div>
+    <div class="top-actions">
+      <a href="/admin" class="btn btn-secondary btn-sm">Volver a admin</a>
+    </div>
+  </header>
+
+  <section class="dashboard-hero light-card">
+    <div>
+      <div class="eyebrow">Actividad</div>
+      <h1>{{ user['hotel_name'] }}</h1>
+      {% if user.get('api_key') %}
+      <p class="lede small">API: activa (clave asignada). <a href="/admin/api">Gestionar acceso API</a></p>
+      {% else %}
+      <p class="lede small">API: sin acceso. <a href="/admin/api">Dar acceso desde Acceso API</a></p>
+      {% endif %}
+      <p class="lede small">
+        Plan {{ plan_label }} · Creado el {{ user['created_at'][:10] }} ·
+        Último login: {{ user['last_login_at'] or 'Nunca' }} ·
+        Logins: {{ user['login_count'] or 0 }}.
+      </p>
+    </div>
+    <div class="hero-plan-box">
+      <div class="pill">Resumen</div>
+      <div class="mini-kpis">
+        <div>
+          <span>Análisis generados</span>
+          <strong>{{ stats.total_analyses }}</strong>
+        </div>
+        <div>
+          <span>Reportes subidos</span>
+          <strong>{{ stats.total_files }}</strong>
+        </div>
+      </div>
+      <div class="mini-highlight">
+        <p class="muted">
+          Último análisis: {{ stats.last_analysis_at or 'N/A' }} ·
+          Última actividad: {{ stats.last_activity or 'Sin datos' }}.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="history-card light-card">
+    <div class="section-head">
+      <div>
+        <h2>Sesiones recientes</h2>
+        <p class="muted">Aproximación de cada cuándo entra y cuánto tiempo permanece.</p>
+      </div>
+    </div>
+    {% if sessions %}
+    <div class="history-grid" style="grid-template-columns: 1fr 1fr;">
+      {% for s in sessions %}
+      <div class="history-item">
+        <div class="history-top">
+          <strong>Inicio: {{ s.started_at[:19].replace('T', ' ') }}</strong>
+          <span>Fin: {{ s.ended_at and s.ended_at[:19].replace('T', ' ') or 'Abierta / desconocido' }}</span>
+        </div>
+        <p class="muted">
+          Requests: {{ s.request_count }} ·
+          Último toque: {{ s.last_seen_at[:19].replace('T', ' ') }}.
+        </p>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">Todavía no hay sesiones registradas para este usuario.</div>
+    {% endif %}
+  </section>
+
+  <section class="history-card light-card">
+    <div class="section-head">
+      <div>
+        <h2>Análisis generados</h2>
+        <p class="muted">Los últimos análisis que este hotel ha corrido.</p>
+      </div>
+    </div>
+    {% if analyses %}
+    <div class="history-grid" style="grid-template-columns: 1fr 1fr;">
+      {% for a in analyses %}
+      <div class="history-item">
+        <div class="history-top">
+          <strong>{{ a.title }}</strong>
+          <span>{{ a.created_at[:19].replace('T', ' ') }}</span>
+        </div>
+        <p class="muted">
+          {{ a.file_count }} archivo(s) · {{ a.days_covered }} días · {{ a.reports_detected }} reporte(s).
+        </p>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">Este usuario aún no ha generado análisis.</div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}
+

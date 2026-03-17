@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Documentación API — DRAGONNÉ{% endblock %}
+{% block canonical %}{% if app_url %}{{ app_url }}/api{% endif %}{% endblock %}
+{% block body %}
+<div class="marketing-shell" style="max-width: 720px; margin: 0 auto; padding: 48px 24px;">
+  <h1 style="font-size: 1.75rem; font-weight: 700; margin: 0 0 12px;">Documentación API</h1>
+  <p class="muted" style="margin: 0 0 24px; line-height: 1.6;">
+    La API de DRAGONNÉ te permite ejecutar análisis de reportes, listar resultados y descargar PDFs de forma programática.
+  </p>
+  <p style="margin: 0 0 24px; line-height: 1.6;">
+    Autenticación por <strong>API key</strong>: envía el header <code style="background: rgba(0,0,0,.06); padding: 2px 8px; border-radius: 4px;">X-API-Key: tu_key</code> o <code style="background: rgba(0,0,0,.06); padding: 2px 8px; border-radius: 4px;">Authorization: Bearer tu_key</code> en cada petición.
+    La clave se obtiene tras <strong>solicitar acceso</strong>; un administrador la asigna desde el panel Admin → Acceso API. Uso limitado por estándares de industria (p. ej. 60 req/min, 1000/día).
+  </p>
+  <p style="margin: 0 0 28px; line-height: 1.6;">
+    Endpoints principales: <strong>POST /api/v1/analyze</strong> (subir reportes y obtener análisis), <strong>GET /api/v1/analyses</strong> (listar), <strong>GET /api/v1/analyses/{id}</strong> (detalle), <strong>GET /api/v1/analyses/{id}/pdf</strong> (descargar PDF).
+  </p>
+  <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+    <a href="/docs" class="btn btn-primary">Abrir Swagger (interactivo)</a>
+    <a href="/redoc" class="btn btn-secondary">Abrir ReDoc</a>
+  </div>
+  <p class="muted" style="margin: 28px 0 0; font-size: 0.875rem;">
+    El esquema OpenAPI está disponible en <a href="/openapi.json">/openapi.json</a>.
+  </p>
+</div>
+{% endblock %}

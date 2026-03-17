@@ -1,0 +1,109 @@
+{# Contenido reutilizable del "Resultado del análisis" para mockup y landing #}
+{# Estructura tablero: KPIs arriba; 3 columnas (izq: mix + indicadores + oportunidades + riesgos | centro: resumen + métricas + hallazgos | der: recomendaciones + datos) #}
+<section class="results-card light-card results-card-tablero" style="margin-top:0;">
+  <div class="section-head">
+    <div>
+      <h2>Resultado del análisis</h2>
+      <p class="muted">2 reporte(s) detectado(s) · 3 archivo(s) subidos · 90 días cubiertos</p>
+    </div>
+    <div class="results-actions">
+      <span class="pill">Pro+</span>
+      <button class="btn btn-secondary btn-sm" disabled>Descargar PDF</button>
+    </div>
+  </div>
+  <div class="results-tablero">
+    <div class="tablero-kpis">
+      <div class="kpi"><div class="label">Archivos</div><div class="value">3</div></div>
+      <div class="kpi"><div class="label">Reportes</div><div class="value">2</div></div>
+      <div class="kpi"><div class="label">Días cubiertos</div><div class="value">90</div></div>
+      <div class="kpi"><div class="label">Máx. rango</div><div class="value">180</div></div>
+    </div>
+    <div class="tablero-col tablero-col-left">
+      <div class="chart-card">
+        <h3>Mix por canal (estimado)</h3>
+        <div class="mix-bars">
+          <div class="mix-bar-row">
+            <span class="mix-bar-label">Directo web</span>
+            <div class="mix-bar-track"><div class="mix-bar-fill" style="width:35%;background:#f6a905"></div></div>
+            <span class="mix-bar-pct">35%</span>
+          </div>
+          <div class="mix-bar-row">
+            <span class="mix-bar-label">Booking.com</span>
+            <div class="mix-bar-track"><div class="mix-bar-fill" style="width:25%;background:#f07e07"></div></div>
+            <span class="mix-bar-pct">25%</span>
+          </div>
+          <div class="mix-bar-row">
+            <span class="mix-bar-label">Expedia</span>
+            <div class="mix-bar-track"><div class="mix-bar-fill" style="width:22%;background:#808081"></div></div>
+            <span class="mix-bar-pct">22%</span>
+          </div>
+          <div class="mix-bar-row">
+            <span class="mix-bar-label">Agoda</span>
+            <div class="mix-bar-track"><div class="mix-bar-fill" style="width:10%;background:#343434"></div></div>
+            <span class="mix-bar-pct">10%</span>
+          </div>
+          <div class="mix-bar-row">
+            <span class="mix-bar-label">Hotelbeds</span>
+            <div class="mix-bar-track"><div class="mix-bar-fill" style="width:8%;background:#6b7280"></div></div>
+            <span class="mix-bar-pct">8%</span>
+          </div>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3>Indicadores operativos</h3>
+        <div class="columns-wrapper">
+          <div class="column" style="height: 80px;"><div class="column-inner"></div></div>
+          <div class="column" style="height: 110px;"><div class="column-inner"></div></div>
+          <div class="column" style="height: 60px;"><div class="column-inner"></div></div>
+        </div>
+        <div class="column-labels">
+          <span>ADR</span>
+          <span>Room nights</span>
+          <span>Cancelación</span>
+        </div>
+        <div class="mini-top" style="margin-top:8px;">ADR semana: USD 88 · ADR fin de semana: USD 104 · Room nights totales: 420 · Cancelación: 9% (concentrada en OTAs)</div>
+      </div>
+      <div class="panel-block">
+        <h3>Oportunidades directo vs OTA</h3>
+        <div class="panel-item">Diseñar campañas específicas para mover parte del volumen de fines de semana de OTA a canal directo (paquetes con valor añadido, beneficios exclusivos por reservar directo).</div>
+        <div class="panel-item">Aprovechar la capacidad ociosa de domingo a jueves con tarifas corporativas / long stay bien segmentadas, priorizando canales de menor coste de distribución.</div>
+        <div class="panel-item">Revisar comisiones y condiciones de la OTA dominante; si no es posible mejorarlas, limitar inventario en fechas de alta demanda para proteger margen.</div>
+      </div>
+      <div class="panel-block">
+        <h3>Riesgos detectados</h3>
+        <div class="panel-item">Dependencia operativa y comercial de una única OTA: cualquier cambio de algoritmo, visibilidad o política impactaría de forma directa el flujo de caja del hotel.</div>
+        <div class="panel-item">Demasiado inventario barato disponible en OTAs en fines de semana fuertes, lo que hace difícil subir tarifa sin sacrificar visibilidad.</div>
+      </div>
+    </div>
+    <div class="tablero-col tablero-col-center">
+      <div class="panel-block panel-block-resumen">
+        <h3>Resumen ejecutivo</h3>
+        <div class="resumen-ejecutivo-body">En los últimos 90 días el hotel llenó principalmente viernes y sábado; de domingo a jueves opera muy por debajo de su potencial. Booking.com concentra la mayor parte del volumen, pero a un ADR y margen neto más bajos que otros canales. El canal directo tiene buena tarifa y menor coste de distribución, pero casi no participa en fines de semana fuertes. La combinación actual deja al hotel dependiente de una sola OTA para llenar inventario y le hace ceder margen justo en las fechas de mayor demanda.</div>
+      </div>
+      <div class="panel-block">
+        <h3>Métricas clave</h3>
+        <div class="panel-item"><strong>ADR promedio · USD 92</strong><div class="muted">El ADR sube a ~USD 104 en fines de semana, pero cae por debajo de USD 85 de domingo a jueves.</div></div>
+        <div class="panel-item"><strong>Room nights · 420</strong><div class="muted">70% de las noches vendidas se concentran en viernes y sábado; la ocupación entre semana es claramente más débil.</div></div>
+        <div class="panel-item"><strong>Cancelación · 9%</strong><div class="muted">La mayor parte de las cancelaciones viene de OTAs, lo que aumenta la volatilidad del pickup.</div></div>
+      </div>
+      <div class="panel-block">
+        <h3>Hallazgos prioritarios</h3>
+        <div class="panel-item"><strong>Fuerte dependencia de una sola OTA</strong><div>Booking.com concentra la mayor parte del volumen con un ADR ~12% menor que el resto de canales, reduciendo margen neto.</div><div class="muted">Impacto: alto · Prioridad: inmediata</div></div>
+        <div class="panel-item"><strong>Ocupación débil de domingo a jueves</strong><div>El hotel vive casi solo de fines de semana; hay muchos huecos entre semana donde podría capturar demanda corporativa o local.</div><div class="muted">Impacto: alto · Prioridad: alta</div></div>
+        <div class="panel-item"><strong>Canal directo desaprovechado en fechas fuertes</strong><div>En fines de semana de alta demanda, la mayoría de reservas entra por OTAs con comisión; el directo participa poco pese a tener mejor contribución.</div><div class="muted">Impacto: medio · Prioridad: alta</div></div>
+      </div>
+    </div>
+    <div class="tablero-col tablero-col-right">
+      <div class="panel-block">
+        <h3>Recomendaciones accionables</h3>
+        <div class="panel-item"><strong>Plan 30 días: proteger fines de semana</strong><div>Subir tarifa gradual en viernes-sábado en los próximos 2 ciclos fuertes y limitar cupos en la OTA dominante, dejando mejores condiciones en canal directo.</div><div class="muted">Urgencia: inmediata</div></div>
+        <div class="panel-item"><strong>Plan 60 días: activar entre semana</strong><div>Lanzar tarifas corporativas / local business de domingo a jueves, priorizando directo y partners con menor comisión; medir pickup por segmento.</div><div class="muted">Urgencia: alta</div></div>
+        <div class="panel-item"><strong>Meta de mix por canal</strong><div>Definir un objetivo de participación directa (por ejemplo 30–35% del total) y revisar mensualmente la evolución por canal, ajustando inventario y precio en consecuencia.</div><div class="muted">Urgencia: media</div></div>
+      </div>
+      <div class="panel-block">
+        <h3>Datos faltantes</h3>
+        <div class="muted">Para afinar más el análisis sería ideal contar con: niveles de comisión por canal, segmentación (corporativo, ocio, grupos) y, si es posible, reporte de pickup por fecha de creación. Con eso podríamos medir margen neto por canal y anticipar mejor los picos de demanda.</div>
+      </div>
+    </div>
+  </div>
+</section>

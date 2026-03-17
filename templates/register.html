@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Crear cuenta — DRAGONNÉ{% endblock %}
+{% block content %}
+<section class="auth-wrap">
+  <div class="auth-card wide">
+    <div class="eyebrow">Primeros hoteles</div>
+    <h1>Crea tu cuenta</h1>
+    <p class="lead small">Empieza gratis y sube tus primeros reportes descargados del PMS o channel manager.</p>
+    {% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
+    <form method="post" class="form-stack">
+      <label>Nombre del hotel o grupo</label>
+      <input type="text" name="hotel_name" required />
+      <label>Correo de trabajo</label>
+      <input type="email" name="email" required />
+      <label>Contraseña</label>
+      <input type="password" name="password" minlength="8" required />
+      <button class="btn btn-primary full" type="submit">Crear cuenta</button>
+    </form>
+    <div class="mini-grid">
+      <div class="mini-card">Gratis: hasta 3 paquetes</div>
+      <div class="mini-card">Hasta 3 meses por análisis</div>
+      <div class="mini-card">Todo en español LATAM</div>
+    </div>
+  </div>
+</section>
+{% endblock %}

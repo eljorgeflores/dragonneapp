@@ -1,0 +1,27 @@
+# Entorno y secretos (nunca subir a repositorio)
+.env
+.env.local
+.env.*.local
+
+# Base de datos y archivos subidos
+data/
+uploads/
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/

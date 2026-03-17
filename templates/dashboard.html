@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Panel — ProfitPilot{% endblock %}
+{% block content %}
+<section class="dashboard-top">
+  <div>
+    <div class="eyebrow">Panel comercial</div>
+    <h1>Hola, {{ current_user['hotel_name'] }}</h1>
+    <p class="lead">Sube reportes de reservas, producción por canal, forecast o pickup. ProfitPilot los interpreta en lenguaje hotelero y aterriza oportunidades reales.</p>
+  </div>
+  <div class="plan-card">
+    <div class="plan-badge {{ current_user['plan'] }}">Plan {{ 'Pro' if current_user['plan'] == 'pro' else 'Gratis' }}</div>
+    {% if current_user['plan'] == 'free' %}
+      <div class="plan-meta">Llevas {{ used_packages }}/{{ free_max_packages }} paquetes usados</div>
+      <div class="plan-meta">Límite gratis: hasta {{ free_max_days }} días por análisis</div>
+      <a class="btn btn-secondary full" href="/pricing">Subir a Pro</a>
+    {% else %}
+      <div class="plan-meta">Tu cuenta ya puede abrir históricos mayores y seguir guardando análisis.</div>
+    {% endif %}
+  </div>
+</section>
+
+<section class="section-grid two dashboard-grid">
+  <article class="feature-card large">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Nuevo análisis</div>
+        <h2>Sube tus reportes</h2>
+      </div>
+      <button class="chip-button" disabled>Conectar PMS / Channel · Coming soon</button>
+    </div>
+    <form id="analyzeForm" class="form-stack" enctype="multipart/form-data">
+      <label>Título del análisis</label>
+      <input type="text" name="title" placeholder="Ej. Producción enero-marzo 2026" required />
+      <label>Reportes</label>
+      <div class="dropzone" id="dropzone">
+        <input type="file" name="files" id="files" multiple accept=".csv,.xlsx,.xls,.xlsm" required />
+        <div class="drop-inner">
+          <strong>Arrastra aquí tus archivos o da clic para adjuntar</strong>
+          <p>CSV, XLSX, XLS o XLSM. Ideal para exports de PMS, channel manager, booking engine o reportes de pickup.</p>
+        </div>
+      </div>
+      <div id="fileList" class="file-list"></div>
+      <div class="hint-row">
+        <span class="pill">Gratis: hasta 3 meses por análisis</span>
+        <button class="link-plain" id="pmsInterest" type="button">Avísenme cuando abran conectores</button>
+      </div>
+      <button class="btn btn-primary" type="submit">Interpretar reportes</button>
+    </form>
+  </article>
+
+  <article class="feature-card large soft" id="resultsPanel">
+    <div class="eyebrow">Resultado</div>
+    <h2>Análisis IA</h2>
+    <p class="lead small">Tu lectura comercial aparecerá aquí cuando subas archivos.</p>
+    <div id="analysisState" class="empty-state">Todavía no hay análisis en esta sesión.</div>
+    <div id="analysisSummary"></div>
+    <div id="analysisOutput"></div>
+  </article>
+</section>
+
+<section class="section-grid two">
+  <article class="feature-card large">
+    <div class="eyebrow">Historial</div>
+    <h2>Análisis guardados</h2>
+    {% if packages %}
+      <div class="history-list">
+        {% for item in packages %}
+          <a class="history-item" href="/package/{{ item['id'] }}">
+            <div>
+              <strong>{{ item['title'] }}</strong>
+              <div class="history-meta">{{ item['created_at'][:10] }} · {{ item['file_count'] }} archivos · {{ item['date_span_days'] or 0 }} días</div>
+            </div>
+            <span>Ver</span>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">Todavía no guardas análisis. Sube tu primer paquete arriba.</div>
+    {% endif %}
+  </article>
+  <article class="feature-card large">
+    <div class="eyebrow">Qué desbloquea Pro</div>
+    <h2>Más histórico, más profundidad, menos fricción</h2>
+    <ul class="clean-list compact">
+      <li>Más de 3 meses por análisis, histórico o futuro.</li>
+      <li>Más paquetes y seguimiento continuo del hotel.</li>
+      <li>Base lista para futuras conexiones con PMS y channel manager.</li>
+      <li>Escala natural para equipos de revenue y e-commerce.</li>
+    </ul>
+    <a class="btn btn-secondary" href="/pricing">Ver planes</a>
+  </article>
+</section>
+{% endblock %}
