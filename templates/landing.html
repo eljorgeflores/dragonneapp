@@ -1,20 +1,16 @@
 {% extends 'base.html' %}
 {% block title %}DRAGONNÉ — Analiza reportes hoteleros{% endblock %}
 {% block content %}
+
 <header class="site-header marketing-shell">
   <div class="site-header-inner">
     <a href="/" class="brand brand-link">
       <img class="brand-logo" src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" />
     </a>
     <nav class="site-header-nav">
-      {% if user %}
-        <a href="/dashboard" class="link nav-link-desktop">Dashboard</a>
-      {% else %}
-        <a href="/login" class="nav-icon-button" aria-label="Iniciar sesión">
-          <span class="nav-avatar" aria-hidden="true"></span>
-          <span class="nav-label">Iniciar sesión</span>
-        </a>
-      {% endif %}
+      <a href="/login" class="nav-icon-button" aria-label="Iniciar sesión">
+        <span class="nav-avatar" aria-hidden="true"></span>
+      </a>
       <button class="nav-hamburger" type="button" aria-label="Abrir menú principal">
         <span></span>
         <span></span>
@@ -25,17 +21,13 @@
 
 <section class="hero hero-landing marketing-shell">
   <div class="hero-copy">
-    <span class="eyebrow">Revenue, distribución y margen en claro</span>
-    <h1>Sube tus reportes del PMS o channel manager y entiende qué canal te deja dinero.</h1>
-    <p>DRAGONNÉ interpreta exports en Excel, CSV o Sheets y te devuelve insights accionables en español latino, con lenguaje hotelero real: mix de canal, dependencia OTA, margen estimado, cancelación y oportunidades comerciales.</p>
+    <span class="eyebrow">Analista de revenue con IA · en español, en minutos</span>
+    <h1>Tu primer analista de revenue inteligente.</h1>
+    <p>Sube el reporte que ya exportas de tu PMS o channel manager. Recibe una lectura clara y senior: qué canales te llenan pero te comen margen, en qué días realmente ganas dinero y qué mover en precio y mix para mejorar resultados.</p>
+    <p>Prueba gratis con un reporte de hasta <strong>30 días</strong>.</p>
     <div class="hero-actions hero-actions-primary">
-      <a href="/signup" class="button">Crear cuenta gratis</a>
-      <a href="#pricing" class="button secondary">Ver planes</a>
-    </div>
-    <div class="badge-row">
-      <span class="badge">Hasta 3 reportes gratis</span>
-      <span class="badge">Hasta 3 meses por análisis</span>
-      <span class="badge">Diseñado para hoteles independientes</span>
+      <a href="/signup" class="button">Probar gratis</a>
+      <a href="#demo" class="button secondary">Ver cómo funciona</a>
     </div>
   </div>
   <div class="hero-card glass">
@@ -52,18 +44,18 @@
   </div>
 </section>
 
-<section class="container feature-strip">
+<section class="container feature-strip" id="demo">
+  <div class="feature-card">
+    <h3>Cómo funciona</h3>
+    <p>Subes tus reportes, DRAGONNÉ los entiende y te devuelve un dashboard accionable con lectura comercial real, no solo tablas.</p>
+  </div>
   <div class="feature-card">
     <h3>Drag & drop real</h3>
-    <p>CSV, XLSX, XLS y XLSM. Sube el reporte tal cual sale del PMS o channel manager.</p>
+    <p>CSV, XLSX, XLS y XLSM. Tal cual salen del PMS o channel manager.</p>
   </div>
   <div class="feature-card">
-    <h3>Interpretación inteligente</h3>
-    <p>Te traduce el reporte a lenguaje ejecutivo y hotelero, no a tablas crudas.</p>
-  </div>
-  <div class="feature-card">
-    <h3>Paywall simple</h3>
-    <p>Gratis hasta 3 meses. Más histórico, más reportes o futuras conexiones, con Pro.</p>
+    <h3>Diseñado para hoteleros</h3>
+    <p>Insights escritos en español latino, pensados para dueño, GM y equipo de revenue.</p>
   </div>
 </section>
 
@@ -108,4 +100,5 @@
     </div>
   </div>
 </section>
+
 {% endblock %}

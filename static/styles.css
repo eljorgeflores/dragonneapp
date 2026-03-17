@@ -162,14 +162,12 @@ button, input, textarea { font: inherit; }
 .nav-icon-button {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
   border-radius: 999px;
   border: 1px solid rgba(52,52,52,.08);
-  background: rgba(255,255,255,.9);
-  font-size: 13px;
-  color: var(--text);
-  text-decoration: none;
+  background: rgba(255,255,255,.95);
 }
 .nav-avatar {
   width: 20px;
@@ -1475,7 +1473,7 @@ input:focus, textarea:focus {
   .marketing-shell { padding: 18px; padding-left: max(18px, env(safe-area-inset-left)); padding-right: max(18px, env(safe-area-inset-right)); }
   .hero { grid-template-columns: 1fr; gap: 20px; }
   .hero-landing { padding-top: 20px; padding-bottom: 32px; }
-  .hero h1, .auth-card h1 { font-size: 30px; text-align: left; }
+  .hero h1 { font-size: 30px; text-align: left; }
   .hero-card { order: -1; }
   .hero-actions.hero-actions-primary { justify-content: flex-start; }
   .kpi-grid { grid-template-columns: 1fr; }
