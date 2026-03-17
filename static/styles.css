@@ -737,6 +737,40 @@ input:focus, textarea:focus {
   }
 }
 
+/* Controles mobile para tablero (columna colapsable) */
+.tablero-toggle-bar {
+  display: none;
+  margin: 12px 0 0;
+  padding: 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.85);
+  border: 1px solid rgba(52,52,52,.08);
+  box-shadow: 0 6px 18px rgba(0,0,0,.04);
+  gap: 4px;
+}
+.tablero-toggle {
+  flex: 1;
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.tablero-toggle.is-active {
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-primary-strong));
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(240,126,7,.24);
+}
+.tablero-toggle:focus-visible {
+  outline: 2px solid var(--accent-primary-strong);
+  outline-offset: 1px;
+}
+
 /* Landing (marketing): mismo layout tablero que /mockup-analisis cuando el demo está en .pp-demo-report */
 .pp-demo-report .results-card-tablero .results-tablero {
   display: grid;
@@ -783,6 +817,23 @@ input:focus, textarea:focus {
   .pp-demo-report .results-card-tablero .tablero-col-center,
   .pp-demo-report .results-card-tablero .tablero-col-right {
     grid-column: 1;
+  }
+}
+
+@media (max-width: 900px) {
+  .results-card-tablero .tablero-toggle-bar {
+    display: flex;
+  }
+  [data-tablero-columns] .tablero-kpis {
+    display: grid;
+  }
+  [data-tablero-columns] .tablero-col {
+    display: none;
+  }
+  [data-tablero-columns][data-active="left"] .tablero-col-left,
+  [data-tablero-columns][data-active="center"] .tablero-col-center,
+  [data-tablero-columns][data-active="right"] .tablero-col-right {
+    display: flex;
   }
 }
 /* Destellos gradientes en el demo de la landing (igual que mockup) */

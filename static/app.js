@@ -319,6 +319,22 @@ if (portalBtn) {
   });
 }
 
+// Tablero: controles mobile para colapsar columnas (landing, mockup y panel)
+document.querySelectorAll('.tablero-toggle-bar').forEach(bar => {
+  const card = bar.closest('.results-card-tablero');
+  if (!card) return;
+  const container = card.querySelector('[data-tablero-columns]');
+  if (!container) return;
+  const buttons = bar.querySelectorAll('.tablero-toggle');
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.target || 'center';
+      container.dataset.active = target;
+      buttons.forEach(b => b.classList.toggle('is-active', b === btn));
+    });
+  });
+});
+
 document.querySelector('.history-card')?.addEventListener('click', async (e) => {
   const item = e.target.closest('[data-analysis-id]');
   if (!item) return;

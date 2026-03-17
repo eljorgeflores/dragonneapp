@@ -129,13 +129,18 @@
         <button class="btn btn-secondary btn-sm" id="downloadPdfBtn" disabled>Descargar PDF</button>
       </div>
     </div>
+    <div class="tablero-toggle-bar" aria-label="Cambiar sección del tablero para móviles">
+      <button type="button" class="tablero-toggle is-active" data-target="center">Resumen</button>
+      <button type="button" class="tablero-toggle" data-target="left">Canales y riesgos</button>
+      <button type="button" class="tablero-toggle" data-target="right">Acciones</button>
+    </div>
     <div id="paywall" class="upgrade-banner hidden"></div>
     <div class="results-tablero" id="resultsLayout">
       <div id="resultsLoading" class="results-loading hidden" aria-live="polite">
         <img src="/static/branding/dragonne-wordmark.png" alt="" class="results-loading-logo" width="140" height="32" />
         <p class="muted">Analizando…</p>
       </div>
-      <div class="results-tablero-inner" id="tableroContent">
+      <div class="results-tablero-inner" id="tableroContent" data-tablero-columns data-active="center">
         <div class="tablero-kpis" id="tableroKpis"></div>
         <div class="tablero-col tablero-col-left" id="tableroLeft"></div>
         <div class="tablero-col tablero-col-center" id="tableroCenter"></div>
