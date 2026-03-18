@@ -258,6 +258,32 @@
     .pp-badge--logo{min-width:88px;min-height:40px;padding:8px 12px}
     .pp-badge--logo .pp-integration-logo{height:22px;max-width:76px}
   }
+  /* === Bloque 1: home marketing móvil (header + hero) === */
+  @media (max-width:768px){
+    .pp-nav{display:flex;align-items:center;flex-wrap:wrap}
+    .pp-brand{order:0}
+    .pp-brand img{height:28px;width:auto !important}
+    .pp-actions{order:1;margin-left:auto;gap:8px}
+    .pp-actions .pp-btn-dark{display:none}
+    .pp-actions .pp-btn-light{
+      min-width:36px;width:36px;height:36px;padding:0;
+      font-size:0;line-height:0;text-indent:-999px;overflow:hidden;
+      border-radius:999px;position:relative;
+    }
+    .pp-actions .pp-btn-light::before{
+      content:"";position:absolute;left:50%;top:50%;
+      transform:translate(-50%,-50%);
+      width:20px;height:20px;border-radius:999px;
+      background:linear-gradient(135deg,#f6a905,#f07e07);
+      box-shadow:0 0 0 2px rgba(255,255,255,.95);
+    }
+    .pp-nav-toggle-btn{order:2}
+    .pp-links{order:3}
+    .pp-hero .pp-grid{grid-template-columns:1fr;gap:24px}
+    .pp-hero .pp-hero-right{order:-1}
+    .pp-hero h1{font-size:1.75rem;line-height:1.2;max-width:100%}
+    .pp-hero{padding:16px 0 28px}
+  }
   @media (max-width:480px){
     .pp-footer-nav{grid-template-columns:1fr}
     .pp-hero-actions{flex-direction:column;align-items:stretch;margin-bottom:16px}
