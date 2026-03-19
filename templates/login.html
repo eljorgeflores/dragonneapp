@@ -11,6 +11,7 @@
     <p class="muted center">Entra para analizar tus reportes hoteleros.</p>
     {% if error %}<div class="alert error">{{ error }}</div>{% endif %}
     <form method="post" class="auth-form">
+      {% if next %}<input type="hidden" name="next" value="{{ next }}" />{% endif %}
       <label>Correo</label>
       <input type="email" name="email" required />
       <label>Contraseña</label>

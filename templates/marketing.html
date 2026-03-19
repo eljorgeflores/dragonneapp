@@ -4,18 +4,20 @@
 <style>
   .pp *{box-sizing:border-box}
   .pp{
-    --text:#343434;--muted:#627082;--line:#e6ebf2;--dark:#343434;--soft:#f1f5f9;
+    --text:#343434;--muted:#808081;--line:rgba(52,52,52,0.14);--dark:#343434;--soft:#f1f5f9;
     --green:#eaf7ef;--greenText:#17603d;--amber:#fff6e8;--amberText:#8a5a13;--red:#fff1f1;--redText:#9f3333;
-    --blue:#eef4ff;--blueText:#f07e07;--shadow:0 22px 60px rgba(15,23,32,.08);--shadowSoft:0 10px 28px rgba(15,23,32,.05);
+    --blue:#eef4ff;--accent-orange:#f07e07;--shadow:0 22px 60px rgba(15,23,32,.08);--shadowSoft:0 10px 28px rgba(15,23,32,.05);
     color:var(--text);
     background:
       radial-gradient(circle at top left, rgba(255,255,255,.96), transparent 26%),
       radial-gradient(circle at top right, rgba(229,236,245,.82), transparent 24%),
       linear-gradient(180deg,#fbfcfe 0%,#f5f7fb 100%);
     min-height:100vh;
-    font-family:"SF Pro Display","SF Pro Text",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    font-family:"Inter",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   }
   .pp a{text-decoration:none}
+  .pp-skip{position:absolute;left:-9999px;z-index:999;padding:12px 20px;background:#343434;color:#fff;font-weight:600;border-radius:0 0 12px 0}
+  .pp-skip:focus{left:0;top:0;outline:2px solid #f07e07;outline-offset:2px}
   .ppc{width:min(1180px,calc(100% - 40px));margin:0 auto}
   .pp-nav-wrap{position:sticky;top:0;z-index:100;backdrop-filter:blur(18px);background:rgba(246,248,251,.82);border-bottom:1px solid rgba(15,23,32,.04)}
   .pp-nav{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:14px 0}
@@ -61,6 +63,8 @@
   .pp-nav-toggle-btn span::after{top:5px}
   .pp-btn{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 18px;border-radius:999px;font-weight:600;border:1px solid transparent;transition:.2s ease}
   .pp-btn:hover{transform:translateY(-1px)}
+  .pp-btn:focus-visible,.pp-links a:focus-visible{outline:2px solid #f07e07;outline-offset:2px}
+  .pp-links a:hover{color:var(--text)}
   .pp-btn-dark,.pp-btn-dark:visited{
     background:linear-gradient(90deg,#f6a905,#f07e07) !important;
     color:#fff !important;
@@ -69,7 +73,11 @@
   .pp-btn-light,.pp-btn-light:visited{background:#fff !important;border-color:var(--line);color:var(--text) !important}
 
   .pp-hero{padding:20px 0 32px}
-  .pp-grid{display:grid;grid-template-columns:.92fr 1.08fr;gap:36px;align-items:start}
+  .pp-grid{display:grid;gap:36px;align-items:start}
+  .pp-hero-grid{grid-template-columns:.92fr 1.08fr;grid-template-areas:"hero-top hero-right" "hero-bottom hero-right"}
+  .pp-hero-top{grid-area:hero-top}
+  .pp-hero-right{grid-area:hero-right}
+  .pp-hero-bottom{grid-area:hero-bottom}
   .pp-hero-viz{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadowSoft);padding:18px;margin-top:20px;max-width:380px}
   .pp-hero-viz-title{font-size:.85rem;font-weight:700;color:var(--muted);margin:0 0 12px;letter-spacing:.02em}
   .pp-hero-viz .pp-channel{padding:8px 0;border-bottom:1px solid var(--line)}
@@ -79,7 +87,8 @@
   .pp-hero-right .pp-mock-wrap{flex:0 0 auto}
   .pp-hero-right .pp-mock{min-height:320px}
   .pp-hero-right .pp-mock-dash .pp-mock{min-height:280px}
-  .pp-eyebrow{display:inline-block;padding:8px 14px;border-radius:999px;background:#fff;border:1px solid var(--line);color:#7d7d7d;font-size:.88rem;margin-bottom:12px;box-shadow:0 8px 20px rgba(15,23,32,.04)}
+  .pp-eyebrow{display:inline-block;padding:8px 14px;border-radius:999px;background:#fff;border:1px solid var(--line);color:#7d7d7d;font-size:.88rem;margin-bottom:10px;box-shadow:0 8px 20px rgba(15,23,32,.04)}
+  .pp-hero-tagline{font-size:1rem;line-height:1.5;color:var(--muted);margin:0 0 16px;font-weight:500;letter-spacing:-.02em}
   .pp h1{
     font-size:clamp(2.2rem,4vw,3.6rem);
     line-height:1.2;
@@ -115,7 +124,7 @@
   .pp-upload-box p{margin:0;color:var(--muted);font-size:.9rem}
   .pp-progress-head{display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:.86rem;margin-bottom:10px;color:#343434}
   .pp-pill{padding:6px 10px;border-radius:999px;font-size:.76rem;font-weight:700;display:inline-flex;align-items:center;gap:8px}
-  .pp-pill.blue{background:var(--blue);color:var(--blueText)} .pp-pill.green{background:var(--green);color:var(--greenText)} .pp-pill.amber{background:var(--amber);color:var(--amberText)}
+  .pp-pill.blue{background:var(--blue);color:var(--accent-orange)} .pp-pill.green{background:var(--green);color:var(--greenText)} .pp-pill.amber{background:var(--amber);color:var(--amberText)}
   .pp-pulse-dot{width:8px;height:8px;border-radius:999px;background:currentColor}
   .pp-progress{height:8px;border-radius:999px;background:#ecf1f6;overflow:hidden}
   .pp-progress-fill{height:100%;width:78%;background:linear-gradient(90deg,#343434,#5b6878);border-radius:999px}
@@ -144,18 +153,21 @@
   .pp-insight:last-child{margin-bottom:0}
   .pp-insight strong{display:block;margin-bottom:4px;font-size:.86rem}
 
-  .pp-section{padding:34px 0}
-  .pp #producto,.pp #como-funciona,.pp #integraciones,.pp #precios,.pp #prueba,.pp #demo-reporte,.pp #uploader{scroll-margin-top:5.5rem}
+  /* === Secciones: regla única desktop y móvil === */
+  .pp-section{padding:34px 0;text-align:left}
+  .pp #producto,.pp #como-funciona,.pp #integraciones,.pp #prueba,.pp #demo-reporte,.pp #uploader{scroll-margin-top:5.5rem}
   .pp-section-head{display:flex;justify-content:space-between;align-items:end;gap:20px;flex-wrap:wrap;margin-bottom:24px}
   .pp-section-head p{max-width:560px}
-  .pp-section-hero{padding-bottom:32px;margin-bottom:8px;border-bottom:1px solid rgba(15,23,32,.06)}
-  .pp-section-hero .pp-section-title{font-size:clamp(1.9rem,3vw,2.8rem);line-height:1.08;letter-spacing:-.05em;margin:0 0 12px;background:linear-gradient(90deg,#f6a905,#f07e07);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:800}
-  .pp-section-lead{margin:0;max-width:520px}
+  /* Título de sección: siempre fuera de las cajas, mismo estilo (naranja) */
+  .pp-section-hero{padding-bottom:24px;margin-bottom:24px}
+  .pp-section-hero .pp-section-title{font-size:clamp(1.75rem,3vw,2.6rem);line-height:1.12;letter-spacing:-.05em;margin:0 0 10px;background:linear-gradient(90deg,#f6a905,#f07e07);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:800}
+  .pp-section-lead{margin:0;max-width:560px}
   .pp-section-lead p{margin:0;font-size:1rem;line-height:1.7;color:var(--muted);font-weight:400;letter-spacing:-.01em}
   .pp-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
   .pp-card,.pp-box{background:#fff;border:1px solid var(--line);border-radius:26px;box-shadow:var(--shadow);padding:24px}
   .pp-num{width:38px;height:38px;border-radius:12px;background:var(--soft);display:grid;place-items:center;font-weight:700;margin-bottom:16px;color:#343434}
-  .pp h2{font-size:clamp(1.9rem,3vw,2.8rem);line-height:1.02;letter-spacing:-.05em;margin:0 0 12px;color:#343434}
+  /* h2 solo dentro de cajas como subtítulo; títulos de sección usan .pp-section-title */
+  .pp .pp-box h2,.pp .pp-card h2{font-size:clamp(1.25rem,2vw,1.5rem);line-height:1.2;letter-spacing:-.03em;margin:0 0 10px;color:#343434;font-weight:700}
   .pp h3{margin:0 0 10px;font-size:1.1rem;line-height:1.25;letter-spacing:-.03em;color:#343434}
   .pp-muted{color:var(--muted);line-height:1.68}
   .pp-two-col{display:grid;grid-template-columns:1fr 1fr;gap:24px}
@@ -197,8 +209,15 @@
   .pp-footer-nav a:hover{color:var(--text)}
   .pp-footer-bottom{padding-top:20px;border-top:1px solid var(--line);font-size:.88rem;color:var(--muted)}
   .pp-footer-bottom p{margin:0}
+  /* --- Desktop: secciones simétricas (alineación izquierda, mismo espaciado) --- */
+  @media (min-width:761px){
+    .pp-section .ppc{text-align:left}
+    .pp-section-hero .pp-section-title{text-align:left}
+    .pp-section-lead{text-align:left}
+  }
   @media (max-width:1080px){
     .pp-grid,.pp-cards,.pp-two-col,.pp-cta,.pp-panels,.pp-pricing-grid{grid-template-columns:1fr}
+    .pp-hero-grid{grid-template-columns:.92fr 1.08fr}
     .pp-hero-viz{max-width:100%;margin-top:16px}
     .pp-hero-right .pp-mock{min-height:360px}
     .pp-hero-right .pp-mock-dash .pp-mock{min-height:260px}
@@ -206,6 +225,7 @@
     .pp-footer-grid{grid-template-columns:1fr}
     .pp-mock{min-height:400px}
   }
+  /* --- Móvil: misma jerarquía, mismo espaciado y alineación que desktop --- */
   @media (max-width:760px){
     .ppc{width:min(1180px,calc(100% - 24px));padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}
     .pp-nav{flex-wrap:nowrap;gap:10px;padding:8px 0;position:relative}
@@ -253,22 +273,28 @@
     .pp-lead,.pp-sub{max-width:100%}
     .pp-mock{min-height:380px}
     .pp-mock-wrap{animation:none}
-    .pp-section{padding:24px 0}
+    .pp-section{padding:28px 0;text-align:left}
+    .pp-section-hero{padding-bottom:20px;margin-bottom:20px}
+    .pp-section-hero .pp-section-title{text-align:left;font-size:clamp(1.5rem,5vw,1.9rem)}
+    .pp-section-lead{text-align:left;max-width:100%}
     .pp-badges{gap:12px;justify-content:center}
     .pp-badge--logo{min-width:88px;min-height:40px;padding:8px 12px}
     .pp-badge--logo .pp-integration-logo{height:22px;max-width:76px}
   }
   /* === Bloque 1: home marketing móvil (header + hero) === */
+  /* === Bloque 2: alineación header + padding y texto demo === */
   @media (max-width:768px){
-    .pp-nav{display:flex;align-items:center;flex-wrap:wrap}
-    .pp-brand{order:0}
+    .pp-nav{display:flex;align-items:center;flex-wrap:wrap;min-height:50px}
+    .pp-brand{order:0;display:flex;align-items:center}
     .pp-brand img{height:28px;width:auto !important}
-    .pp-actions{order:1;margin-left:auto;gap:8px}
+    .pp-actions{order:1;margin-left:auto;gap:8px;display:flex;align-items:center;height:38px}
     .pp-actions .pp-btn-dark{display:none}
     .pp-actions .pp-btn-light{
-      min-width:36px;width:36px;height:36px;padding:0;
+      min-width:38px;width:38px;height:38px;max-height:38px;padding:0;box-sizing:border-box;
       font-size:0;line-height:0;text-indent:-999px;overflow:hidden;
       border-radius:999px;position:relative;
+      display:inline-flex;align-items:center;justify-content:center;
+      flex-shrink:0;
     }
     .pp-actions .pp-btn-light::before{
       content:"";position:absolute;left:50%;top:50%;
@@ -277,12 +303,35 @@
       background:linear-gradient(135deg,#f6a905,#f07e07);
       box-shadow:0 0 0 2px rgba(255,255,255,.95);
     }
-    .pp-nav-toggle-btn{order:2}
+    .pp-nav-toggle-btn{order:2;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;min-width:38px;min-height:38px;padding:0;box-sizing:border-box;margin:0}
+    .pp-nav-toggle-btn span{display:block}
     .pp-links{order:3}
-    .pp-hero .pp-grid{grid-template-columns:1fr;gap:24px}
-    .pp-hero .pp-hero-right{order:-1}
+    .pp-hero .pp-hero-grid{grid-template-columns:1fr;grid-template-areas:"hero-top" "hero-right" "hero-bottom";gap:20px}
     .pp-hero h1{font-size:1.75rem;line-height:1.2;max-width:100%}
-    .pp-hero{padding:16px 0 28px}
+    .pp-hero{padding:32px 0 28px}
+    .pp-hero .pp-hero-tagline{margin-bottom:12px}
+    .pp-hero .pp-hero-top .pp-eyebrow{margin-top:0}
+    .pp-hero-right .pp-mock-dash .pp-mock{min-height:220px}
+    /* Demo: caja con scroll interno en móvil para no hacer la landing interminable */
+    .pp-demo-report{padding-left:24px;padding-right:24px;box-sizing:border-box}
+    .pp-demo-report-inner{max-width:100%;margin:0 auto;padding-left:0;padding-right:0;box-sizing:border-box}
+    .pp-demo-scroll-wrap{max-height:55vh;overflow-y:auto;-webkit-overflow-scrolling:touch;border-radius:20px;box-shadow:0 12px 32px rgba(15,23,32,.12);background:#fff;border:1px solid var(--line)}
+    .pp-demo-report .results-card-tablero{max-width:100%;overflow-x:hidden;box-sizing:border-box;margin-left:auto;margin-right:auto}
+    .pp-demo-report .results-card-tablero .section-head{padding-left:24px !important;padding-right:24px !important;box-sizing:border-box}
+    .pp-demo-report .results-card-tablero .tablero-toggle-bar{margin:12px 24px 16px;width:calc(100% - 48px);max-width:calc(100% - 48px);background:#fff;box-shadow:0 4px 12px rgba(0,0,0,.06);padding:10px 12px;min-height:48px;box-sizing:border-box;display:flex;align-items:center}
+    .pp-demo-report .results-card-tablero .tablero-toggle{cursor:default;pointer-events:none}
+    .pp-demo-report .results-card-tablero .results-tablero{padding-left:24px !important;padding-right:24px !important;padding-top:0 !important;min-width:0;box-sizing:border-box}
+    .pp-demo-report .results-card-tablero .tablero-kpis{grid-template-columns:1fr !important;padding-left:24px;padding-right:24px;gap:12px;min-width:0;padding-top:8px;padding-bottom:12px;margin-bottom:0;box-shadow:none}
+    .pp-demo-report .results-card-tablero .tablero-kpis .kpi{min-width:0}
+    .pp-demo-report .results-card-tablero .tablero-col{min-width:0;scroll-margin-top:24px}
+    .pp-demo-report .results-card-tablero .tablero-col .panel-block,
+    .pp-demo-report .results-card-tablero .tablero-col .chart-card,
+    .pp-demo-report .results-card-tablero .panel-block-resumen{padding-left:20px !important;padding-right:20px !important;box-sizing:border-box;min-width:0}
+    .pp-demo-report .resumen-ejecutivo-body,
+    .pp-demo-report .panel-item,
+    .pp-demo-report .panel-block .muted,
+    .pp-demo-report .mini-top{max-width:100% !important;overflow-wrap:break-word;word-wrap:break-word;box-sizing:border-box}
+    .pp-demo-report .mix-bar-row,.pp-demo-report .panel-item{min-width:0}
   }
   @media (max-width:480px){
     .pp-footer-nav{grid-template-columns:1fr}
@@ -291,7 +340,8 @@
     .pp-brand img{height:26px}
     .pp-micro{font-size:.8rem}
     .pp-micro img.pp-openai-logo{height:18px}
-    .pp-section-hero .pp-section-title{font-size:1.65rem}
+    .pp-section{padding:24px 0}
+    .pp-section-hero .pp-section-title{font-size:1.5rem;text-align:left}
     .pp-badges{gap:10px}
     .pp-badge--logo{min-width:80px;min-height:36px;padding:6px 10px}
     .pp-badge--logo .pp-integration-logo{height:20px;max-width:68px}
@@ -336,6 +386,7 @@
 </style>
 
 <div class="pp">
+  <a href="#top" class="pp-skip">Saltar al contenido</a>
   <div class="pp-nav-wrap">
     <div class="ppc pp-nav">
       <input type="checkbox" id="pp-nav-toggle" class="pp-nav-toggle" />
@@ -351,7 +402,7 @@
         <a href="#producto">Producto</a>
         <a href="#como-funciona">Cómo funciona</a>
         <a href="#integraciones">Integraciones</a>
-        <a href="#precios">Precios</a>
+        <a href="/precios">Precios</a>
       </nav>
       <div class="pp-actions">
         <a class="pp-btn pp-btn-light" href="/login">Iniciar sesión</a>
@@ -362,19 +413,13 @@
 
   <main id="top">
     <section class="pp-hero">
-      <div class="ppc pp-grid">
-        <div>
-          <div class="pp-eyebrow">Analista de revenue con IA · en español, en minutos</div>
+      <div class="ppc pp-grid pp-hero-grid">
+        <div class="pp-hero-top">
+          <div class="pp-eyebrow">Analista de Revenue con IA</div>
+          <p class="pp-hero-tagline">Lectura senior de tu reporte, en español, en minutos.</p>
           <h1>Tu primer analista de revenue inteligente</h1>
           <p class="pp-lead">Sube el reporte que ya exportas de tu PMS o channel manager. Recibe una lectura clara y senior: qué canales te llenan pero te comen margen, en qué días realmente ganas dinero y qué mover en precio y mix para mejorar resultados.</p>
-          <p class="pp-sub">Prueba gratis con un reporte de hasta <strong>{{ free_max_days }}</strong> días.</p>
-          <div class="pp-hero-actions">
-            <a class="pp-btn pp-btn-dark" href="/signup">Probar gratis</a>
-            <a class="pp-btn pp-btn-light" href="#como-funciona">Ver cómo funciona</a>
-          </div>
-          <p class="pp-micro">Impulsado por <img src="/static/branding/openai-logo.svg" alt="OpenAI" class="pp-openai-logo" loading="lazy" /></p>
         </div>
-
         <div class="pp-hero-right">
           <div class="pp-mock-wrap pp-mock-dash">
             <div class="pp-mock">
@@ -403,17 +448,27 @@
             </div>
           </div>
         </div>
+        <div class="pp-hero-bottom">
+          <p class="pp-sub">Prueba gratis con un reporte de hasta <strong>{{ free_max_days }}</strong> días.</p>
+          <div class="pp-hero-actions">
+            <a class="pp-btn pp-btn-dark" href="/signup">Probar gratis</a>
+            <a class="pp-btn pp-btn-light" href="#como-funciona">Ver cómo funciona</a>
+          </div>
+          <p class="pp-micro">Impulsado por <img src="/static/branding/openai-logo.svg" alt="OpenAI" class="pp-openai-logo" loading="lazy" /></p>
+        </div>
       </div>
     </section>
 
     <section id="demo-reporte" class="pp-demo-report" aria-label="Demo del resultado del análisis">
       <div class="pp-demo-report-inner">
-        {% include '_demo_resultado_analisis.html' %}
-        <p class="pp-muted" style="text-align:center;margin-top:24px;font-size:14px;">Así se ve tu resultado. <a href="/signup" style="color:#f07e07;font-weight:600;">Crear cuenta</a> para subir tus reportes y recibir análisis reales.</p>
+        <div class="pp-demo-scroll-wrap">
+          {% include '_demo_resultado_analisis.html' %}
+        </div>
+        <p class="pp-muted pp-demo-cta" style="text-align:center;margin-top:24px;font-size:14px;">Así se ve tu resultado. <a href="/signup" style="color:#f07e07;font-weight:600;">Crear cuenta</a> para subir tus reportes y recibir análisis reales.</p>
       </div>
     </section>
 
-    <section id="producto" class="pp-section"><div class="ppc"><div class="pp-cards">
+    <section id="producto" class="pp-section"><div class="ppc"><div class="pp-section-hero"><h2 class="pp-section-title">¿Qué puede hacer por ti?</h2></div><div class="pp-cards">
       <div class="pp-card"><div class="pp-num">1</div><h3>Ve con claridad qué negocio sí te conviene</h3><p class="pp-muted">No todo lo que vende más te deja más dinero. DRAGONNÉ detecta en qué canales realmente ganas margen neto y dónde estás regalando inventario barato.</p></div>
       <div class="pp-card"><div class="pp-num">2</div><h3>Hallazgos como los de un RM senior</h3><p class="pp-muted">Más que números: patrones claros de fin de semana vs entre semana, dependencia de OTAs, huecos de demanda y riesgos que normalmente vería un revenue manager experimentado.</p></div>
       <div class="pp-card"><div class="pp-num">3</div><h3>Toma decisiones más rápidas sin rehacer reportes</h3><p class="pp-muted">Subes tu archivo y obtienes un plan de juego: qué mover en precio, canal e inventario en las próximas semanas para proteger margen y equilibrar tu mezcla.</p></div>
@@ -423,91 +478,43 @@
       <div class="pp-card"><div class="pp-num">2</div><h3>DRAGONNÉ lo interpreta</h3><p class="pp-muted">Ordena la información, detecta señales relevantes y entiende tu reporte con lógica pensada para la operación hotelera.</p></div>
       <div class="pp-card"><div class="pp-num">3</div><h3>Recibe una lectura accionable</h3><p class="pp-muted">Obtén un resumen ejecutivo, hallazgos clave y recomendaciones claras para vender mejor y proteger margen.</p></div>
     </div></div></section>
-    <section class="pp-section"><div class="ppc"><div class="pp-box"><div class="pp-two-col"><div><h2>¿Qué recibe tu hotel?</h2><p class="pp-muted">Lectura comercial clara y ejecutiva: qué pasa y qué hacer. Sin tablas inmensas.</p></div><div>
-      <div class="pp-bullet"><span class="pp-bullet-mark">•</span><div><strong>Resumen ejecutivo</strong> con la foto clara del periodo y los mensajes que importan para dueño / GM.</div></div>
+    <section class="pp-section"><div class="ppc"><div class="pp-section-hero"><h2 class="pp-section-title">¿Qué recibe tu hotel?</h2><div class="pp-section-lead"><p>Lectura comercial clara y ejecutiva: qué pasa y qué hacer. Sin tablas inmensas.</p></div></div><div class="pp-box"><div class="pp-bullet"><span class="pp-bullet-mark">•</span><div><strong>Resumen ejecutivo</strong> con la foto clara del periodo y los mensajes que importan para dueño / GM.</div></div>
       <div class="pp-bullet"><span class="pp-bullet-mark">•</span><div><strong>Lectura por canal</strong> que muestra qué tanto dependes de cada OTA, cuánto aporta el directo y dónde se está yendo el margen.</div></div>
       <div class="pp-bullet"><span class="pp-bullet-mark">•</span><div><strong>Hallazgos de valor</strong> sobre días fuertes vs flojos, huecos de ocupación y riesgos de depender de pocos canales.</div></div>
       <div class="pp-bullet"><span class="pp-bullet-mark">•</span><div><strong>Recomendaciones accionables</strong> con un plan de las próximas 2–4 semanas: qué mover, en qué días y en qué canales.</div></div>
-    </div></div></div></div></section>
-    <section id="prueba" class="pp-section"><div class="ppc"><div class="pp-box pp-cta"><div><h2>Empieza gratis</h2><p class="pp-muted">Prueba DRAGONNÉ con un reporte de hasta <strong>{{ free_max_days }}</strong> días y descubre en minutos qué está pasando realmente en tu negocio.</p><p class="pp-muted">Ideal para que lo pruebes sin invertir. No necesitas tarjeta de crédito.</p></div><div class="pp-cta-btn-wrap"><a class="pp-btn pp-btn-dark" href="/signup">Probar gratis</a></div></div></div></section>
+    </div></div></section>
+    <section id="prueba" class="pp-section"><div class="ppc"><div class="pp-box"><h2>Empieza gratis</h2><p class="pp-muted">Prueba DRAGONNÉ con un reporte de hasta <strong>{{ free_max_days }}</strong> días y descubre en minutos qué está pasando realmente en tu negocio. Ideal para que lo pruebes sin invertir. No necesitas tarjeta de crédito.</p><div class="pp-hero-actions" style="margin-top:20px;margin-bottom:0;"><a class="pp-btn pp-btn-dark" href="/signup">Probar gratis</a></div></div></div></section>
     <section id="integraciones" class="pp-section">
       <div class="ppc">
+        <div class="pp-section-hero"><h2 class="pp-section-title">Muy pronto</h2><div class="pp-section-lead"><p>DRAGONNÉ está diseñado para convivir con tu stack hotelero. Las primeras conexiones serán con PMS y channel managers muy usados por hoteles independientes.</p></div></div>
         <div class="pp-box">
-          <h2>Muy pronto</h2>
-          <p class="pp-muted">DRAGONNÉ está diseñado para convivir con tu stack hotelero. Las primeras conexiones serán con PMS y channel managers muy usados por hoteles independientes.</p>
+          <p class="pp-muted" style="margin-top:0;">Plataformas con las que conectaremos:</p>
           <div class="pp-badges" style="gap:18px;flex-wrap:wrap;">
             <div class="pp-badge pp-badge--logo" style="display:flex;align-items:center;">
-              <img class="pp-integration-logo" src="/static/branding/integrations/mews.svg" alt="Mews" />
+              <img class="pp-integration-logo" src="/static/branding/integrations/mews.svg" alt="Mews" loading="lazy" />
             </div>
             <div class="pp-badge pp-badge--logo" style="display:flex;align-items:center;">
-              <img class="pp-integration-logo" src="/static/branding/integrations/cloudbeds.svg" alt="Cloudbeds" />
+              <img class="pp-integration-logo" src="/static/branding/integrations/cloudbeds.svg" alt="Cloudbeds" loading="lazy" />
             </div>
             <div class="pp-badge pp-badge--logo" style="display:flex;align-items:center;">
-              <img class="pp-integration-logo" src="/static/branding/integrations/siteminder.svg" alt="SiteMinder" />
+              <img class="pp-integration-logo" src="/static/branding/integrations/siteminder.svg" alt="SiteMinder" loading="lazy" />
             </div>
             <div class="pp-badge pp-badge--logo" style="display:flex;align-items:center;">
-              <img class="pp-integration-logo" src="/static/branding/integrations/littlehotelier.svg" alt="Little Hotelier" />
+              <img class="pp-integration-logo" src="/static/branding/integrations/littlehotelier.svg" alt="Little Hotelier" loading="lazy" />
             </div>
             <div class="pp-badge pp-badge--logo" style="display:flex;align-items:center;">
-              <img class="pp-integration-logo" src="/static/branding/integrations/yanolja.svg" alt="Yanolja" />
+              <img class="pp-integration-logo" src="/static/branding/integrations/yanolja.svg" alt="Yanolja" loading="lazy" />
             </div>
             <div class="pp-badge pp-badge--logo" style="display:flex;align-items:center;">
-              <img class="pp-integration-logo" src="/static/branding/integrations/shiji.svg" alt="Shiji" />
+              <img class="pp-integration-logo" src="/static/branding/integrations/shiji.svg" alt="Shiji" loading="lazy" />
             </div>
           </div>
           <p class="pp-muted" style="margin-top:16px;">En esta etapa, todo funciona vía reportes exportados. Las conexiones se liberarán como módulo aparte sin afectar el flujo actual.</p>
         </div>
       </div>
     </section>
-    <section id="precios" class="pp-section">
-      <div class="ppc">
-        <div class="pp-box">
-          <h2>Empieza gratis. Escala cuando tu hotel lo necesite.</h2>
-          <p class="pp-muted">Prueba DRAGONNÉ sin costo con un primer análisis. Cuando te haga sentido leer más periodos o más reportes, pasa a Pro sin cambiar de flujo.</p>
-          <div class="pp-pricing-grid">
-            <div class="pp-price-card">
-              <div class="pp-price-name">Gratis</div>
-              <div class="pp-price-main">USD 0<span>/siempre</span></div>
-              <ul class="pp-price-list">
-                <li><strong>1 reporte mensual</strong> de hasta {{ free_max_days }} días</li>
-                <li><strong>3 reportes guardados</strong> para comparar</li>
-                <li><strong>Soporte por email</strong> en horario laboral</li>
-              </ul>
-              <div class="pp-price-cta">
-                <a class="pp-btn pp-btn-light" href="/signup">Empezar gratis</a>
-              </div>
-            </div>
-            <div class="pp-price-card highlight">
-              <div class="pp-price-pill">Más elegido</div>
-              <div class="pp-price-name">Pro</div>
-              <div class="pp-price-main">USD {{ monthly_price }}<span>/mes</span></div>
-              <ul class="pp-price-list">
-                <li><strong>5 reportes</strong> de máximo {{ pro_90_max_days }} días cada uno</li>
-                <li><strong>10 reportes guardados</strong> para comparar</li>
-                <li><strong>Soporte prioritario por email</strong></li>
-              </ul>
-              <div class="pp-price-cta">
-                <a class="pp-btn pp-btn-dark" href="/signup">Pro {{ monthly_price }} USD/mes</a>
-              </div>
-            </div>
-            <div class="pp-price-card">
-              <div class="pp-price-name">Pro +</div>
-              <div class="pp-price-main">USD {{ premium_monthly_price }}<span>/mes</span></div>
-              <ul class="pp-price-list">
-                <li><strong>5 reportes</strong> de máximo {{ pro_180_max_days }} días cada uno</li>
-                <li><strong>10 reportes guardados</strong> para comparar</li>
-                <li><strong>Account manager asignado</strong></li>
-              </ul>
-              <div class="pp-price-cta">
-                <a class="pp-btn pp-btn-light" href="/signup">Pro {{ premium_monthly_price }} USD/mes</a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-    <section id="uploader" class="pp-section"><div class="ppc"><div class="pp-box pp-uploader"><h2>Sube tu reporte</h2><p class="pp-muted">Aceptamos archivos Excel y CSV exportados desde PMS y channel managers.</p><p class="pp-muted">Primer análisis gratis para reportes de hasta <strong>{{ free_max_days }}</strong> días.</p><div class="pp-dropzone"><strong>Arrastra tu archivo aquí</strong><p>o selecciónalo desde tu computadora</p><a class="pp-btn pp-btn-dark" href="/signup">Seleccionar archivo</a></div></div></div></section>
-    <section class="pp-section"><div class="ppc"><div class="pp-box"><h2>Menos intuición. Más claridad. Mejores decisiones.</h2><p class="pp-muted">DRAGONNÉ transforma reportes dispersos en información útil para vender mejor, proteger margen y entender tu negocio con más precisión.</p><div class="pp-hero-actions"><a class="pp-btn pp-btn-dark" href="/signup">Probar gratis</a><a class="pp-btn pp-btn-light" href="/login">Iniciar sesión</a></div></div></div></section>
+    <section id="uploader" class="pp-section"><div class="ppc"><div class="pp-section-hero"><h2 class="pp-section-title">Sube tu reporte</h2><div class="pp-section-lead"><p>Aceptamos archivos Excel y CSV exportados desde PMS y channel managers. Primer análisis gratis para reportes de hasta <strong>{{ free_max_days }}</strong> días.</p></div></div><div class="pp-box pp-uploader"><div class="pp-dropzone"><strong>Arrastra tu archivo aquí</strong><p>o selecciónalo desde tu computadora</p><a class="pp-btn pp-btn-dark" href="/signup">Seleccionar archivo</a></div></div></div></section>
+    <section class="pp-section"><div class="ppc"><div class="pp-box"><h2>Menos intuición. Más claridad. Mejores decisiones.</h2><p class="pp-muted">DRAGONNÉ transforma reportes dispersos en información útil para vender mejor, proteger margen y entender tu negocio con más precisión.</p><div class="pp-hero-actions" style="margin-top:20px;margin-bottom:0;"><a class="pp-btn pp-btn-dark" href="/signup">Probar gratis</a><a class="pp-btn pp-btn-light" href="/login">Iniciar sesión</a></div></div></div></section>
   </main>
   <footer class="pp-footer" role="contentinfo" aria-label="Pie de página">
   <div class="ppc pp-footer-inner">
@@ -525,7 +532,7 @@
             <li><a href="/#como-funciona">Cómo funciona</a></li>
             <li><a href="/#prueba">Probar gratis</a></li>
             <li><a href="/#integraciones">Integraciones</a></li>
-            <li><a href="/#precios">Precios</a></li>
+            <li><a href="/precios">Precios</a></li>
           </ul>
         </section>
         <section aria-labelledby="footer-cuenta">

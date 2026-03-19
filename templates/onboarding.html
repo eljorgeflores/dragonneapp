@@ -8,7 +8,7 @@
       <img class="brand-logo" src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" />
     </div>
     <h1>{% if editing %}Editar datos de tu hotel{% else %}Cuéntanos de tu hotel{% endif %}</h1>
-    <p class="muted center">{% if editing %}Actualiza la información para personalizar tus análisis.{% else %}Con esto personalizamos tus análisis y recomendaciones.{% endif %}</p>
+    <p class="muted center">{% if editing %}Actualiza la información para personalizar tus análisis.{% else %}Con esto personalizamos tus análisis y recomendaciones. Completa estos datos una sola vez; al iniciar sesión más tarde seguirán guardados.{% endif %}</p>
     {% if error %}<div class="alert error">{{ error }}</div>{% endif %}
     <form method="post" class="auth-form two-col">
       <div>

@@ -12,7 +12,7 @@
     {% if current_user['plan'] == 'free' %}
       <div class="plan-meta">Llevas {{ used_packages }}/{{ free_max_packages }} paquetes usados</div>
       <div class="plan-meta">Límite gratis: hasta {{ free_max_days }} días por análisis</div>
-      <a class="btn btn-secondary full" href="/pricing">Subir a Pro</a>
+      <a class="btn btn-secondary full" href="/precios">Subir a Pro</a>
     {% else %}
       <div class="plan-meta">Tu cuenta ya puede abrir históricos mayores y seguir guardando análisis.</div>
     {% endif %}
@@ -87,7 +87,7 @@
       <li>Base lista para futuras conexiones con PMS y channel manager.</li>
       <li>Escala natural para equipos de revenue y e-commerce.</li>
     </ul>
-    <a class="btn btn-secondary" href="/pricing">Ver planes</a>
+    <a class="btn btn-secondary" href="/precios">Ver planes</a>
   </article>
 </section>
 {% endblock %}

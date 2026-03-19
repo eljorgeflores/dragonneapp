@@ -12,6 +12,7 @@
         <span class="plan-badge-inline pill {% if user['plan'] == 'pro' %}pill-pro{% endif %}{% if user['plan'] == 'pro_plus' %} pill-pro-plus{% endif %}">Plan {{ plan_label }}</span>
       </div>
       <div class="top-actions">
+        {% if is_admin %}<a href="/admin" class="btn btn-secondary btn-sm">Admin</a>{% endif %}
         <a href="/app/account" class="btn btn-secondary btn-sm">Mi cuenta</a>
         <button class="btn btn-secondary btn-sm" id="openPortalBtn" {% if not user['stripe_customer_id'] %}disabled{% endif %}>Facturación</button>
         <form method="post" action="/logout" class="logout-form"><button class="btn btn-secondary btn-sm" type="submit">Salir</button></form>
