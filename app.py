@@ -18,6 +18,26 @@ from threading import Lock
 from typing import Any, Dict, List, Optional, Tuple
 import time
 
+# #region agent log
+def _debug_log(location: str, message: str, data: Optional[Dict] = None, hypothesis_id: Optional[str] = None, run_id: Optional[str] = None):
+    try:
+        _log_path = _path / ".cursor" / "debug-95cdbc.log"
+        payload = {"sessionId": "95cdbc", "timestamp": int(time.time() * 1000), "location": location, "message": message, "data": data or {}, "hypothesisId": hypothesis_id or "", "runId": run_id or ""}
+        with open(_log_path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(payload, ensure_ascii=False) + "\n")
+    except Exception:
+        pass
+
+def _dbg(location: str, message: str, data: Optional[Dict] = None, hypothesis_id: Optional[str] = None):
+    try:
+        log_path = Path(__file__).resolve().parent / ".cursor" / "debug-b78cbe.log"
+        payload = {"sessionId": "b78cbe", "timestamp": int(time.time() * 1000), "location": location, "message": message, "data": data or {}, "hypothesisId": hypothesis_id or ""}
+        with open(log_path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(payload, ensure_ascii=False) + "\n")
+    except Exception:
+        pass
+# #endregion
+
 # Cargar .env desde la carpeta del proyecto (así no dependes de "export" en la terminal)
 _path = Path(__file__).resolve().parent
 _env_file = _path / ".env"
@@ -30,7 +50,7 @@ if _env_file.exists():
 
 import pandas as pd
 import requests
-from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Request, Response, UploadFile
+from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Query, Request, Response, UploadFile
 from fastapi.routing import APIRouter
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse, StreamingResponse
 from fastapi.openapi.docs import get_redoc_html
@@ -111,6 +131,24 @@ async def add_security_headers(request: Request, call_next):
     response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     return response
+
+
+@app.exception_handler(HTTPException)
+def http_exception_handler(request: Request, exc: HTTPException):
+    """Para 401 (no autenticado): redirigir a login en peticiones HTML; devolver JSON con redirect en API/fetch."""
+    if exc.status_code == 401:
+        accept = (request.headers.get("accept") or "").lower()
+        wants_html = "text/html" in accept and "application/json" not in accept
+        path = (request.url.path or "").strip()
+        if wants_html or path.startswith("/app") or path.startswith("/admin") or path == "/":
+            next_url = path if path and path != "/" else "/app"
+            return RedirectResponse(url=f"/login?next={next_url}", status_code=303)
+        return JSONResponse(
+            {"ok": False, "error": exc.detail or "Debes iniciar sesión", "redirect": "/login"},
+            status_code=401,
+        )
+    raise exc
+
 
 api_v1 = APIRouter(prefix="/api/v1", tags=["API v1"])
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
@@ -396,6 +434,12 @@ def find_col(columns: List[str], aliases: List[str]) -> Optional[str]:
     return None
 
 
+def _has_date_header(columns: Any) -> bool:
+    """True si las columnas parecen encabezado de datos (tienen Fecha/Día/Date)."""
+    lower = [str(c).lower() for c in columns]
+    return any("fecha" in c or "date" in c or "día" in c or "dia" in c for c in lower)
+
+
 def _excel_to_dataframes_openpyxl(raw: bytes, filename: str, read_only: bool = True) -> List[Tuple[str, pd.DataFrame]]:
     """Fallback: leer Excel con openpyxl directo (soporta formatos que pandas ExcelFile a veces rechaza)."""
     from openpyxl import load_workbook
@@ -427,7 +471,31 @@ def parse_file(upload: UploadFile) -> List[Tuple[str, pd.DataFrame]]:
     if len(raw) > MAX_UPLOAD_BYTES_PER_FILE:
         raise ValueError(f"Archivo demasiado grande. Máximo {MAX_UPLOAD_BYTES_PER_FILE // (1024*1024)} MB por archivo.")
     if ext == ".csv":
-        return [(upload.filename or "reporte.csv", pd.read_csv(io.BytesIO(raw)))]
+        # Detectar separador: coma o punto y coma (común en Excel en español)
+        buf = io.BytesIO(raw)
+        first_line = buf.readline().decode("utf-8", errors="replace").strip()
+        buf.seek(0)
+        sep = ","
+        if ";" in first_line and "," not in first_line:
+            sep = ";"
+        elif ";" in first_line and first_line.count(";") >= first_line.count(","):
+            sep = ";"
+        try:
+            df = pd.read_csv(buf, sep=sep, encoding="utf-8")
+        except Exception:
+            df = pd.read_csv(io.BytesIO(raw), encoding="utf-8")
+        # Si la primera fila parece encabezado de PMS (título, moneda, etc.), buscar fila con Fecha/Día
+        if not _has_date_header(df.columns) and len(df) > 0:
+            for skip in range(1, min(8, len(raw) // 80 + 1)):
+                try:
+                    buf2 = io.BytesIO(raw)
+                    df2 = pd.read_csv(buf2, sep=sep, encoding="utf-8", skiprows=skip)
+                    if len(df2.columns) >= 2 and _has_date_header(df2.columns):
+                        df = df2
+                        break
+                except Exception:
+                    continue
+        return [(upload.filename or "reporte.csv", df)]
     if ext == ".xls":
         # Excel 97-2003: xlrd a veces marca como "corruptos" archivos válidos de PMS; ignorar esa comprobación
         try:
@@ -436,7 +504,20 @@ def parse_file(upload: UploadFile) -> List[Tuple[str, pd.DataFrame]]:
                 engine="xlrd",
                 engine_kwargs={"ignore_workbook_corruption": True},
             )
-            return [(f"{upload.filename}::{sheet}", excel.parse(sheet)) for sheet in excel.sheet_names]
+            result = []
+            for sheet in excel.sheet_names:
+                df = excel.parse(sheet)
+                if not _has_date_header(df.columns) and len(df) >= 4:
+                    for header_row in range(1, 6):
+                        try:
+                            df2 = excel.parse(sheet, header=header_row)
+                            if len(df2.columns) >= 2 and _has_date_header(df2.columns):
+                                df = df2
+                                break
+                        except Exception:
+                            continue
+                result.append((f"{upload.filename}::{sheet}", df))
+            return result
         except Exception as e:
             raise ValueError(
                 "No pudimos leer este archivo Excel 97-2003 (.xls). "
@@ -446,7 +527,20 @@ def parse_file(upload: UploadFile) -> List[Tuple[str, pd.DataFrame]]:
         # Intentar primero con pandas (rápido y estándar)
         try:
             excel = pd.ExcelFile(io.BytesIO(raw))
-            return [(f"{upload.filename}::{sheet}", excel.parse(sheet)) for sheet in excel.sheet_names]
+            result = []
+            for sheet in excel.sheet_names:
+                df = excel.parse(sheet)
+                if not _has_date_header(df.columns) and len(df) >= 4:
+                    for header_row in range(1, 6):
+                        try:
+                            df2 = excel.parse(sheet, header=header_row)
+                            if len(df2.columns) >= 2 and _has_date_header(df2.columns):
+                                df = df2
+                                break
+                        except Exception:
+                            continue
+                result.append((f"{upload.filename}::{sheet}", df))
+            return result
         except Exception as e:
             err = str(e).strip().lower()
             # Si falla por “corruption” o formato raro, intentar con openpyxl en modo read_only (otra ruta de lectura)
@@ -524,6 +618,17 @@ def infer_sheet(sheet_name: str, df: pd.DataFrame) -> Dict[str, Any]:
     status_col = mappings["status"]
     adr_col = mappings["adr"]
 
+    # Convertir columnas de dinero con formato "$1,234.56" a numérico
+    def _to_numeric_currency(series: pd.Series) -> pd.Series:
+        if series.dtype != object and pd.api.types.is_numeric_dtype(series):
+            return series
+        cleaned = series.astype(str).str.replace(r"[$,\s]", "", regex=True)
+        return pd.to_numeric(cleaned, errors="coerce")
+
+    for col in [rev_col, comm_col, pay_col, adr_col]:
+        if col and col in work.columns:
+            work[col] = _to_numeric_currency(work[col])
+
     metrics: Dict[str, Any] = {}
     if rev_col:
         metrics["revenue_total"] = round(float(work[rev_col].fillna(0).sum()), 2)
@@ -587,9 +692,23 @@ def infer_sheet(sheet_name: str, df: pd.DataFrame) -> Dict[str, Any]:
                     max_date = col_max
                 break
 
+    # Normalizar a tipo fecha (evitar numpy.int64 p. ej. fechas Excel como número)
+    try:
+        min_date_norm = pd.Timestamp(min_date) if min_date is not None else None
+    except (TypeError, ValueError):
+        min_date_norm = None
+    try:
+        max_date_norm = pd.Timestamp(max_date) if max_date is not None else None
+    except (TypeError, ValueError):
+        max_date_norm = None
+
     days_covered = 0
-    if min_date is not None and max_date is not None:
-        days_covered = int((max_date - min_date).days) + 1
+    if min_date_norm is not None and max_date_norm is not None:
+        try:
+            delta = max_date_norm - min_date_norm
+            days_covered = int(getattr(delta, "days", delta)) + 1
+        except (TypeError, ValueError):
+            days_covered = 0
 
     fields_detected = [k for k, v in mappings.items() if v]
     return {
@@ -606,8 +725,8 @@ def infer_sheet(sheet_name: str, df: pd.DataFrame) -> Dict[str, Any]:
         "metrics": metrics,
         "days_covered": days_covered,
         "date_range": {
-            "start": min_date.isoformat() if min_date is not None else None,
-            "end": max_date.isoformat() if max_date is not None else None,
+            "start": min_date_norm.isoformat() if min_date_norm is not None else None,
+            "end": max_date_norm.isoformat() if max_date_norm is not None else None,
         },
         "sample_columns": norm_cols[:30],
     }
@@ -626,12 +745,22 @@ def summarize_reports(files: List[UploadFile]) -> Dict[str, Any]:
             max_days = max(max_days, summary.get("days_covered", 0))
             dr = summary.get("date_range", {})
             if dr.get("start"):
-                all_starts.append(pd.to_datetime(dr["start"]))
+                t = pd.to_datetime(dr["start"])
+                if pd.notna(t):
+                    all_starts.append(t)
             if dr.get("end"):
-                all_ends.append(pd.to_datetime(dr["end"]))
+                t = pd.to_datetime(dr["end"])
+                if pd.notna(t):
+                    all_ends.append(t)
     overall_days = 0
     if all_starts and all_ends:
-        overall_days = int((max(all_ends) - min(all_starts)).days) + 1
+        try:
+            delta = max(all_ends) - min(all_starts)
+            d = getattr(delta, "days", None)
+            if d is not None and not (isinstance(d, float) and math.isnan(d)):
+                overall_days = int(d) + 1
+        except (TypeError, ValueError):
+            pass
     return {
         "total_files": len(files),
         "reports_detected": len(report_summaries),
@@ -814,7 +943,7 @@ def get_current_user(request: Request) -> Optional[sqlite3.Row]:
 def require_user(request: Request) -> sqlite3.Row:
     user = get_current_user(request)
     if not user:
-        raise HTTPException(status_code=303, detail="Debes iniciar sesión")
+        raise HTTPException(status_code=401, detail="Debes iniciar sesión")
     return user
 
 
@@ -1158,13 +1287,8 @@ def sync_user_from_stripe_customer(customer_id: str, subscription_id: Optional[s
         )
 
 
-@app.get("/", response_class=HTMLResponse)
-def home(request: Request):
-    user = get_current_user(request)
-    if user:
-        return RedirectResponse("/app", status_code=303)
-    return templates.TemplateResponse("marketing.html", {
-        "request": request,
+def _marketing_context():
+    return {
         "monthly_price": MONTHLY_PRICE,
         "annual_price": ANNUAL_PRICE,
         "free_max_days": FREE_MAX_DAYS,
@@ -1178,7 +1302,34 @@ def home(request: Request):
         "pro_180_max_files": PRO_180_MAX_FILES,
         "pro_180_max_analyses": PRO_180_MAX_ANALYSES,
         "current_year": datetime.now(timezone.utc).year,
-    })
+    }
+
+
+@app.get("/", response_class=HTMLResponse)
+def home(request: Request):
+    # #region agent log
+    _debug_log("app.py:home", "GET / entry", {"has_user": bool(get_current_user(request))}, "H2")
+    # #endregion
+    user = get_current_user(request)
+    if user:
+        return RedirectResponse("/app", status_code=303)
+    ctx = _marketing_context()
+    # #region agent log
+    _debug_log("app.py:home", "marketing context keys", {"keys": list(ctx.keys())}, "H2")
+    # #endregion
+    return templates.TemplateResponse("marketing.html", {"request": request, **ctx})
+
+
+@app.get("/precios", response_class=HTMLResponse)
+def precios_page(request: Request):
+    """Página de precios fuera de la landing para reducir fricción."""
+    return templates.TemplateResponse("precios.html", {"request": request, **_marketing_context()})
+
+
+@app.get("/pricing", include_in_schema=False)
+def pricing_redirect():
+    """Redirige a la página de precios en español."""
+    return RedirectResponse("/precios", status_code=302)
 
 
 @app.get("/api", response_class=HTMLResponse)
@@ -1205,12 +1356,12 @@ def sitemap_xml():
         base + "/",
         base + "/login",
         base + "/signup",
+        base + "/precios",
         base + "/api",
         base + "/#producto",
         base + "/#como-funciona",
         base + "/#prueba",
         base + "/#integraciones",
-        base + "/#precios",
     ]
     xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
     xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
@@ -1280,14 +1431,16 @@ def signup(
 
 
 @app.get("/login", response_class=HTMLResponse)
-def login_page(request: Request):
-    if get_current_user(request):
-        return RedirectResponse("/app", status_code=303)
-    return templates.TemplateResponse("login.html", {"request": request, "error": None})
+def login_page(request: Request, next_url: str = Query("", alias="next")):
+    user = get_current_user(request)
+    if user:
+        return RedirectResponse("/admin" if is_admin_user(user) else "/app", status_code=303)
+    next_safe = next_url.strip() if next_url and next_url.strip().startswith("/") and not next_url.strip().startswith("//") else ""
+    return templates.TemplateResponse("login.html", {"request": request, "error": None, "next": next_safe})
 
 
 @app.post("/login")
-def login(request: Request, email: str = Form(...), password: str = Form(...)):
+def login(request: Request, email: str = Form(...), password: str = Form(...), next_url: str = Form("", alias="next")):
     if login_rate_limiter.is_blocked(request):
         return templates.TemplateResponse("login.html", {"request": request, "error": "Demasiados intentos. Espera unos minutos e intenta de nuevo."}, status_code=429)
     with db() as conn:
@@ -1308,14 +1461,22 @@ def login(request: Request, email: str = Form(...), password: str = Form(...)):
         session_id = cur.lastrowid
     request.session["user_id"] = user["id"]
     request.session["session_id"] = session_id
-    return RedirectResponse("/app", status_code=303)
+    next_safe = next_url.strip() if next_url and next_url.strip().startswith("/") and not next_url.strip().startswith("//") else ""
+    redirect_to = next_safe or "/app"
+    # Si es admin y no pidió una URL concreta, llevarlo al panel admin (gestión de usuarios, accesos)
+    if not next_safe and is_admin_user(user):
+        redirect_to = "/admin"
+    # #region agent log
+    _debug_log("app.py:login", "POST login success", {"redirect_to": redirect_to}, "H3")
+    # #endregion
+    return RedirectResponse(redirect_to, status_code=303)
 
 
 @app.get("/forgot-password", response_class=HTMLResponse)
 def forgot_password_page(request: Request):
     if get_current_user(request):
         return RedirectResponse("/app", status_code=303)
-    return templates.TemplateResponse("forgot_password.html", {"request": request, "sent": False, "error": None, "reset_link": None})
+    return templates.TemplateResponse("forgot_password.html", {"request": request, "sent": False, "error": None, "reset_link": None, "smtp_configured": bool(SMTP_HOST and SMTP_USER and SMTP_PASSWORD)})
 
 
 @app.post("/forgot-password", response_class=HTMLResponse)
@@ -1323,20 +1484,21 @@ def forgot_password(request: Request, email: str = Form(...)):
     email = email.strip().lower()
     reset_link = None
     email_sent = False
+    smtp_configured = bool(SMTP_HOST and SMTP_USER and SMTP_PASSWORD)
     try:
         with db() as conn:
             user = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
         if not user:
-            return templates.TemplateResponse("forgot_password.html", {"request": request, "sent": True, "error": None, "reset_link": None, "email_sent": False})
+            return templates.TemplateResponse("forgot_password.html", {"request": request, "sent": True, "error": None, "reset_link": None, "email_sent": False, "smtp_configured": smtp_configured})
         token = create_reset_token(user["id"])
         reset_link = f"{APP_URL}/reset-password/{token}"
         if send_password_reset_email(email, reset_link):
             email_sent = True
-            reset_link = None  # No mostrar en pantalla en producción
-        return templates.TemplateResponse("forgot_password.html", {"request": request, "sent": True, "error": None, "reset_link": reset_link, "email_sent": email_sent})
+            reset_link = None  # No mostrar en pantalla cuando el correo se envió bien
+        return templates.TemplateResponse("forgot_password.html", {"request": request, "sent": True, "error": None, "reset_link": reset_link, "email_sent": email_sent, "smtp_configured": smtp_configured})
     except Exception:
         return templates.TemplateResponse("forgot_password.html", {
-            "request": request, "sent": False, "error": "Algo falló al generar el enlace. Si no tienes SMTP configurado, al enviar de nuevo debería mostrarse el enlace en pantalla.", "reset_link": reset_link, "email_sent": False
+            "request": request, "sent": False, "error": "Algo falló al generar el enlace. Vuelve a intentar; si el servidor no tiene correo configurado, se mostrará un enlace en pantalla.", "reset_link": reset_link, "email_sent": False, "smtp_configured": smtp_configured
         })
 
 
@@ -1481,14 +1643,20 @@ def dashboard(request: Request):
         analyses = conn.execute("SELECT * FROM analyses WHERE user_id = ? ORDER BY created_at DESC LIMIT 20", (user["id"],)).fetchall()
     formatted = []
     for row in analyses:
+        # #region agent log
+        _created = row["created_at"]
+        _days = row["days_covered"]
+        _debug_log("app.py:dashboard", "analysis row", {"id": row["id"], "created_at_is_none": _created is None, "days_covered_is_none": _days is None}, "H1")
+        # #endregion
         analysis = json.loads(row["analysis_json"])
         summary = json.loads(row["summary_json"])
+        created_at_str = (_created[:19].replace("T", " ") if _created else "")
         formatted.append({
             "id": row["id"],
             "title": row["title"] or f"Análisis {row['id']}",
-            "created_at": row["created_at"][:19].replace("T", " "),
+            "created_at": created_at_str,
             "file_count": row["file_count"],
-            "days_covered": row["days_covered"],
+            "days_covered": _days if _days is not None else 0,
             "resumen_ejecutivo": analysis.get("resumen_ejecutivo", ""),
             "metricas": analysis.get("metricas_clave", [])[:4],
             "senal_upgrade": analysis.get("senal_de_upgrade", {}),
@@ -1498,6 +1666,7 @@ def dashboard(request: Request):
     return templates.TemplateResponse("app.html", {
         "request": request,
         "user": user,
+        "is_admin": is_admin_user(user),
         "analyses": formatted,
         "plan_label": plan_label(user["plan"]),
         "free_max_days": FREE_MAX_DAYS,
@@ -1515,15 +1684,27 @@ def dashboard(request: Request):
     })
 
 
+def _user_row_as_dict(row: sqlite3.Row) -> dict:
+    """Convierte sqlite3.Row a dict para usar .get() y evitar AttributeError."""
+    return dict(row) if row is not None else {}
+
+
 @app.post("/analyze")
 async def analyze(request: Request, business_context: str = Form(""), files: List[UploadFile] = File(...)):
-    user = require_user(request)
+    # #region agent log
+    _debug_log("app.py:analyze", "POST /analyze entry", {"files_count": len(files) if files else 0}, "H4")
+    _dbg("app.py:analyze", "entry", {"files_count": len(files) if files else 0, "filenames": [getattr(f, "filename", None) for f in (files or [])]}, "H_A")
+    # #endregion
+    user = _user_row_as_dict(require_user(request))
     if onboarding_pending(user):
+        _dbg("app.py:analyze", "early_return", {"reason": "onboarding_pending"}, "H_C")
         return JSONResponse({"ok": False, "error": "Completa los datos de tu hotel primero.", "redirect": "/onboarding"}, status_code=400)
     if not files:
+        _dbg("app.py:analyze", "early_return", {"reason": "no_files"}, "H_A")
         return JSONResponse({"ok": False, "error": "Sube al menos un reporte."}, status_code=400)
     try:
         summary = summarize_reports(files)
+        _dbg("app.py:analyze", "after_summarize", {"reports_detected": summary.get("reports_detected"), "total_files": summary.get("total_files")}, "H_B")
         enforce_plan(user, summary)
         hotel_context = {
             "hotel_nombre": user["hotel_name"],
@@ -1546,10 +1727,15 @@ async def analyze(request: Request, business_context: str = Form(""), files: Lis
             plan_for_model = "free_30"
         else:
             plan_for_model = "pro_90"
+        _dbg("app.py:analyze", "before_call_openai", {}, "H_D")
         analysis = call_openai(summary, combined_business_context, hotel_context, plan_for_model)
         title = f"{summary['reports_detected']} reporte(s) · {datetime.now().strftime('%d/%m/%Y %H:%M')}"
         analysis_id = save_analysis(user["id"], title, user["plan"], summary, analysis, files)
         created_at = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")[:19].replace("T", " ")
+        # #region agent log
+        _debug_log("app.py:analyze", "POST /analyze success", {"analysis_id": analysis_id}, "H4")
+        _dbg("app.py:analyze", "success", {"analysis_id": analysis_id}, "H_D")
+        # #endregion
         return JSONResponse({
             "ok": True,
             "analysis_id": analysis_id,
@@ -1560,12 +1746,18 @@ async def analyze(request: Request, business_context: str = Form(""), files: Lis
             "plan": user["plan"],
         })
     except HTTPException as e:
+        _dbg("app.py:analyze", "http_exception", {"detail": e.detail, "status_code": e.status_code}, "H_C")
         return JSONResponse({"ok": False, "error": e.detail}, status_code=e.status_code)
     except ValueError as e:
+        _dbg("app.py:analyze", "value_error", {"message": str(e)}, "H_B")
         return JSONResponse({"ok": False, "error": str(e)}, status_code=400)
     except Exception as e:
         import traceback
         traceback.print_exc()
+        # #region agent log
+        _debug_log("app.py:analyze", "POST /analyze exception", {"error": str(e)}, "H4")
+        _dbg("app.py:analyze", "exception", {"exc_type": type(e).__name__, "exc_msg": str(e)}, "H_B")
+        # #endregion
         err_msg = str(e).strip() if str(e) else "Error desconocido"
         return JSONResponse({"ok": False, "error": f"No se pudo completar el análisis. Intenta de nuevo más tarde. ({err_msg})"}, status_code=500)
 
@@ -1919,6 +2111,7 @@ async def api_analyze(
     Sube uno o más reportes (CSV/Excel) y devuelve el análisis en JSON.
     Mismo límite de plan que en la web (días, archivos, número de análisis).
     """
+    user = _user_row_as_dict(user)
     if not files:
         raise HTTPException(status_code=400, detail="Sube al menos un reporte.")
     try:

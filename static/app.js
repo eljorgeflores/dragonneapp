@@ -32,10 +32,24 @@ if (dropzone) {
     e.preventDefault();
     dropzone.classList.add('dragover');
   }));
-  ['dragleave', 'drop'].forEach(ev => dropzone.addEventListener(ev, e => {
+  dropzone.addEventListener('dragleave', e => {
     e.preventDefault();
     dropzone.classList.remove('dragover');
-  }));
+  });
+  dropzone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropzone.classList.remove('dragover');
+    const dtFiles = e.dataTransfer && e.dataTransfer.files;
+    if (fileInput && dtFiles && dtFiles.length > 0) {
+      const dt = new DataTransfer();
+      [...dtFiles].forEach(f => dt.items.add(f));
+      fileInput.files = dt.files;
+      renderFiles();
+      // #region agent log
+      fetch('http://127.0.0.1:7434/ingest/f7fd8531-32a1-4b90-bb69-c6823426808b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'b78cbe'},body:JSON.stringify({sessionId:'b78cbe',location:'app.js:drop',message:'drop applied',data:{count:dtFiles.length,names:[...dtFiles].map(f=>f.name)},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
+    }
+  });
 }
 if (fileInput) fileInput.addEventListener('change', renderFiles);
 
