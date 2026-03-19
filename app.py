@@ -107,6 +107,11 @@ EMAIL_FROM = os.getenv("EMAIL_FROM", "DRAGONNÉ <noreply@ejemplo.com>").strip()
 # API pública: acceso por clave asignada en Admin. Límites estándar (por clave).
 API_RATE_LIMIT_PER_MINUTE = int(os.getenv("API_RATE_LIMIT_PER_MINUTE", "60"))
 API_RATE_LIMIT_PER_DAY = int(os.getenv("API_RATE_LIMIT_PER_DAY", "1000"))
+# Consultoría: enlace a calendario (30 min con Jorge). Puedes sobreescribirlo con CONSULTING_CALENDAR_URL en .env.
+CONSULTING_CALENDAR_URL = (
+    os.getenv("CONSULTING_CALENDAR_URL", "").strip()
+    or "https://calendar.app.google/h4SKsVcUvTp3JpNM6"
+)
 
 app = FastAPI(
     title=APP_NAME,
@@ -163,6 +168,64 @@ def now_iso() -> str:
 def send_password_reset_email(to_email: str, reset_link: str) -> bool:
     """Envía el enlace de recuperación por correo. Devuelve True si se envió, False si no hay SMTP o falló."""
     if not SMTP_HOST or not SMTP_USER or not SMTP_PASSWORD:
+        return False
+
+
+def send_consulting_lead_email(
+    to_email: str,
+    name: str,
+    from_email: str,
+    company: str,
+    type_: str,
+    message: str,
+    phone: str,
+    lang: str,
+) -> bool:
+    """Envía por correo el lead de la landing de consultoría."""
+    if not SMTP_HOST or not SMTP_USER or not SMTP_PASSWORD:
+        return False
+    subject = "Nuevo lead consultoría — DRAGONNÉ"
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = EMAIL_FROM
+    msg["To"] = to_email
+    if from_email:
+        msg["Reply-To"] = from_email
+    lines = [
+        f"Nombre: {name}",
+        f"Email: {from_email}",
+        f"Empresa / Proyecto: {company}",
+        f"Tipo: {type_}",
+        f"Teléfono: {phone}",
+        "",
+        "Mensaje:",
+        message,
+        "",
+        f"Idioma del formulario: {lang}",
+    ]
+    text = "\n".join(lines)
+    html = "<br>".join(
+        [
+            f"<strong>Nombre:</strong> {name}",
+            f"<br><strong>Email:</strong> {from_email}",
+            f"<br><strong>Empresa / Proyecto:</strong> {company}",
+            f"<br><strong>Tipo:</strong> {type_}",
+            f"<br><strong>Teléfono:</strong> {phone}",
+            "<br><br><strong>Mensaje:</strong><br>",
+            message.replace("\n", "<br>"),
+            f"<br><br><em>Idioma del formulario: {lang}</em>",
+        ]
+    )
+    msg.attach(MIMEText(text, "plain", "utf-8"))
+    msg.attach(MIMEText(html, "html", "utf-8"))
+    try:
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=15) as server:
+            server.starttls()
+            server.login(SMTP_USER, SMTP_PASSWORD)
+            msg["To"] = to_email
+            server.sendmail(EMAIL_FROM, [to_email], msg.as_string())
+        return True
+    except Exception:
         return False
     msg = MIMEMultipart("alternative")
     msg["Subject"] = "Recuperar contraseña — DRAGONNÉ"
@@ -296,6 +359,22 @@ def init_db():
                 used INTEGER NOT NULL DEFAULT 0,
                 created_at TEXT NOT NULL,
                 FOREIGN KEY(user_id) REFERENCES users(id)
+            );
+            """
+        )
+        # Leads del formulario de consultoría (landing /consultoria)
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS consulting_leads (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                email TEXT NOT NULL,
+                company TEXT,
+                type TEXT,
+                message TEXT,
+                phone TEXT,
+                lang TEXT,
+                created_at TEXT NOT NULL
             );
             """
         )
@@ -1324,6 +1403,103 @@ def home(request: Request):
 def precios_page(request: Request):
     """Página de precios fuera de la landing para reducir fricción."""
     return templates.TemplateResponse("precios.html", {"request": request, **_marketing_context()})
+
+
+def _consulting_translations():
+    """Carga traducciones desde consulting_i18n (ruta relativa a app.py para evitar import errors)."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "consulting_i18n",
+        BASE_DIR / "consulting_i18n.py",
+    )
+    if spec is None or spec.loader is None:
+        return {"es": {}, "en": {}}
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return getattr(mod, "CONSULTING_TRANSLATIONS", {"es": {}, "en": {}})
+
+
+class _DefaultT(dict):
+    """Dict que devuelve '' para cualquier clave faltante (evita UndefinedError en plantilla)."""
+    def __missing__(self, key):
+        return ""
+
+
+@app.get("/consultoria", response_class=HTMLResponse)
+def consulting_landing(request: Request, lang: str = Query("es", alias="lang")):
+    """Landing de consultoría: startups, SMBs, hospitalidad. Soporta ?lang=es|en."""
+    if lang not in ("es", "en"):
+        lang = "es"
+    trans = _consulting_translations()
+    t = trans.get(lang) or trans.get("es")
+    if not t:
+        t = _DefaultT()
+    else:
+        t = _DefaultT(t)
+    try:
+        lead_path = request.url_for("consulting_lead_submit").path
+    except Exception:
+        lead_path = "/consultoria/lead"
+    return templates.TemplateResponse(
+        "consulting.html",
+        {
+            "request": request,
+            "current_year": datetime.now(timezone.utc).year,
+            "lang": lang,
+            "t": t,
+            "calendar_url": CONSULTING_CALENDAR_URL,
+            "lead_form_action": lead_path,
+        },
+    )
+
+
+@app.get("/consulting", response_class=HTMLResponse)
+def consulting_landing_en(request: Request, lang: str = Query("en", alias="lang")):
+    """
+    Alias en inglés para la landing de consultoría: dragonne.co/consulting.
+    Por defecto sirve la versión en inglés (?lang=en), pero respeta ?lang=es|en.
+    """
+    return consulting_landing(request=request, lang=lang)
+
+
+@app.post("/consultoria/lead", name="consulting_lead_submit")
+def consulting_lead_submit(
+    request: Request,
+    name: str = Form(..., min_length=1, max_length=200),
+    email: str = Form(..., min_length=1, max_length=254),
+    company: str = Form(""),
+    type: str = Form(""),
+    message: str = Form(""),
+    phone: str = Form(""),
+    lang: str = Form("es"),
+):
+    """Captura lead del formulario de la landing de consultoría. Guarda en DB y envía correo."""
+    email = email.strip().lower()
+    if not re.match(r"^[^@]+@[^@]+\.[^@]+$", email):
+        return JSONResponse({"ok": False, "error": "invalid_email"}, status_code=400)
+    now = datetime.now(timezone.utc).isoformat()
+    with db() as conn:
+        conn.execute(
+            """INSERT INTO consulting_leads (name, email, company, type, message, phone, lang, created_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            (name.strip()[:200], email, (company or "").strip()[:300], (type or "").strip()[:80], (message or "").strip()[:5000], (phone or "").strip()[:50], (lang or "es")[:5], now),
+        )
+    # Email a jorge@dragonne.co
+    try:
+        send_consulting_lead_email(
+            to_email="jorge@dragonne.co",
+            name=name.strip()[:200],
+            from_email=email,
+            company=(company or "").strip()[:300],
+            type_=(type or "").strip()[:80],
+            message=(message or "").strip()[:5000],
+            phone=(phone or "").strip()[:50],
+            lang=(lang or "es")[:5],
+        )
+    except Exception:
+        # No rompemos el flujo si el correo falla; queda en DB
+        pass
+    return JSONResponse({"ok": True})
 
 
 @app.get("/pricing", include_in_schema=False)
