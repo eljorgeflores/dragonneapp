@@ -1852,6 +1852,11 @@ input:focus, textarea:focus {
 }
 
 @media (max-width: 640px) {
+  /* En móvil, los items con márgenes negativos pueden quedar recortados
+     dentro del tablero (overflow hidden). En mockup permitimos overflow visible. */
+  .page-mockup-analisis .results-card.results-card-tablero {
+    overflow: visible;
+  }
   .page-mockup-analisis .mockup-demo-container {
     padding: 24px 20px 40px;
   }
