@@ -1,105 +1,154 @@
 {% extends 'base.html' %}
-{% block title %}Cliente — DRAGONNÉ{% endblock %}
+{% block title %}Cliente — Admin — DRAGONNÉ{% endblock %}
+{% block body_class %}page-admin{% endblock %}
 {% block body %}
-<div class="app-shell">
+<div class="app-shell admin-panel">
   <header class="app-topbar">
-    <div>
-      <div class="brand"><img class="brand-logo" style="margin:0" src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" /></div>
-      <div class="muted">Detalle de cliente · {{ user['hotel_name'] }} ({{ user['email'] }})</div>
-    </div>
-    <div class="top-actions">
-      <a href="/admin" class="btn btn-secondary btn-sm">Volver a admin</a>
+    <div class="app-topbar-inner">
+      <a href="/admin" class="brand-link">
+        <img class="brand-logo" src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" />
+      </a>
+      <div class="app-context muted">
+        Detalle de cliente · {{ user['hotel_name'] }} · {{ user['email'] }}
+      </div>
+      <div class="top-actions">
+        <a href="/admin/admins" class="btn btn-secondary btn-sm">Administradores</a>
+        <a href="/admin/api" class="btn btn-secondary btn-sm">Acceso API</a>
+        <a href="/admin" class="btn btn-secondary btn-sm">Volver a admin</a>
+        <a href="/app" class="btn btn-secondary btn-sm">Panel app</a>
+      </div>
     </div>
   </header>
 
-  <section class="dashboard-hero light-card">
-    <div>
-      <div class="eyebrow">Actividad</div>
-      <h1>{{ user['hotel_name'] }}</h1>
-      {% if user.get('api_key') %}
-      <p class="lede small">API: activa (clave asignada). <a href="/admin/api">Gestionar acceso API</a></p>
+  <div class="app-content">
+    <section class="dashboard-welcome admin-page-intro">
+      <h1 class="dashboard-page-title">{{ user['hotel_name'] }}</h1>
+      <p class="dashboard-page-desc muted">{{ user['email'] }} · Plan {{ plan_label }}</p>
+    </section>
+
+    <section class="dashboard-hero light-card">
+      <div>
+        <div class="eyebrow">Actividad</div>
+        <h2 class="admin-card-heading">Resumen comercial</h2>
+        {% if user.get('api_key') %}
+        <p class="lede small">API: activa (clave asignada). <a href="/admin/api">Gestionar acceso API</a></p>
+        {% else %}
+        <p class="lede small">API: sin acceso. <a href="/admin/api">Dar acceso desde Acceso API</a></p>
+        {% endif %}
+        <p class="lede small">
+          Creado el {{ user['created_at'][:10] }} ·
+          Último login: {{ user['last_login_at'] or 'Nunca' }} ·
+          Logins: {{ user['login_count'] or 0 }}.
+        </p>
+      </div>
+      <div class="hero-plan-box">
+        <div class="pill">Métricas</div>
+        <div class="mini-kpis">
+          <div>
+            <span>Análisis generados</span>
+            <strong>{{ stats.total_analyses }}</strong>
+          </div>
+          <div>
+            <span>Archivos subidos</span>
+            <strong>{{ stats.total_files }}</strong>
+          </div>
+        </div>
+        <div class="mini-highlight">
+          <p class="muted">
+            Último análisis: {{ stats.last_analysis_at or 'N/A' }} ·
+            Última actividad: {{ stats.last_activity or 'Sin datos' }}.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="history-card light-card admin-manage-card">
+      <div class="section-head">
+        <div>
+          <h2>Gestionar cuenta</h2>
+          <p class="muted">Cambiar plan (solo en la app; Stripe puede seguir cobrando hasta que canceles en el portal). Eliminar usuario borra todos sus análisis y archivos.</p>
+        </div>
+      </div>
+      <div class="admin-manage-grid">
+        <form class="admin-plan-form" method="post" action="/admin/users/{{ user['id'] }}/plan">
+          <label for="admin_plan_select">Plan del producto</label>
+          <div class="admin-plan-row">
+            <select id="admin_plan_select" name="plan" class="admin-select">
+              <option value="free" {% if user['plan'] == 'free' %}selected{% endif %}>Gratis</option>
+              <option value="pro" {% if user['plan'] == 'pro' %}selected{% endif %}>Pro</option>
+              <option value="pro_plus" {% if user['plan'] == 'pro_plus' %}selected{% endif %}>Pro+</option>
+            </select>
+            <button type="submit" class="btn btn-primary btn-sm">Guardar plan</button>
+          </div>
+        </form>
+        {% if current_user['id'] != user['id'] %}
+        <form method="post" action="/admin/users/{{ user['id'] }}/delete" class="admin-danger-zone" onsubmit="return confirm('¿Eliminar definitivamente a este usuario y todos sus análisis y archivos? Esta acción no se puede deshacer.');">
+          <span class="muted small">Zona peligrosa</span>
+          <button type="submit" class="btn btn-sm admin-btn-danger">Eliminar usuario</button>
+        </form>
+        {% else %}
+        <p class="muted small admin-note-self">No puedes eliminar tu propia cuenta desde el panel admin.</p>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="history-card light-card">
+      <div class="section-head">
+        <div>
+          <h2>Sesiones recientes</h2>
+          <p class="muted">Aproximación de cada cuándo entra y cuánto tiempo permanece.</p>
+        </div>
+      </div>
+      {% if sessions %}
+      <div class="admin-stack">
+        {% for s in sessions %}
+        <div class="admin-row-card">
+          <div class="history-top">
+            <strong>Inicio: {{ s.started_at[:19].replace('T', ' ') }}</strong>
+            <span>Fin: {{ s.ended_at and s.ended_at[:19].replace('T', ' ') or 'Abierta / desconocido' }}</span>
+          </div>
+          <p class="muted small" style="margin: 8px 0 0;">
+            Requests: {{ s.request_count }} ·
+            Último toque: {{ s.last_seen_at[:19].replace('T', ' ') }}.
+          </p>
+        </div>
+        {% endfor %}
+      </div>
       {% else %}
-      <p class="lede small">API: sin acceso. <a href="/admin/api">Dar acceso desde Acceso API</a></p>
+      <div class="empty-state">Todavía no hay sesiones registradas para este usuario.</div>
       {% endif %}
-      <p class="lede small">
-        Plan {{ plan_label }} · Creado el {{ user['created_at'][:10] }} ·
-        Último login: {{ user['last_login_at'] or 'Nunca' }} ·
-        Logins: {{ user['login_count'] or 0 }}.
-      </p>
-    </div>
-    <div class="hero-plan-box">
-      <div class="pill">Resumen</div>
-      <div class="mini-kpis">
-        <div>
-          <span>Análisis generados</span>
-          <strong>{{ stats.total_analyses }}</strong>
-        </div>
-        <div>
-          <span>Reportes subidos</span>
-          <strong>{{ stats.total_files }}</strong>
-        </div>
-      </div>
-      <div class="mini-highlight">
-        <p class="muted">
-          Último análisis: {{ stats.last_analysis_at or 'N/A' }} ·
-          Última actividad: {{ stats.last_activity or 'Sin datos' }}.
-        </p>
-      </div>
-    </div>
-  </section>
+    </section>
 
-  <section class="history-card light-card">
-    <div class="section-head">
-      <div>
-        <h2>Sesiones recientes</h2>
-        <p class="muted">Aproximación de cada cuándo entra y cuánto tiempo permanece.</p>
-      </div>
-    </div>
-    {% if sessions %}
-    <div class="history-grid" style="grid-template-columns: 1fr 1fr;">
-      {% for s in sessions %}
-      <div class="history-item">
-        <div class="history-top">
-          <strong>Inicio: {{ s.started_at[:19].replace('T', ' ') }}</strong>
-          <span>Fin: {{ s.ended_at and s.ended_at[:19].replace('T', ' ') or 'Abierta / desconocido' }}</span>
+    <section class="history-card light-card">
+      <div class="section-head">
+        <div>
+          <h2>Análisis generados</h2>
+          <p class="muted">Puedes borrar un análisis para liberar cupos (p. ej. límite de análisis en plan gratis).</p>
         </div>
-        <p class="muted">
-          Requests: {{ s.request_count }} ·
-          Último toque: {{ s.last_seen_at[:19].replace('T', ' ') }}.
-        </p>
       </div>
-      {% endfor %}
-    </div>
-    {% else %}
-    <div class="empty-state">Todavía no hay sesiones registradas para este usuario.</div>
-    {% endif %}
-  </section>
-
-  <section class="history-card light-card">
-    <div class="section-head">
-      <div>
-        <h2>Análisis generados</h2>
-        <p class="muted">Los últimos análisis que este hotel ha corrido.</p>
-      </div>
-    </div>
-    {% if analyses %}
-    <div class="history-grid" style="grid-template-columns: 1fr 1fr;">
-      {% for a in analyses %}
-      <div class="history-item">
-        <div class="history-top">
-          <strong>{{ a.title }}</strong>
-          <span>{{ a.created_at[:19].replace('T', ' ') }}</span>
+      {% if analyses %}
+      <div class="admin-stack">
+        {% for a in analyses %}
+        <div class="admin-row-card admin-analysis-row">
+          <div>
+            <div class="history-top">
+              <strong>{{ a.title }}</strong>
+              <span>{{ a.created_at }}</span>
+            </div>
+            <p class="muted small" style="margin: 8px 0 0;">
+              {{ a.file_count }} archivo(s) · {{ a.days_covered }} días · {{ a.reports_detected }} reporte(s) detectados.
+            </p>
+          </div>
+          <form method="post" action="/admin/analyses/{{ a.id }}/delete" onsubmit="return confirm('¿Borrar este análisis y sus archivos subidos?');">
+            <button type="submit" class="btn btn-sm admin-btn-danger-outline">Borrar análisis</button>
+          </form>
         </div>
-        <p class="muted">
-          {{ a.file_count }} archivo(s) · {{ a.days_covered }} días · {{ a.reports_detected }} reporte(s).
-        </p>
+        {% endfor %}
       </div>
-      {% endfor %}
-    </div>
-    {% else %}
-    <div class="empty-state">Este usuario aún no ha generado análisis.</div>
-    {% endif %}
-  </section>
+      {% else %}
+      <div class="empty-state">Este usuario aún no ha generado análisis.</div>
+      {% endif %}
+    </section>
+  </div>
 </div>
 {% endblock %}
-

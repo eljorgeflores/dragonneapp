@@ -87,6 +87,21 @@ PRO_180_MAX_FILES = 5
 PRO_180_MAX_ANALYSES = 10
 PRO_PLUS_MAX_ANALYSES = 10  # al llegar al límite, invitar a contactar (plan máximo)
 DEFAULT_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o")
+
+
+def max_upload_files_for_plan(plan: str) -> int:
+    """Máximo de archivos por análisis según plan de producto."""
+    if plan == "free":
+        return FREE_MAX_FILES_PER_ANALYSIS
+    if plan == "pro":
+        return PRO_90_MAX_FILES
+    if plan == "pro_plus":
+        return PRO_180_MAX_FILES
+    return FREE_MAX_FILES_PER_ANALYSIS
+
+
+def public_share_base_url() -> str:
+    return (APP_URL or "http://127.0.0.1:8000").rstrip("/")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 APP_URL = os.getenv("APP_URL", "http://127.0.0.1:8000")
 SECRET_KEY = os.getenv("APP_SECRET_KEY", "change-me-now")
@@ -165,9 +180,86 @@ def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+_SHARE_EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+def looks_like_email(addr: str) -> bool:
+    s = (addr or "").strip()
+    return bool(s) and len(s) <= 254 and bool(_SHARE_EMAIL_RE.match(s))
+
+
 def send_password_reset_email(to_email: str, reset_link: str) -> bool:
     """Envía el enlace de recuperación por correo. Devuelve True si se envió, False si no hay SMTP o falló."""
     if not SMTP_HOST or not SMTP_USER or not SMTP_PASSWORD:
+        return False
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = "Recuperar contraseña — DRAGONNÉ"
+    msg["From"] = EMAIL_FROM
+    msg["To"] = to_email
+    text = f"""Hola,
+
+Alguien pidió restablecer la contraseña de tu cuenta en DRAGONNÉ.
+
+Haz clic en el siguiente enlace para elegir una nueva contraseña (válido 1 hora):
+
+{reset_link}
+
+Si no pediste esto, ignora este correo.
+
+—
+DRAGONNÉ
+"""
+    html = f"""<p>Hola,</p>
+<p>Alguien pidió restablecer la contraseña de tu cuenta en DRAGONNÉ.</p>
+<p><a href="{reset_link}">Haz clic aquí para elegir una nueva contraseña</a> (válido 1 hora).</p>
+<p>Si no pediste esto, ignora este correo.</p>
+<p>—<br>DRAGONNÉ</p>"""
+    msg.attach(MIMEText(text, "plain", "utf-8"))
+    msg.attach(MIMEText(html, "html", "utf-8"))
+    try:
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=15) as server:
+            server.starttls()
+            server.login(SMTP_USER, SMTP_PASSWORD)
+            server.sendmail(EMAIL_FROM, [to_email], msg.as_string())
+        return True
+    except Exception:
+        return False
+
+
+def send_analysis_share_link_email(to_email: str, share_url: str, hotel_label: str) -> bool:
+    """Envía por SMTP el enlace público de solo lectura del análisis."""
+    if not SMTP_HOST or not SMTP_USER or not SMTP_PASSWORD:
+        return False
+    subject = f"Informe compartido — {hotel_label} — DRAGONNÉ"
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = EMAIL_FROM
+    msg["To"] = to_email.strip()
+    text = f"""Hola,
+
+Te comparten un informe de análisis hotelero generado con DRAGONNÉ (vista de solo lectura):
+
+{share_url}
+
+Cualquiera con este enlace puede ver el contenido del informe. Si no esperabas este correo, ignóralo.
+
+—
+DRAGONNÉ
+"""
+    html = f"""<p>Hola,</p>
+<p>Te comparten un informe de análisis hotelero generado con <strong>DRAGONNÉ</strong> (solo lectura).</p>
+<p><a href="{share_url}">Abrir informe compartido</a></p>
+<p class="muted">Cualquiera con este enlace puede ver el contenido. Si no esperabas este correo, ignóralo.</p>
+<p>—<br>DRAGONNÉ</p>"""
+    msg.attach(MIMEText(text, "plain", "utf-8"))
+    msg.attach(MIMEText(html, "html", "utf-8"))
+    try:
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=15) as server:
+            server.starttls()
+            server.login(SMTP_USER, SMTP_PASSWORD)
+            server.sendmail(EMAIL_FROM, [to_email.strip()], msg.as_string())
+        return True
+    except Exception:
         return False
 
 
@@ -227,38 +319,6 @@ def send_consulting_lead_email(
         return True
     except Exception:
         return False
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = "Recuperar contraseña — DRAGONNÉ"
-    msg["From"] = EMAIL_FROM
-    msg["To"] = to_email
-    text = f"""Hola,
-
-Alguien pidió restablecer la contraseña de tu cuenta en DRAGONNÉ.
-
-Haz clic en el siguiente enlace para elegir una nueva contraseña (válido 1 hora):
-
-{reset_link}
-
-Si no pediste esto, ignora este correo.
-
-—
-DRAGONNÉ
-"""
-    html = f"""<p>Hola,</p>
-<p>Alguien pidió restablecer la contraseña de tu cuenta en DRAGONNÉ.</p>
-<p><a href="{reset_link}">Haz clic aquí para elegir una nueva contraseña</a> (válido 1 hora).</p>
-<p>Si no pediste esto, ignora este correo.</p>
-<p>—<br>DRAGONNÉ</p>"""
-    msg.attach(MIMEText(text, "plain", "utf-8"))
-    msg.attach(MIMEText(html, "html", "utf-8"))
-    try:
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=15) as server:
-            server.starttls()
-            server.login(SMTP_USER, SMTP_PASSWORD)
-            server.sendmail(EMAIL_FROM, to_email, msg.as_string())
-        return True
-    except Exception:
-        return False
 
 
 @contextmanager
@@ -305,6 +365,7 @@ def init_db():
                 summary_json TEXT NOT NULL,
                 analysis_json TEXT NOT NULL,
                 created_at TEXT NOT NULL,
+                share_token TEXT,
                 FOREIGN KEY(user_id) REFERENCES users(id)
             );
 
@@ -347,6 +408,17 @@ def init_db():
                     conn.execute(f"ALTER TABLE users ADD COLUMN {col} TEXT")
             except sqlite3.OperationalError:
                 pass
+
+        try:
+            conn.execute("ALTER TABLE analyses ADD COLUMN share_token TEXT")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            conn.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS idx_analyses_share_token ON analyses(share_token) WHERE share_token IS NOT NULL"
+            )
+        except sqlite3.OperationalError:
+            pass
 
         # Tabla simple para recuperación de contraseña
         conn.execute(
@@ -1160,6 +1232,42 @@ def require_admin(request: Request) -> sqlite3.Row:
     return user
 
 
+ADMIN_PLAN_VALUES = frozenset({"free", "pro", "pro_plus"})
+
+
+def _delete_uploaded_files_for_analysis(conn, analysis_id: int) -> None:
+    rows = conn.execute("SELECT stored_path FROM uploaded_files WHERE analysis_id = ?", (analysis_id,)).fetchall()
+    for r in rows:
+        try:
+            p = Path(r["stored_path"])
+            if p.is_file():
+                p.unlink()
+        except OSError:
+            pass
+    conn.execute("DELETE FROM uploaded_files WHERE analysis_id = ?", (analysis_id,))
+
+
+def delete_analysis_by_id(conn, analysis_id: int) -> bool:
+    """Borra análisis, filas de uploaded_files y archivos en disco."""
+    row = conn.execute("SELECT id FROM analyses WHERE id = ?", (analysis_id,)).fetchone()
+    if not row:
+        return False
+    _delete_uploaded_files_for_analysis(conn, analysis_id)
+    conn.execute("DELETE FROM analyses WHERE id = ?", (analysis_id,))
+    return True
+
+
+def delete_user_and_related(conn, user_id: int) -> bool:
+    """Borra todos los análisis (y archivos) del usuario, sesiones y el usuario."""
+    rows = conn.execute("SELECT id FROM analyses WHERE user_id = ?", (user_id,)).fetchall()
+    for r in rows:
+        _delete_uploaded_files_for_analysis(conn, r["id"])
+    conn.execute("DELETE FROM analyses WHERE user_id = ?", (user_id,))
+    conn.execute("DELETE FROM user_sessions WHERE user_id = ?", (user_id,))
+    cur = conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
+    return cur.rowcount > 0
+
+
 def analyses_count(user_id: int) -> int:
     with db() as conn:
         row = conn.execute("SELECT COUNT(*) AS c FROM analyses WHERE user_id = ?", (user_id,)).fetchone()
@@ -1269,13 +1377,14 @@ def enforce_plan(user: sqlite3.Row, summary: Dict[str, Any]):
         return
 
 
-def save_analysis(user_id: int, title: str, plan: str, summary: Dict[str, Any], analysis: Dict[str, Any], files: List[UploadFile]) -> int:
+def save_analysis(user_id: int, title: str, plan: str, summary: Dict[str, Any], analysis: Dict[str, Any], files: List[UploadFile]) -> Tuple[int, str]:
     created_at = now_iso()
+    share_token = secrets.token_urlsafe(24)
     with db() as conn:
         cur = conn.execute(
             """
-            INSERT INTO analyses (user_id, title, plan_at_analysis, file_count, days_covered, summary_json, analysis_json, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO analyses (user_id, title, plan_at_analysis, file_count, days_covered, summary_json, analysis_json, created_at, share_token)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 user_id,
@@ -1286,6 +1395,7 @@ def save_analysis(user_id: int, title: str, plan: str, summary: Dict[str, Any], 
                 json.dumps(summary, ensure_ascii=False),
                 json.dumps(analysis, ensure_ascii=False),
                 created_at,
+                share_token,
             ),
         )
         analysis_id = cur.lastrowid
@@ -1304,7 +1414,7 @@ def save_analysis(user_id: int, title: str, plan: str, summary: Dict[str, Any], 
                 "INSERT INTO uploaded_files (analysis_id, original_name, stored_path, created_at) VALUES (?, ?, ?, ?)",
                 (analysis_id, upload.filename or safe_name, str(file_path), created_at),
             )
-        return analysis_id
+        return analysis_id, share_token
 
 
 def format_money(value: float) -> str:
@@ -1397,6 +1507,12 @@ def home(request: Request):
     _debug_log("app.py:home", "marketing context keys", {"keys": list(ctx.keys())}, "H2")
     # #endregion
     return templates.TemplateResponse("marketing.html", {"request": request, **ctx})
+
+
+@app.get("/marketing", response_class=HTMLResponse)
+def marketing_alias(request: Request):
+    """Alias legible para la landing principal del producto."""
+    return home(request)
 
 
 @app.get("/precios", response_class=HTMLResponse)
@@ -1552,7 +1668,7 @@ def robots_txt():
     """Indica a crawlers la ubicación del sitemap."""
     base = (APP_URL or "http://127.0.0.1:8000").rstrip("/")
     return PlainTextResponse(
-        "User-agent: *\nAllow: /\nDisallow: /app\nDisallow: /admin\nSitemap: " + base + "/sitemap.xml\n"
+        "User-agent: *\nAllow: /\nDisallow: /app\nDisallow: /admin\nDisallow: /s/\nSitemap: " + base + "/sitemap.xml\n"
     )
 
 
@@ -1845,6 +1961,9 @@ def dashboard(request: Request):
         "is_admin": is_admin_user(user),
         "analyses": formatted,
         "plan_label": plan_label(user["plan"]),
+        "max_files_per_analysis": max_upload_files_for_plan(user["plan"]),
+        "pro_max_files": PRO_90_MAX_FILES,
+        "pro_plus_max_files": PRO_180_MAX_FILES,
         "free_max_days": FREE_MAX_DAYS,
         "free_max_files": FREE_MAX_FILES_PER_ANALYSIS,
         "free_max_analyses": FREE_MAX_ANALYSES,
@@ -1857,6 +1976,7 @@ def dashboard(request: Request):
         "invite_upgrade": eligibility["invite_upgrade"],
         "invite_contact": eligibility["invite_contact"],
         "contact_email": eligibility["contact_email"],
+        "smtp_configured": bool(SMTP_HOST and SMTP_USER and SMTP_PASSWORD),
     })
 
 
@@ -1898,16 +2018,18 @@ async def analyze(request: Request, business_context: str = Form(""), files: Lis
             "hotel_booking_url": user.get("hotel_booking_url") or "",
         }
         combined_business_context = business_context or ""
-        # Mapeo simple de plan actual a plan para el modelo
         if user["plan"] == "free":
             plan_for_model = "free_30"
-        else:
+        elif user["plan"] == "pro":
             plan_for_model = "pro_90"
+        else:
+            plan_for_model = "pro_180"
         _dbg("app.py:analyze", "before_call_openai", {}, "H_D")
         analysis = call_openai(summary, combined_business_context, hotel_context, plan_for_model)
         title = f"{summary['reports_detected']} reporte(s) · {datetime.now().strftime('%d/%m/%Y %H:%M')}"
-        analysis_id = save_analysis(user["id"], title, user["plan"], summary, analysis, files)
+        analysis_id, share_token = save_analysis(user["id"], title, user["plan"], summary, analysis, files)
         created_at = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")[:19].replace("T", " ")
+        share_url = f"{public_share_base_url()}/s/{share_token}"
         # #region agent log
         _debug_log("app.py:analyze", "POST /analyze success", {"analysis_id": analysis_id}, "H4")
         _dbg("app.py:analyze", "success", {"analysis_id": analysis_id}, "H_D")
@@ -1920,6 +2042,7 @@ async def analyze(request: Request, business_context: str = Form(""), files: Lis
             "summary": summary,
             "analysis": analysis,
             "plan": user["plan"],
+            "share_url": share_url,
         })
     except HTTPException as e:
         _dbg("app.py:analyze", "http_exception", {"detail": e.detail, "status_code": e.status_code}, "H_C")
@@ -1945,6 +2068,8 @@ def analysis_detail(request: Request, analysis_id: int):
         row = conn.execute("SELECT * FROM analyses WHERE id = ? AND user_id = ?", (analysis_id, user["id"])).fetchone()
     if not row:
         raise HTTPException(status_code=404, detail="Análisis no encontrado")
+    stoken = row["share_token"] if row["share_token"] else None
+    share_url = f"{public_share_base_url()}/s/{stoken}" if stoken else None
     return JSONResponse({
         "ok": True,
         "summary": json.loads(row["summary_json"]),
@@ -1953,7 +2078,82 @@ def analysis_detail(request: Request, analysis_id: int):
         "title": row["title"],
         "created_at": row["created_at"],
         "plan": row["plan_at_analysis"] or "free",
+        "share_url": share_url,
     })
+
+
+@app.post("/analysis/{analysis_id}/share")
+def ensure_analysis_share_link(request: Request, analysis_id: int):
+    """Crea o devuelve el enlace público de solo lectura para un análisis (p. ej. análisis guardados antes de la migración)."""
+    user = require_user(request)
+    with db() as conn:
+        row = conn.execute(
+            "SELECT share_token FROM analyses WHERE id = ? AND user_id = ?",
+            (analysis_id, user["id"]),
+        ).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Análisis no encontrado")
+        token = row["share_token"]
+        if not token:
+            token = secrets.token_urlsafe(24)
+            conn.execute("UPDATE analyses SET share_token = ? WHERE id = ?", (token, analysis_id))
+    return JSONResponse({"ok": True, "share_url": f"{public_share_base_url()}/s/{token}"})
+
+
+@app.post("/analysis/{analysis_id}/share-email")
+async def email_share_link(request: Request, analysis_id: int, to_email: str = Form(...)):
+    """Envía por SMTP el enlace público del análisis a un correo (requiere SMTP configurado en el servidor)."""
+    user = require_user(request)
+    if not SMTP_HOST or not SMTP_USER or not SMTP_PASSWORD:
+        raise HTTPException(
+            status_code=503,
+            detail="El envío por correo no está configurado en el servidor. Usa “Abrir en mi correo” o configura SMTP (.env).",
+        )
+    to_clean = (to_email or "").strip()
+    if not looks_like_email(to_clean):
+        raise HTTPException(status_code=400, detail="Correo no válido.")
+    uid = int(user["id"])
+    hotel_label = (user["hotel_name"] or "").strip() or "Hotel"
+    with db() as conn:
+        row = conn.execute(
+            "SELECT share_token FROM analyses WHERE id = ? AND user_id = ?",
+            (analysis_id, uid),
+        ).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Análisis no encontrado")
+        token = row["share_token"]
+        if not token:
+            token = secrets.token_urlsafe(24)
+            conn.execute("UPDATE analyses SET share_token = ? WHERE id = ?", (token, analysis_id))
+    share_url = f"{public_share_base_url()}/s/{token}"
+    if not send_analysis_share_link_email(to_clean, share_url, hotel_label):
+        raise HTTPException(status_code=500, detail="No se pudo enviar el correo. Intenta más tarde.")
+    return JSONResponse({"ok": True, "message": "Correo enviado."})
+
+
+@app.get("/s/{share_token}", response_class=HTMLResponse)
+def shared_analysis_view(request: Request, share_token: str):
+    """Vista pública de solo lectura del análisis (quien tenga el enlace)."""
+    with db() as conn:
+        row = conn.execute(
+            "SELECT title, summary_json, analysis_json, created_at FROM analyses WHERE share_token = ?",
+            (share_token,),
+        ).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Enlace no válido o expirado.")
+    summary = json.loads(row["summary_json"])
+    analysis = json.loads(row["analysis_json"])
+    created = (row["created_at"] or "")[:19].replace("T", " ")
+    return templates.TemplateResponse(
+        "share_public.html",
+        {
+            "request": request,
+            "page_title": row["title"] or "Informe compartido",
+            "created_at": created,
+            "summary": summary,
+            "analysis": analysis,
+        },
+    )
 
 
 # Colores brandbook para PDF
@@ -2309,10 +2509,15 @@ async def api_analyze(
             "hotel_booking_url": user.get("hotel_booking_url") or "",
         }
         combined_business_context = business_context or ""
-        plan_for_model = "pro_90" if user["plan"] == "pro" else "free_30"
+        if user["plan"] == "free":
+            plan_for_model = "free_30"
+        elif user["plan"] == "pro":
+            plan_for_model = "pro_90"
+        else:
+            plan_for_model = "pro_180"
         analysis = call_openai(summary, combined_business_context, hotel_context, plan_for_model)
         title = f"{summary['reports_detected']} reporte(s) · {datetime.now().strftime('%d/%m/%Y %H:%M')}"
-        analysis_id = save_analysis(user["id"], title, user["plan"], summary, analysis, files)
+        analysis_id, share_token = save_analysis(user["id"], title, user["plan"], summary, analysis, files)
         return {
             "ok": True,
             "analysis_id": analysis_id,
@@ -2320,6 +2525,7 @@ async def api_analyze(
             "summary": summary,
             "analysis": analysis,
             "plan": user["plan"],
+            "share_url": f"{public_share_base_url()}/s/{share_token}",
         }
     except HTTPException:
         raise
@@ -2594,12 +2800,12 @@ def admin_home(request: Request):
 
 @app.get("/admin/users/{user_id}", response_class=HTMLResponse)
 def admin_user_detail(request: Request, user_id: int):
-    require_admin(request)
+    admin = require_admin(request)
     with db() as conn:
         user = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
         if not user:
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
-        analyses = conn.execute(
+        analysis_rows = conn.execute(
             "SELECT * FROM analyses WHERE user_id = ? ORDER BY created_at DESC LIMIT 50",
             (user_id,),
         ).fetchall()
@@ -2623,6 +2829,23 @@ def admin_user_detail(request: Request, user_id: int):
             (user_id,),
         ).fetchone()
 
+    analyses_list = []
+    for row in analysis_rows:
+        try:
+            summary = json.loads(row["summary_json"])
+        except (TypeError, json.JSONDecodeError):
+            summary = {}
+        created_raw = row["created_at"] or ""
+        created_at_str = created_raw[:19].replace("T", " ") if created_raw else ""
+        analyses_list.append({
+            "id": row["id"],
+            "title": row["title"] or f"Análisis {row['id']}",
+            "created_at": created_at_str,
+            "file_count": row["file_count"],
+            "days_covered": row["days_covered"] if row["days_covered"] is not None else 0,
+            "reports_detected": int(summary.get("reports_detected") or 0),
+        })
+
     stats = {
         "total_analyses": stats_row["total_analyses"],
         "total_files": stats_row["total_files"],
@@ -2632,12 +2855,52 @@ def admin_user_detail(request: Request, user_id: int):
 
     return templates.TemplateResponse("admin_user_detail.html", {
         "request": request,
+        "current_user": admin,
         "user": user,
         "plan_label": plan_label(user["plan"]),
-        "analyses": analyses,
+        "analyses": analyses_list,
         "sessions": sessions,
         "stats": stats,
     })
+
+
+@app.post("/admin/users/{user_id}/plan")
+def admin_user_set_plan(request: Request, user_id: int, plan: str = Form(...)):
+    require_admin(request)
+    plan = (plan or "").strip()
+    if plan not in ADMIN_PLAN_VALUES:
+        raise HTTPException(status_code=400, detail="Plan no válido")
+    with db() as conn:
+        u = conn.execute("SELECT id FROM users WHERE id = ?", (user_id,)).fetchone()
+        if not u:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        conn.execute("UPDATE users SET plan = ?, updated_at = ? WHERE id = ?", (plan, now_iso(), user_id))
+    return RedirectResponse(f"/admin/users/{user_id}", status_code=303)
+
+
+@app.post("/admin/users/{user_id}/delete")
+def admin_user_delete(request: Request, user_id: int):
+    admin = require_admin(request)
+    if admin["id"] == user_id:
+        return RedirectResponse("/admin?error=no_borrar_self", status_code=303)
+    with db() as conn:
+        target = conn.execute("SELECT id FROM users WHERE id = ?", (user_id,)).fetchone()
+        if not target:
+            return RedirectResponse("/admin?error=usuario_no_encontrado", status_code=303)
+        delete_user_and_related(conn, user_id)
+    return RedirectResponse("/admin", status_code=303)
+
+
+@app.post("/admin/analyses/{analysis_id}/delete")
+def admin_analysis_delete(request: Request, analysis_id: int):
+    require_admin(request)
+    with db() as conn:
+        row = conn.execute("SELECT user_id FROM analyses WHERE id = ?", (analysis_id,)).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Análisis no encontrado")
+        uid = row["user_id"]
+        delete_analysis_by_id(conn, analysis_id)
+    return RedirectResponse(f"/admin/users/{uid}", status_code=303)
 
 
 @app.get("/admin/admins", response_class=HTMLResponse)

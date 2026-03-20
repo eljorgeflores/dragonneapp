@@ -1,5 +1,7 @@
+const appShell = document.getElementById('appShell');
 const fileInput = document.getElementById('files');
 const fileList = document.getElementById('fileList');
+const fileLimitHint = document.getElementById('fileLimitHint');
 const dropzone = document.getElementById('dropzone');
 const form = document.getElementById('analyzeForm');
 const resultsCard = document.getElementById('resultsCard');
@@ -14,15 +16,61 @@ const paywallEl = document.getElementById('paywall');
 const planBadge = document.getElementById('planBadge');
 const resultMeta = document.getElementById('resultMeta');
 const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+const copyShareBtn = document.getElementById('copyShareBtn');
+const emailShareBtn = document.getElementById('emailShareBtn');
+const serverEmailShareBtn = document.getElementById('serverEmailShareBtn');
+const shareFeedback = document.getElementById('shareFeedback');
 let currentAnalysisId = null;
+let currentShareUrl = null;
+
+function getMaxFiles() {
+  const raw = (form && form.dataset.maxFiles) || (appShell && appShell.dataset.maxFiles) || '5';
+  const v = parseInt(raw, 10);
+  return Number.isFinite(v) && v > 0 ? v : 5;
+}
+
+function showFileHint(msg) {
+  if (!fileLimitHint) return;
+  if (!msg) {
+    fileLimitHint.classList.add('hidden');
+    fileLimitHint.textContent = '';
+    return;
+  }
+  fileLimitHint.textContent = msg;
+  fileLimitHint.classList.remove('hidden');
+}
+
+function setInputFiles(fileArray) {
+  if (!fileInput) return;
+  const maxF = getMaxFiles();
+  const slice = fileArray.slice(0, maxF);
+  const dt = new DataTransfer();
+  slice.forEach(f => dt.items.add(f));
+  fileInput.files = dt.files;
+  renderFiles();
+}
 
 function renderFiles() {
   if (!fileInput || !fileList) return;
   fileList.innerHTML = '';
-  [...fileInput.files].forEach(file => {
+  [...fileInput.files].forEach((file, idx) => {
     const chip = document.createElement('div');
-    chip.className = 'file-chip';
-    chip.textContent = `${file.name} · ${(file.size / 1024).toFixed(1)} KB`;
+    chip.className = 'file-chip file-chip-row';
+    const label = document.createElement('span');
+    label.className = 'file-chip-label';
+    label.textContent = `${file.name} · ${(file.size / 1024).toFixed(1)} KB`;
+    chip.appendChild(label);
+    const rm = document.createElement('button');
+    rm.type = 'button';
+    rm.className = 'file-chip-remove';
+    rm.setAttribute('aria-label', `Quitar ${file.name}`);
+    rm.textContent = '×';
+    rm.addEventListener('click', () => {
+      const next = [...fileInput.files].filter((_, i) => i !== idx);
+      setInputFiles(next);
+      showFileHint('');
+    });
+    chip.appendChild(rm);
     fileList.appendChild(chip);
   });
 }
@@ -41,17 +89,32 @@ if (dropzone) {
     dropzone.classList.remove('dragover');
     const dtFiles = e.dataTransfer && e.dataTransfer.files;
     if (fileInput && dtFiles && dtFiles.length > 0) {
-      const dt = new DataTransfer();
-      [...dtFiles].forEach(f => dt.items.add(f));
-      fileInput.files = dt.files;
-      renderFiles();
-      // #region agent log
-      fetch('http://127.0.0.1:7434/ingest/f7fd8531-32a1-4b90-bb69-c6823426808b',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'b78cbe'},body:JSON.stringify({sessionId:'b78cbe',location:'app.js:drop',message:'drop applied',data:{count:dtFiles.length,names:[...dtFiles].map(f=>f.name)},timestamp:Date.now()})}).catch(()=>{});
-      // #endregion
+      const maxF = getMaxFiles();
+      const incoming = [...dtFiles];
+      const existing = [...fileInput.files];
+      const merged = [...existing, ...incoming];
+      if (merged.length > maxF) {
+        showFileHint(`Tu plan permite hasta ${maxF} archivo(s) por análisis. Quita archivos con ✕ o deja solo los que necesitas.`);
+      } else {
+        showFileHint('');
+      }
+      setInputFiles(merged);
     }
   });
 }
-if (fileInput) fileInput.addEventListener('change', renderFiles);
+if (fileInput) {
+  fileInput.addEventListener('change', () => {
+    const maxF = getMaxFiles();
+    const arr = [...fileInput.files];
+    if (arr.length > maxF) {
+      showFileHint(`Tu plan permite hasta ${maxF} archivo(s) por análisis. Se usaron solo los primeros ${maxF}.`);
+      setInputFiles(arr);
+    } else {
+      if (arr.length <= maxF) showFileHint('');
+      renderFiles();
+    }
+  });
+}
 
 function htmlEscape(value) {
   return String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
@@ -234,12 +297,35 @@ function appendToHistory(item) {
   }
 }
 
+async function ensureShareUrl(analysisId) {
+  if (currentShareUrl) return currentShareUrl;
+  const res = await fetch(`/analysis/${analysisId}/share`, { method: 'POST', headers: { Accept: 'application/json' } });
+  const data = await res.json().catch(() => ({}));
+  if (res.ok && data.ok && data.share_url) {
+    currentShareUrl = data.share_url;
+    return currentShareUrl;
+  }
+  return null;
+}
+
+function setShareControlsEnabled(on) {
+  if (copyShareBtn) copyShareBtn.disabled = !on;
+  if (emailShareBtn) emailShareBtn.disabled = !on;
+  if (serverEmailShareBtn) serverEmailShareBtn.disabled = !on;
+  if (!on && shareFeedback) {
+    shareFeedback.classList.add('hidden');
+    shareFeedback.textContent = '';
+  }
+}
+
 if (form) {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const submit = form.querySelector('button[type="submit"]');
     submit.disabled = true;
     submit.textContent = 'Analizando…';
+    currentShareUrl = null;
+    setShareControlsEnabled(false);
     resultsCard.classList.remove('hidden');
     if (resultsLayout) resultsLayout.classList.add('is-loading');
     if (resultsLoading) resultsLoading.classList.remove('hidden');
@@ -259,15 +345,23 @@ if (form) {
         hideAnalysisLoading();
         currentAnalysisId = null;
         if (downloadPdfBtn) downloadPdfBtn.disabled = true;
-        if (tableroCenter) tableroCenter.innerHTML = `<div class="alert error">${htmlEscape(data.error || 'No se pudo correr el análisis.')}</div>`;
+        setShareControlsEnabled(false);
+        let errBody = htmlEscape(data.error || 'No se pudo correr el análisis.');
+        const errLower = (data.error || '').toLowerCase();
+        if (res.status === 402 && (errLower.includes('archivo') || errLower.includes('archivos'))) {
+          errBody += `<p class="upload-error-tip muted small">Consejo: en <strong>plan gratis</strong> solo puedes <strong>1 archivo</strong> por análisis. Quita los demás con la <strong>✕</strong> junto al nombre y vuelve a intentar.</p>`;
+        }
+        if (tableroCenter) tableroCenter.innerHTML = `<div class="alert error">${errBody}</div>`;
         resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
         return;
       }
       hideAnalysisLoading();
       currentAnalysisId = data.analysis_id || null;
+      currentShareUrl = data.share_url || null;
       if (downloadPdfBtn) {
         downloadPdfBtn.disabled = !currentAnalysisId;
       }
+      setShareControlsEnabled(!!currentAnalysisId);
       renderSummary(data.summary, data.plan);
       renderCharts(data.summary);
       renderAnalysis(data.analysis);
@@ -283,6 +377,7 @@ if (form) {
       resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch (err) {
       hideAnalysisLoading();
+      setShareControlsEnabled(false);
       if (tableroCenter) tableroCenter.innerHTML = `<div class="alert error">${htmlEscape(err.message)}</div>`;
       resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } finally {
@@ -358,9 +453,11 @@ document.querySelector('.history-card')?.addEventListener('click', async (e) => 
   if (!res.ok || !data.ok) return;
   resultsCard.classList.remove('hidden');
   currentAnalysisId = data.id || id;
+  currentShareUrl = data.share_url || null;
   if (downloadPdfBtn) {
     downloadPdfBtn.disabled = !currentAnalysisId;
   }
+  setShareControlsEnabled(!!currentAnalysisId);
   renderSummary(data.summary, data.plan || 'free');
   renderCharts(data.summary);
   renderAnalysis(data.analysis);
@@ -371,5 +468,81 @@ if (downloadPdfBtn) {
   downloadPdfBtn.addEventListener('click', () => {
     if (!currentAnalysisId) return;
     window.location.href = `/analysis/${currentAnalysisId}/pdf`;
+  });
+}
+
+if (copyShareBtn) {
+  copyShareBtn.addEventListener('click', async () => {
+    if (!currentAnalysisId) return;
+    shareFeedback?.classList.add('hidden');
+    const url = currentShareUrl || await ensureShareUrl(currentAnalysisId);
+    if (!url) {
+      if (shareFeedback) {
+        shareFeedback.textContent = 'No se pudo generar el enlace. Intenta de nuevo.';
+        shareFeedback.classList.remove('hidden');
+      }
+      return;
+    }
+    currentShareUrl = url;
+    try {
+      await navigator.clipboard.writeText(url);
+      if (shareFeedback) {
+        shareFeedback.textContent = 'Enlace copiado. Cualquiera con el enlace puede ver este informe (solo lectura).';
+        shareFeedback.classList.remove('hidden');
+      }
+    } catch {
+      prompt('Copia este enlace:', url);
+    }
+  });
+}
+
+if (emailShareBtn) {
+  emailShareBtn.addEventListener('click', async () => {
+    if (!currentAnalysisId) return;
+    const url = currentShareUrl || await ensureShareUrl(currentAnalysisId);
+    if (!url) {
+      if (shareFeedback) {
+        shareFeedback.textContent = 'No se pudo generar el enlace. Intenta de nuevo.';
+        shareFeedback.classList.remove('hidden');
+      }
+      return;
+    }
+    currentShareUrl = url;
+    const subject = encodeURIComponent('Informe DRAGONNÉ — análisis hotelero');
+    const body = encodeURIComponent(
+      `Te comparto el análisis generado con DRAGONNÉ (solo lectura):\n\n${url}\n\nEl enlace permite ver el informe sin iniciar sesión.`
+    );
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  });
+}
+
+if (serverEmailShareBtn) {
+  serverEmailShareBtn.addEventListener('click', async () => {
+    if (!currentAnalysisId) return;
+    shareFeedback?.classList.add('hidden');
+    const addr = window.prompt('Correo del destinatario (DRAGONNÉ enviará el enlace público):');
+    if (!addr || !addr.trim()) return;
+    const fd = new FormData();
+    fd.append('to_email', addr.trim());
+    try {
+      const res = await fetch(`/analysis/${currentAnalysisId}/share-email`, { method: 'POST', body: fd });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) {
+        if (shareFeedback) {
+          shareFeedback.textContent = data.detail || data.error || 'No se pudo enviar el correo.';
+          shareFeedback.classList.remove('hidden');
+        }
+        return;
+      }
+      if (shareFeedback) {
+        shareFeedback.textContent = 'Listo: enviamos el enlace al correo indicado.';
+        shareFeedback.classList.remove('hidden');
+      }
+    } catch (e) {
+      if (shareFeedback) {
+        shareFeedback.textContent = e.message || 'Error de red.';
+        shareFeedback.classList.remove('hidden');
+      }
+    }
   });
 }

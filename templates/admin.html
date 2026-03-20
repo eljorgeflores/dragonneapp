@@ -1,70 +1,85 @@
 {% extends 'base.html' %}
 {% block title %}Admin — DRAGONNÉ{% endblock %}
+{% block body_class %}page-admin{% endblock %}
 {% block body %}
-<div class="app-shell">
+<div class="app-shell admin-panel">
   <header class="app-topbar">
-    <div>
-      <div class="brand"><img class="brand-logo" style="margin:0" src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" /></div>
-      <div class="muted">Panel admin · {{ current_user['email'] }}</div>
-    </div>
-    <div class="top-actions">
-      <a href="/admin/admins" class="btn btn-secondary btn-sm">Administradores</a>
-      <a href="/admin/api" class="btn btn-secondary btn-sm">Acceso API</a>
-      <a href="/app" class="btn btn-secondary btn-sm">Volver al panel</a>
+    <div class="app-topbar-inner">
+      <a href="/admin" class="brand-link">
+        <img class="brand-logo" src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" />
+      </a>
+      <div class="app-context muted">Panel admin · {{ current_user['email'] }}</div>
+      <div class="top-actions">
+        <a href="/admin/admins" class="btn btn-secondary btn-sm">Administradores</a>
+        <a href="/admin/api" class="btn btn-secondary btn-sm">Acceso API</a>
+        <a href="/app" class="btn btn-secondary btn-sm">Volver al panel</a>
+      </div>
     </div>
   </header>
 
-  <section class="dashboard-hero light-card">
-    <div>
-      <div class="eyebrow">Visión general</div>
-      <h1>Uso de clientes y actividad en DRAGONNÉ.</h1>
-      <p class="lede small">Mira qué hoteles están activos, cada cuándo entran, cuánto analizan y qué tan enganchados están con el producto.</p>
-    </div>
-    <div class="hero-plan-box">
-      <div class="pill">Snapshot</div>
-      <div class="mini-kpis">
-        <div>
-          <span>Hoteles</span>
-          <strong>{{ totals.total_hotels }}</strong>
-        </div>
-        <div>
-          <span>Usuarios con login reciente (&lt;=30 días)</span>
-          <strong>{{ totals.active_last_30d }}</strong>
-        </div>
-      </div>
-      <div class="mini-highlight">
-        <p class="muted">Total análisis: {{ totals.total_analyses }} · Reportes subidos: {{ totals.total_files }}.</p>
-      </div>
-    </div>
-  </section>
+  <div class="app-content">
+    {% if request.query_params.get('error') == 'no_borrar_self' %}
+    <div class="admin-flash admin-flash-warn" role="status">No puedes eliminar tu propia cuenta desde aquí.</div>
+    {% elif request.query_params.get('error') == 'usuario_no_encontrado' %}
+    <div class="admin-flash admin-flash-warn" role="status">Ese usuario ya no existe.</div>
+    {% endif %}
 
-  <section class="history-card light-card">
-    <div class="section-head">
+    <section class="dashboard-welcome admin-page-intro">
+      <h1 class="dashboard-page-title">Uso de clientes</h1>
+      <p class="dashboard-page-desc muted">Actividad en DRAGONNÉ: hoteles activos, análisis y enganche con el producto.</p>
+    </section>
+
+    <section class="dashboard-hero light-card">
       <div>
-        <h2>Hoteles y usuarios</h2>
-        <p class="muted">Ordenados por actividad reciente.</p>
+        <div class="eyebrow">Visión general</div>
+        <h2 class="admin-card-heading">Snapshot</h2>
+        <p class="lede small">Mira qué hoteles están activos, cada cuándo entran y cuánto analizan.</p>
       </div>
-    </div>
-    <div class="history-grid" style="grid-template-columns: 1fr 1fr;">
-      {% for u in users %}
-      <a href="/admin/users/{{ u.id }}" class="history-item">
-        <div class="history-top">
-          <strong>{{ u.hotel_name }}</strong>
-          <span>{{ u.email }}</span>
+      <div class="hero-plan-box">
+        <div class="pill">Totales</div>
+        <div class="mini-kpis">
+          <div>
+            <span>Hoteles</span>
+            <strong>{{ totals.total_hotels }}</strong>
+          </div>
+          <div>
+            <span>Activos (≤30 días)</span>
+            <strong>{{ totals.active_last_30d }}</strong>
+          </div>
         </div>
-        <p>
-          Plan {{ u.plan_label }} · {{ u.total_analyses }} análisis · {{ u.total_files }} reportes.
-        </p>
-        <div class="history-meta">
-          <span>Creado: {{ u.created_at[:10] }}</span>
-          <span>Último login: {{ u.last_login_at or 'Nunca' }}</span>
-          <span>Logins: {{ u.login_count }}</span>
-          <span>Última actividad: {{ u.last_activity or 'Sin datos' }}</span>
+        <div class="mini-highlight">
+          <p class="muted">Total análisis: {{ totals.total_analyses }} · Archivos subidos: {{ totals.total_files }}.</p>
         </div>
-      </a>
-      {% endfor %}
-    </div>
-  </section>
+      </div>
+    </section>
+
+    <section class="history-card light-card">
+      <div class="section-head">
+        <div>
+          <h2>Hoteles y usuarios</h2>
+          <p class="muted">Ordenados por actividad reciente. Pulsa una fila para gestionar plan, borrar análisis o eliminar cuenta.</p>
+        </div>
+      </div>
+      <div class="admin-stack">
+        {% for u in users %}
+        <a href="/admin/users/{{ u.id }}" class="admin-row-card admin-row-link">
+          <div class="history-top">
+            <strong>{{ u.hotel_name }}</strong>
+            <span>{{ u.email }}</span>
+          </div>
+          <p class="muted small" style="margin: 8px 0 0;">
+            Plan {{ u.plan_label }} · {{ u.total_analyses }} análisis · {{ u.total_files }} archivos en análisis.
+          </p>
+          <div class="history-meta">
+            <span>Creado: {{ u.created_at[:10] }}</span>
+            <span>Último login: {{ u.last_login_at or 'Nunca' }}</span>
+            <span>Logins: {{ u.login_count }}</span>
+            <span>Última actividad: {{ u.last_activity or 'Sin datos' }}</span>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
 </div>
 {% endblock %}
-

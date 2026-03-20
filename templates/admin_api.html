@@ -1,77 +1,87 @@
 {% extends 'base.html' %}
 {% block title %}Acceso API — Admin — DRAGONNÉ{% endblock %}
+{% block body_class %}page-admin{% endblock %}
 {% block body %}
-<div class="app-shell">
+<div class="app-shell admin-panel">
   <header class="app-topbar">
-    <div>
-      <div class="brand"><img class="brand-logo" style="margin:0" src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" /></div>
-      <div class="muted">Acceso API · {{ current_user['email'] }}</div>
-    </div>
-    <div class="top-actions">
-      <a href="/admin/admins" class="btn btn-secondary btn-sm">Administradores</a>
-      <a href="/admin" class="btn btn-secondary btn-sm">Volver a admin</a>
+    <div class="app-topbar-inner">
+      <a href="/admin" class="brand-link">
+        <img class="brand-logo" src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" />
+      </a>
+      <div class="app-context muted">Acceso API · {{ current_user['email'] }}</div>
+      <div class="top-actions">
+        <a href="/admin/admins" class="btn btn-secondary btn-sm">Administradores</a>
+        <a href="/admin" class="btn btn-secondary btn-sm">Volver a admin</a>
+      </div>
     </div>
   </header>
 
-  {% if api_key_flash %}
-  <section class="light-card" style="padding: 20px; margin-bottom: 20px; border: 2px solid var(--accent-primary-strong);">
-    <p style="margin: 0 0 8px;"><strong>Clave API generada</strong> — Cópiala ahora; no se volverá a mostrar.</p>
-    <code style="display: block; background: rgba(0,0,0,.06); padding: 12px; border-radius: 8px; word-break: break-all; font-size: 0.9rem;">{{ api_key_flash.key }}</code>
-    <p class="muted" style="margin: 12px 0 0; font-size: 0.875rem;">El usuario debe usar el header <code>X-API-Key</code> o <code>Authorization: Bearer &lt;clave&gt;</code>. Límites: {{ rate_limit_min }} req/min, {{ rate_limit_day }} req/día.</p>
-  </section>
-  {% endif %}
-
-  <section class="dashboard-hero light-card">
-    <div>
-      <div class="eyebrow">Autorización</div>
-      <h1>Acceso API</h1>
-      <p class="lede small">Aprueba o revoca el acceso a la API por usuario. Quien tenga clave puede consumir la API dentro de los límites ({{ rate_limit_min }} peticiones/minuto, {{ rate_limit_day }}/día). La API es pública pero solo los autorizados tienen clave.</p>
+  <div class="app-content">
+    {% if api_key_flash %}
+    <div class="admin-api-key-banner light-card" role="status">
+      <p class="admin-api-key-title"><strong>Clave API generada</strong> — Cópiala ahora; no se volverá a mostrar.</p>
+      <code class="admin-api-key-code">{{ api_key_flash.key }}</code>
+      <p class="muted small admin-api-key-hint">Header <code>X-API-Key</code> o <code>Authorization: Bearer &lt;clave&gt;</code>. Límites: {{ rate_limit_min }} req/min, {{ rate_limit_day }} req/día.</p>
     </div>
-  </section>
+    {% endif %}
 
-  <section class="history-card light-card">
-    <div class="section-head">
+    <section class="dashboard-welcome admin-page-intro">
+      <h1 class="dashboard-page-title">Acceso API</h1>
+      <p class="dashboard-page-desc muted">Aprueba o revoca claves por usuario. Solo quien tenga clave consume la API dentro de los límites.</p>
+    </section>
+
+    <section class="dashboard-hero light-card">
       <div>
-        <h2>Usuarios</h2>
-        <p class="muted">Dar acceso = generar clave (se muestra una vez). Revocar = invalidar la clave.</p>
+        <div class="eyebrow">Autorización</div>
+        <h2 class="admin-card-heading">Claves por hotel</h2>
+        <p class="lede small">Dar acceso genera una clave (se muestra una vez). Revocar la invalida al instante.</p>
       </div>
-    </div>
-    <div class="history-grid" style="grid-template-columns: 1fr;">
-      {% for u in users %}
-      <div class="history-item" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+    </section>
+
+    <section class="history-card light-card">
+      <div class="section-head">
         <div>
-          <div class="history-top">
-            <strong>{{ u.hotel_name }}</strong>
-            <span>{{ u.email }}</span>
-          </div>
-          <p class="muted" style="margin: 4px 0 0;">
-            {% if u.api_key %}
-            API activa · Clave: <code>{{ u.api_key_masked }}</code>
-            {% else %}
-            Sin acceso API
-            {% endif %}
-          </p>
-        </div>
-        <div style="display: flex; gap: 8px;">
-          {% if u.api_key %}
-          <form action="/admin/api/regenerate" method="post" style="display:inline;" onsubmit="return confirm('¿Regenerar clave? La anterior dejará de funcionar.');">
-            <input type="hidden" name="user_id" value="{{ u.id }}" />
-            <button type="submit" class="btn btn-secondary btn-sm">Regenerar clave</button>
-          </form>
-          <form action="/admin/api/revoke" method="post" style="display:inline;" onsubmit="return confirm('¿Revocar acceso API para este usuario?');">
-            <input type="hidden" name="user_id" value="{{ u.id }}" />
-            <button type="submit" class="btn btn-sm" style="background: #fff1f1; color: #9f3333; border: 1px solid #fecaca;">Revocar</button>
-          </form>
-          {% else %}
-          <form action="/admin/api/grant" method="post" style="display:inline;">
-            <input type="hidden" name="user_id" value="{{ u.id }}" />
-            <button type="submit" class="btn btn-primary btn-sm">Dar acceso API</button>
-          </form>
-          {% endif %}
+          <h2>Usuarios</h2>
+          <p class="muted">Regenerar invalida la clave anterior.</p>
         </div>
       </div>
-      {% endfor %}
-    </div>
-  </section>
+      <div class="admin-stack">
+        {% for u in users %}
+        <div class="admin-row-card admin-row-actions admin-api-user-row">
+          <div>
+            <div class="history-top">
+              <strong>{{ u.hotel_name }}</strong>
+              <span>{{ u.email }}</span>
+            </div>
+            <p class="muted small" style="margin: 8px 0 0;">
+              {% if u.api_key %}
+              API activa · <code>{{ u.api_key_masked }}</code>
+              {% else %}
+              Sin acceso API
+              {% endif %}
+            </p>
+          </div>
+          <div class="admin-inline-actions">
+            {% if u.api_key %}
+            <form action="/admin/api/regenerate" method="post" onsubmit="return confirm('¿Regenerar clave? La anterior dejará de funcionar.');">
+              <input type="hidden" name="user_id" value="{{ u.id }}" />
+              <button type="submit" class="btn btn-secondary btn-sm">Regenerar</button>
+            </form>
+            <form action="/admin/api/revoke" method="post" onsubmit="return confirm('¿Revocar acceso API para este usuario?');">
+              <input type="hidden" name="user_id" value="{{ u.id }}" />
+              <button type="submit" class="btn btn-sm admin-btn-danger-outline">Revocar</button>
+            </form>
+            {% else %}
+            <form action="/admin/api/grant" method="post">
+              <input type="hidden" name="user_id" value="{{ u.id }}" />
+              <button type="submit" class="btn btn-primary btn-sm">Dar acceso</button>
+            </form>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
 </div>
 {% endblock %}

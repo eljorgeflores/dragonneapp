@@ -1,82 +1,93 @@
 {% extends 'base.html' %}
 {% block title %}Administradores — Admin — DRAGONNÉ{% endblock %}
+{% block body_class %}page-admin{% endblock %}
 {% block body %}
-<div class="app-shell">
+<div class="app-shell admin-panel">
   <header class="app-topbar">
-    <div>
-      <div class="brand"><img class="brand-logo" style="margin:0" src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" /></div>
-      <div class="muted">Administradores · {{ current_user['email'] }}</div>
-    </div>
-    <div class="top-actions">
-      <a href="/admin" class="btn btn-secondary btn-sm">Volver a admin</a>
+    <div class="app-topbar-inner">
+      <a href="/admin" class="brand-link">
+        <img class="brand-logo" src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" />
+      </a>
+      <div class="app-context muted">Administradores · {{ current_user['email'] }}</div>
+      <div class="top-actions">
+        <a href="/admin/api" class="btn btn-secondary btn-sm">Acceso API</a>
+        <a href="/admin" class="btn btn-secondary btn-sm">Volver a admin</a>
+      </div>
     </div>
   </header>
 
-  <section class="dashboard-hero light-card">
-    <div>
-      <div class="eyebrow">Acceso admin</div>
-      <h1>Administradores</h1>
-      <p class="lede small">Los correos en <strong>ADMIN_EMAILS</strong> (configuración del servidor) siempre tienen acceso. Desde aquí puedes dar o quitar acceso admin a otros usuarios registrados.</p>
-    </div>
-  </section>
+  <div class="app-content">
+    <section class="dashboard-welcome admin-page-intro">
+      <h1 class="dashboard-page-title">Administradores</h1>
+      <p class="dashboard-page-desc muted">Los correos en <strong>ADMIN_EMAILS</strong> siempre tienen acceso. Desde aquí das o quitas <code>is_admin</code> a usuarios registrados.</p>
+    </section>
 
-  <section class="history-card light-card">
-    <div class="section-head">
+    <section class="dashboard-hero light-card">
       <div>
-        <h2>Con acceso admin</h2>
-        <p class="muted">Fijos = desde .env; Panel = asignado aquí.</p>
+        <div class="eyebrow">Acceso admin</div>
+        <h2 class="admin-card-heading">Quién entra al panel</h2>
+        <p class="lede small">Fijos = variables de entorno; panel = base de datos.</p>
       </div>
-    </div>
-    <div class="history-grid" style="grid-template-columns: 1fr;">
-      {% for a in admins %}
-      <div class="history-item" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+    </section>
+
+    <section class="history-card light-card">
+      <div class="section-head">
         <div>
-          <div class="history-top">
-            <strong>{{ a.email }}</strong>
-            {% if a.hotel_name %}<span>{{ a.hotel_name }}</span>{% endif %}
-          </div>
-          <p class="muted" style="margin: 4px 0 0;">
-            {% if a.fijo %}Fijo (configuración servidor){% else %}Desde panel{% endif %}
-          </p>
+          <h2>Con acceso admin</h2>
+          <p class="muted">Fijos desde servidor; el resto desde este panel.</p>
         </div>
-        {% if not a.fijo and a.user_id %}
-        <form action="/admin/admins/revoke" method="post" style="display:inline;" onsubmit="return confirm('¿Quitar acceso admin a este usuario?');">
-          <input type="hidden" name="user_id" value="{{ a.user_id }}" />
-          <button type="submit" class="btn btn-sm" style="background: #fff1f1; color: #9f3333; border: 1px solid #fecaca;">Quitar admin</button>
-        </form>
+      </div>
+      <div class="admin-stack">
+        {% for a in admins %}
+        <div class="admin-row-card admin-row-actions">
+          <div>
+            <div class="history-top">
+              <strong>{{ a.email }}</strong>
+              {% if a.hotel_name %}<span>{{ a.hotel_name }}</span>{% endif %}
+            </div>
+            <p class="muted small" style="margin: 8px 0 0;">
+              {% if a.fijo %}Fijo (configuración servidor){% else %}Asignado desde panel{% endif %}
+            </p>
+          </div>
+          {% if not a.fijo and a.user_id %}
+          <form action="/admin/admins/revoke" method="post" onsubmit="return confirm('¿Quitar acceso admin a este usuario?');">
+            <input type="hidden" name="user_id" value="{{ a.user_id }}" />
+            <button type="submit" class="btn btn-sm admin-btn-danger-outline">Quitar admin</button>
+          </form>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="history-card light-card">
+      <div class="section-head">
+        <div>
+          <h2>Usuarios sin acceso admin</h2>
+          <p class="muted">Puedes darles acceso para que entren al panel admin.</p>
+        </div>
+      </div>
+      <div class="admin-stack">
+        {% for u in non_admins %}
+        <div class="admin-row-card admin-row-actions">
+          <div>
+            <div class="history-top">
+              <strong>{{ u.email }}</strong>
+              <span>{{ u.hotel_name }}</span>
+            </div>
+            <p class="muted small" style="margin: 8px 0 0;">Alta: {{ u.created_at[:10] }}</p>
+          </div>
+          <form action="/admin/admins/grant" method="post">
+            <input type="hidden" name="user_id" value="{{ u.id }}" />
+            <button type="submit" class="btn btn-primary btn-sm">Hacer admin</button>
+          </form>
+        </div>
+        {% endfor %}
+        {% if not non_admins %}
+        <div class="empty-state">No hay más usuarios registrados fuera de la lista de administradores.</div>
         {% endif %}
       </div>
-      {% endfor %}
-    </div>
-  </section>
-
-  <section class="history-card light-card">
-    <div class="section-head">
-      <div>
-        <h2>Usuarios sin acceso admin</h2>
-        <p class="muted">Puedes darles acceso para que entren al panel admin.</p>
-      </div>
-    </div>
-    <div class="history-grid" style="grid-template-columns: 1fr;">
-      {% for u in non_admins %}
-      <div class="history-item" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
-        <div>
-          <div class="history-top">
-            <strong>{{ u.email }}</strong>
-            <span>{{ u.hotel_name }}</span>
-          </div>
-          <p class="muted" style="margin: 4px 0 0;">{{ u.created_at[:10] }}</p>
-        </div>
-        <form action="/admin/admins/grant" method="post" style="display:inline;">
-          <input type="hidden" name="user_id" value="{{ u.id }}" />
-          <button type="submit" class="btn btn-primary btn-sm">Hacer admin</button>
-        </form>
-      </div>
-      {% endfor %}
-      {% if not non_admins %}
-      <div class="empty-state">No hay más usuarios registrados; todos los usuarios con cuenta son ya administradores o están listados arriba.</div>
-      {% endif %}
-    </div>
-  </section>
+    </section>
+  </div>
 </div>
 {% endblock %}

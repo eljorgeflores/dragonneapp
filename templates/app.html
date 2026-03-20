@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}DRAGONNÉ — Panel{% endblock %}
 {% block body %}
-<div class="app-shell">
+<div class="app-shell" id="appShell" data-app-url="{{ app_url or '' }}" data-max-files="{{ max_files_per_analysis }}" data-plan="{{ user['plan'] }}">
   <header class="app-topbar">
     <div class="app-topbar-inner">
       <a href="/app" class="brand-link">
@@ -23,7 +23,7 @@
   <div class="app-content">
   <section class="dashboard-welcome">
     <h1 class="dashboard-page-title">Panel</h1>
-    <p class="dashboard-page-desc muted">Sube reportes de tu PMS o channel manager y recibe lectura comercial en minutos. Plan {{ plan_label }}: {% if user['plan'] == 'pro_plus' %}máxima capacidad.{% elif user['plan'] == 'pro' %}hasta 90 días, más archivos y análisis guardados.{% else %}hasta {{ free_max_days }} días, {{ free_max_files }} archivo por análisis, {{ free_max_analyses }} análisis guardados.{% endif %}</p>
+    <p class="dashboard-page-desc muted">Sube reportes de tu PMS o channel manager y recibe lectura comercial en minutos. Plan {{ plan_label }}: {% if user['plan'] == 'pro_plus' %}hasta {{ pro_plus_max_files }} archivos por análisis y hasta 180 días.{% elif user['plan'] == 'pro' %}hasta {{ pro_max_files }} archivos por análisis y hasta 90 días.{% else %}hasta {{ free_max_days }} días, <strong>1 solo archivo</strong> por análisis y {{ free_max_analyses }} análisis guardados.{% endif %}</p>
   </section>
 
   <main class="dashboard-grid">
@@ -35,19 +35,35 @@
         </div>
       </div>
       {% if can_upload %}
-      <form id="analyzeForm" class="analyze-form">
+      <form id="analyzeForm" class="analyze-form" data-max-files="{{ max_files_per_analysis }}">
+        <div class="upload-coach" role="region" aria-label="Guía para subir reportes">
+          <p class="upload-coach-title">Cómo sacarle provecho desde el primer análisis</p>
+          <ul class="upload-coach-list">
+            <li><strong>Qué subir:</strong> exportaciones <strong>CSV o Excel</strong> desde tu PMS, channel manager o motor (producción por canal, room history, pickup, forecast con fechas, etc.).</li>
+            <li><strong>Qué debe traer el archivo:</strong> idealmente <strong>fechas</strong> (estancia, negocio o reserva), <strong>canal o fuente</strong>, e <strong>ingresos o ADR</strong>. Entre más columnas útiles traiga, mejor la lectura.</li>
+            {% if user['plan'] == 'free' %}
+            <li class="upload-coach-highlight"><strong>Plan gratis:</strong> solo <strong>1 archivo</strong> por análisis. Si necesitas cruzar varias fuentes, sube el export más completo o <a href="/app/account">mejora tu plan</a>.</li>
+            {% else %}
+            <li><strong>Tu plan:</strong> puedes subir hasta <strong>{{ max_files_per_analysis }} archivos</strong> en un solo análisis para cruzar, por ejemplo, producción + forecast.</li>
+            {% endif %}
+            <li><strong>Si algo falla:</strong> puedes <strong>quitar archivos</strong> con la ✕ en la lista antes de analizar, o volver a elegir archivos sin recargar la página.</li>
+          </ul>
+        </div>
+
         <label>Contexto del negocio (opcional)</label>
+        <p class="field-hint muted small">Unas líneas sobre tu objetivo (más directo, precio fin de semana, temporada, etc.) mejoran el tono y las recomendaciones.</p>
         <textarea name="business_context" rows="4" placeholder="Ejemplo: Queremos crecer canal directo en fines de semana, bajar dependencia OTA en temporada alta y empujar estancias mínimas de 2 noches en vacaciones."></textarea>
 
         <label>Reportes</label>
         <div class="dropzone light" id="dropzone">
-          <input id="files" name="files" type="file" multiple accept=".csv,.xlsx,.xls,.xlsm" required />
+          <input id="files" name="files" type="file" {% if max_files_per_analysis > 1 %}multiple{% endif %} accept=".csv,.xlsx,.xls,.xlsm" required />
           <div>
-            <strong>Arrastra aquí tus reportes</strong>
-            <p>PMS, channel manager, motor o reportes exportados desde Google Sheets.</p>
+            <strong>{% if max_files_per_analysis > 1 %}Arrastra aquí tus reportes (máx. {{ max_files_per_analysis }}){% else %}Arrastra aquí tu reporte{% endif %}</strong>
+            <p>Un archivo a la vez en plan gratis; varios en Pro / Pro+.</p>
           </div>
         </div>
         <div id="fileList" class="file-list"></div>
+        <p id="fileLimitHint" class="field-hint muted small hidden" role="status"></p>
 
         <div class="button-row">
           <button class="btn btn-primary" type="submit">Analizar reportes</button>
@@ -81,6 +97,12 @@
         <li>Hallazgos prioritarios</li>
         <li>Riesgos detectados</li>
         <li>Recomendaciones accionables</li>
+      </ul>
+      <h3>Qué esperar</h3>
+      <ul class="clean-list">
+        <li>El análisis tarda normalmente <strong>1–3 minutos</strong> según tamaño del archivo.</li>
+        <li>Si el export viene sin fechas o sin canales/ingresos, el informe será más genérico: la herramienta te dirá qué reportes subir después.</li>
+        <li>Puedes <strong>descargar PDF</strong>, <strong>copiar enlace</strong>, <strong>abrir tu correo</strong> con el mensaje listo{% if smtp_configured %} o <strong>enviar el enlace desde DRAGONNÉ</strong> si el servidor tiene SMTP configurado{% endif %}.</li>
       </ul>
       <h3>Qué viene después</h3>
       <ul class="clean-list">
@@ -125,10 +147,16 @@
         <h2>Resultado del análisis</h2>
         <p class="muted" id="resultMeta"></p>
       </div>
-      <div class="results-actions">
+      <div class="results-actions results-actions-share">
         <span id="planBadge" class="pill"></span>
-        <button class="btn btn-secondary btn-sm" id="downloadPdfBtn" disabled>Descargar PDF</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="downloadPdfBtn" disabled>Descargar PDF</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="copyShareBtn" disabled title="Enlace de solo lectura">Copiar enlace</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="emailShareBtn" disabled title="Abre Gmail, Outlook u otro cliente con el mensaje listo">Abrir en mi correo</button>
+        {% if smtp_configured %}
+        <button type="button" class="btn btn-secondary btn-sm" id="serverEmailShareBtn" disabled title="DRAGONNÉ envía el enlace por SMTP">Enviar enlace (correo)</button>
+        {% endif %}
       </div>
+      <p id="shareFeedback" class="share-feedback muted small hidden" role="status" aria-live="polite"></p>
     </div>
     <div class="tablero-toggle-bar" aria-label="Cambiar sección del tablero para móviles">
       <button type="button" class="tablero-toggle is-active" data-target="center">Resumen</button>
