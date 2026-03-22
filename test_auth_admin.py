@@ -27,6 +27,7 @@ def test_signup_creates_user_and_redirects_to_onboarding():
     r = client.post(
         "/signup",
         data={"email": email, "password": password, "password_confirm": password},
+        follow_redirects=False,
     )
     assert r.status_code == 303
     assert r.headers.get("location") == "/onboarding"
@@ -82,7 +83,7 @@ def test_login_normal_user_redirects_to_app():
     client.post("/onboarding", data=onboarding)
     client.post("/logout")
 
-    r = client.post("/login", data={"email": email, "password": password})
+    r = client.post("/login", data={"email": email, "password": password}, follow_redirects=False)
     assert r.status_code == 303
     assert r.headers.get("location") == "/app"
 
@@ -95,7 +96,7 @@ def test_login_admin_user_redirects_to_admin():
         conn.execute("UPDATE users SET is_admin = 1 WHERE email = ?", (email,))
     client.post("/logout")
 
-    r = client.post("/login", data={"email": email, "password": password})
+    r = client.post("/login", data={"email": email, "password": password}, follow_redirects=False)
     assert r.status_code == 303
     assert r.headers.get("location") == "/admin"
 
@@ -141,10 +142,13 @@ def test_forgot_password_and_reset_flow():
     r_reset = client.post(
         f"/reset-password/{token}",
         data={"password": "newpassword123", "password_confirm": "newpassword123"},
+        follow_redirects=False,
     )
     assert r_reset.status_code == 303
     assert r_reset.headers.get("location") == "/login"
-    r_login = client.post("/login", data={"email": email, "password": "newpassword123"})
+    r_login = client.post(
+        "/login", data={"email": email, "password": "newpassword123"}, follow_redirects=False
+    )
     assert r_login.status_code == 303
 
 
@@ -168,6 +172,7 @@ def test_reset_password_invalid_token():
 
 
 def test_admin_requires_login():
+    client.cookies.clear()
     r = client.get("/admin", follow_redirects=False)
     assert r.status_code in (302, 303)
     assert "/login" in (r.headers.get("location") or "")

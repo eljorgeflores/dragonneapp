@@ -6,12 +6,9 @@ import math
 import os
 import re
 import secrets
-import smtplib
 import sqlite3
 from collections import Counter, defaultdict
 from datetime import datetime, timedelta, timezone
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 from pathlib import Path
 from threading import Lock
 from typing import Any, Dict, List, Optional, Tuple
@@ -21,14 +18,10 @@ from config import (
     ADMIN_EMAILS,
     ALLOWED_UPLOAD_EXTENSIONS,
     ANNUAL_PRICE,
-    API_RATE_LIMIT_PER_DAY,
-    API_RATE_LIMIT_PER_MINUTE,
     APP_NAME,
     APP_URL,
     BASE_DIR,
-    CONSULTING_CALENDAR_URL,
     DEFAULT_MODEL,
-    EMAIL_FROM,
     FREE_MAX_ANALYSES,
     FREE_MAX_DAYS,
     FREE_MAX_FILES_PER_ANALYSIS,
@@ -47,7 +40,6 @@ from config import (
     SECRET_KEY,
     SMTP_HOST,
     SMTP_PASSWORD,
-    SMTP_PORT,
     SMTP_USER,
     STRIPE_ANNUAL_PRICE_ID,
     STRIPE_MONTHLY_PRICE_ID,
@@ -63,57 +55,36 @@ from db import db, init_db
 # Esquema SQLite al importar el módulo (comportamiento previo a Fase 1).
 init_db()
 
-# #region agent log
-def _debug_log(location: str, message: str, data: Optional[Dict] = None, hypothesis_id: Optional[str] = None, run_id: Optional[str] = None):
-    try:
-        _log_path = BASE_DIR / ".cursor" / "debug-95cdbc.log"
-        payload = {"sessionId": "95cdbc", "timestamp": int(time.time() * 1000), "location": location, "message": message, "data": data or {}, "hypothesisId": hypothesis_id or "", "runId": run_id or ""}
-        with open(_log_path, "a", encoding="utf-8") as f:
-            f.write(json.dumps(payload, ensure_ascii=False) + "\n")
-    except Exception:
-        pass
-
-def _dbg(location: str, message: str, data: Optional[Dict] = None, hypothesis_id: Optional[str] = None):
-    try:
-        log_path = BASE_DIR / ".cursor" / "debug-b78cbe.log"
-        payload = {"sessionId": "b78cbe", "timestamp": int(time.time() * 1000), "location": location, "message": message, "data": data or {}, "hypothesisId": hypothesis_id or ""}
-        with open(log_path, "a", encoding="utf-8") as f:
-            f.write(json.dumps(payload, ensure_ascii=False) + "\n")
-    except Exception:
-        pass
-# #endregion
+from debuglog import _dbg, _debug_log
 
 """
-DragonApp — aplicación FastAPI monolítica (Fase 1).
+DragonApp — ensamblador FastAPI + lógica de negocio (análisis, billing, API v1).
 
-Deuda técnica / siguiente paso: dividir en routes/* y services/* como en docs/dragonapp_phase1.md.
-Mantener este archivo como ensamblador mientras se extraen routers sin romper URLs.
+Routers: routes/marketing, auth, consulting (aislado), admin, analysis. Ver docs/dragonapp_phase2.md.
 """
 
 import pandas as pd
 import requests
+from auth_session import (
+    get_api_user,
+    is_admin_user,
+    onboarding_pending,
+    require_user,
+)
+from email_smtp import send_analysis_share_link_email
 from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Query, Request, Response, UploadFile
+from fastapi.exception_handlers import http_exception_handler as default_http_exception_handler
 from fastapi.routing import APIRouter
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse, StreamingResponse
-from fastapi.openapi.docs import get_redoc_html
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
+from plans import max_upload_files_for_plan, plan_label
 from starlette.middleware.sessions import SessionMiddleware
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.colors import HexColor
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase.pdfmetrics import stringWidth
-
-
-def max_upload_files_for_plan(plan: str) -> int:
-    """Máximo de archivos por análisis según plan de producto."""
-    if plan == "free":
-        return FREE_MAX_FILES_PER_ANALYSIS
-    if plan == "pro":
-        return PRO_90_MAX_FILES
-    if plan == "pro_plus":
-        return PRO_180_MAX_FILES
-    return FREE_MAX_FILES_PER_ANALYSIS
+from templating import templates
+from time_utils import now_iso
 
 
 def public_share_base_url() -> str:
@@ -146,7 +117,7 @@ async def add_security_headers(request: Request, call_next):
 
 
 @app.exception_handler(HTTPException)
-def http_exception_handler(request: Request, exc: HTTPException):
+async def http_exception_handler(request: Request, exc: HTTPException):
     """Para 401 (no autenticado): redirigir a login en peticiones HTML; devolver JSON con redirect en API/fetch."""
     if exc.status_code == 401:
         accept = (request.headers.get("accept") or "").lower()
@@ -159,18 +130,10 @@ def http_exception_handler(request: Request, exc: HTTPException):
             {"ok": False, "error": exc.detail or "Debes iniciar sesión", "redirect": "/login"},
             status_code=401,
         )
-    raise exc
+    return await default_http_exception_handler(request, exc)
 
 
 api_v1 = APIRouter(prefix="/api/v1", tags=["API v1"])
-templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
-# SEO: app_url disponible en todas las plantillas (canonical, JSON-LD, OG)
-templates.env.globals["app_url"] = (APP_URL or "").rstrip("/") or None
-
-
-def now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
-
 
 _SHARE_EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
@@ -178,139 +141,6 @@ _SHARE_EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 def looks_like_email(addr: str) -> bool:
     s = (addr or "").strip()
     return bool(s) and len(s) <= 254 and bool(_SHARE_EMAIL_RE.match(s))
-
-
-def send_password_reset_email(to_email: str, reset_link: str) -> bool:
-    """Envía el enlace de recuperación por correo. Devuelve True si se envió, False si no hay SMTP o falló."""
-    if not SMTP_HOST or not SMTP_USER or not SMTP_PASSWORD:
-        return False
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = "Recuperar contraseña — DRAGONNÉ"
-    msg["From"] = EMAIL_FROM
-    msg["To"] = to_email
-    text = f"""Hola,
-
-Alguien pidió restablecer la contraseña de tu cuenta en DRAGONNÉ.
-
-Haz clic en el siguiente enlace para elegir una nueva contraseña (válido 1 hora):
-
-{reset_link}
-
-Si no pediste esto, ignora este correo.
-
-—
-DRAGONNÉ
-"""
-    html = f"""<p>Hola,</p>
-<p>Alguien pidió restablecer la contraseña de tu cuenta en DRAGONNÉ.</p>
-<p><a href="{reset_link}">Haz clic aquí para elegir una nueva contraseña</a> (válido 1 hora).</p>
-<p>Si no pediste esto, ignora este correo.</p>
-<p>—<br>DRAGONNÉ</p>"""
-    msg.attach(MIMEText(text, "plain", "utf-8"))
-    msg.attach(MIMEText(html, "html", "utf-8"))
-    try:
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=15) as server:
-            server.starttls()
-            server.login(SMTP_USER, SMTP_PASSWORD)
-            server.sendmail(EMAIL_FROM, [to_email], msg.as_string())
-        return True
-    except Exception:
-        return False
-
-
-def send_analysis_share_link_email(to_email: str, share_url: str, hotel_label: str) -> bool:
-    """Envía por SMTP el enlace público de solo lectura del análisis."""
-    if not SMTP_HOST or not SMTP_USER or not SMTP_PASSWORD:
-        return False
-    subject = f"Informe compartido — {hotel_label} — DRAGONNÉ"
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = subject
-    msg["From"] = EMAIL_FROM
-    msg["To"] = to_email.strip()
-    text = f"""Hola,
-
-Te comparten un informe de análisis hotelero generado con DRAGONNÉ (vista de solo lectura):
-
-{share_url}
-
-Cualquiera con este enlace puede ver el contenido del informe. Si no esperabas este correo, ignóralo.
-
-—
-DRAGONNÉ
-"""
-    html = f"""<p>Hola,</p>
-<p>Te comparten un informe de análisis hotelero generado con <strong>DRAGONNÉ</strong> (solo lectura).</p>
-<p><a href="{share_url}">Abrir informe compartido</a></p>
-<p class="muted">Cualquiera con este enlace puede ver el contenido. Si no esperabas este correo, ignóralo.</p>
-<p>—<br>DRAGONNÉ</p>"""
-    msg.attach(MIMEText(text, "plain", "utf-8"))
-    msg.attach(MIMEText(html, "html", "utf-8"))
-    try:
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=15) as server:
-            server.starttls()
-            server.login(SMTP_USER, SMTP_PASSWORD)
-            server.sendmail(EMAIL_FROM, [to_email.strip()], msg.as_string())
-        return True
-    except Exception:
-        return False
-
-
-def send_consulting_lead_email(
-    to_email: str,
-    name: str,
-    from_email: str,
-    company: str,
-    type_: str,
-    message: str,
-    phone: str,
-    lang: str,
-) -> bool:
-    """Envía por correo el lead de la landing de consultoría."""
-    if not SMTP_HOST or not SMTP_USER or not SMTP_PASSWORD:
-        return False
-    subject = "Nuevo lead consultoría — DRAGONNÉ"
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = subject
-    msg["From"] = EMAIL_FROM
-    msg["To"] = to_email
-    if from_email:
-        msg["Reply-To"] = from_email
-    lines = [
-        f"Nombre: {name}",
-        f"Email: {from_email}",
-        f"Empresa / Proyecto: {company}",
-        f"Tipo: {type_}",
-        f"Teléfono: {phone}",
-        "",
-        "Mensaje:",
-        message,
-        "",
-        f"Idioma del formulario: {lang}",
-    ]
-    text = "\n".join(lines)
-    html = "<br>".join(
-        [
-            f"<strong>Nombre:</strong> {name}",
-            f"<br><strong>Email:</strong> {from_email}",
-            f"<br><strong>Empresa / Proyecto:</strong> {company}",
-            f"<br><strong>Tipo:</strong> {type_}",
-            f"<br><strong>Teléfono:</strong> {phone}",
-            "<br><br><strong>Mensaje:</strong><br>",
-            message.replace("\n", "<br>"),
-            f"<br><br><em>Idioma del formulario: {lang}</em>",
-        ]
-    )
-    msg.attach(MIMEText(text, "plain", "utf-8"))
-    msg.attach(MIMEText(html, "html", "utf-8"))
-    try:
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=15) as server:
-            server.starttls()
-            server.login(SMTP_USER, SMTP_PASSWORD)
-            msg["To"] = to_email
-            server.sendmail(EMAIL_FROM, [to_email], msg.as_string())
-        return True
-    except Exception:
-        return False
 
 
 DATE_ALIASES = [
@@ -893,239 +723,6 @@ def call_openai(summary: Dict[str, Any], business_context: str, hotel_context: D
     return json.loads(text)
 
 
-def password_hash(password: str) -> str:
-    salt = secrets.token_hex(16)
-    digest = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), 200_000)
-    return f"{salt}${digest.hex()}"
-
-
-def verify_password(password: str, password_hash_value: str) -> bool:
-    try:
-        salt, stored = password_hash_value.split("$", 1)
-        digest = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), 200_000).hex()
-        return hmac.compare_digest(digest, stored)
-    except Exception:
-        return False
-
-
-def create_reset_token(user_id: int) -> str:
-    token = secrets.token_urlsafe(32)
-    expires_at = (datetime.now(timezone.utc) + timedelta(hours=2)).isoformat()
-    with db() as conn:
-        conn.execute(
-            """
-            INSERT INTO password_resets (user_id, token, expires_at, created_at)
-            VALUES (?, ?, ?, ?)
-            """,
-            (user_id, token, expires_at, now_iso()),
-        )
-    return token
-
-
-def consume_reset_token(token: str) -> Optional[int]:
-    now_ts = datetime.now(timezone.utc).isoformat()
-    with db() as conn:
-        row = conn.execute(
-            """
-            SELECT * FROM password_resets
-            WHERE token = ? AND used = 0 AND expires_at > ?
-            """,
-            (token, now_ts),
-        ).fetchone()
-        if not row:
-            return None
-        conn.execute(
-            "UPDATE password_resets SET used = 1 WHERE id = ?",
-            (row["id"],),
-        )
-        return int(row["user_id"])
-
-
-def get_current_user(request: Request) -> Optional[sqlite3.Row]:
-    user_id = request.session.get("user_id")
-    if not user_id:
-        return None
-    with db() as conn:
-        return conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
-
-
-def require_user(request: Request) -> sqlite3.Row:
-    user = get_current_user(request)
-    if not user:
-        raise HTTPException(status_code=401, detail="Debes iniciar sesión")
-    return user
-
-
-def onboarding_pending(user: sqlite3.Row) -> bool:
-    """True si el usuario aún no completó el onboarding (nombre hotel / contacto)."""
-    name = (user["hotel_name"] or "").strip() if user["hotel_name"] is not None else ""
-    contact = (user["contact_name"] or "").strip() if user["contact_name"] is not None else ""
-    return not name or not contact
-
-
-class APIRateLimiter:
-    """Límites por API key: N peticiones/minuto y M/día (estándar industria)."""
-    def __init__(self, per_minute: int = 60, per_day: int = 1000):
-        self.per_minute = per_minute
-        self.per_day = per_day
-        self._data: Dict[str, Dict[str, Any]] = {}
-        self._lock = Lock()
-
-    def _day_start(self) -> str:
-        return datetime.now(timezone.utc).date().isoformat()
-
-    def check_and_consume(self, api_key: str) -> None:
-        """Lanza HTTPException 429 si se excede el límite."""
-        now = time.time()
-        today = self._day_start()
-        with self._lock:
-            rec = self._data.get(api_key)
-            if not rec:
-                rec = {"minute_count": 0, "minute_ts": now, "day_count": 0, "day_date": today}
-                self._data[api_key] = rec
-            if now - rec["minute_ts"] >= 60:
-                rec["minute_count"] = 0
-                rec["minute_ts"] = now
-            if rec["day_date"] != today:
-                rec["day_count"] = 0
-                rec["day_date"] = today
-            rec["minute_count"] += 1
-            rec["day_count"] += 1
-            if rec["minute_count"] > self.per_minute:
-                raise HTTPException(
-                    status_code=429,
-                    detail=f"Límite por minuto excedido ({self.per_minute} req/min). Intenta más tarde.",
-                    headers={"Retry-After": "60"},
-                )
-            if rec["day_count"] > self.per_day:
-                raise HTTPException(
-                    status_code=429,
-                    detail=f"Límite diario excedido ({self.per_day} req/día). Mañana se reinicia.",
-                    headers={"Retry-After": "86400"},
-                )
-
-
-api_rate_limiter = APIRateLimiter(per_minute=API_RATE_LIMIT_PER_MINUTE, per_day=API_RATE_LIMIT_PER_DAY)
-
-LOGIN_RATE_LIMIT_ATTEMPTS = 6
-LOGIN_RATE_LIMIT_WINDOW_SEC = 300  # 5 minutos
-
-
-class LoginRateLimiter:
-    """Límite de intentos de login fallidos por IP para mitigar fuerza bruta."""
-    def __init__(self, max_attempts: int = 6, window_sec: int = 300):
-        self.max_attempts = max_attempts
-        self.window_sec = window_sec
-        self._attempts: Dict[str, List[float]] = {}
-        self._lock = Lock()
-
-    def _client_ip(self, request: Request) -> str:
-        forwarded = request.headers.get("x-forwarded-for")
-        if forwarded:
-            return forwarded.split(",")[0].strip()
-        return (request.scope.get("client") or ("", 0))[0] or "unknown"
-
-    def is_blocked(self, request: Request) -> bool:
-        ip = self._client_ip(request)
-        now = time.time()
-        with self._lock:
-            if ip not in self._attempts:
-                return False
-            self._attempts[ip] = [t for t in self._attempts[ip] if now - t < self.window_sec]
-            return len(self._attempts[ip]) >= self.max_attempts
-
-    def record_failed(self, request: Request) -> None:
-        ip = self._client_ip(request)
-        now = time.time()
-        with self._lock:
-            if ip not in self._attempts:
-                self._attempts[ip] = []
-            self._attempts[ip] = [t for t in self._attempts[ip] if now - t < self.window_sec]
-            self._attempts[ip].append(now)
-
-
-login_rate_limiter = LoginRateLimiter(max_attempts=LOGIN_RATE_LIMIT_ATTEMPTS, window_sec=LOGIN_RATE_LIMIT_WINDOW_SEC)
-
-
-def get_api_user(
-    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
-    authorization: Optional[str] = Header(None),
-) -> sqlite3.Row:
-    """Autenticación: API key asignada en Admin. Rate limit por clave."""
-    key = x_api_key
-    if not key and authorization and authorization.startswith("Bearer "):
-        key = authorization[7:].strip()
-    if not key:
-        raise HTTPException(status_code=401, detail="Falta API key. Usa el header X-API-Key o Authorization: Bearer <tu_key>.")
-    with db() as conn:
-        user = conn.execute("SELECT * FROM users WHERE api_key = ?", (key,)).fetchone()
-    if not user:
-        raise HTTPException(status_code=401, detail="API key inválida o no autorizada. Solicita acceso en la web.")
-    api_rate_limiter.check_and_consume(key)
-    if onboarding_pending(user):
-        raise HTTPException(status_code=403, detail="Completa el onboarding antes de usar la API.")
-    return user
-
-
-def plan_label(plan: str) -> str:
-    if plan == "pro_plus":
-        return "Pro+"
-    if plan == "pro":
-        return "Pro"
-    return "Gratis"
-
-
-def is_admin_user(user: sqlite3.Row) -> bool:
-    if user["is_admin"]:
-        return True
-    if ADMIN_EMAILS and user["email"].strip().lower() in ADMIN_EMAILS:
-        return True
-    return False
-
-
-def require_admin(request: Request) -> sqlite3.Row:
-    user = require_user(request)
-    if not is_admin_user(user):
-        raise HTTPException(status_code=403, detail="No tienes permisos de administrador.")
-    return user
-
-
-ADMIN_PLAN_VALUES = frozenset({"free", "pro", "pro_plus"})
-
-
-def _delete_uploaded_files_for_analysis(conn, analysis_id: int) -> None:
-    rows = conn.execute("SELECT stored_path FROM uploaded_files WHERE analysis_id = ?", (analysis_id,)).fetchall()
-    for r in rows:
-        try:
-            p = Path(r["stored_path"])
-            if p.is_file():
-                p.unlink()
-        except OSError:
-            pass
-    conn.execute("DELETE FROM uploaded_files WHERE analysis_id = ?", (analysis_id,))
-
-
-def delete_analysis_by_id(conn, analysis_id: int) -> bool:
-    """Borra análisis, filas de uploaded_files y archivos en disco."""
-    row = conn.execute("SELECT id FROM analyses WHERE id = ?", (analysis_id,)).fetchone()
-    if not row:
-        return False
-    _delete_uploaded_files_for_analysis(conn, analysis_id)
-    conn.execute("DELETE FROM analyses WHERE id = ?", (analysis_id,))
-    return True
-
-
-def delete_user_and_related(conn, user_id: int) -> bool:
-    """Borra todos los análisis (y archivos) del usuario, sesiones y el usuario."""
-    rows = conn.execute("SELECT id FROM analyses WHERE user_id = ?", (user_id,)).fetchall()
-    for r in rows:
-        _delete_uploaded_files_for_analysis(conn, r["id"])
-    conn.execute("DELETE FROM analyses WHERE user_id = ?", (user_id,))
-    conn.execute("DELETE FROM user_sessions WHERE user_id = ?", (user_id,))
-    cur = conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
-    return cur.rowcount > 0
-
-
 def analyses_count(user_id: int) -> int:
     with db() as conn:
         row = conn.execute("SELECT COUNT(*) AS c FROM analyses WHERE user_id = ?", (user_id,)).fetchone()
@@ -1334,435 +931,6 @@ def sync_user_from_stripe_customer(customer_id: str, subscription_id: Optional[s
         )
 
 
-def _marketing_context():
-    return {
-        "monthly_price": MONTHLY_PRICE,
-        "annual_price": ANNUAL_PRICE,
-        "free_max_days": FREE_MAX_DAYS,
-        "free_max_files": FREE_MAX_FILES_PER_ANALYSIS,
-        "free_max_analyses": FREE_MAX_ANALYSES,
-        "premium_monthly_price": PREMIUM_MONTHLY_PRICE,
-        "pro_90_max_days": PRO_90_MAX_DAYS,
-        "pro_90_max_files": PRO_90_MAX_FILES,
-        "pro_90_max_analyses": PRO_90_MAX_ANALYSES,
-        "pro_180_max_days": PRO_180_MAX_DAYS,
-        "pro_180_max_files": PRO_180_MAX_FILES,
-        "pro_180_max_analyses": PRO_180_MAX_ANALYSES,
-        "current_year": datetime.now(timezone.utc).year,
-    }
-
-
-@app.get("/", response_class=HTMLResponse)
-def home(request: Request):
-    # #region agent log
-    _debug_log("app.py:home", "GET / entry", {"has_user": bool(get_current_user(request))}, "H2")
-    # #endregion
-    user = get_current_user(request)
-    if user:
-        return RedirectResponse("/app", status_code=303)
-    ctx = _marketing_context()
-    # #region agent log
-    _debug_log("app.py:home", "marketing context keys", {"keys": list(ctx.keys())}, "H2")
-    # #endregion
-    return templates.TemplateResponse("marketing.html", {"request": request, **ctx})
-
-
-@app.get("/marketing", response_class=HTMLResponse)
-def marketing_alias(request: Request):
-    """Alias legible para la landing principal del producto."""
-    return home(request)
-
-
-@app.get("/precios", response_class=HTMLResponse)
-def precios_page(request: Request):
-    """Página de precios fuera de la landing para reducir fricción."""
-    return templates.TemplateResponse("precios.html", {"request": request, **_marketing_context()})
-
-
-# ---------------------------------------------------------------------------
-# Consultoría (fuera del núcleo DragonApp SaaS). Ver docs/dragonapp_phase1.md.
-# ---------------------------------------------------------------------------
-def _consulting_translations():
-    """Carga traducciones desde consulting_i18n (ruta relativa a app.py para evitar import errors)."""
-    import importlib.util
-    spec = importlib.util.spec_from_file_location(
-        "consulting_i18n",
-        BASE_DIR / "consulting_i18n.py",
-    )
-    if spec is None or spec.loader is None:
-        return {"es": {}, "en": {}}
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return getattr(mod, "CONSULTING_TRANSLATIONS", {"es": {}, "en": {}})
-
-
-class _DefaultT(dict):
-    """Dict que devuelve '' para cualquier clave faltante (evita UndefinedError en plantilla)."""
-    def __missing__(self, key):
-        return ""
-
-
-@app.get("/consultoria", response_class=HTMLResponse)
-def consulting_landing(request: Request, lang: str = Query("es", alias="lang")):
-    """Landing de consultoría: startups, SMBs, hospitalidad. Soporta ?lang=es|en."""
-    if lang not in ("es", "en"):
-        lang = "es"
-    trans = _consulting_translations()
-    t = trans.get(lang) or trans.get("es")
-    if not t:
-        t = _DefaultT()
-    else:
-        t = _DefaultT(t)
-    try:
-        lead_path = request.url_for("consulting_lead_submit").path
-    except Exception:
-        lead_path = "/consultoria/lead"
-    return templates.TemplateResponse(
-        "consulting.html",
-        {
-            "request": request,
-            "current_year": datetime.now(timezone.utc).year,
-            "lang": lang,
-            "t": t,
-            "calendar_url": CONSULTING_CALENDAR_URL,
-            "lead_form_action": lead_path,
-        },
-    )
-
-
-@app.get("/consulting", response_class=HTMLResponse)
-def consulting_landing_en(request: Request, lang: str = Query("en", alias="lang")):
-    """
-    Alias en inglés para la landing de consultoría: dragonne.co/consulting.
-    Por defecto sirve la versión en inglés (?lang=en), pero respeta ?lang=es|en.
-    """
-    return consulting_landing(request=request, lang=lang)
-
-
-@app.post("/consultoria/lead", name="consulting_lead_submit")
-def consulting_lead_submit(
-    request: Request,
-    name: str = Form(..., min_length=1, max_length=200),
-    email: str = Form(..., min_length=1, max_length=254),
-    company: str = Form(""),
-    type: str = Form(""),
-    message: str = Form(""),
-    phone: str = Form(""),
-    lang: str = Form("es"),
-):
-    """Captura lead del formulario de la landing de consultoría. Guarda en DB y envía correo."""
-    email = email.strip().lower()
-    if not re.match(r"^[^@]+@[^@]+\.[^@]+$", email):
-        return JSONResponse({"ok": False, "error": "invalid_email"}, status_code=400)
-    now = datetime.now(timezone.utc).isoformat()
-    with db() as conn:
-        conn.execute(
-            """INSERT INTO consulting_leads (name, email, company, type, message, phone, lang, created_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-            (name.strip()[:200], email, (company or "").strip()[:300], (type or "").strip()[:80], (message or "").strip()[:5000], (phone or "").strip()[:50], (lang or "es")[:5], now),
-        )
-    # Email a jorge@dragonne.co
-    try:
-        send_consulting_lead_email(
-            to_email="jorge@dragonne.co",
-            name=name.strip()[:200],
-            from_email=email,
-            company=(company or "").strip()[:300],
-            type_=(type or "").strip()[:80],
-            message=(message or "").strip()[:5000],
-            phone=(phone or "").strip()[:50],
-            lang=(lang or "es")[:5],
-        )
-    except Exception:
-        # No rompemos el flujo si el correo falla; queda en DB
-        pass
-    return JSONResponse({"ok": True})
-
-
-@app.get("/pricing", include_in_schema=False)
-def pricing_redirect():
-    """Redirige a la página de precios en español."""
-    return RedirectResponse("/precios", status_code=302)
-
-
-@app.get("/api", response_class=HTMLResponse)
-def api_docs_page(request: Request):
-    """Página de documentación de la API; enlaza a /docs y /redoc."""
-    return templates.TemplateResponse("api_docs.html", {"request": request})
-
-
-@app.get("/redoc", include_in_schema=False)
-def redoc_docs(request: Request):
-    """ReDoc: schema en ruta relativa (mismo origen) y ReDoc 2.x estable."""
-    return get_redoc_html(
-        openapi_url="/openapi.json",
-        title=f"{APP_NAME} - ReDoc",
-        redoc_js_url="https://cdn.jsdelivr.net/npm/redoc@2.1.3/bundles/redoc.standalone.js",
-    )
-
-
-@app.get("/sitemap.xml", response_class=Response)
-def sitemap_xml():
-    """Sitemap XML para SEO y crawlers."""
-    base = (APP_URL or "http://127.0.0.1:8000").rstrip("/")
-    urls = [
-        base + "/",
-        base + "/login",
-        base + "/signup",
-        base + "/precios",
-        base + "/api",
-        base + "/#producto",
-        base + "/#como-funciona",
-        base + "/#prueba",
-        base + "/#integraciones",
-    ]
-    xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
-    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
-    for u in urls:
-        xml += f"  <url><loc>{u}</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>\n"
-    xml += "</urlset>"
-    return Response(content=xml, media_type="application/xml")
-
-
-@app.get("/robots.txt", response_class=PlainTextResponse)
-def robots_txt():
-    """Indica a crawlers la ubicación del sitemap."""
-    base = (APP_URL or "http://127.0.0.1:8000").rstrip("/")
-    return PlainTextResponse(
-        "User-agent: *\nAllow: /\nDisallow: /app\nDisallow: /admin\nDisallow: /s/\nSitemap: " + base + "/sitemap.xml\n"
-    )
-
-
-@app.get("/mockup-analisis", response_class=HTMLResponse)
-def mockup_analisis(request: Request):
-    """Vista estática de cómo se ve un análisis en la plataforma (para demo/marketing)."""
-    return templates.TemplateResponse("mockup_analisis.html", {"request": request})
-
-
-@app.get("/signup", response_class=HTMLResponse)
-def signup_page(request: Request):
-    if get_current_user(request):
-        return RedirectResponse("/app", status_code=303)
-    return templates.TemplateResponse("signup.html", {"request": request, "error": None})
-
-
-@app.post("/signup")
-def signup(
-    request: Request,
-    email: str = Form(...),
-    password: str = Form(...),
-    password_confirm: str = Form(""),
-):
-    email = email.strip().lower()
-    if len(password) < 8:
-        return templates.TemplateResponse("signup.html", {"request": request, "error": "La contraseña debe tener al menos 8 caracteres."}, status_code=400)
-    if password != password_confirm:
-        return templates.TemplateResponse("signup.html", {"request": request, "error": "Las contraseñas no coinciden."}, status_code=400)
-    with db() as conn:
-        exists = conn.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()
-        if exists:
-            return templates.TemplateResponse("signup.html", {"request": request, "error": "Ese correo ya está registrado."}, status_code=400)
-        cur = conn.execute(
-            """
-            INSERT INTO users (
-                hotel_name,
-                hotel_size,
-                hotel_category,
-                hotel_location,
-                contact_name,
-                email,
-                password_hash,
-                plan,
-                created_at,
-                updated_at
-            ) VALUES ('', NULL, NULL, NULL, '', ?, ?, 'free', ?, ?)
-            """,
-            (email, password_hash(password), now_iso(), now_iso()),
-        )
-        request.session["user_id"] = cur.lastrowid
-    return RedirectResponse("/onboarding", status_code=303)
-
-
-@app.get("/login", response_class=HTMLResponse)
-def login_page(request: Request, next_url: str = Query("", alias="next")):
-    user = get_current_user(request)
-    if user:
-        return RedirectResponse("/admin" if is_admin_user(user) else "/app", status_code=303)
-    next_safe = next_url.strip() if next_url and next_url.strip().startswith("/") and not next_url.strip().startswith("//") else ""
-    return templates.TemplateResponse("login.html", {"request": request, "error": None, "next": next_safe})
-
-
-@app.post("/login")
-def login(request: Request, email: str = Form(...), password: str = Form(...), next_url: str = Form("", alias="next")):
-    if login_rate_limiter.is_blocked(request):
-        return templates.TemplateResponse("login.html", {"request": request, "error": "Demasiados intentos. Espera unos minutos e intenta de nuevo."}, status_code=429)
-    with db() as conn:
-        user = conn.execute("SELECT * FROM users WHERE email = ?", (email.strip().lower(),)).fetchone()
-    if not user or not verify_password(password, user["password_hash"]):
-        login_rate_limiter.record_failed(request)
-        return templates.TemplateResponse("login.html", {"request": request, "error": "Correo o contraseña incorrectos."}, status_code=400)
-    # Actualizamos métricas de login
-    with db() as conn:
-        conn.execute(
-            "UPDATE users SET last_login_at = ?, login_count = COALESCE(login_count, 0) + 1, updated_at = ? WHERE id = ?",
-            (now_iso(), now_iso(), user["id"]),
-        )
-        cur = conn.execute(
-            "INSERT INTO user_sessions (user_id, started_at, last_seen_at, request_count) VALUES (?, ?, ?, ?)",
-            (user["id"], now_iso(), now_iso(), 1),
-        )
-        session_id = cur.lastrowid
-    request.session["user_id"] = user["id"]
-    request.session["session_id"] = session_id
-    next_safe = next_url.strip() if next_url and next_url.strip().startswith("/") and not next_url.strip().startswith("//") else ""
-    redirect_to = next_safe or "/app"
-    # Si es admin y no pidió una URL concreta, llevarlo al panel admin (gestión de usuarios, accesos)
-    if not next_safe and is_admin_user(user):
-        redirect_to = "/admin"
-    # #region agent log
-    _debug_log("app.py:login", "POST login success", {"redirect_to": redirect_to}, "H3")
-    # #endregion
-    return RedirectResponse(redirect_to, status_code=303)
-
-
-@app.get("/forgot-password", response_class=HTMLResponse)
-def forgot_password_page(request: Request):
-    if get_current_user(request):
-        return RedirectResponse("/app", status_code=303)
-    return templates.TemplateResponse("forgot_password.html", {"request": request, "sent": False, "error": None, "reset_link": None, "smtp_configured": bool(SMTP_HOST and SMTP_USER and SMTP_PASSWORD)})
-
-
-@app.post("/forgot-password", response_class=HTMLResponse)
-def forgot_password(request: Request, email: str = Form(...)):
-    email = email.strip().lower()
-    reset_link = None
-    email_sent = False
-    smtp_configured = bool(SMTP_HOST and SMTP_USER and SMTP_PASSWORD)
-    try:
-        with db() as conn:
-            user = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
-        if not user:
-            return templates.TemplateResponse("forgot_password.html", {"request": request, "sent": True, "error": None, "reset_link": None, "email_sent": False, "smtp_configured": smtp_configured})
-        token = create_reset_token(user["id"])
-        reset_link = f"{APP_URL}/reset-password/{token}"
-        if send_password_reset_email(email, reset_link):
-            email_sent = True
-            reset_link = None  # No mostrar en pantalla cuando el correo se envió bien
-        return templates.TemplateResponse("forgot_password.html", {"request": request, "sent": True, "error": None, "reset_link": reset_link, "email_sent": email_sent, "smtp_configured": smtp_configured})
-    except Exception:
-        return templates.TemplateResponse("forgot_password.html", {
-            "request": request, "sent": False, "error": "Algo falló al generar el enlace. Vuelve a intentar; si el servidor no tiene correo configurado, se mostrará un enlace en pantalla.", "reset_link": reset_link, "email_sent": False, "smtp_configured": smtp_configured
-        })
-
-
-@app.get("/reset-password/{token}", response_class=HTMLResponse)
-def reset_password_page(request: Request, token: str):
-    """Página pública: el usuario abre el enlace desde el correo. No debe estar protegida por WAF ni bloqueada por Referer."""
-    # No consumimos todavía el token, solo validamos forma general
-    return templates.TemplateResponse("reset_password.html", {"request": request, "token": token, "error": None})
-
-
-@app.post("/reset-password/{token}", response_class=HTMLResponse)
-def reset_password(request: Request, token: str, password: str = Form(...), password_confirm: str = Form(...)):
-    if password != password_confirm:
-        return templates.TemplateResponse("reset_password.html", {"request": request, "token": token, "error": "Las contraseñas no coinciden."})
-    if len(password) < 8:
-        return templates.TemplateResponse("reset_password.html", {"request": request, "token": token, "error": "La contraseña debe tener al menos 8 caracteres."})
-    user_id = consume_reset_token(token)
-    if not user_id:
-        return templates.TemplateResponse("reset_password.html", {"request": request, "token": None, "error": "El enlace ya no es válido. Solicita uno nuevo."})
-    with db() as conn:
-        conn.execute(
-            "UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?",
-            (password_hash(password), now_iso(), user_id),
-        )
-    return RedirectResponse("/login", status_code=303)
-
-
-@app.post("/logout")
-def logout(request: Request):
-    session_id = request.session.get("session_id")
-    if session_id:
-        with db() as conn:
-            conn.execute(
-                "UPDATE user_sessions SET ended_at = ?, last_seen_at = ?, request_count = request_count + 1 WHERE id = ?",
-                (now_iso(), now_iso(), session_id),
-            )
-    request.session.clear()
-    return RedirectResponse("/", status_code=303)
-
-
-@app.get("/onboarding", response_class=HTMLResponse)
-def onboarding_page(request: Request):
-    user = get_current_user(request)
-    if not user:
-        return RedirectResponse("/login", status_code=303)
-    if not onboarding_pending(user):
-        # Permitir editar: mostrar formulario con datos actuales
-        return templates.TemplateResponse("onboarding.html", {"request": request, "error": None, "user": user, "editing": True})
-    return templates.TemplateResponse("onboarding.html", {"request": request, "error": None, "user": user, "editing": False})
-
-
-@app.post("/onboarding")
-def onboarding(
-    request: Request,
-    hotel_name: str = Form(...),
-    contact_name: str = Form(...),
-    hotel_size: str = Form(...),
-    hotel_category: str = Form(...),
-    hotel_location: str = Form(...),
-    hotel_stars: str = Form("0"),
-    hotel_location_context: str = Form(""),
-    hotel_pms: str = Form(""),
-    hotel_channel_manager: str = Form(""),
-    hotel_booking_engine: str = Form(""),
-    hotel_tech_other: str = Form(""),
-    hotel_google_business_url: str = Form(""),
-    hotel_expedia_url: str = Form(""),
-    hotel_booking_url: str = Form(""),
-):
-    user = get_current_user(request)
-    if not user:
-        return RedirectResponse("/login", status_code=303)
-    hotel_name = hotel_name.strip()
-    contact_name = contact_name.strip()
-    hotel_size = hotel_size.strip() or None
-    hotel_category = hotel_category.strip() or None
-    hotel_location = hotel_location.strip() or None
-    try:
-        stars_int = int(hotel_stars.strip() or "0")
-        if stars_int < 0 or stars_int > 5:
-            stars_int = 0
-    except ValueError:
-        stars_int = 0
-    location_ctx = hotel_location_context.strip() or None
-    pms = hotel_pms.strip() or None
-    channel_mgr = hotel_channel_manager.strip() or None
-    booking_eng = hotel_booking_engine.strip() or None
-    tech_other = hotel_tech_other.strip() or None
-    gmb_url = hotel_google_business_url.strip() or None
-    expedia_url = hotel_expedia_url.strip() or None
-    booking_url = hotel_booking_url.strip() or None
-    if not hotel_name or not contact_name:
-        return templates.TemplateResponse("onboarding.html", {"request": request, "error": "Nombre del hotel y contacto son obligatorios."}, status_code=400)
-    if not hotel_size or not hotel_category:
-        return templates.TemplateResponse("onboarding.html", {"request": request, "error": "Indica el tamaño y la categoría de tu hotel para personalizar las recomendaciones."}, status_code=400)
-    with db() as conn:
-        conn.execute(
-            """
-            UPDATE users SET hotel_name = ?, contact_name = ?, hotel_size = ?, hotel_category = ?, hotel_location = ?,
-            hotel_stars = ?, hotel_location_context = ?,
-            hotel_pms = ?, hotel_channel_manager = ?, hotel_booking_engine = ?, hotel_tech_other = ?,
-            hotel_google_business_url = ?, hotel_expedia_url = ?, hotel_booking_url = ?,
-            updated_at = ?
-            WHERE id = ?
-            """,
-            (hotel_name, contact_name, hotel_size, hotel_category, hotel_location, stars_int, location_ctx,
-             pms, channel_mgr, booking_eng, tech_other, gmb_url, expedia_url, booking_url, now_iso(), user["id"]),
-        )
-    return RedirectResponse("/app", status_code=303)
-
-
 @app.get("/app/account", response_class=HTMLResponse)
 def account_page(request: Request):
     """Mi cuenta: perfil, editar datos, y opciones de plan (Pro y Pro+)."""
@@ -1846,8 +1014,7 @@ def _user_row_as_dict(row: sqlite3.Row) -> dict:
     return dict(row) if row is not None else {}
 
 
-@app.post("/analyze")
-async def analyze(request: Request, business_context: str = Form(""), files: List[UploadFile] = File(...)):
+async def web_analyze(request: Request, business_context: str, files: List[UploadFile]):
     # #region agent log
     _debug_log("app.py:analyze", "POST /analyze entry", {"files_count": len(files) if files else 0}, "H4")
     _dbg("app.py:analyze", "entry", {"files_count": len(files) if files else 0, "filenames": [getattr(f, "filename", None) for f in (files or [])]}, "H_A")
@@ -1922,8 +1089,7 @@ async def analyze(request: Request, business_context: str = Form(""), files: Lis
         return JSONResponse({"ok": False, "error": f"No se pudo completar el análisis. Intenta de nuevo más tarde. ({err_msg})"}, status_code=500)
 
 
-@app.get("/analysis/{analysis_id}")
-def analysis_detail(request: Request, analysis_id: int):
+def web_analysis_detail_json(request: Request, analysis_id: int):
     user = require_user(request)
     with db() as conn:
         row = conn.execute("SELECT * FROM analyses WHERE id = ? AND user_id = ?", (analysis_id, user["id"])).fetchone()
@@ -1943,8 +1109,7 @@ def analysis_detail(request: Request, analysis_id: int):
     })
 
 
-@app.post("/analysis/{analysis_id}/share")
-def ensure_analysis_share_link(request: Request, analysis_id: int):
+def web_analysis_share_ensure(request: Request, analysis_id: int):
     """Crea o devuelve el enlace público de solo lectura para un análisis (p. ej. análisis guardados antes de la migración)."""
     user = require_user(request)
     with db() as conn:
@@ -1961,8 +1126,7 @@ def ensure_analysis_share_link(request: Request, analysis_id: int):
     return JSONResponse({"ok": True, "share_url": f"{public_share_base_url()}/s/{token}"})
 
 
-@app.post("/analysis/{analysis_id}/share-email")
-async def email_share_link(request: Request, analysis_id: int, to_email: str = Form(...)):
+async def web_analysis_share_email(request: Request, analysis_id: int, to_email: str):
     """Envía por SMTP el enlace público del análisis a un correo (requiere SMTP configurado en el servidor)."""
     user = require_user(request)
     if not SMTP_HOST or not SMTP_USER or not SMTP_PASSWORD:
@@ -1992,8 +1156,7 @@ async def email_share_link(request: Request, analysis_id: int, to_email: str = F
     return JSONResponse({"ok": True, "message": "Correo enviado."})
 
 
-@app.get("/s/{share_token}", response_class=HTMLResponse)
-def shared_analysis_view(request: Request, share_token: str):
+def web_shared_analysis_page(request: Request, share_token: str):
     """Vista pública de solo lectura del análisis (quien tenga el enlace)."""
     with db() as conn:
         row = conn.execute(
@@ -2293,8 +1456,7 @@ def _pdf_build_analysis_pdf(
     c.showPage()
 
 
-@app.get("/analysis/{analysis_id}/pdf")
-def analysis_pdf(request: Request, analysis_id: int):
+def web_analysis_pdf_download(request: Request, analysis_id: int):
     user = require_user(request)
     with db() as conn:
         row = conn.execute(
@@ -2467,6 +1629,18 @@ def api_analysis_pdf(analysis_id: int, user: sqlite3.Row = Depends(get_api_user)
 
 app.include_router(api_v1)
 
+from routes.admin import router as admin_router
+from routes.analysis import router as analysis_router
+from routes.auth import router as auth_router
+from routes.consulting import router as consulting_router
+from routes.marketing import router as marketing_router
+
+app.include_router(marketing_router)
+app.include_router(auth_router)
+app.include_router(consulting_router)
+app.include_router(admin_router)
+app.include_router(analysis_router)
+
 
 @app.post("/billing/create-checkout-session")
 def create_checkout_session(request: Request, billing_cycle: str = Form(...), plan_tier: str = Form("pro")):
@@ -2578,319 +1752,3 @@ def health_config():
         "stripe_pro_price_configured": bool(STRIPE_MONTHLY_PRICE_ID and STRIPE_MONTHLY_PRICE_ID.strip()),
         "stripe_pro_plus_price_configured": bool(STRIPE_PRO_PLUS_PRICE_ID and STRIPE_PRO_PLUS_PRICE_ID.strip()),
     }
-
-
-@app.get("/admin", response_class=HTMLResponse)
-def admin_home(request: Request):
-    admin = require_admin(request)
-    with db() as conn:
-        # Totales globales
-        totals_row = conn.execute(
-            """
-            SELECT
-              COUNT(*) AS total_hotels,
-              SUM(COALESCE(login_count, 0)) AS total_logins,
-              SUM(CASE WHEN last_login_at IS NOT NULL AND last_login_at >= ? THEN 1 ELSE 0 END) AS active_last_30d
-            FROM users
-            """,
-            ((datetime.now(timezone.utc) - timedelta(days=30)).isoformat(),),
-        ).fetchone()
-        analyses_totals = conn.execute(
-            "SELECT COUNT(*) AS total_analyses, COALESCE(SUM(file_count), 0) AS total_files FROM analyses"
-        ).fetchone()
-
-        # Usuarios con actividad agregada
-        rows = conn.execute(
-            """
-            SELECT
-              u.*,
-              COALESCE(a.cnt, 0) AS total_analyses,
-              COALESCE(a.files_cnt, 0) AS total_files,
-              s.last_activity
-            FROM users u
-            LEFT JOIN (
-              SELECT
-                user_id,
-                COUNT(*) AS cnt,
-                SUM(file_count) AS files_cnt,
-                MAX(created_at) AS last_analysis_at
-              FROM analyses
-              GROUP BY user_id
-            ) a ON a.user_id = u.id
-            LEFT JOIN (
-              SELECT
-                user_id,
-                MAX(COALESCE(ended_at, last_seen_at)) AS last_activity
-              FROM user_sessions
-              GROUP BY user_id
-            ) s ON s.user_id = u.id
-            ORDER BY COALESCE(s.last_activity, u.created_at) DESC
-            LIMIT 100
-            """
-        ).fetchall()
-
-    users = []
-    for r in rows:
-        users.append({
-            "id": r["id"],
-            "hotel_name": r["hotel_name"],
-            "email": r["email"],
-            "plan_label": plan_label(r["plan"]),
-            "created_at": r["created_at"],
-            "last_login_at": r["last_login_at"],
-            "login_count": r["login_count"] or 0,
-            "total_analyses": r["total_analyses"],
-            "total_files": r["total_files"],
-            "last_activity": r["last_activity"],
-        })
-
-    totals = {
-        "total_hotels": totals_row["total_hotels"],
-        "active_last_30d": totals_row["active_last_30d"],
-        "total_analyses": analyses_totals["total_analyses"],
-        "total_files": analyses_totals["total_files"],
-    }
-
-    return templates.TemplateResponse("admin.html", {
-        "request": request,
-        "current_user": admin,
-        "users": users,
-        "totals": totals,
-    })
-
-
-@app.get("/admin/users/{user_id}", response_class=HTMLResponse)
-def admin_user_detail(request: Request, user_id: int):
-    admin = require_admin(request)
-    with db() as conn:
-        user = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
-        if not user:
-            raise HTTPException(status_code=404, detail="Usuario no encontrado")
-        analysis_rows = conn.execute(
-            "SELECT * FROM analyses WHERE user_id = ? ORDER BY created_at DESC LIMIT 50",
-            (user_id,),
-        ).fetchall()
-        sessions = conn.execute(
-            "SELECT * FROM user_sessions WHERE user_id = ? ORDER BY started_at DESC LIMIT 50",
-            (user_id,),
-        ).fetchall()
-        stats_row = conn.execute(
-            """
-            SELECT
-              COUNT(*) AS total_analyses,
-              COALESCE(SUM(file_count), 0) AS total_files,
-              MAX(created_at) AS last_analysis_at
-            FROM analyses
-            WHERE user_id = ?
-            """,
-            (user_id,),
-        ).fetchone()
-        last_activity_row = conn.execute(
-            "SELECT MAX(COALESCE(ended_at, last_seen_at)) AS last_activity FROM user_sessions WHERE user_id = ?",
-            (user_id,),
-        ).fetchone()
-
-    analyses_list = []
-    for row in analysis_rows:
-        try:
-            summary = json.loads(row["summary_json"])
-        except (TypeError, json.JSONDecodeError):
-            summary = {}
-        created_raw = row["created_at"] or ""
-        created_at_str = created_raw[:19].replace("T", " ") if created_raw else ""
-        analyses_list.append({
-            "id": row["id"],
-            "title": row["title"] or f"Análisis {row['id']}",
-            "created_at": created_at_str,
-            "file_count": row["file_count"],
-            "days_covered": row["days_covered"] if row["days_covered"] is not None else 0,
-            "reports_detected": int(summary.get("reports_detected") or 0),
-        })
-
-    stats = {
-        "total_analyses": stats_row["total_analyses"],
-        "total_files": stats_row["total_files"],
-        "last_analysis_at": stats_row["last_analysis_at"],
-        "last_activity": last_activity_row["last_activity"],
-    }
-
-    return templates.TemplateResponse("admin_user_detail.html", {
-        "request": request,
-        "current_user": admin,
-        "user": user,
-        "plan_label": plan_label(user["plan"]),
-        "analyses": analyses_list,
-        "sessions": sessions,
-        "stats": stats,
-    })
-
-
-@app.post("/admin/users/{user_id}/plan")
-def admin_user_set_plan(request: Request, user_id: int, plan: str = Form(...)):
-    require_admin(request)
-    plan = (plan or "").strip()
-    if plan not in ADMIN_PLAN_VALUES:
-        raise HTTPException(status_code=400, detail="Plan no válido")
-    with db() as conn:
-        u = conn.execute("SELECT id FROM users WHERE id = ?", (user_id,)).fetchone()
-        if not u:
-            raise HTTPException(status_code=404, detail="Usuario no encontrado")
-        conn.execute("UPDATE users SET plan = ?, updated_at = ? WHERE id = ?", (plan, now_iso(), user_id))
-    return RedirectResponse(f"/admin/users/{user_id}", status_code=303)
-
-
-@app.post("/admin/users/{user_id}/delete")
-def admin_user_delete(request: Request, user_id: int):
-    admin = require_admin(request)
-    if admin["id"] == user_id:
-        return RedirectResponse("/admin?error=no_borrar_self", status_code=303)
-    with db() as conn:
-        target = conn.execute("SELECT id FROM users WHERE id = ?", (user_id,)).fetchone()
-        if not target:
-            return RedirectResponse("/admin?error=usuario_no_encontrado", status_code=303)
-        delete_user_and_related(conn, user_id)
-    return RedirectResponse("/admin", status_code=303)
-
-
-@app.post("/admin/analyses/{analysis_id}/delete")
-def admin_analysis_delete(request: Request, analysis_id: int):
-    require_admin(request)
-    with db() as conn:
-        row = conn.execute("SELECT user_id FROM analyses WHERE id = ?", (analysis_id,)).fetchone()
-        if not row:
-            raise HTTPException(status_code=404, detail="Análisis no encontrado")
-        uid = row["user_id"]
-        delete_analysis_by_id(conn, analysis_id)
-    return RedirectResponse(f"/admin/users/{uid}", status_code=303)
-
-
-@app.get("/admin/admins", response_class=HTMLResponse)
-def admin_admins(request: Request):
-    """Lista administradores (fijos + desde panel) y permite dar/quitar acceso."""
-    admin = require_admin(request)
-    admin_emails_set = ADMIN_EMAILS
-    with db() as conn:
-        all_users = conn.execute(
-            "SELECT id, email, hotel_name, is_admin, created_at FROM users ORDER BY email"
-        ).fetchall()
-    admins = []
-    non_admins = []
-    for email in sorted(admin_emails_set):
-        admins.append({"email": email, "hotel_name": None, "fijo": True, "user_id": None})
-    for r in all_users:
-        email_lower = (r["email"] or "").strip().lower()
-        if r["is_admin"]:
-            if email_lower not in admin_emails_set:
-                admins.append({
-                    "email": r["email"],
-                    "hotel_name": r["hotel_name"],
-                    "fijo": False,
-                    "user_id": r["id"],
-                })
-        else:
-            if email_lower not in admin_emails_set:
-                non_admins.append({
-                    "id": r["id"],
-                    "email": r["email"],
-                    "hotel_name": r["hotel_name"],
-                    "created_at": r["created_at"],
-                })
-    return templates.TemplateResponse("admin_admins.html", {
-        "request": request,
-        "current_user": admin,
-        "admins": admins,
-        "non_admins": non_admins,
-    })
-
-
-@app.post("/admin/admins/grant")
-def admin_admins_grant(request: Request, user_id: int = Form(...)):
-    """Concede acceso admin a un usuario (is_admin=1)."""
-    require_admin(request)
-    with db() as conn:
-        conn.execute("UPDATE users SET is_admin = 1, updated_at = ? WHERE id = ?", (now_iso(), user_id))
-    return RedirectResponse("/admin/admins", status_code=303)
-
-
-@app.post("/admin/admins/revoke")
-def admin_admins_revoke(request: Request, user_id: int = Form(...)):
-    """Quita acceso admin (is_admin=0). No afecta a los de ADMIN_EMAILS."""
-    require_admin(request)
-    with db() as conn:
-        user = conn.execute("SELECT email FROM users WHERE id = ?", (user_id,)).fetchone()
-        if user and user["email"].strip().lower() in ADMIN_EMAILS:
-            return RedirectResponse("/admin/admins?error=fijo", status_code=303)
-        conn.execute("UPDATE users SET is_admin = 0, updated_at = ? WHERE id = ?", (now_iso(), user_id))
-    return RedirectResponse("/admin/admins", status_code=303)
-
-
-@app.get("/admin/api", response_class=HTMLResponse)
-def admin_api(request: Request):
-    """Módulo Admin: listar usuarios y aprobar/revocar acceso API."""
-    admin = require_admin(request)
-    api_key_flash = request.session.pop("api_key_flash", None)
-    with db() as conn:
-        rows = conn.execute(
-            """
-            SELECT id, email, hotel_name, plan, api_key, created_at
-            FROM users
-            ORDER BY hotel_name
-            """
-        ).fetchall()
-    users = []
-    for r in rows:
-        key = r["api_key"] if r["api_key"] else None
-        masked = ("••••••••" + key[-4:] if key and len(key) > 4 else "••••••••") if key else "—"
-        users.append({
-            "id": r["id"],
-            "email": r["email"],
-            "hotel_name": r["hotel_name"],
-            "plan": r["plan"],
-            "api_key": key,
-            "api_key_masked": masked,
-        })
-    return templates.TemplateResponse("admin_api.html", {
-        "request": request,
-        "current_user": admin,
-        "users": users,
-        "api_key_flash": api_key_flash,
-        "rate_limit_min": API_RATE_LIMIT_PER_MINUTE,
-        "rate_limit_day": API_RATE_LIMIT_PER_DAY,
-    })
-
-
-@app.post("/admin/api/grant")
-def admin_api_grant(request: Request, user_id: int = Form(...)):
-    """Genera una API key para el usuario y la muestra una vez."""
-    require_admin(request)
-    with db() as conn:
-        user = conn.execute("SELECT id, email, hotel_name FROM users WHERE id = ?", (user_id,)).fetchone()
-        if not user:
-            raise HTTPException(status_code=404, detail="Usuario no encontrado")
-        new_key = secrets.token_urlsafe(32)
-        conn.execute("UPDATE users SET api_key = ?, updated_at = ? WHERE id = ?", (new_key, now_iso(), user_id))
-    request.session["api_key_flash"] = {"user_id": user_id, "key": new_key}
-    return RedirectResponse("/admin/api", status_code=303)
-
-
-@app.post("/admin/api/revoke")
-def admin_api_revoke(request: Request, user_id: int = Form(...)):
-    """Revoca el acceso API del usuario (borra la clave)."""
-    require_admin(request)
-    with db() as conn:
-        conn.execute("UPDATE users SET api_key = NULL, updated_at = ? WHERE id = ?", (now_iso(), user_id))
-    return RedirectResponse("/admin/api?revoked=1", status_code=303)
-
-
-@app.post("/admin/api/regenerate")
-def admin_api_regenerate(request: Request, user_id: int = Form(...)):
-    """Regenera la API key del usuario (la anterior deja de funcionar)."""
-    require_admin(request)
-    with db() as conn:
-        user = conn.execute("SELECT id FROM users WHERE id = ?", (user_id,)).fetchone()
-        if not user:
-            raise HTTPException(status_code=404, detail="Usuario no encontrado")
-        new_key = secrets.token_urlsafe(32)
-        conn.execute("UPDATE users SET api_key = ?, updated_at = ? WHERE id = ?", (new_key, now_iso(), user_id))
-    request.session["api_key_flash"] = {"user_id": user_id, "key": new_key}
-    return RedirectResponse("/admin/api", status_code=303)
