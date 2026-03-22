@@ -15,6 +15,8 @@ const tableroRight = document.getElementById('tableroRight');
 const paywallEl = document.getElementById('paywall');
 const planBadge = document.getElementById('planBadge');
 const resultMeta = document.getElementById('resultMeta');
+const analyzeFormStatus = document.getElementById('analyzeFormStatus');
+const resultHero = document.getElementById('resultHero');
 const downloadPdfBtn = document.getElementById('downloadPdfBtn');
 const copyShareBtn = document.getElementById('copyShareBtn');
 const emailShareBtn = document.getElementById('emailShareBtn');
@@ -22,6 +24,13 @@ const serverEmailShareBtn = document.getElementById('serverEmailShareBtn');
 const shareFeedback = document.getElementById('shareFeedback');
 let currentAnalysisId = null;
 let currentShareUrl = null;
+let loadingPhaseTimer = null;
+
+const LOADING_PHASES = [
+  'Leyendo archivos y validando formato…',
+  'Detectando fechas, canales y métricas…',
+  'Generando tu informe ejecutivo con IA…',
+];
 
 function getMaxFiles() {
   const raw = (form && form.dataset.maxFiles) || (appShell && appShell.dataset.maxFiles) || '5';
@@ -52,6 +61,10 @@ function setInputFiles(fileArray) {
 
 function renderFiles() {
   if (!fileInput || !fileList) return;
+  if (analyzeFormStatus && fileInput.files.length) {
+    analyzeFormStatus.textContent = '';
+    analyzeFormStatus.classList.add('hidden');
+  }
   fileList.innerHTML = '';
   [...fileInput.files].forEach((file, idx) => {
     const chip = document.createElement('div');
@@ -120,8 +133,164 @@ function htmlEscape(value) {
   return String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 }
 
+function formatDisplayDate(raw) {
+  if (!raw) return '';
+  const s = String(raw).replace('T', ' ').trim();
+  return s.length >= 16 ? s.slice(0, 16) : s;
+}
+
+function formatDateShort(iso) {
+  if (!iso) return '—';
+  try {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return String(iso).slice(0, 10);
+    return d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' });
+  } catch {
+    return '—';
+  }
+}
+
+function formatSheetLabel(sheetName) {
+  if (!sheetName) return 'Reporte';
+  const s = String(sheetName);
+  const idx = s.indexOf('::');
+  if (idx === -1) return s;
+  return `${s.slice(0, idx)} · hoja «${s.slice(idx + 2)}»`;
+}
+
+function executiveLead(text) {
+  const t = (text || '').trim().replace(/\s+/g, ' ');
+  if (!t) {
+    return 'Revisa el resumen completo abajo, las métricas clave y las acciones sugeridas para decidir el siguiente paso.';
+  }
+  if (t.length <= 300) return t;
+  const slice = t.slice(0, 300);
+  const dot = slice.lastIndexOf('.');
+  return dot > 100 ? slice.slice(0, dot + 1) : `${slice}…`;
+}
+
+function datosFaltantesAsStrings(analysis) {
+  const gaps = analysis?.datos_faltantes;
+  if (!gaps || !gaps.length) return [];
+  return gaps
+    .map(g => (typeof g === 'string' ? g : (g && (g.text || g.detalle || g.titulo)) || ''))
+    .map(s => String(s).trim())
+    .filter(Boolean);
+}
+
+function renderResultSourcePanel(summary) {
+  const el = document.getElementById('resultSourcePanel');
+  if (!el || !summary) return;
+  const rows = summary.report_summaries || [];
+  if (!rows.length) {
+    el.classList.add('hidden');
+    el.innerHTML = '';
+    return;
+  }
+  el.classList.remove('hidden');
+  const parts = rows.map(r => {
+    const label = formatSheetLabel(r.sheet_name);
+    const dc = r.days_covered ?? 0;
+    const dr = r.date_range || {};
+    const start = formatDateShort(dr.start);
+    const end = formatDateShort(dr.end);
+    const fd = r.fields_detected || [];
+    const fields = fd.slice(0, 12).join(', ');
+    const more = fd.length > 12 ? '…' : '';
+    const fieldsLine = fields
+      ? `Campos detectados: ${fields}${more}`
+      : 'Sin columnas clave identificadas con confianza en este archivo.';
+    return `<div class="result-source-row">
+      <div>
+        <div class="result-source-name">${htmlEscape(label)}</div>
+        <div class="result-source-fields">${htmlEscape(fieldsLine)}</div>
+      </div>
+      <div class="result-source-meta">
+        <strong>${htmlEscape(dc)}</strong> días en este reporte<br/>
+        Rango útil: ${htmlEscape(start)} → ${htmlEscape(end)}
+      </div>
+    </div>`;
+  });
+  el.innerHTML = `<h3>Qué se analizó y con qué cobertura</h3><div class="result-source-rows">${parts.join('')}</div>`;
+}
+
+function renderResultHero(title, createdAt, analysis, summary) {
+  if (!resultHero) return;
+  resultHero.classList.remove('hidden');
+  const titleEl = document.getElementById('resultHeroTitle');
+  const metaEl = document.getElementById('resultHeroMeta');
+  const leadEl = document.getElementById('resultHeroLead');
+  const gapBox = document.getElementById('resultHeroGapCallout');
+  const gapList = document.getElementById('resultHeroGapList');
+  if (titleEl) titleEl.textContent = title || 'Análisis guardado';
+  const files = summary?.total_files ?? '—';
+  const reps = summary?.reports_detected ?? '—';
+  const od = summary?.overall_days_covered ?? 0;
+  const md = summary?.max_days_covered ?? 0;
+  if (metaEl) {
+    const when = formatDisplayDate(createdAt);
+    metaEl.textContent = `${when ? `${when} · ` : ''}${files} archivo(s) · ${reps} reporte(s) · ${od} días ventana total · hasta ${md} días en un solo reporte`;
+  }
+  if (leadEl) leadEl.textContent = executiveLead(analysis?.resumen_ejecutivo);
+  const strGaps = datosFaltantesAsStrings(analysis);
+  if (gapBox && gapList) {
+    if (strGaps.length) {
+      gapBox.classList.remove('hidden');
+      const cap = strGaps.slice(0, 6);
+      gapList.innerHTML = cap.map(s => `<li>${htmlEscape(s)}</li>`).join('');
+      if (strGaps.length > 6) {
+        gapList.insertAdjacentHTML(
+          'beforeend',
+          `<li class="muted">${htmlEscape(`+ ${strGaps.length - 6} más en el panel «Acciones».`)}</li>`,
+        );
+      }
+    } else {
+      gapBox.classList.add('hidden');
+      gapList.innerHTML = '';
+    }
+  }
+}
+
+function hideResultHeroAndSource() {
+  if (resultHero) resultHero.classList.add('hidden');
+  const rsp = document.getElementById('resultSourcePanel');
+  if (rsp) {
+    rsp.classList.add('hidden');
+    rsp.innerHTML = '';
+  }
+}
+
+function startLoadingPhaseCycle() {
+  if (loadingPhaseTimer) clearInterval(loadingPhaseTimer);
+  const phaseEl = document.getElementById('resultsLoadingPhase');
+  if (!phaseEl) return;
+  let i = 0;
+  phaseEl.textContent = LOADING_PHASES[0];
+  loadingPhaseTimer = setInterval(() => {
+    i = (i + 1) % LOADING_PHASES.length;
+    phaseEl.textContent = LOADING_PHASES[i];
+  }, 4500);
+}
+
+function stopLoadingPhaseCycle() {
+  if (loadingPhaseTimer) {
+    clearInterval(loadingPhaseTimer);
+    loadingPhaseTimer = null;
+  }
+}
+
+function markHistorySelection(analysisId) {
+  document.querySelectorAll('.history-item').forEach(b => {
+    b.classList.toggle('is-active', String(b.dataset.analysisId) === String(analysisId));
+  });
+}
+
 function renderSummary(summary, plan) {
-  if (resultMeta) resultMeta.textContent = `${summary.reports_detected} reporte(s) detectado(s) · ${summary.total_files} archivo(s) subidos · ${summary.overall_days_covered || 0} días cubiertos`;
+  if (resultMeta) {
+    const od = summary.overall_days_covered || 0;
+    const md = summary.max_days_covered || 0;
+    resultMeta.textContent = `Consolidado: ${summary.reports_detected} reporte(s) en ${summary.total_files} archivo(s). Ventana total ~${od} día(s); el reporte individual más largo aporta hasta ${md} día(s).`;
+  }
   if (planBadge) {
     planBadge.textContent = plan === 'pro_plus' ? 'Pro+' : plan === 'pro' ? 'PRO' : 'GRATIS';
   }
@@ -134,6 +303,7 @@ function renderSummary(summary, plan) {
   if (tableroKpis) {
     tableroKpis.innerHTML = cards.map(item => `<div class="kpi"><div class="label">${item.label}</div><div class="value">${htmlEscape(item.value)}</div></div>`).join('');
   }
+  renderResultSourcePanel(summary);
 }
 
 function pickChartColor(idx) {
@@ -232,7 +402,8 @@ function renderAnalysis(analysis) {
   // Columna centro: Resumen ejecutivo, Métricas clave, Hallazgos prioritarios
   tableroCenter.innerHTML = `
     <div class="panel-block panel-block-resumen">
-      <h3>Resumen ejecutivo</h3>
+      <h3>Resumen ejecutivo (completo)</h3>
+      <p class="muted small panel-block-intro">Lectura detallada; arriba tienes la versión corta para decidir rápido.</p>
       <div class="resumen-ejecutivo-body">${htmlEscape(analysis.resumen_ejecutivo || '')}</div>
     </div>
     <div class="panel-block">
@@ -247,12 +418,14 @@ function renderAnalysis(analysis) {
 
   // Columna derecha: Recomendaciones accionables, Datos faltantes
   tableroRight.innerHTML = `
-    <div class="panel-block">
+    <div class="panel-block panel-block-actions">
       <h3>Recomendaciones accionables</h3>
+      <p class="muted small panel-block-intro">Prioriza 1–2 ítems esta semana; el resto puede ir a backlog.</p>
       ${renderListItems(analysis.recomendaciones_accionables, 'actions')}
     </div>
     <div class="panel-block">
       <h3>Datos faltantes</h3>
+      <p class="muted small panel-block-intro">Lo que el modelo no pudo inferir con certeza desde tus archivos.</p>
       ${renderListItems(analysis.datos_faltantes)}
     </div>
   `;
@@ -268,6 +441,7 @@ function renderAnalysis(analysis) {
 }
 
 function hideAnalysisLoading() {
+  stopLoadingPhaseCycle();
   if (resultsLayout) resultsLayout.classList.remove('is-loading');
   if (resultsLoading) resultsLoading.classList.add('hidden');
 }
@@ -278,10 +452,19 @@ function appendToHistory(item) {
   const grid = card.querySelector('#historyGrid');
   const empty = card.querySelector('#historyEmpty');
   const btn = document.createElement('button');
+  btn.type = 'button';
   btn.className = 'history-item';
   btn.dataset.analysisId = String(item.id);
+  const re = (item.resumen_ejecutivo || '').trim();
+  const sub = re
+    ? `<span class="history-title-sub">${htmlEscape(re.length > 120 ? `${re.slice(0, 120)}…` : re)}</span>`
+    : '';
   btn.innerHTML = `
     <span class="history-col history-col-date">${htmlEscape(item.created_at)}</span>
+    <span class="history-col history-col-title">
+      <span class="history-title-main">${htmlEscape(item.title || `Análisis ${item.id}`)}</span>
+      ${sub}
+    </span>
     <span class="history-col history-col-files">${item.file_count}</span>
     <span class="history-col history-col-days">${item.days_covered ?? 0}</span>
     <span class="history-col history-col-reports">${item.reports_detected}</span>
@@ -322,13 +505,29 @@ if (form) {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const submit = form.querySelector('button[type="submit"]');
+    const files = fileInput && fileInput.files ? [...fileInput.files] : [];
+    if (!files.length) {
+      if (analyzeFormStatus) {
+        analyzeFormStatus.textContent = 'Selecciona al menos un archivo CSV o Excel antes de analizar.';
+        analyzeFormStatus.classList.remove('hidden');
+      }
+      showFileHint('Añade archivos con «Elegir archivos» o arrastrándolos aquí.');
+      return;
+    }
+    if (analyzeFormStatus) {
+      analyzeFormStatus.textContent = '';
+      analyzeFormStatus.classList.add('hidden');
+    }
     submit.disabled = true;
     submit.textContent = 'Analizando…';
+    form.setAttribute('aria-busy', 'true');
     currentShareUrl = null;
     setShareControlsEnabled(false);
+    hideResultHeroAndSource();
     resultsCard.classList.remove('hidden');
     if (resultsLayout) resultsLayout.classList.add('is-loading');
     if (resultsLoading) resultsLoading.classList.remove('hidden');
+    startLoadingPhaseCycle();
     if (tableroKpis) tableroKpis.innerHTML = '';
     if (tableroLeft) tableroLeft.innerHTML = '';
     if (tableroCenter) tableroCenter.innerHTML = '';
@@ -336,17 +535,26 @@ if (form) {
     if (paywallEl) paywallEl.classList.add('hidden');
     try {
       const res = await fetch('/analyze', { method: 'POST', body: new FormData(form) });
-      const data = await res.json();
+      let data = {};
+      try {
+        data = await res.json();
+      } catch {
+        data = { ok: false, error: 'Respuesta inválida del servidor. Revisa tu conexión o inténtalo más tarde.' };
+      }
       if (!res.ok || !data.ok) {
         if (data.redirect) {
           window.location.href = data.redirect;
           return;
         }
         hideAnalysisLoading();
+        hideResultHeroAndSource();
         currentAnalysisId = null;
         if (downloadPdfBtn) downloadPdfBtn.disabled = true;
         setShareControlsEnabled(false);
         let errBody = htmlEscape(data.error || 'No se pudo correr el análisis.');
+        if (res.status === 401) {
+          errBody = htmlEscape('Tu sesión expiró. Vuelve a iniciar sesión e inténtalo de nuevo.');
+        }
         const errLower = (data.error || '').toLowerCase();
         if (res.status === 402 && (errLower.includes('archivo') || errLower.includes('archivos'))) {
           errBody += `<p class="upload-error-tip muted small">Consejo: en <strong>plan gratis</strong> solo puedes <strong>1 archivo</strong> por análisis. Quita los demás con la <strong>✕</strong> junto al nombre y vuelve a intentar.</p>`;
@@ -365,6 +573,7 @@ if (form) {
       renderSummary(data.summary, data.plan);
       renderCharts(data.summary);
       renderAnalysis(data.analysis);
+      renderResultHero(data.title, data.created_at, data.analysis, data.summary);
       appendToHistory({
         id: data.analysis_id,
         title: data.title || `${data.summary.reports_detected} reporte(s)`,
@@ -374,15 +583,18 @@ if (form) {
         reports_detected: data.summary.reports_detected,
         resumen_ejecutivo: (data.analysis && data.analysis.resumen_ejecutivo) ? data.analysis.resumen_ejecutivo : '',
       });
+      if (currentAnalysisId) markHistorySelection(currentAnalysisId);
       resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch (err) {
       hideAnalysisLoading();
+      hideResultHeroAndSource();
       setShareControlsEnabled(false);
       if (tableroCenter) tableroCenter.innerHTML = `<div class="alert error">${htmlEscape(err.message)}</div>`;
       resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } finally {
       submit.disabled = false;
       submit.textContent = 'Analizar reportes';
+      form.removeAttribute('aria-busy');
     }
   });
 }
@@ -448,8 +660,14 @@ document.querySelector('.history-card')?.addEventListener('click', async (e) => 
   const item = e.target.closest('[data-analysis-id]');
   if (!item) return;
   const id = item.dataset.analysisId;
+  markHistorySelection(id);
   const res = await fetch(`/analysis/${id}`);
-  const data = await res.json();
+  let data = {};
+  try {
+    data = await res.json();
+  } catch {
+    return;
+  }
   if (!res.ok || !data.ok) return;
   resultsCard.classList.remove('hidden');
   currentAnalysisId = data.id || id;
@@ -461,6 +679,7 @@ document.querySelector('.history-card')?.addEventListener('click', async (e) => 
   renderSummary(data.summary, data.plan || 'free');
   renderCharts(data.summary);
   renderAnalysis(data.analysis);
+  renderResultHero(data.title, data.created_at, data.analysis, data.summary);
   resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 

@@ -28,8 +28,9 @@ Opciones:
 
 **No** uses `SESSION_INSECURE_COOKIES=1` en producción HTTPS.
 
-## Deuda (Fase 4)
+## Deuda (siguientes fases)
 
+- **UX flujo core (Fase 4):** ver `docs/dragonapp_phase4.md`.
 - Extraer renderizado del dashboard (`/app`) a `routes/dashboard.py` o `services/dashboard_context.py`.
 - Opcional: `services/openai_analysis.py` solo con `call_openai` + `HOTEL_PROMPT` para acortar `analysis_core`.
 - Revisar `templates/legacy/*` y borrar tras auditoría.
