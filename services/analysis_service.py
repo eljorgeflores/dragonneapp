@@ -57,7 +57,8 @@ async def run_web_analyze(request: Request, business_context: str, files: List[U
             plan_for_model = "pro_180"
         _dbg("services.analysis_service", "before_call_openai", {}, "H_D")
         analysis = call_openai(summary, combined_business_context, hotel_context, plan_for_model)
-        title = f"{summary['reports_detected']} reporte(s) · {datetime.now().strftime('%d/%m/%Y %H:%M')}"
+        n = summary["reports_detected"]
+        title = f"Lectura comercial · {n} fuente{'s' if n != 1 else ''} · {datetime.now().strftime('%d/%m/%Y %H:%M')}"
         analysis_id, share_token = save_analysis(user["id"], title, user["plan"], summary, analysis, files)
         created_at = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")[:19].replace("T", " ")
         share_url = f"{public_share_base_url()}/s/{share_token}"

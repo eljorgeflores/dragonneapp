@@ -126,17 +126,17 @@ def _pdf_build_analysis_pdf(
     # ---------- Tabla resumen (KPIs como en el dashboard) ----------
     c.setFont("Helvetica-Bold", 11)
     c.setFillColor(_PDF_BRAND_ACCENT)
-    c.drawString(_PDF_MARGIN, y, "Resumen del análisis")
+    c.drawString(_PDF_MARGIN, y, "Vista numérica del export")
     y -= 6
     c.setStrokeColor(HexColor("#e0e0e0"))
     c.setLineWidth(0.5)
     tw = (width - 2 * _PDF_MARGIN) / 4
     th = 22
     kpis = [
-        ("Archivos", str(summary.get("total_files", 0))),
-        ("Reportes", str(summary.get("reports_detected", 0))),
-        ("Días cubiertos", str(summary.get("overall_days_covered", 0))),
-        ("Máx. rango", str(summary.get("max_days_covered", 0))),
+        ("Archivos (carga)", str(summary.get("total_files", 0))),
+        ("Fuentes leídas", str(summary.get("reports_detected", 0))),
+        ("Días (ventana total)", str(summary.get("overall_days_covered", 0))),
+        ("Máx. días (una fuente)", str(summary.get("max_days_covered", 0))),
     ]
     for i, (label, value) in enumerate(kpis):
         cx = _PDF_MARGIN + i * tw
@@ -169,7 +169,7 @@ def _pdf_build_analysis_pdf(
     y = new_page(y, 100)
     c.setFont("Helvetica-Bold", 12)
     c.setFillColor(_PDF_BRAND_ACCENT)
-    c.drawString(_PDF_MARGIN, y, "Métricas clave")
+    c.drawString(_PDF_MARGIN, y, "Métricas y lectura")
     y -= 6
     c.setStrokeColor(_PDF_BRAND_ACCENT)
     c.line(_PDF_MARGIN, y - 2, _PDF_MARGIN + 100, y - 2)
@@ -236,7 +236,7 @@ def _pdf_build_analysis_pdf(
         y = new_page(y, 80)
         c.setFont("Helvetica-Bold", 12)
         c.setFillColor(_PDF_BRAND_ACCENT)
-        c.drawString(_PDF_MARGIN, y, "Riesgos detectados")
+        c.drawString(_PDF_MARGIN, y, "Riesgos y puntos de atención")
         y -= 6
         c.setStrokeColor(_PDF_BRAND_ACCENT)
         c.line(_PDF_MARGIN, y - 2, _PDF_MARGIN + 120, y - 2)
@@ -252,7 +252,7 @@ def _pdf_build_analysis_pdf(
     y = new_page(y, 120)
     c.setFont("Helvetica-Bold", 12)
     c.setFillColor(_PDF_BRAND_ACCENT)
-    c.drawString(_PDF_MARGIN, y, "Recomendaciones accionables")
+    c.drawString(_PDF_MARGIN, y, "Próximos pasos sugeridos")
     y -= 6
     c.setStrokeColor(_PDF_BRAND_ACCENT)
     c.line(_PDF_MARGIN, y - 2, _PDF_MARGIN + 200, y - 2)
@@ -278,7 +278,7 @@ def _pdf_build_analysis_pdf(
         y = new_page(y, 60)
         c.setFont("Helvetica-Bold", 12)
         c.setFillColor(_PDF_BRAND_ACCENT)
-        c.drawString(_PDF_MARGIN, y, "Datos faltantes")
+        c.drawString(_PDF_MARGIN, y, "Información que faltó en el export")
         y -= 6
         c.setStrokeColor(_PDF_BRAND_ACCENT)
         c.line(_PDF_MARGIN, y - 2, _PDF_MARGIN + 100, y - 2)

@@ -49,7 +49,7 @@ async def api_analyze(
     """
     user = user_row_as_dict(user)
     if not files:
-        raise HTTPException(status_code=400, detail="Sube al menos un reporte.")
+        raise HTTPException(status_code=400, detail="Carga al menos un archivo CSV o Excel.")
     try:
         summary = summarize_reports(files)
         enforce_plan(user, summary)
@@ -76,7 +76,8 @@ async def api_analyze(
         else:
             plan_for_model = "pro_180"
         analysis = call_openai(summary, combined_business_context, hotel_context, plan_for_model)
-        title = f"{summary['reports_detected']} reporte(s) · {datetime.now().strftime('%d/%m/%Y %H:%M')}"
+        nrep = summary["reports_detected"]
+        title = f"Lectura comercial · {nrep} fuente{'s' if nrep != 1 else ''} · {datetime.now().strftime('%d/%m/%Y %H:%M')}"
         analysis_id, share_token = save_analysis(user["id"], title, user["plan"], summary, analysis, files)
         return {
             "ok": True,
