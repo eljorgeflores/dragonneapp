@@ -1,4 +1,4 @@
-# Traducciones para la landing de consultoría (ES/EN). Lingo tipo YC / 500 Global.
+# Traducciones para la landing de consultoría (ES/EN). Fuera del núcleo DragonApp SaaS; ver docs/dragonapp_phase1.md.
 
 CONSULTING_TRANSLATIONS = {
     "es": {

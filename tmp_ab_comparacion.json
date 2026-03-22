@@ -1,0 +1,74 @@
+{
+  "summary_meta": {
+    "total_files": 2,
+    "reports_detected": 2,
+    "overall_days_covered": 0,
+    "max_days_covered": 0
+  },
+  "antes": {
+    "resumen_ejecutivo": "Hotel Demo, un hotel urbano de 4 estrellas y de tamaño mediano en el centro de CDMX, presenta una oportunidad clara para mejorar su rentabilidad y aumentar las ventas directas. Sin embargo, los reportes disponibles son insuficientes para ofrecer un análisis profundo en relación con la distribución de ingresos, ocupación y rendimiento por canal. La falta de detalles en el informe sugiere que no se están aprovechando al máximo las oportunidades en el mercado, particularmente en la optimización de precios y en la estrategia de reservas directas.",
+    "hallazgos_prioritarios_top3": [
+      {
+        "titulo": "Falta de información crítica",
+        "detalle": "Los reportes no contienen datos suficientes sobre ingresos, canales e historiales de reserva, lo que limita la capacidad de análisis y acción.",
+        "impacto": "Sin datos claros, es difícil tomar decisiones informadas que impulsen la rentabilidad.",
+        "prioridad": "Alta"
+      },
+      {
+        "titulo": "Necesidad de potenciar ventas directas",
+        "detalle": "No se ha podido evaluar la proporción de reservas directas frente a las de OTAs; esto es crucial para reducir dependencia y comisiones.",
+        "impacto": "Un enfoque en canal directo puede aumentar el margen neto considerablemente.",
+        "prioridad": "Alta"
+      },
+      {
+        "titulo": "Oportunidades en la fijación de precios",
+        "detalle": "Con base en la falta de historia de precios, es probable que se estén dejando ingresos sobre la mesa en fechas claves.",
+        "impacto": "Precios optimizados pueden aumentar el ADR, especialmente en días pico.",
+        "prioridad": "Media"
+      }
+    ],
+    "recomendaciones_top3": [
+      {
+        "accion": "Auditar la información disponible en el PMS y otros reportes.",
+        "por_que": "Es esencial para tener una visión clara de los ingresos y comportamiento de reserva.",
+        "urgencia": "Alta"
+      },
+      {
+        "accion": "Crear un plan de marketing dirigido a aumentar las reservas directas, incluyendo ofertas exclusivas en la página web.",
+        "por_que": "Esto puede reducir la dependencia de OTAs y aumentar el margen.",
+        "urgencia": "Media"
+      },
+      {
+        "accion": "Revisar y ajustar las tarifas en base a previsiones y ocupación esperada en fechas clave.",
+        "por_que": "Optimizar el ADR mejorará la rentabilidad general del hotel.",
+        "urgencia": "Media"
+      }
+    ],
+    "datos_faltantes_top5": [
+      "Canales de distribución y sus respectivos ingresos.",
+      "Comisiones de OTAs y márgenes netos.",
+      "Datos históricos sobre manuales de tarifas y ocupación."
+    ]
+  },
+  "nuevo": {
+    "resumen_ejecutivo": "En el Hotel Demo, ubicado en el centro de CDMX y con categoría urbana de 4 estrellas, encontramos una oportunidad significativa para mejorar la rentabilidad y aumentar las ventas directas. Actualmente, no se han podido extraer métricas clave debido a la falta de datos completos en los reportes disponibles. Es crítico obtener información precisa sobre reservas, canales y tarifas para realizar un análisis efectivo.",
+    "hallazgos_prioritarios_top3": [],
+    "recomendaciones_top3": [
+      {
+        "accion": "Solicitar reportes detallados de reservas y canales con urgencia.",
+        "por_que": "Para analizar el rendimiento de cada canal y ajustar estrategias de revenue.",
+        "urgencia": "Alta"
+      },
+      {
+        "accion": "Desarrollar promociones específicas para canal directo.",
+        "por_que": "Aumentar la atracción hacia el sitio web del hotel y reducir comisiones a OTA.",
+        "urgencia": "Media"
+      }
+    ],
+    "datos_faltantes_top5": [
+      "Métricas de revenue por canal.",
+      "Datos sobre el número de reservas y el ADR por día.",
+      "Costos de distribución y comisiones de los canales."
+    ]
+  }
+}

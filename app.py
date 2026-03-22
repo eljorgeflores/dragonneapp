@@ -9,7 +9,6 @@ import secrets
 import smtplib
 import sqlite3
 from collections import Counter, defaultdict
-from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -18,10 +17,56 @@ from threading import Lock
 from typing import Any, Dict, List, Optional, Tuple
 import time
 
+from config import (
+    ADMIN_EMAILS,
+    ALLOWED_UPLOAD_EXTENSIONS,
+    ANNUAL_PRICE,
+    API_RATE_LIMIT_PER_DAY,
+    API_RATE_LIMIT_PER_MINUTE,
+    APP_NAME,
+    APP_URL,
+    BASE_DIR,
+    CONSULTING_CALENDAR_URL,
+    DEFAULT_MODEL,
+    EMAIL_FROM,
+    FREE_MAX_ANALYSES,
+    FREE_MAX_DAYS,
+    FREE_MAX_FILES_PER_ANALYSIS,
+    FREE_REPORTS_PER_MONTH,
+    MAX_UPLOAD_BYTES_PER_FILE,
+    MONTHLY_PRICE,
+    OPENAI_API_KEY,
+    PREMIUM_MONTHLY_PRICE,
+    PRO_180_MAX_ANALYSES,
+    PRO_180_MAX_DAYS,
+    PRO_180_MAX_FILES,
+    PRO_90_MAX_ANALYSES,
+    PRO_90_MAX_DAYS,
+    PRO_90_MAX_FILES,
+    PRO_PLUS_MAX_ANALYSES,
+    SECRET_KEY,
+    SMTP_HOST,
+    SMTP_PASSWORD,
+    SMTP_PORT,
+    SMTP_USER,
+    STRIPE_ANNUAL_PRICE_ID,
+    STRIPE_MONTHLY_PRICE_ID,
+    STRIPE_PRO_PLUS_PRICE_ID,
+    STRIPE_PUBLISHABLE_KEY,
+    STRIPE_SECRET_KEY,
+    STRIPE_WEBHOOK_SECRET,
+    TRIAL_DAYS,
+    UPLOAD_DIR,
+)
+from db import db, init_db
+
+# Esquema SQLite al importar el módulo (comportamiento previo a Fase 1).
+init_db()
+
 # #region agent log
 def _debug_log(location: str, message: str, data: Optional[Dict] = None, hypothesis_id: Optional[str] = None, run_id: Optional[str] = None):
     try:
-        _log_path = _path / ".cursor" / "debug-95cdbc.log"
+        _log_path = BASE_DIR / ".cursor" / "debug-95cdbc.log"
         payload = {"sessionId": "95cdbc", "timestamp": int(time.time() * 1000), "location": location, "message": message, "data": data or {}, "hypothesisId": hypothesis_id or "", "runId": run_id or ""}
         with open(_log_path, "a", encoding="utf-8") as f:
             f.write(json.dumps(payload, ensure_ascii=False) + "\n")
@@ -30,7 +75,7 @@ def _debug_log(location: str, message: str, data: Optional[Dict] = None, hypothe
 
 def _dbg(location: str, message: str, data: Optional[Dict] = None, hypothesis_id: Optional[str] = None):
     try:
-        log_path = Path(__file__).resolve().parent / ".cursor" / "debug-b78cbe.log"
+        log_path = BASE_DIR / ".cursor" / "debug-b78cbe.log"
         payload = {"sessionId": "b78cbe", "timestamp": int(time.time() * 1000), "location": location, "message": message, "data": data or {}, "hypothesisId": hypothesis_id or ""}
         with open(log_path, "a", encoding="utf-8") as f:
             f.write(json.dumps(payload, ensure_ascii=False) + "\n")
@@ -38,15 +83,12 @@ def _dbg(location: str, message: str, data: Optional[Dict] = None, hypothesis_id
         pass
 # #endregion
 
-# Cargar .env desde la carpeta del proyecto (así no dependes de "export" en la terminal)
-_path = Path(__file__).resolve().parent
-_env_file = _path / ".env"
-if _env_file.exists():
-    try:
-        from dotenv import load_dotenv
-        load_dotenv(_env_file)
-    except ImportError:
-        pass  # si no tienes python-dotenv, usa export como antes
+"""
+DragonApp — aplicación FastAPI monolítica (Fase 1).
+
+Deuda técnica / siguiente paso: dividir en routes/* y services/* como en docs/dragonapp_phase1.md.
+Mantener este archivo como ensamblador mientras se extraen routers sin romper URLs.
+"""
 
 import pandas as pd
 import requests
@@ -62,32 +104,6 @@ from reportlab.lib.colors import HexColor
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase.pdfmetrics import stringWidth
 
-APP_NAME = "DRAGONNÉ"
-BASE_DIR = Path(__file__).resolve().parent
-DB_PATH = BASE_DIR / "data" / "profitpilot.db"
-# Asegurar que la carpeta de base de datos exista también en entornos como Render
-DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-UPLOAD_DIR = BASE_DIR / "uploads"
-UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
-ALLOWED_UPLOAD_EXTENSIONS = {".csv", ".xlsx", ".xls", ".xlsm"}
-MAX_UPLOAD_BYTES_PER_FILE = int(os.getenv("MAX_UPLOAD_MB", "50")) * 1024 * 1024
-
-FREE_MAX_DAYS = 30
-FREE_MAX_FILES_PER_ANALYSIS = 1
-FREE_MAX_ANALYSES = 3
-FREE_REPORTS_PER_MONTH = 1  # reportes gratuitos por mes (luego se bloquea hasta upgrade)
-MONTHLY_PRICE = 19
-ANNUAL_PRICE = 49
-PREMIUM_MONTHLY_PRICE = 49
-PRO_90_MAX_DAYS = 90
-PRO_90_MAX_FILES = 5
-PRO_90_MAX_ANALYSES = 10
-PRO_180_MAX_DAYS = 180
-PRO_180_MAX_FILES = 5
-PRO_180_MAX_ANALYSES = 10
-PRO_PLUS_MAX_ANALYSES = 10  # al llegar al límite, invitar a contactar (plan máximo)
-DEFAULT_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o")
-
 
 def max_upload_files_for_plan(plan: str) -> int:
     """Máximo de archivos por análisis según plan de producto."""
@@ -102,31 +118,7 @@ def max_upload_files_for_plan(plan: str) -> int:
 
 def public_share_base_url() -> str:
     return (APP_URL or "http://127.0.0.1:8000").rstrip("/")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
-APP_URL = os.getenv("APP_URL", "http://127.0.0.1:8000")
-SECRET_KEY = os.getenv("APP_SECRET_KEY", "change-me-now")
-STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
-STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
-STRIPE_MONTHLY_PRICE_ID = os.getenv("STRIPE_MONTHLY_PRICE_ID", "")
-STRIPE_ANNUAL_PRICE_ID = os.getenv("STRIPE_ANNUAL_PRICE_ID", "")
-STRIPE_PRO_PLUS_PRICE_ID = os.getenv("STRIPE_PRO_PLUS_PRICE_ID", "")
-STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY", "")
-TRIAL_DAYS = int(os.getenv("TRIAL_DAYS", "0"))
-ADMIN_EMAILS = {e.strip().lower() for e in os.getenv("ADMIN_EMAILS", "").split(",") if e.strip()}
-# Email (recuperar contraseña). Si no configuras SMTP, el enlace se muestra en pantalla (solo pruebas).
-SMTP_HOST = os.getenv("SMTP_HOST", "").strip()
-SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
-SMTP_USER = os.getenv("SMTP_USER", "").strip()
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "").strip()
-EMAIL_FROM = os.getenv("EMAIL_FROM", "DRAGONNÉ <noreply@ejemplo.com>").strip()
-# API pública: acceso por clave asignada en Admin. Límites estándar (por clave).
-API_RATE_LIMIT_PER_MINUTE = int(os.getenv("API_RATE_LIMIT_PER_MINUTE", "60"))
-API_RATE_LIMIT_PER_DAY = int(os.getenv("API_RATE_LIMIT_PER_DAY", "1000"))
-# Consultoría: enlace a calendario (30 min con Jorge). Puedes sobreescribirlo con CONSULTING_CALENDAR_URL en .env.
-CONSULTING_CALENDAR_URL = (
-    os.getenv("CONSULTING_CALENDAR_URL", "").strip()
-    or "https://calendar.app.google/h4SKsVcUvTp3JpNM6"
-)
+
 
 app = FastAPI(
     title=APP_NAME,
@@ -319,140 +311,6 @@ def send_consulting_lead_email(
         return True
     except Exception:
         return False
-
-
-@contextmanager
-def db():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    try:
-        yield conn
-        conn.commit()
-    finally:
-        conn.close()
-
-
-def init_db():
-    with db() as conn:
-        conn.executescript(
-            """
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                hotel_name TEXT NOT NULL,
-                hotel_size TEXT,
-                hotel_category TEXT,
-                hotel_location TEXT,
-                contact_name TEXT NOT NULL,
-                email TEXT NOT NULL UNIQUE,
-                password_hash TEXT NOT NULL,
-                plan TEXT NOT NULL DEFAULT 'free',
-                stripe_customer_id TEXT,
-                stripe_subscription_id TEXT,
-                last_login_at TEXT,
-                login_count INTEGER NOT NULL DEFAULT 0,
-                is_admin INTEGER NOT NULL DEFAULT 0,
-                created_at TEXT NOT NULL,
-                updated_at TEXT NOT NULL
-            );
-
-            CREATE TABLE IF NOT EXISTS analyses (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER NOT NULL,
-                title TEXT,
-                plan_at_analysis TEXT NOT NULL,
-                file_count INTEGER NOT NULL,
-                days_covered INTEGER NOT NULL,
-                summary_json TEXT NOT NULL,
-                analysis_json TEXT NOT NULL,
-                created_at TEXT NOT NULL,
-                share_token TEXT,
-                FOREIGN KEY(user_id) REFERENCES users(id)
-            );
-
-            CREATE TABLE IF NOT EXISTS uploaded_files (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                analysis_id INTEGER NOT NULL,
-                original_name TEXT NOT NULL,
-                stored_path TEXT NOT NULL,
-                created_at TEXT NOT NULL,
-                FOREIGN KEY(analysis_id) REFERENCES analyses(id)
-            );
-
-            CREATE TABLE IF NOT EXISTS billing_events (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                stripe_event_id TEXT UNIQUE,
-                event_type TEXT NOT NULL,
-                payload TEXT NOT NULL,
-                created_at TEXT NOT NULL
-            );
-
-            CREATE TABLE IF NOT EXISTS user_sessions (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER NOT NULL,
-                started_at TEXT NOT NULL,
-                last_seen_at TEXT NOT NULL,
-                ended_at TEXT,
-                request_count INTEGER NOT NULL DEFAULT 0,
-                FOREIGN KEY(user_id) REFERENCES users(id)
-            );
-            """
-        )
-        # Migraciones suaves para instalaciones existentes
-        for col in ["hotel_size", "hotel_category", "hotel_location", "last_login_at", "login_count", "is_admin", "api_key", "hotel_stars", "hotel_location_context",
-                    "hotel_pms", "hotel_channel_manager", "hotel_booking_engine", "hotel_tech_other",
-                    "hotel_google_business_url", "hotel_expedia_url", "hotel_booking_url"]:
-            try:
-                if col in ["login_count", "is_admin", "hotel_stars"]:
-                    conn.execute(f"ALTER TABLE users ADD COLUMN {col} INTEGER DEFAULT 0")
-                else:
-                    conn.execute(f"ALTER TABLE users ADD COLUMN {col} TEXT")
-            except sqlite3.OperationalError:
-                pass
-
-        try:
-            conn.execute("ALTER TABLE analyses ADD COLUMN share_token TEXT")
-        except sqlite3.OperationalError:
-            pass
-        try:
-            conn.execute(
-                "CREATE UNIQUE INDEX IF NOT EXISTS idx_analyses_share_token ON analyses(share_token) WHERE share_token IS NOT NULL"
-            )
-        except sqlite3.OperationalError:
-            pass
-
-        # Tabla simple para recuperación de contraseña
-        conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS password_resets (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER NOT NULL,
-                token TEXT NOT NULL UNIQUE,
-                expires_at TEXT NOT NULL,
-                used INTEGER NOT NULL DEFAULT 0,
-                created_at TEXT NOT NULL,
-                FOREIGN KEY(user_id) REFERENCES users(id)
-            );
-            """
-        )
-        # Leads del formulario de consultoría (landing /consultoria)
-        conn.execute(
-            """
-            CREATE TABLE IF NOT EXISTS consulting_leads (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                email TEXT NOT NULL,
-                company TEXT,
-                type TEXT,
-                message TEXT,
-                phone TEXT,
-                lang TEXT,
-                created_at TEXT NOT NULL
-            );
-            """
-        )
-
-
-init_db()
 
 
 DATE_ALIASES = [
@@ -1521,6 +1379,9 @@ def precios_page(request: Request):
     return templates.TemplateResponse("precios.html", {"request": request, **_marketing_context()})
 
 
+# ---------------------------------------------------------------------------
+# Consultoría (fuera del núcleo DragonApp SaaS). Ver docs/dragonapp_phase1.md.
+# ---------------------------------------------------------------------------
 def _consulting_translations():
     """Carga traducciones desde consulting_i18n (ruta relativa a app.py para evitar import errors)."""
     import importlib.util
