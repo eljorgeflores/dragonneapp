@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import io
 import json
+import logging
+import os
 import re
 import sqlite3
 
@@ -16,6 +18,9 @@ from reportlab.pdfbase.pdfmetrics import stringWidth
 from config import BASE_DIR
 from db import db
 from plans import plan_label
+
+logger = logging.getLogger(__name__)
+
 # Colores brandbook para PDF
 _PDF_BRAND_TEXT = HexColor("#343434")
 _PDF_BRAND_ACCENT = HexColor("#f07e07")
@@ -304,16 +309,36 @@ def streaming_pdf_response_for_owned_analysis(user: sqlite3.Row, analysis_id: in
     summary = json.loads(row["summary_json"])
     analysis = json.loads(row["analysis_json"])
     user_dict = dict(user)
-    buffer = io.BytesIO()
-    c = canvas.Canvas(buffer, pagesize=A4)
-    width, height = A4
-    _pdf_build_analysis_pdf(c, width, height, user_dict, dict(row), summary, analysis)
-    c.save()
-    buffer.seek(0)
+    use_legacy = os.environ.get("REVENUE_REPORT_USE_LEGACY_PDF", "").strip().lower() in ("1", "true", "yes")
+
+    if not use_legacy:
+        try:
+            from services.revenue_report.pipeline import build_revenue_report_document
+            from services.revenue_report.render_pdf import revenue_report_html_to_pdf_bytes
+
+            doc, source = build_revenue_report_document(user_dict, dict(row), summary, analysis, "")
+            pdf_bytes = revenue_report_html_to_pdf_bytes(doc, {"pdf_source": source, "analysis_id": analysis_id})
+            buffer = io.BytesIO(pdf_bytes)
+            buffer.seek(0)
+        except Exception as e:
+            logger.warning("PDF revenue template falló, usando ReportLab legacy: %s", e)
+            buffer = io.BytesIO()
+            c = canvas.Canvas(buffer, pagesize=A4)
+            width, height = A4
+            _pdf_build_analysis_pdf(c, width, height, user_dict, dict(row), summary, analysis)
+            c.save()
+            buffer.seek(0)
+    else:
+        buffer = io.BytesIO()
+        c = canvas.Canvas(buffer, pagesize=A4)
+        width, height = A4
+        _pdf_build_analysis_pdf(c, width, height, user_dict, dict(row), summary, analysis)
+        c.save()
+        buffer.seek(0)
     safe_hotel = re.sub(r"[^\w\s-]", "", (user_dict.get("hotel_name") or "informe"))
     safe_hotel = re.sub(r"[-\s]+", "-", safe_hotel).strip()[:40] or "informe"
     report_date = (row["created_at"] or "")[:10]
-    filename = f"dragonne-informe-{safe_hotel}-{report_date}.pdf"
+    filename = f"dragonne-revenue-{safe_hotel}-{report_date}.pdf"
     return StreamingResponse(
         buffer,
         media_type="application/pdf",

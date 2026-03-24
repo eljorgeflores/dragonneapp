@@ -180,6 +180,7 @@ from routes.auth import router as auth_router
 from routes.billing import router as billing_router
 from routes.consulting import router as consulting_router
 from routes.marketing import router as marketing_router
+from routes.revenue_report_preview import router as revenue_report_preview_router
 
 app.include_router(api_v1_router)
 app.include_router(billing_router)
@@ -188,6 +189,7 @@ app.include_router(auth_router)
 app.include_router(consulting_router)
 app.include_router(admin_router)
 app.include_router(analysis_router)
+app.include_router(revenue_report_preview_router)
 
 
 @app.get("/health")

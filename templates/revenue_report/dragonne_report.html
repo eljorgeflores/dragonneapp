@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>{{ report.cover.report_title }} — {{ report.cover.hotel_name }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body>
+
+  {# ——— Portada oscura ——— #}
+  <section class="cover">
+    <div class="cover-inner">
+      {% if logo_cover_src %}
+      <img class="cover-logo" src="{{ logo_cover_src }}" alt="Dragonné" />
+      {% else %}
+      <p class="cover-eyebrow">DRAGONNÉ</p>
+      {% endif %}
+      <p class="cover-eyebrow">Diagnóstico ejecutivo</p>
+      <h1>{{ report.cover.report_title }}</h1>
+      <p class="cover-meta">Periodo analizado: {{ report.cover.period_label }}</p>
+      <p class="cover-meta">Fecha del informe: {{ report.cover.report_date }}</p>
+      <p class="cover-meta">Elaborado por {{ report.cover.prepared_by }}</p>
+      <p class="cover-hotel">{{ report.cover.hotel_name }}</p>
+    </div>
+  </section>
+
+  <div class="interior">
+    <header class="interior-header">
+      {% if logo_interior_src %}
+      <img src="{{ logo_interior_src }}" alt="Dragonné" />
+      {% else %}
+      <strong style="color:#f07e07;font-size:14pt;">DRAGONNÉ</strong>
+      {% endif %}
+    </header>
+
+    <h2 class="section-title">Resumen ejecutivo</h2>
+    <div class="exec-block">
+      {% for line in report.executive_summary.splitlines() %}
+      <p style="margin:0 0 6px 0;">{{ line }}</p>
+      {% endfor %}
+    </div>
+
+    <h2 class="section-title">Hallazgos clave</h2>
+    {% for f in report.key_findings %}
+    <div class="card">
+      {% if f.impact == 'high' %}<span class="badge badge-high">Impacto alto</span>
+      {% elif f.impact == 'medium' %}<span class="badge badge-medium">Impacto medio</span>
+      {% else %}<span class="badge badge-low">Impacto bajo</span>{% endif %}
+      <h3>{{ f.title }}</h3>
+      <p><strong>Diagnóstico</strong><br/><span class="muted">{{ f.diagnosis }}</span></p>
+      <p><strong>Implicación comercial</strong><br/><span class="muted">{{ f.business_implication }}</span></p>
+      <p><strong>Acción recomendada</strong><br/><span class="muted">{{ f.recommended_action }}</span></p>
+    </div>
+    {% endfor %}
+
+    <h2 class="section-title">Anomalías y alertas analíticas</h2>
+    {% if report.anomalies %}
+      {% for a in report.anomalies %}
+      <div class="card">
+        {% if a.severity == 'high' %}<span class="badge badge-high">Severidad alta</span>
+        {% elif a.severity == 'medium' %}<span class="badge badge-medium">Severidad media</span>
+        {% else %}<span class="badge badge-low">Severidad baja</span>{% endif %}
+        <h3>{{ a.title }}</h3>
+        <p><strong>Qué ocurrió</strong><br/><span class="muted">{{ a.what_happened }}</span></p>
+        <p><strong>Por qué importa</strong><br/><span class="muted">{{ a.why_it_matters }}</span></p>
+        <p><strong>Qué hacer</strong><br/><span class="muted">{{ a.recommended_action }}</span></p>
+      </div>
+      {% endfor %}
+    {% else %}
+      <p class="muted">Sin anomalías destacadas en los datos analizados.</p>
+    {% endif %}
+
+    <h2 class="section-title">Métricas y lectura ejecutiva</h2>
+    <table class="kpi">
+      <thead>
+        <tr>
+          <th>Métrica</th>
+          <th>Valor</th>
+          <th>Lectura</th>
+          <th>Atención</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for k in report.kpi_table %}
+        <tr>
+          <td><strong>{{ k.metric }}</strong></td>
+          <td>{{ k.value }}</td>
+          <td class="muted">{{ k.executive_read }}</td>
+          <td>
+            {% if k.attention_level == 'high' %}<span class="badge badge-high">Alta</span>
+            {% elif k.attention_level == 'medium' %}<span class="badge badge-medium">Media</span>
+            {% else %}<span class="badge badge-low">Baja</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <h2 class="section-title">Recomendaciones estratégicas</h2>
+    {% for r in report.strategic_recommendations %}
+    <div class="card">
+      {% if r.priority == 'high' %}<span class="badge badge-high">Prioridad alta</span>
+      {% elif r.priority == 'medium' %}<span class="badge badge-medium">Prioridad media</span>
+      {% else %}<span class="badge badge-low">Prioridad baja</span>{% endif %}
+      <h3>{{ r.title }}</h3>
+      <p><strong>Acción</strong><br/><span class="muted">{{ r.action }}</span></p>
+      <p><strong>Impacto esperado</strong><br/><span class="muted">{{ r.expected_impact }}</span></p>
+    </div>
+    {% endfor %}
+
+    <h2 class="section-title">Plan 30 · 60 · 90 días</h2>
+    <table class="plan-grid">
+      <tr>
+        <td>
+          <h4>30 días</h4>
+          <ul>
+            {% for x in report.plan_30_60_90.days_30 %}<li>{{ x }}</li>{% endfor %}
+          </ul>
+        </td>
+        <td>
+          <h4>60 días</h4>
+          <ul>
+            {% for x in report.plan_30_60_90.days_60 %}<li>{{ x }}</li>{% endfor %}
+          </ul>
+        </td>
+        <td>
+          <h4>90 días</h4>
+          <ul>
+            {% for x in report.plan_30_60_90.days_90 %}<li>{{ x }}</li>{% endfor %}
+          </ul>
+        </td>
+      </tr>
+    </table>
+
+    <h2 class="section-title">Reportes adicionales recomendados</h2>
+    {% for ar in report.additional_reports_needed %}
+    <div class="card">
+      <h3>{{ ar.report_name }}</h3>
+      <p class="muted">{{ ar.why_it_is_needed }}</p>
+    </div>
+    {% endfor %}
+
+    <h2 class="section-title">Siguientes pasos</h2>
+    <ul class="steps">
+      {% for s in report.next_steps %}<li>{{ s }}</li>{% endfor %}
+    </ul>
+
+    <div class="footer-note">
+      Este análisis identifica patrones a partir de los exports cargados. Para mayor precisión, complementa con pace, canal, lead time y conversión digital. Contenido generado con apoyo de IA; validar decisiones con tu equipo comercial y revenue.
+      {% if is_mock %}<br/><strong>[Vista mock — datos de demostración]</strong>{% endif %}
+    </div>
+  </div>
+</body>
+</html>
