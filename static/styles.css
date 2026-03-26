@@ -394,6 +394,74 @@ button, input, textarea { font: inherit; }
   padding-bottom: 20px;
   border-bottom: 1px solid var(--line);
 }
+.account-billing-portal-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.account-billing-portal-actions--locked {
+  align-items: flex-start;
+}
+.account-billing-locked-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  background: rgba(52, 52, 52, 0.05);
+  border: 1px dashed rgba(52, 52, 52, 0.18);
+}
+.account-billing-help-details {
+  margin: 0;
+}
+.account-billing-help-details summary {
+  list-style: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.account-billing-help-details summary::-webkit-details-marker {
+  display: none;
+}
+.account-billing-help-q {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.92);
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--muted);
+  line-height: 1;
+  transition: 0.15s ease;
+}
+.account-billing-help-summary:hover .account-billing-help-q,
+.account-billing-help-details[open] .account-billing-help-q {
+  border-color: rgba(240, 126, 7, 0.45);
+  color: var(--accent-primary-dark);
+}
+.account-billing-help-body {
+  margin: 12px 0 0;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.82);
+  line-height: 1.55;
+  color: var(--text);
+  max-width: 520px;
+}
+.account-billing-locked-lead strong {
+  color: var(--text);
+  font-weight: 700;
+}
 .account-dl--compact {
   margin: 4px 0 0;
   max-width: 480px;
