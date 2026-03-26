@@ -7,10 +7,21 @@ Deuda (Fase 2): validar variables críticas al arranque; agrupar por dominio (bi
 from __future__ import annotations
 
 import os
+import socket
 from pathlib import Path
 from urllib.parse import urlparse
 
 BASE_DIR = Path(__file__).resolve().parent
+
+
+def _first_nonempty_env(*names: str) -> str:
+    """Primer valor definido y no vacío (documentación Django/Render suele usar EMAIL_* o MAIL_*)."""
+    for name in names:
+        v = (os.getenv(name) or "").strip()
+        if v:
+            return v
+    return ""
+
 
 _env_file = BASE_DIR / ".env"
 if _env_file.exists():
@@ -98,17 +109,45 @@ STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY", "")
 TRIAL_DAYS = int(os.getenv("TRIAL_DAYS", "0"))
 ADMIN_EMAILS = {e.strip().lower() for e in os.getenv("ADMIN_EMAILS", "").split(",") if e.strip()}
 
-SMTP_HOST = os.getenv("SMTP_HOST", "").strip()
-SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
-SMTP_USER = os.getenv("SMTP_USER", "").strip()
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "").strip()
-# Cabecera "From" visible en el cliente de correo (puede incluir nombre <correo>)
-EMAIL_FROM = os.getenv("EMAIL_FROM", "DRAGONNÉ <noreply@ejemplo.com>").strip()
+SMTP_HOST = _first_nonempty_env("SMTP_HOST", "EMAIL_HOST", "MAIL_SERVER")
+_port_s = _first_nonempty_env("SMTP_PORT", "EMAIL_PORT")
+SMTP_PORT = int(_port_s) if _port_s else 587
+SMTP_USER = _first_nonempty_env("SMTP_USER", "EMAIL_HOST_USER", "MAIL_USERNAME")
+SMTP_PASSWORD = _first_nonempty_env("SMTP_PASSWORD", "EMAIL_HOST_PASSWORD", "MAIL_PASSWORD")
+# Cabecera "From" visible. Si no se define, alinear con SMTP_USER (noreply@ejemplo.com rompe entrega en muchos SMTP).
+_email_from_env = _first_nonempty_env("EMAIL_FROM", "DEFAULT_FROM_EMAIL")
+EMAIL_FROM = (
+    _email_from_env
+    if _email_from_env
+    else (f"DRAGONNÉ <{SMTP_USER}>" if SMTP_USER else "DRAGONNÉ <noreply@localhost>")
+)
 # Remitente del sobre SMTP (muchas APIs exigen el mismo correo que SMTP_USER); por defecto SMTP_USER
 SMTP_ENVELOPE_FROM = os.getenv("SMTP_ENVELOPE_FROM", "").strip()
 # "starttls" (587 típ.) o "ssl" (SMTP_SSL, p. ej. puerto 465)
-_smtp_sec = os.getenv("SMTP_SECURITY", "starttls").strip().lower()
+_smtp_sec = (os.getenv("SMTP_SECURITY", "starttls") or "starttls").strip().lower()
 SMTP_SECURITY = _smtp_sec if _smtp_sec in ("starttls", "ssl") else "starttls"
+# Django / plantillas: SSL implícito en 465 (MAIL_USE_SSL)
+if (
+    SMTP_SECURITY == "starttls"
+    and _first_nonempty_env("EMAIL_USE_SSL", "MAIL_USE_SSL").lower() in ("1", "true", "yes")
+):
+    SMTP_SECURITY = "ssl"
+
+
+def smtp_host_tcp_reachable(timeout_sec: float = 2.0) -> bool | None:
+    """Conexión TCP al host:puerto SMTP (sin TLS ni credenciales). None si no hay host."""
+    host = (SMTP_HOST or "").strip()
+    if not host:
+        return None
+    try:
+        port = int(SMTP_PORT)
+    except (TypeError, ValueError):
+        return None
+    try:
+        with socket.create_connection((host, port), timeout=timeout_sec):
+            return True
+    except OSError:
+        return False
 
 # Caducidad del enlace de restablecimiento (debe coincidir con textos de correo y UI)
 PASSWORD_RESET_TOKEN_TTL_HOURS = max(1, int(os.getenv("PASSWORD_RESET_TOKEN_TTL_HOURS", "1")))

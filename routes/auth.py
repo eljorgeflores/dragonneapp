@@ -1,4 +1,7 @@
 """Registro, login, logout, onboarding, recuperación de contraseña."""
+import json
+import logging
+
 from fastapi import APIRouter, Form, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
@@ -24,6 +27,8 @@ from config import (
 from db import db
 from debuglog import _debug_log
 from email_smtp import send_password_reset_email
+
+_log = logging.getLogger(__name__)
 from request_public_url import origin_for_user_facing_links
 from templating import templates
 from time_utils import now_iso
@@ -175,10 +180,20 @@ def forgot_password(request: Request, email: str = Form(...)):
     reset_link_alt = None
     email_sent = False
     smtp_configured = bool(SMTP_HOST and SMTP_USER and SMTP_PASSWORD)
+
     try:
         with db() as conn:
             user = conn.execute(_SQL_USER_BY_EMAIL_NORM, (email,)).fetchone()
         if not user:
+            # #region agent log
+            _log.info(
+                "forgot_password_metrics %s",
+                json.dumps(
+                    {"branch": "unknown_email", "smtp_configured": smtp_configured},
+                    ensure_ascii=False,
+                ),
+            )
+            # #endregion
             return templates.TemplateResponse(
                 "forgot_password.html",
                 _forgot_template_ctx(
@@ -193,6 +208,12 @@ def forgot_password(request: Request, email: str = Form(...)):
                     link_notice_incomplete=False,
                 ),
             )
+        if not smtp_configured:
+            _log.warning(
+                "forgot_password: hay usuario para el correo indicado pero SMTP no está completo "
+                "(definir SMTP_HOST, SMTP_USER y SMTP_PASSWORD en el entorno del servicio). "
+                "No se enviará correo; solo enlace en pantalla."
+            )
         token = create_reset_token(user["id"])
         base = origin_for_user_facing_links(request)
         # Query ?token= suele pasar mejor WAF/proxies; ruta con token como respaldo (correos que cortan ?token=)
@@ -204,6 +225,24 @@ def forgot_password(request: Request, email: str = Form(...)):
             reset_link,
             reset_link_fallback=reset_link_alt,
         )
+        if smtp_configured and not email_sent:
+            _log.warning(
+                "forgot_password: SMTP configurado pero el envío falló o fue rechazado; "
+                "revisar log anterior y SMTP_SECURITY/SMTP_PORT."
+            )
+        # #region agent log
+        _log.info(
+            "forgot_password_metrics %s",
+            json.dumps(
+                {
+                    "branch": "user_found",
+                    "smtp_configured": smtp_configured,
+                    "email_sent": email_sent,
+                },
+                ensure_ascii=False,
+            ),
+        )
+        # #endregion
         # Conservar reset_link en la plantilla aunque el SMTP devuelva True (spam, demora,
         # “éxito” engañoso del proveedor): respaldo en la misma pantalla.
         return templates.TemplateResponse(
@@ -221,6 +260,7 @@ def forgot_password(request: Request, email: str = Form(...)):
             ),
         )
     except Exception:
+        _log.exception("forgot_password: error al generar token o plantilla")
         return templates.TemplateResponse(
             "forgot_password.html",
             _forgot_template_ctx(

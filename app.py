@@ -1,5 +1,7 @@
 import json
+import logging
 import os
+from contextlib import asynccontextmanager
 
 from config import (
     ANNUAL_PRICE,
@@ -16,11 +18,13 @@ from config import (
     PRO_180_MAX_FILES,
     PRO_90_MAX_FILES,
     SECRET_KEY,
+    SMTP_ENVELOPE_FROM,
     SMTP_HOST,
     SMTP_PASSWORD,
     SMTP_PORT,
     SMTP_SECURITY,
     SMTP_USER,
+    smtp_host_tcp_reachable,
     STRIPE_MONTHLY_PRICE_ID,
     STRIPE_PRO_PLUS_PRICE_ID,
     STRIPE_PUBLISHABLE_KEY,
@@ -44,7 +48,7 @@ Servicios: services/analysis_core, share_service, pdf_service, billing_stripe. V
 from urllib.parse import quote
 
 from auth_session import is_admin_user, onboarding_pending, require_user
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.exception_handlers import http_exception_handler as default_http_exception_handler
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -55,6 +59,24 @@ from templating import templates
 from time_utils import now_iso
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Arranque del worker: registra si SMTP está completo (sin secretos)."""
+    ok = bool(SMTP_HOST and SMTP_USER and SMTP_PASSWORD)
+    log = logging.getLogger(__name__)
+    if ok:
+        log.info(
+            "DragonApp startup: smtp_configured=True smtp_security=%s smtp_port=%s",
+            SMTP_SECURITY,
+            SMTP_PORT,
+        )
+    else:
+        log.warning(
+            "DragonApp startup: smtp_configured=False — la recuperación de contraseña no enviará correo "
+            "hasta definir SMTP_HOST, SMTP_USER y SMTP_PASSWORD (o alias EMAIL_* / MAIL_*)."
+        )
+    yield
+
 
 app = FastAPI(
     title=APP_NAME,
@@ -63,6 +85,7 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url=None,  # servimos ReDoc a mano con URL absoluta del schema para que cargue bien
     openapi_url="/openapi.json",
+    lifespan=lifespan,
 )
 # Cookie de sesión: Secure si APP_URL es https. En local con http://127.0.0.1 y .env de producción,
 # las cookies Secure no se envían → usar SESSION_INSECURE_COOKIES=1 (solo desarrollo).
@@ -210,9 +233,12 @@ def health():
 
 
 @app.get("/health/config")
-def health_config():
-    """Indica si las variables de entorno críticas están definidas (solo sí/no, sin valores)."""
-    return {
+def health_config(smtp_probe: bool = Query(False)):
+    """Indica si las variables de entorno críticas están definidas (solo sí/no, sin valores).
+
+    smtp_probe=true — prueba TCP al servidor SMTP (~2 s); útil si el correo no sale y el firewall bloquea el puerto.
+    """
+    out = {
         "ok": True,
         "openai_configured": bool(OPENAI_API_KEY and OPENAI_API_KEY.strip()),
         "stripe_configured": bool(STRIPE_SECRET_KEY and STRIPE_SECRET_KEY.strip()),
@@ -220,7 +246,14 @@ def health_config():
         "stripe_pro_price_configured": bool(STRIPE_MONTHLY_PRICE_ID and STRIPE_MONTHLY_PRICE_ID.strip()),
         "stripe_pro_plus_price_configured": bool(STRIPE_PRO_PLUS_PRICE_ID and STRIPE_PRO_PLUS_PRICE_ID.strip()),
         "smtp_configured": bool(SMTP_HOST and SMTP_USER and SMTP_PASSWORD),
+        "smtp_host_set": bool(SMTP_HOST),
+        "smtp_user_set": bool(SMTP_USER),
+        "smtp_password_set": bool(SMTP_PASSWORD),
+        "smtp_envelope_configured": bool((SMTP_ENVELOPE_FROM or SMTP_USER or "").strip()),
         "smtp_security": SMTP_SECURITY,
         "smtp_port": SMTP_PORT,
         "url_prefix_configured": bool(URL_PREFIX),
     }
+    if smtp_probe:
+        out["smtp_tcp_reachable"] = smtp_host_tcp_reachable()
+    return out

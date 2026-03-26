@@ -10,9 +10,35 @@ import pytest
 from fastapi.testclient import TestClient
 
 import config
+import templating
 from app import app, db
 
 client = TestClient(app)
+
+
+def test_health_config_smtp_flags():
+    r = client.get("/health/config")
+    assert r.status_code == 200
+    data = r.json()
+    for key in (
+        "smtp_configured",
+        "smtp_host_set",
+        "smtp_user_set",
+        "smtp_password_set",
+        "smtp_envelope_configured",
+        "smtp_security",
+        "smtp_port",
+    ):
+        assert key in data
+    assert "smtp_tcp_reachable" not in data
+
+
+def test_health_config_smtp_probe_adds_tcp_flag():
+    r = client.get("/health/config?smtp_probe=true")
+    assert r.status_code == 200
+    data = r.json()
+    assert "smtp_tcp_reachable" in data
+    assert data["smtp_tcp_reachable"] in (None, True, False)
 
 
 def _unique_email():
@@ -30,6 +56,14 @@ def test_internal_path_strips_prefix(monkeypatch):
     assert config.internal_path("/sub/app") == "/app"
     assert config.internal_path("/sub") == "/"
     assert config.internal_path("/app") == "/app"
+
+
+def test_forgot_password_page_form_action_respects_prefix(monkeypatch):
+    monkeypatch.setattr(config, "URL_PREFIX", "/sub")
+    monkeypatch.setitem(templating.templates.env.globals, "url_prefix", "/sub")
+    r = client.get("/forgot-password")
+    assert r.status_code == 200
+    assert 'action="/sub/forgot-password"' in r.text
 
 
 def test_401_html_redirect_respects_url_prefix(monkeypatch):

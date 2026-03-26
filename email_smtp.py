@@ -1,6 +1,7 @@
 """Envío SMTP (recuperación contraseña, compartir análisis, lead consultoría)."""
 import logging
 import smtplib
+import ssl
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
@@ -28,13 +29,22 @@ def _sendmail(recipients: list[str], raw_message: str) -> None:
     env_from = _envelope_from()
     if not env_from:
         raise ValueError("smtp_envelope_from_missing")
+    tls_ctx = ssl.create_default_context()
     if SMTP_SECURITY == "ssl":
-        with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=_SMTP_TIMEOUT_SEC) as server:
+        with smtplib.SMTP_SSL(
+            SMTP_HOST,
+            SMTP_PORT,
+            timeout=_SMTP_TIMEOUT_SEC,
+            context=tls_ctx,
+        ) as server:
+            server.ehlo()
             server.login(SMTP_USER, SMTP_PASSWORD)
             server.sendmail(env_from, recipients, raw_message)
         return
     with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=_SMTP_TIMEOUT_SEC) as server:
-        server.starttls()
+        server.ehlo()
+        server.starttls(context=tls_ctx)
+        server.ehlo()
         server.login(SMTP_USER, SMTP_PASSWORD)
         server.sendmail(env_from, recipients, raw_message)
 
@@ -51,6 +61,11 @@ def send_password_reset_email(
     ttl_hours: int | None = None,
 ) -> bool:
     if not SMTP_HOST or not SMTP_USER or not SMTP_PASSWORD:
+        _log.info("Recuperación contraseña: SMTP no configurado (faltan HOST/USER/PASSWORD), no se envía correo")
+        return False
+    to_addr = (to_email or "").strip()
+    if not to_addr:
+        _log.warning("Recuperación contraseña: destinatario vacío, no se envía")
         return False
     h = PASSWORD_RESET_TOKEN_TTL_HOURS if ttl_hours is None else ttl_hours
     ttl_es = _reset_ttl_label_es(h)
@@ -69,7 +84,7 @@ Si el enlace anterior no abre en tu correo (algunos programas cortan la direcci�
     msg = MIMEMultipart("alternative")
     msg["Subject"] = "Recuperar contraseña — DRAGONNÉ"
     msg["From"] = EMAIL_FROM
-    msg["To"] = to_email
+    msg["To"] = to_addr
     text = f"""Hola,
 
 Alguien pidió restablecer la contraseña de tu cuenta en DRAGONNÉ.
@@ -92,7 +107,12 @@ DRAGONNÉ
     msg.attach(MIMEText(text, "plain", "utf-8"))
     msg.attach(MIMEText(html, "html", "utf-8"))
     try:
-        _sendmail([to_email], msg.as_string())
+        _sendmail([to_addr], msg.as_string())
+        _log.info(
+            "Correo recuperación contraseña: SMTP aceptó el mensaje (SECURITY=%s puerto=%s)",
+            SMTP_SECURITY,
+            SMTP_PORT,
+        )
         return True
     except Exception as exc:
         _log.warning(
