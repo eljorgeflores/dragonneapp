@@ -33,6 +33,7 @@ from config import (
     STRIPE_WEBHOOK_SECRET,
     internal_path,
     password_reset_email_delivery_configured,
+    resend_sender_plausible,
     url_path,
 )
 from db import db, init_db
@@ -79,6 +80,11 @@ async def lifespan(app: FastAPI):
                 else ""
             ),
         )
+        if resend_ok and not resend_sender_plausible():
+            log.warning(
+                "DragonApp startup: RESEND_API_KEY definida pero RESEND_FROM/EMAIL_FROM no es un remitente "
+                "válido para Resend (evita localhost, ejemplo.com; usa un dominio verificado en Resend)."
+            )
     else:
         log.warning(
             "DragonApp startup: password_reset_delivery=False — definir SMTP completo "
@@ -262,6 +268,7 @@ def health_config(smtp_probe: bool = Query(False)):
         "smtp_security": SMTP_SECURITY,
         "smtp_port": SMTP_PORT,
         "resend_configured": bool(RESEND_API_KEY),
+        "resend_sender_plausible": resend_sender_plausible(),
         "password_reset_email_delivery_configured": password_reset_email_delivery_configured(),
         "url_prefix_configured": bool(URL_PREFIX),
     }

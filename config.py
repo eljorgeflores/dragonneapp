@@ -160,6 +160,19 @@ def password_reset_email_delivery_configured() -> bool:
     return bool(RESEND_API_KEY) or bool(SMTP_HOST and SMTP_USER and SMTP_PASSWORD)
 
 
+def resend_sender_plausible() -> bool:
+    """Con RESEND_API_KEY, el From no debe ser placeholder (Resend rechaza localhost/ejemplo)."""
+    if not RESEND_API_KEY:
+        return True
+    raw = (RESEND_FROM or EMAIL_FROM or "").strip()
+    if not raw or "@" not in raw:
+        return False
+    low = raw.lower()
+    if "localhost" in low or "ejemplo.com" in low or "example.com" in low:
+        return False
+    return True
+
+
 # Caducidad del enlace de restablecimiento (debe coincidir con textos de correo y UI)
 PASSWORD_RESET_TOKEN_TTL_HOURS = max(1, int(os.getenv("PASSWORD_RESET_TOKEN_TTL_HOURS", "1")))
 

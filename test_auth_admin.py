@@ -30,6 +30,7 @@ def test_health_config_smtp_flags():
         "smtp_security",
         "smtp_port",
         "resend_configured",
+        "resend_sender_plausible",
         "password_reset_email_delivery_configured",
     ):
         assert key in data
