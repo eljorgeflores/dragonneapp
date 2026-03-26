@@ -61,6 +61,24 @@ def _reset_ttl_label_es(hours: int) -> str:
 _RESEND_API_URL = "https://api.resend.com/emails"
 
 
+def _resend_response_detail(resp: requests.Response, max_len: int = 1200) -> str:
+    """Texto seguro para logs (evidencia en hosting); evita volcar el cuerpo entero."""
+    raw = (resp.text or "")[:max_len]
+    try:
+        data = resp.json()
+        if isinstance(data, dict):
+            bits = []
+            for key in ("message", "name", "statusCode"):
+                val = data.get(key)
+                if val is not None and val != "":
+                    bits.append(f"{key}={val}")
+            if bits:
+                return "; ".join(bits)
+    except Exception:
+        pass
+    return raw
+
+
 def _send_via_resend(to_addr: str, subject: str, text: str, html: str) -> bool:
     """Envío vía Resend (HTTPS). `from` debe ser un remitente verificado en el panel de Resend."""
     if not RESEND_API_KEY:
@@ -89,12 +107,20 @@ def _send_via_resend(to_addr: str, subject: str, text: str, html: str) -> bool:
         _log.warning("Resend: error de red: %s", exc, exc_info=True)
         return False
     if r.status_code in (200, 201):
-        _log.info("Correo recuperación: Resend API aceptó el envío (HTTP %s)", r.status_code)
+        try:
+            jid = r.json().get("id") if r.content else None
+        except Exception:
+            jid = None
+        _log.info(
+            "Correo recuperación: Resend API aceptó el envío (HTTP %s id=%s)",
+            r.status_code,
+            jid or "?",
+        )
         return True
     _log.warning(
         "Resend API rechazó el envío (HTTP %s): %s",
         r.status_code,
-        (r.text or "")[:800],
+        _resend_response_detail(r),
     )
     return False
 
