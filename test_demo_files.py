@@ -10,7 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from fastapi import UploadFile
 from starlette.datastructures import Headers
 
-from app import parse_file, summarize_reports
+from services.analysis_core import parse_file, summarize_reports
 
 # Rutas a los archivos demo (en Downloads del usuario)
 DOWNLOADS = Path("/Users/jorgeflores/Downloads")

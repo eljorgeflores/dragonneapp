@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>{{ report.cover.report_title }} — {{ report.cover.hotel_name }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/revenue_report.css" />
+</head>
+<body>
+
+  {# ——— Portada editorial ——— #}
+  <section class="cover cover-editorial">
+    <div class="cover-bg"></div>
+    <div class="cover-layout">
+      <div class="cover-accent"></div>
+      <div class="cover-main">
+        <header class="cover-brand">
+          {% if logo_cover_src %}
+          <img class="cover-logo" src="{{ logo_cover_src }}" alt="Dragonné" />
+          {% else %}
+          <p class="cover-wordmark-fallback">DRAGONNÉ</p>
+          {% endif %}
+          <p class="cover-brand-line">Consultoría estratégica · Revenue &amp; distribución</p>
+        </header>
+
+        <div class="cover-hero">
+          <h1 class="cover-property">{{ report.cover.hotel_name }}</h1>
+          <p class="cover-title-line">{{ report.cover.report_title }}</p>
+          <p class="cover-subtitle">Memorando ejecutivo · Lectura para dirección y revenue</p>
+        </div>
+
+        <aside class="cover-meta-rail">
+          <div class="meta-row">
+            <span class="meta-k">Periodo</span>
+            <span class="meta-v">{{ report.cover.period_label }}</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-k">Fecha del informe</span>
+            <span class="meta-v">{{ report.cover.report_date }}</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-k">Elaboración</span>
+            <span class="meta-v">{{ report.cover.prepared_by }}</span>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <div class="document-body">
+    <header class="running-chrome">
+      {% if logo_interior_src %}
+      <img src="{{ logo_interior_src }}" alt="" class="chrome-logo" />
+      {% else %}
+      <span class="chrome-wordmark">DRAGONNÉ</span>
+      {% endif %}
+      <span class="chrome-center">{{ report.cover.hotel_name }}</span>
+      <span class="chrome-date">{{ report.cover.report_date }}</span>
+    </header>
+
+    {# ——— Página conceptual 2: resumen + 3 highlights ——— #}
+    <section class="sheet sheet-exec">
+      <div class="section-head">
+        <span class="eyebrow">Apertura</span>
+        <h2 class="title-serif">Resumen ejecutivo</h2>
+      </div>
+
+      <div class="exec-lede">
+        {% for line in report.executive_summary.splitlines() %}
+        {% if line.strip() %}
+        <p class="lede-p">{{ line }}</p>
+        {% endif %}
+        {% endfor %}
+      </div>
+
+      <div class="highlights-head">
+        <span class="eyebrow eyebrow-light">Lecturas inmediatas</span>
+      </div>
+      <div class="highlight-grid">
+        {% for h in executive_highlights %}
+        <article class="highlight-tile">
+          <span class="highlight-index">0{{ loop.index }}</span>
+          <p class="highlight-copy">{{ h }}</p>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+
+    {# ——— Hallazgos modulares ——— #}
+    <section class="sheet">
+      <div class="section-head">
+        <span class="eyebrow">Diagnóstico</span>
+        <h2 class="title-serif">Hallazgos clave</h2>
+      </div>
+
+      {% for f in report.key_findings %}
+      <article class="finding-card">
+        <div class="finding-primary">
+          <div class="badge-row">
+            {% if f.impact == 'high' %}
+            <span class="pill pill-high">Impacto · Alto</span>
+            {% elif f.impact == 'medium' %}
+            <span class="pill pill-med">Impacto · Medio</span>
+            {% else %}
+            <span class="pill pill-low">Impacto · Contenido</span>
+            {% endif %}
+          </div>
+          <h3 class="finding-title">{{ f.title }}</h3>
+          <div class="content-block">
+            <span class="label-caps">Diagnóstico</span>
+            <p class="body-text">{{ f.diagnosis }}</p>
+          </div>
+        </div>
+        <aside class="finding-sidebar">
+          <div class="sidebar-block">
+            <span class="label-caps label-accent">Por qué importa</span>
+            <p class="sidebar-text">{{ f.business_implication }}</p>
+          </div>
+          <div class="sidebar-block sidebar-ink">
+            <span class="label-caps">Acción recomendada</span>
+            <p class="sidebar-text">{{ f.recommended_action }}</p>
+          </div>
+        </aside>
+      </article>
+      {% endfor %}
+    </section>
+
+    {# ——— Anomalías ——— #}
+    <section class="sheet">
+      <div class="section-head">
+        <span class="eyebrow">Señales</span>
+        <h2 class="title-serif">Anomalías y alertas analíticas</h2>
+      </div>
+
+      {% if report.anomalies %}
+      {% for a in report.anomalies %}
+      <article class="anomaly-callout">
+        <div class="callout-rule {% if a.severity == 'high' %}sev-high{% elif a.severity == 'medium' %}sev-med{% else %}sev-low{% endif %}"></div>
+        <div class="callout-body">
+          <div class="callout-top">
+            {% if a.severity == 'high' %}
+            <span class="pill pill-high">Severidad · Alta</span>
+            {% elif a.severity == 'medium' %}
+            <span class="pill pill-med">Severidad · Media</span>
+            {% else %}
+            <span class="pill pill-low">Severidad · Contenida</span>
+            {% endif %}
+            <h3 class="callout-title">{{ a.title }}</h3>
+          </div>
+          <div class="callout-grid">
+            <div>
+              <span class="label-caps">Qué ocurrió</span>
+              <p class="body-text">{{ a.what_happened }}</p>
+            </div>
+            <div class="callout-emphasis">
+              <span class="label-caps label-accent">Por qué importa</span>
+              <p class="body-text">{{ a.why_it_matters }}</p>
+            </div>
+            <div class="callout-span">
+              <span class="label-caps">Qué hacer</span>
+              <p class="body-text">{{ a.recommended_action }}</p>
+            </div>
+          </div>
+        </div>
+      </article>
+      {% endfor %}
+      {% else %}
+      <p class="muted-paragraph">Sin anomalías destacadas en los datos analizados.</p>
+      {% endif %}
+    </section>
+
+    {# ——— Tabla KPI editorial ——— #}
+    <section class="sheet">
+      <div class="section-head">
+        <span class="eyebrow">Métricas</span>
+        <h2 class="title-serif">Lectura ejecutiva por KPI</h2>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table-editorial">
+          <thead>
+            <tr>
+              <th scope="col">Indicador</th>
+              <th scope="col">Valor</th>
+              <th scope="col">Lectura</th>
+              <th scope="col">Atención</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for k in report.kpi_table %}
+            <tr>
+              <td class="td-metric">{{ k.metric }}</td>
+              <td class="td-value">{{ k.value }}</td>
+              <td class="td-read">{{ k.executive_read }}</td>
+              <td class="td-pill">
+                {% if k.attention_level == 'high' %}
+                <span class="pill pill-high pill-tight">Alta</span>
+                {% elif k.attention_level == 'medium' %}
+                <span class="pill pill-med pill-tight">Media</span>
+                {% else %}
+                <span class="pill pill-low pill-tight">Baja</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    {# ——— Recomendaciones ——— #}
+    <section class="sheet">
+      <div class="section-head">
+        <span class="eyebrow">Palancas</span>
+        <h2 class="title-serif">Recomendaciones estratégicas</h2>
+      </div>
+
+      {% for r in report.strategic_recommendations %}
+      <article class="reco-row">
+        <div class="reco-left">
+          {% if r.priority == 'high' %}
+          <span class="pill pill-high">Prioridad · Alta</span>
+          {% elif r.priority == 'medium' %}
+          <span class="pill pill-med">Prioridad · Media</span>
+          {% else %}
+          <span class="pill pill-low">Prioridad · Soporte</span>
+          {% endif %}
+          <h3 class="reco-title">{{ r.title }}</h3>
+          <p class="body-text">{{ r.action }}</p>
+        </div>
+        <div class="reco-impact">
+          <span class="label-caps">Impacto esperado</span>
+          <p class="impact-text">{{ r.expected_impact }}</p>
+        </div>
+      </article>
+      {% endfor %}
+    </section>
+
+    {# ——— Plan 30-60-90 ——— #}
+    <section class="sheet">
+      <div class="section-head">
+        <span class="eyebrow">Horizonte</span>
+        <h2 class="title-serif">Plan 30 · 60 · 90 días</h2>
+      </div>
+
+      <div class="plan-deck">
+        <div class="plan-column">
+          <div class="plan-cap">30</div>
+          <p class="plan-label">días — Fundamentos</p>
+          <ul class="plan-list">
+            {% for x in report.plan_30_60_90.days_30 %}<li>{{ x }}</li>{% endfor %}
+          </ul>
+        </div>
+        <div class="plan-column">
+          <div class="plan-cap">60</div>
+          <p class="plan-label">días — Medición</p>
+          <ul class="plan-list">
+            {% for x in report.plan_30_60_90.days_60 %}<li>{{ x }}</li>{% endfor %}
+          </ul>
+        </div>
+        <div class="plan-column">
+          <div class="plan-cap">90</div>
+          <p class="plan-label">días — Escala</p>
+          <ul class="plan-list">
+            {% for x in report.plan_30_60_90.days_90 %}<li>{{ x }}</li>{% endfor %}
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    {# ——— Reportes adicionales ——— #}
+    <section class="sheet">
+      <div class="section-head">
+        <span class="eyebrow">Datos</span>
+        <h2 class="title-serif">Reportes adicionales recomendados</h2>
+      </div>
+      <div class="extra-grid">
+        {% for ar in report.additional_reports_needed %}
+        <article class="extra-card">
+          <h3 class="extra-title">{{ ar.report_name }}</h3>
+          <p class="extra-why">{{ ar.why_it_is_needed }}</p>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+
+    {# ——— Siguientes pasos ——— #}
+    <section class="sheet sheet-compact">
+      <div class="section-head">
+        <span class="eyebrow">Operación</span>
+        <h2 class="title-serif">Siguientes pasos</h2>
+      </div>
+      <ol class="steps-ordered">
+        {% for s in report.next_steps %}<li>{{ s }}</li>{% endfor %}
+      </ol>
+    </section>
+
+    {# ——— Cierre estratégico ——— #}
+    <section class="sheet sheet-closure">
+      <div class="closure-panel">
+        <p class="closure-eyebrow">Lectura final</p>
+        <p class="closure-body">{{ closing_strategic_implication }}</p>
+      </div>
+    </section>
+
+    <footer class="doc-footer">
+      <p>Este análisis identifica patrones a partir de los exports cargados. Para mayor precisión, complementa con pace, canal, lead time y conversión digital. Contenido generado con apoyo de IA; validar decisiones con tu equipo comercial y revenue.</p>
+      {% if is_mock %}<p class="mock-flag">Vista mock — datos de demostración</p>{% endif %}
+    </footer>
+  </div>
+</body>
+</html>

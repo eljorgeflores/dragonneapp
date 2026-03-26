@@ -2,7 +2,7 @@
 {% block title %}{{ page_title }} — DRAGONNÉ{% endblock %}
 {% block meta %}
 <meta name="robots" content="noindex, nofollow" />
-<meta name="description" content="Informe de análisis hotelero compartido con DRAGONNÉ. Solo lectura." />
+<meta name="description" content="Lectura comercial hotelera compartida con DRAGONNÉ. Solo lectura." />
 {% endblock %}
 {% block jsonld %}{% endblock %}
 {% block body %}
@@ -12,12 +12,12 @@
     <p class="muted small share-public-meta">{{ created_at }} · Vista de solo lectura</p>
   </header>
   <h1 class="share-public-title">{{ page_title }}</h1>
-  <p class="share-public-lead muted">Este enlace fue compartido contigo. No requiere cuenta. El contenido refleja el análisis generado a partir de los reportes subidos.</p>
+  <p class="share-public-lead muted">Enlace compartido; no requiere cuenta. El texto se generó a partir de los exports que cargó quien creó la lectura.</p>
 
   <div class="share-public-kpis">
-    <div class="share-kpi"><span class="label">Archivos</span><span class="value">{{ summary.total_files or 0 }}</span></div>
-    <div class="share-kpi"><span class="label">Reportes detectados</span><span class="value">{{ summary.reports_detected or 0 }}</span></div>
-    <div class="share-kpi"><span class="label">Días cubiertos</span><span class="value">{{ summary.overall_days_covered or 0 }}</span></div>
+    <div class="share-kpi"><span class="label">Archivos (carga)</span><span class="value">{{ summary.total_files or 0 }}</span></div>
+    <div class="share-kpi"><span class="label">Fuentes leídas</span><span class="value">{{ summary.reports_detected or 0 }}</span></div>
+    <div class="share-kpi"><span class="label">Días (ventana total)</span><span class="value">{{ summary.overall_days_covered or 0 }}</span></div>
   </div>
 
   <section class="share-section">
@@ -27,7 +27,7 @@
 
   {% if analysis.metricas_clave %}
   <section class="share-section">
-    <h2>Métricas clave</h2>
+    <h2>Métricas y lectura</h2>
     <ul class="share-list">
       {% for m in analysis.metricas_clave %}
       <li><strong>{{ m.nombre }} · {{ m.valor }}</strong><br /><span class="muted">{{ m.lectura }}</span></li>
@@ -41,7 +41,7 @@
     <h2>Hallazgos prioritarios</h2>
     <ul class="share-list">
       {% for h in analysis.hallazgos_prioritarios %}
-      <li><strong>{{ h.titulo }}</strong><br />{{ h.detalle }}<br /><span class="muted">Impacto: {{ h.impacto }} · Prioridad: {{ h.prioridad }}</span></li>
+      <li><strong>{{ h.titulo }}</strong><br />{{ h.detalle }}<br /><span class="muted">Gravedad para el negocio: {{ h.impacto }} · Prioridad sugerida: {{ h.prioridad }}</span></li>
       {% endfor %}
     </ul>
   </section>
@@ -49,24 +49,24 @@
 
   {% if analysis.oportunidades_directo_vs_ota %}
   <section class="share-section">
-    <h2>Oportunidades directo vs OTA</h2>
+    <h2>Oportunidades (directo y distribución)</h2>
     <ul class="share-list">{% for o in analysis.oportunidades_directo_vs_ota %}<li>{{ o }}</li>{% endfor %}</ul>
   </section>
   {% endif %}
 
   {% if analysis.riesgos_detectados %}
   <section class="share-section">
-    <h2>Riesgos detectados</h2>
+    <h2>Riesgos y puntos de atención</h2>
     <ul class="share-list">{% for r in analysis.riesgos_detectados %}<li>{{ r }}</li>{% endfor %}</ul>
   </section>
   {% endif %}
 
   {% if analysis.recomendaciones_accionables %}
   <section class="share-section">
-    <h2>Recomendaciones accionables</h2>
+    <h2>Próximos pasos sugeridos</h2>
     <ul class="share-list">
       {% for a in analysis.recomendaciones_accionables %}
-      <li><strong>{{ a.accion }}</strong><br />{{ a.por_que }}<br /><span class="muted">Urgencia: {{ a.urgencia }}</span></li>
+      <li><strong>{{ a.accion }}</strong><br />{{ a.por_que }}<br /><span class="muted">Plazo sugerido: {{ a.urgencia }}</span></li>
       {% endfor %}
     </ul>
   </section>
@@ -74,7 +74,7 @@
 
   {% if analysis.datos_faltantes %}
   <section class="share-section">
-    <h2>Datos faltantes / siguientes reportes</h2>
+    <h2>Información que faltó en el export</h2>
     <ul class="share-list">{% for d in analysis.datos_faltantes %}<li>{{ d }}</li>{% endfor %}</ul>
   </section>
   {% endif %}

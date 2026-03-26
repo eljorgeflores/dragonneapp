@@ -69,6 +69,13 @@
           <p class="muted">Cambiar plan (solo en la app; Stripe puede seguir cobrando hasta que canceles en el portal). Eliminar usuario borra todos sus análisis y archivos.</p>
         </div>
       </div>
+      {% if pwd_reset == 'sent' %}
+      <div class="alert success" style="margin: 0 0 16px;">Se envió un enlace de restablecimiento de contraseña al correo del cliente.</div>
+      {% elif pwd_reset == 'smtp' %}
+      <div class="alert error" style="margin: 0 0 16px;">No hay canal de correo para restablecer contraseña: configura SMTP completo (host, usuario, contraseña) o RESEND_API_KEY con un remitente válido (p. ej. RESEND_FROM / dominio verificado en Resend).</div>
+      {% elif pwd_reset == 'fail' %}
+      <div class="alert error" style="margin: 0 0 16px;">No se pudo enviar el correo. Revisa Resend, SMTP y los logs del servidor.</div>
+      {% endif %}
       <div class="admin-manage-grid">
         <form class="admin-plan-form" method="post" action="/admin/users/{{ user['id'] }}/plan">
           <label for="admin_plan_select">Plan del producto</label>
@@ -80,6 +87,11 @@
             </select>
             <button type="submit" class="btn btn-primary btn-sm">Guardar plan</button>
           </div>
+        </form>
+        <form method="post" action="/admin/users/{{ user['id'] }}/send-password-reset" class="admin-plan-form">
+          <label>Contraseña del cliente</label>
+          <p class="muted small" style="margin: 0 0 8px;">Envía al correo registrado el mismo enlace que usaría “Olvidé mi contraseña” (un solo uso, caducidad según configuración del servidor).</p>
+          <button type="submit" class="btn btn-secondary btn-sm">Enviar enlace de restablecimiento</button>
         </form>
         {% if current_user['id'] != user['id'] %}
         <form method="post" action="/admin/users/{{ user['id'] }}/delete" class="admin-danger-zone" onsubmit="return confirm('¿Eliminar definitivamente a este usuario y todos sus análisis y archivos? Esta acción no se puede deshacer.');">

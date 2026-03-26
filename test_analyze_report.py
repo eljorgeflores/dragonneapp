@@ -13,7 +13,8 @@ import pandas as pd
 from fastapi import UploadFile
 from starlette.datastructures import Headers
 
-from app import parse_file, summarize_reports, ALLOWED_UPLOAD_EXTENSIONS
+from config import ALLOWED_UPLOAD_EXTENSIONS
+from services.analysis_core import parse_file, summarize_reports
 
 
 def make_upload_file(filename: str, content: bytes, content_type: str = "application/octet-stream") -> UploadFile:

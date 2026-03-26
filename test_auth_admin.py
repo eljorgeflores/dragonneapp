@@ -9,13 +9,122 @@ import uuid
 import pytest
 from fastapi.testclient import TestClient
 
+import config
+import email_smtp
+import templating
 from app import app, db
 
 client = TestClient(app)
 
 
+def test_normalize_api_secret_strips_bom_and_newlines():
+    from config import _normalize_api_secret
+
+    assert _normalize_api_secret("  re_test\n") == "re_test"
+    assert _normalize_api_secret("\ufeffre_other") == "re_other"
+
+
+def test_health_config_smtp_flags():
+    r = client.get("/health/config")
+    assert r.status_code == 200
+    data = r.json()
+    for key in (
+        "smtp_configured",
+        "smtp_host_set",
+        "smtp_user_set",
+        "smtp_password_set",
+        "smtp_envelope_configured",
+        "smtp_security",
+        "smtp_port",
+        "resend_configured",
+        "resend_sender_plausible",
+        "password_reset_email_delivery_configured",
+    ):
+        assert key in data
+    assert "smtp_tcp_reachable" not in data
+
+
+def test_health_config_smtp_probe_adds_tcp_flag():
+    r = client.get("/health/config?smtp_probe=true")
+    assert r.status_code == 200
+    data = r.json()
+    assert "smtp_tcp_reachable" in data
+    assert data["smtp_tcp_reachable"] in (None, True, False)
+
+
 def _unique_email():
     return f"test-{uuid.uuid4().hex[:10]}@example.com"
+
+
+def test_url_path_respects_prefix(monkeypatch):
+    monkeypatch.setattr(config, "URL_PREFIX", "/sub")
+    assert config.url_path("/login") == "/sub/login"
+    assert config.url_path("/forgot-password?x=1") == "/sub/forgot-password?x=1"
+
+
+def test_internal_path_strips_prefix(monkeypatch):
+    monkeypatch.setattr(config, "URL_PREFIX", "/sub")
+    assert config.internal_path("/sub/app") == "/app"
+    assert config.internal_path("/sub") == "/"
+    assert config.internal_path("/app") == "/app"
+
+
+def test_password_reset_delivery_requires_plausible_resend_from(monkeypatch):
+    monkeypatch.setattr(config, "RESEND_API_KEY", "re_x", raising=False)
+    monkeypatch.setattr(config, "SMTP_HOST", "", raising=False)
+    monkeypatch.setattr(config, "SMTP_USER", "", raising=False)
+    monkeypatch.setattr(config, "SMTP_PASSWORD", "", raising=False)
+    monkeypatch.setattr(config, "EMAIL_FROM", "DRAGONNÉ <noreply@localhost>", raising=False)
+    assert config.resend_sender_plausible() is False
+    assert config.password_reset_email_delivery_configured() is False
+
+
+def test_forgot_password_sends_via_resend_when_stub_succeeds(monkeypatch):
+    _from = "DRAGONNÉ <onboarding@resend.dev>"
+    monkeypatch.setattr(config, "RESEND_API_KEY", "re_test_key")
+    monkeypatch.setattr(config, "EMAIL_FROM", _from)
+    monkeypatch.setattr(email_smtp, "_send_via_resend", lambda *a, **k: True)
+    email = _unique_email()
+    password = "password123"
+    client.post(
+        "/signup",
+        data={"email": email, "password": password, "password_confirm": password},
+        follow_redirects=True,
+    )
+    r = client.post("/forgot-password", data={"email": email})
+    assert r.status_code == 200
+    assert "Revisa tu bandeja de entrada" in (r.text or "")
+    client.post("/logout", follow_redirects=True)
+
+
+def test_forgot_password_page_form_action_respects_prefix(monkeypatch):
+    monkeypatch.setattr(config, "URL_PREFIX", "/sub")
+    monkeypatch.setitem(templating.templates.env.globals, "url_prefix", "/sub")
+    r = client.get("/forgot-password")
+    assert r.status_code == 200
+    assert 'action="/sub/forgot-password"' in r.text
+
+
+def test_401_html_redirect_respects_url_prefix(monkeypatch):
+    """Sin sesión: /app + Accept HTML debe redirigir a login con URL_PREFIX en Location."""
+    monkeypatch.setattr(config, "URL_PREFIX", "/sub")
+    r = client.get("/app", headers={"Accept": "text/html"}, follow_redirects=False)
+    assert r.status_code == 303
+    loc = r.headers.get("location") or ""
+    assert loc.startswith("/sub/login")
+    assert "next=%2Fapp" in loc or "next=/app" in loc
+
+
+def _extract_reset_token_from_html(html: str) -> str | None:
+    if not html:
+        return None
+    m = re.search(r"reset-password\?token=([A-Za-z0-9_-]+)", html)
+    if m:
+        return m.group(1)
+    m = re.search(r"/reset-password/([A-Za-z0-9_-]+)", html)
+    if m:
+        return m.group(1)
+    return None
 
 
 # --- Signup y onboarding ---
@@ -27,6 +136,7 @@ def test_signup_creates_user_and_redirects_to_onboarding():
     r = client.post(
         "/signup",
         data={"email": email, "password": password, "password_confirm": password},
+        follow_redirects=False,
     )
     assert r.status_code == 303
     assert r.headers.get("location") == "/onboarding"
@@ -82,7 +192,7 @@ def test_login_normal_user_redirects_to_app():
     client.post("/onboarding", data=onboarding)
     client.post("/logout")
 
-    r = client.post("/login", data={"email": email, "password": password})
+    r = client.post("/login", data={"email": email, "password": password}, follow_redirects=False)
     assert r.status_code == 303
     assert r.headers.get("location") == "/app"
 
@@ -95,7 +205,7 @@ def test_login_admin_user_redirects_to_admin():
         conn.execute("UPDATE users SET is_admin = 1 WHERE email = ?", (email,))
     client.post("/logout")
 
-    r = client.post("/login", data={"email": email, "password": password})
+    r = client.post("/login", data={"email": email, "password": password}, follow_redirects=False)
     assert r.status_code == 303
     assert r.headers.get("location") == "/admin"
 
@@ -123,10 +233,7 @@ def test_forgot_password_and_reset_flow():
 
     r = client.post("/forgot-password", data={"email": email})
     assert r.status_code == 200
-    token = None
-    match = re.search(r"/reset-password/([A-Za-z0-9_-]+)", r.text)
-    if match:
-        token = match.group(1)
+    token = _extract_reset_token_from_html(r.text)
     if not token:
         # SMTP envió el correo y el link no está en HTML; obtenemos el token de la BD
         with db() as conn:
@@ -139,12 +246,19 @@ def test_forgot_password_and_reset_flow():
             assert row
             token = row["token"]
     r_reset = client.post(
-        f"/reset-password/{token}",
-        data={"password": "newpassword123", "password_confirm": "newpassword123"},
+        "/reset-password",
+        data={
+            "token": token,
+            "password": "newpassword123",
+            "password_confirm": "newpassword123",
+        },
+        follow_redirects=False,
     )
     assert r_reset.status_code == 303
     assert r_reset.headers.get("location") == "/login"
-    r_login = client.post("/login", data={"email": email, "password": "newpassword123"})
+    r_login = client.post(
+        "/login", data={"email": email, "password": "newpassword123"}, follow_redirects=False
+    )
     assert r_login.status_code == 303
 
 
@@ -155,19 +269,228 @@ def test_forgot_password_unknown_email_does_not_leak():
     assert "no existe" not in (r.text or "").lower() or "no está registrado" not in (r.text or "").lower()
 
 
+def test_forgot_password_link_host_matches_app_url_not_testserver():
+    """Regresión H6: TestClient usa host 'testserver'; enlaces deben usar APP_URL (conftest)."""
+    from urllib.parse import urlparse
+
+    email = _unique_email()
+    password = "password123"
+    client.post(
+        "/signup",
+        data={"email": email, "password": password, "password_confirm": password},
+        follow_redirects=True,
+    )
+    r = client.post("/forgot-password", data={"email": email})
+    assert r.status_code == 200
+    html = r.text or ""
+    netloc = urlparse(config.APP_URL).netloc
+    assert netloc
+    assert "reset-password" in html
+    assert netloc in html
+    assert "http://testserver" not in html
+
+
+def test_forgot_password_finds_legacy_email_trim_case():
+    """Correo en BD con espacios / mayúsculas debe coincidir con el tecleado normalizado."""
+    email = _unique_email()
+    password = "password123"
+    client.post(
+        "/signup",
+        data={"email": email, "password": password, "password_confirm": password},
+    )
+    with db() as conn:
+        conn.execute(
+            "UPDATE users SET email = ? WHERE email = ?",
+            (f"  {email.upper()}  ", email),
+        )
+    client.post("/logout")
+    r = client.post("/forgot-password", data={"email": email})
+    assert r.status_code == 200
+    # Sin SMTP suele mostrarse el enlace en página (?token= o ruta legacy)
+    assert "reset-password" in (r.text or "") and (
+        "token=" in (r.text or "") or "/reset-password/" in (r.text or "")
+    )
+
+
+def test_reset_password_get_without_query_redirects():
+    r = client.get("/reset-password", follow_redirects=False)
+    assert r.status_code == 303
+    loc = r.headers.get("location") or ""
+    assert "/forgot-password" in loc
+    assert "incomplete_link" in loc
+
+
 def test_reset_password_invalid_token():
     r = client.post(
-        "/reset-password/token-invalido-o-caducado",
-        data={"password": "newpass123", "password_confirm": "newpass123"},
+        "/reset-password",
+        data={
+            "token": "token-invalido-o-caducado",
+            "password": "newpass123",
+            "password_confirm": "newpass123",
+        },
     )
     assert r.status_code == 200
     assert "válido" in r.text or "nuevo" in r.text
+
+
+def test_reset_password_expired_token_rejected():
+    email = _unique_email()
+    password = "password123"
+    client.post("/signup", data={"email": email, "password": password, "password_confirm": password})
+    client.post("/logout")
+    client.post("/forgot-password", data={"email": email})
+    with db() as conn:
+        row = conn.execute(
+            """
+            SELECT pr.token FROM password_resets pr
+            JOIN users u ON u.id = pr.user_id
+            WHERE LOWER(TRIM(u.email)) = ?
+            ORDER BY pr.id DESC LIMIT 1
+            """,
+            (email,),
+        ).fetchone()
+    assert row
+    token = row["token"]
+    with db() as conn:
+        conn.execute(
+            "UPDATE password_resets SET expires_at = ? WHERE token = ?",
+            ("2000-01-01T00:00:00+00:00", token),
+        )
+    r = client.post(
+        "/reset-password",
+        data={
+            "token": token,
+            "password": "newpass999",
+            "password_confirm": "newpass999",
+        },
+    )
+    assert r.status_code == 200
+    assert "válido" in (r.text or "").lower()
+    r_ok = client.post("/login", data={"email": email, "password": password}, follow_redirects=False)
+    assert r_ok.status_code == 303
+
+
+def test_delete_user_removes_password_resets():
+    email_target = _unique_email()
+    email_admin = _unique_email()
+    password = "password123"
+    client.post(
+        "/signup",
+        data={"email": email_target, "password": password, "password_confirm": password},
+    )
+    client.post("/logout")
+    client.post(
+        "/signup",
+        data={"email": email_admin, "password": password, "password_confirm": password},
+    )
+    with db() as conn:
+        conn.execute("UPDATE users SET is_admin = 1 WHERE email = ?", (email_admin,))
+        uid_target = conn.execute("SELECT id FROM users WHERE email = ?", (email_target,)).fetchone()["id"]
+    client.post("/forgot-password", data={"email": email_target})
+    with db() as conn:
+        n = conn.execute(
+            "SELECT COUNT(*) AS c FROM password_resets WHERE user_id = ?",
+            (uid_target,),
+        ).fetchone()["c"]
+    assert n >= 1
+    client.post("/logout")
+    client.post("/login", data={"email": email_admin, "password": password})
+    r_del = client.post(f"/admin/users/{uid_target}/delete", follow_redirects=False)
+    assert r_del.status_code == 303
+    with db() as conn:
+        n2 = conn.execute(
+            "SELECT COUNT(*) AS c FROM password_resets WHERE user_id = ?",
+            (uid_target,),
+        ).fetchone()["c"]
+    assert n2 == 0
+
+
+def test_admin_send_password_reset_without_smtp_redirects():
+    email_admin = _unique_email()
+    email_other = _unique_email()
+    password = "password123"
+    client.post(
+        "/signup",
+        data={"email": email_other, "password": password, "password_confirm": password},
+    )
+    with db() as conn:
+        uid_other = conn.execute("SELECT id FROM users WHERE email = ?", (email_other,)).fetchone()["id"]
+    client.post("/logout")
+    client.post(
+        "/signup",
+        data={"email": email_admin, "password": password, "password_confirm": password},
+    )
+    with db() as conn:
+        conn.execute("UPDATE users SET is_admin = 1 WHERE email = ?", (email_admin,))
+    client.post("/logout")
+    client.post("/login", data={"email": email_admin, "password": password})
+    r = client.post(f"/admin/users/{uid_other}/send-password-reset", follow_redirects=False)
+    assert r.status_code == 303
+    assert "pwd_reset=smtp" in (r.headers.get("location") or "")
+
+
+def test_admin_send_password_reset_succeeds_with_resend_only(monkeypatch):
+    """Panel admin: antes solo miraba SMTP; con solo Resend debe poder enviar."""
+    _from = "DRAGONNÉ <onboarding@resend.dev>"
+    monkeypatch.setattr(config, "RESEND_API_KEY", "re_test_key")
+    monkeypatch.setattr(config, "EMAIL_FROM", _from)
+    monkeypatch.setattr(email_smtp, "_send_via_resend", lambda *a, **k: True)
+    email_admin = _unique_email()
+    email_other = _unique_email()
+    password = "password123"
+    client.post(
+        "/signup",
+        data={"email": email_other, "password": password, "password_confirm": password},
+    )
+    with db() as conn:
+        uid_other = conn.execute("SELECT id FROM users WHERE email = ?", (email_other,)).fetchone()["id"]
+    client.post("/logout")
+    client.post(
+        "/signup",
+        data={"email": email_admin, "password": password, "password_confirm": password},
+    )
+    with db() as conn:
+        conn.execute("UPDATE users SET is_admin = 1 WHERE email = ?", (email_admin,))
+    client.post("/logout")
+    client.post("/login", data={"email": email_admin, "password": password})
+    r = client.post(f"/admin/users/{uid_other}/send-password-reset", follow_redirects=False)
+    assert r.status_code == 303
+    assert "pwd_reset=sent" in (r.headers.get("location") or "")
+    client.post("/logout", follow_redirects=True)
+
+
+def test_admin_send_password_reset_requires_admin():
+    email_user = _unique_email()
+    email_other = _unique_email()
+    password = "password123"
+    client.post(
+        "/signup",
+        data={"email": email_other, "password": password, "password_confirm": password},
+    )
+    with db() as conn:
+        uid_other = conn.execute("SELECT id FROM users WHERE email = ?", (email_other,)).fetchone()["id"]
+    client.post("/logout")
+    client.post(
+        "/signup",
+        data={"email": email_user, "password": password, "password_confirm": password},
+    )
+    onboarding = {
+        "hotel_name": "Hotel",
+        "contact_name": "Tester",
+        "hotel_size": "pequeño (<=40 llaves)",
+        "hotel_category": "boutique",
+        "hotel_location": "X",
+    }
+    client.post("/onboarding", data=onboarding)
+    r = client.post(f"/admin/users/{uid_other}/send-password-reset", follow_redirects=False)
+    assert r.status_code == 403
 
 
 # --- Panel admin: solo con sesión admin ---
 
 
 def test_admin_requires_login():
+    client.cookies.clear()
     r = client.get("/admin", follow_redirects=False)
     assert r.status_code in (302, 303)
     assert "/login" in (r.headers.get("location") or "")
