@@ -12,7 +12,9 @@ MOCK_REVENUE_REPORT = {
         "La operación muestra concentración de demanda en fin de semana con ADR estable, "
         "pero dependencia elevada de OTAs en esas noches. El canal directo participa poco "
         "cuando la demanda es fuerte. La prioridad inmediata es proteger tarifa en noches "
-        "altas y empujar visibilidad directa sin disparar comisión."
+        "altas y empujar visibilidad directa sin disparar comisión. "
+        "La lectura estratégica: el hotel compite bien en tarifa pública pero cede margen neto "
+        "por mix de canal en las fechas donde ya tiene poder de pricing."
     ),
     "key_findings": [
         {
@@ -28,6 +30,13 @@ MOCK_REVENUE_REPORT = {
             "diagnosis": "El mix entre semana depende de OTAs y tarifas promocionales.",
             "business_implication": "Mayor costo de distribución en días de demanda blanda.",
             "recommended_action": "Paquetes y bundles solo en directo para noches flojas; medir conversión del motor.",
+        },
+        {
+            "title": "Brecha de paridad puntual en suites y habitación premium",
+            "impact": "low",
+            "diagnosis": "En 3 fechas el BAR directo quedó por debajo del OTA en categoría premium.",
+            "business_implication": "Riesgo de canibalización y percepción de valor incoherente en upsell.",
+            "recommended_action": "Regla de mínimo en channel manager para categorías altas; revisión semanal de BAR.",
         },
     ],
     "anomalies": [

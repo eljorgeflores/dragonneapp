@@ -7,9 +7,11 @@ from fastapi import APIRouter, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from admin_ops import ADMIN_PLAN_VALUES, delete_analysis_by_id, delete_user_and_related
-from auth_session import require_admin
-from config import ADMIN_EMAILS, API_RATE_LIMIT_PER_DAY, API_RATE_LIMIT_PER_MINUTE
+from auth_session import create_reset_token, require_admin
+from config import ADMIN_EMAILS, API_RATE_LIMIT_PER_DAY, API_RATE_LIMIT_PER_MINUTE, SMTP_HOST, SMTP_PASSWORD, SMTP_USER, reset_password_public_path
 from db import db
+from email_smtp import send_password_reset_email
+from request_public_url import origin_for_user_facing_links
 from plans import plan_label
 from templating import templates
 from time_utils import now_iso
@@ -148,6 +150,8 @@ def admin_user_detail(request: Request, user_id: int):
         "last_activity": last_activity_row["last_activity"],
     }
 
+    pwd_reset = (request.query_params.get("pwd_reset") or "").strip().lower()
+
     return templates.TemplateResponse("admin_user_detail.html", {
         "request": request,
         "current_user": admin,
@@ -156,7 +160,32 @@ def admin_user_detail(request: Request, user_id: int):
         "analyses": analyses_list,
         "sessions": sessions,
         "stats": stats,
+        "pwd_reset": pwd_reset,
     })
+
+
+@router.post("/admin/users/{user_id}/send-password-reset")
+def admin_user_send_password_reset(request: Request, user_id: int):
+    require_admin(request)
+    smtp_ok = bool(SMTP_HOST and SMTP_USER and SMTP_PASSWORD)
+    with db() as conn:
+        row = conn.execute("SELECT id, email FROM users WHERE id = ?", (user_id,)).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    if not smtp_ok:
+        return RedirectResponse(f"/admin/users/{user_id}?pwd_reset=smtp", status_code=303)
+    token = create_reset_token(row["id"])
+    base = origin_for_user_facing_links(request)
+    reset_path = reset_password_public_path()
+    reset_link = f"{base}{reset_path}?token={token}"
+    reset_link_alt = f"{base}{reset_path}/{token}"
+    if send_password_reset_email(
+        row["email"],
+        reset_link,
+        reset_link_fallback=reset_link_alt,
+    ):
+        return RedirectResponse(f"/admin/users/{user_id}?pwd_reset=sent", status_code=303)
+    return RedirectResponse(f"/admin/users/{user_id}?pwd_reset=fail", status_code=303)
 
 
 @router.post("/admin/users/{user_id}/plan")

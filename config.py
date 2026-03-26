@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from urllib.parse import urlparse
 
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -48,7 +49,45 @@ PRO_PLUS_MAX_ANALYSES = 10
 DEFAULT_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 APP_URL = os.getenv("APP_URL", "http://127.0.0.1:8000")
+# Ruta pública donde el navegador ve la app (p. ej. reverse proxy en /dragonne). Vacío si está en la raíz.
+_url_prefix_env = os.getenv("URL_PREFIX", "").strip().rstrip("/")
+_path_from_app_url = (urlparse((APP_URL or "").strip()).path or "").rstrip("/")
+if _path_from_app_url == "/":
+    _path_from_app_url = ""
+_raw_px = _url_prefix_env or _path_from_app_url
+if _raw_px and not _raw_px.startswith("/"):
+    _raw_px = "/" + _raw_px
+URL_PREFIX = "" if _raw_px in ("/", "") else _raw_px
 SECRET_KEY = os.getenv("APP_SECRET_KEY", "change-me-now")
+
+
+def reset_password_public_path() -> str:
+    """Ruta URL pública del formulario de restablecimiento (con prefijo de proxy si aplica)."""
+    p = (URL_PREFIX or "").rstrip("/")
+    return f"{p}/reset-password" if p else "/reset-password"
+
+
+def url_path(relative: str) -> str:
+    """Ruta para cabecera Location / href internos cuando hay URL_PREFIX (proxy con subruta)."""
+    rel = (relative or "").strip()
+    if not rel.startswith("/"):
+        rel = "/" + rel
+    base = (URL_PREFIX or "").rstrip("/")
+    return f"{base}{rel}" if base else rel
+
+
+def internal_path(path: str) -> str:
+    """Normaliza el path de la petición a ruta interna de la app (sin duplicar URL_PREFIX)."""
+    p = (path or "").strip() or "/"
+    base = (URL_PREFIX or "").rstrip("/")
+    if not base:
+        return p if p.startswith("/") else "/" + p
+    if p == base or p == base + "/":
+        return "/"
+    if p.startswith(base + "/"):
+        p = p[len(base) :]
+    return p if p.startswith("/") else "/" + p
+
 
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
 STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
@@ -63,7 +102,16 @@ SMTP_HOST = os.getenv("SMTP_HOST", "").strip()
 SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
 SMTP_USER = os.getenv("SMTP_USER", "").strip()
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "").strip()
+# Cabecera "From" visible en el cliente de correo (puede incluir nombre <correo>)
 EMAIL_FROM = os.getenv("EMAIL_FROM", "DRAGONNÉ <noreply@ejemplo.com>").strip()
+# Remitente del sobre SMTP (muchas APIs exigen el mismo correo que SMTP_USER); por defecto SMTP_USER
+SMTP_ENVELOPE_FROM = os.getenv("SMTP_ENVELOPE_FROM", "").strip()
+# "starttls" (587 típ.) o "ssl" (SMTP_SSL, p. ej. puerto 465)
+_smtp_sec = os.getenv("SMTP_SECURITY", "starttls").strip().lower()
+SMTP_SECURITY = _smtp_sec if _smtp_sec in ("starttls", "ssl") else "starttls"
+
+# Caducidad del enlace de restablecimiento (debe coincidir con textos de correo y UI)
+PASSWORD_RESET_TOKEN_TTL_HOURS = max(1, int(os.getenv("PASSWORD_RESET_TOKEN_TTL_HOURS", "1")))
 
 API_RATE_LIMIT_PER_MINUTE = int(os.getenv("API_RATE_LIMIT_PER_MINUTE", "60"))
 API_RATE_LIMIT_PER_DAY = int(os.getenv("API_RATE_LIMIT_PER_DAY", "1000"))

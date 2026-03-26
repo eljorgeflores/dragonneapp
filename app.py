@@ -6,6 +6,7 @@ from config import (
     APP_NAME,
     APP_URL,
     BASE_DIR,
+    URL_PREFIX,
     FREE_MAX_ANALYSES,
     FREE_MAX_DAYS,
     FREE_MAX_FILES_PER_ANALYSIS,
@@ -17,12 +18,16 @@ from config import (
     SECRET_KEY,
     SMTP_HOST,
     SMTP_PASSWORD,
+    SMTP_PORT,
+    SMTP_SECURITY,
     SMTP_USER,
     STRIPE_MONTHLY_PRICE_ID,
     STRIPE_PRO_PLUS_PRICE_ID,
     STRIPE_PUBLISHABLE_KEY,
     STRIPE_SECRET_KEY,
     STRIPE_WEBHOOK_SECRET,
+    internal_path,
+    url_path,
 )
 from db import db, init_db
 
@@ -35,6 +40,8 @@ from debuglog import _debug_log
 DragonApp — ensamblador FastAPI: middleware, /app, health; routers en routes/*.
 Servicios: services/analysis_core, share_service, pdf_service, billing_stripe. Ver docs/dragonapp_phase3.md.
 """
+
+from urllib.parse import quote
 
 from auth_session import is_admin_user, onboarding_pending, require_user
 from fastapi import FastAPI, HTTPException, Request
@@ -83,12 +90,16 @@ async def http_exception_handler(request: Request, exc: HTTPException):
     if exc.status_code == 401:
         accept = (request.headers.get("accept") or "").lower()
         wants_html = "text/html" in accept and "application/json" not in accept
-        path = (request.url.path or "").strip()
+        raw_path = request.url.path or ""
+        path = internal_path(raw_path)
         if wants_html or path.startswith("/app") or path.startswith("/admin") or path == "/":
             next_url = path if path and path != "/" else "/app"
-            return RedirectResponse(url=f"/login?next={next_url}", status_code=303)
+            return RedirectResponse(
+                url=f"{url_path('/login')}?next={quote(next_url, safe='/')}",
+                status_code=303,
+            )
         return JSONResponse(
-            {"ok": False, "error": exc.detail or "Debes iniciar sesión", "redirect": "/login"},
+            {"ok": False, "error": exc.detail or "Debes iniciar sesión", "redirect": url_path("/login")},
             status_code=401,
         )
     return await default_http_exception_handler(request, exc)
@@ -100,7 +111,7 @@ def account_page(request: Request):
     """Mi cuenta: perfil, editar datos, y opciones de plan (Pro y Pro+)."""
     user = require_user(request)
     if onboarding_pending(user):
-        return RedirectResponse("/onboarding", status_code=303)
+        return RedirectResponse(url_path("/onboarding"), status_code=303)
     return templates.TemplateResponse("account.html", {
         "request": request,
         "user": user,
@@ -115,7 +126,7 @@ def account_page(request: Request):
 def dashboard(request: Request):
     user = require_user(request)
     if onboarding_pending(user):
-        return RedirectResponse("/onboarding", status_code=303)
+        return RedirectResponse(url_path("/onboarding"), status_code=303)
     # Tracking de sesión básica: último uso del panel
     session_id = request.session.get("session_id")
     if session_id:
@@ -208,4 +219,8 @@ def health_config():
         "stripe_webhook_configured": bool(STRIPE_WEBHOOK_SECRET and STRIPE_WEBHOOK_SECRET.strip()),
         "stripe_pro_price_configured": bool(STRIPE_MONTHLY_PRICE_ID and STRIPE_MONTHLY_PRICE_ID.strip()),
         "stripe_pro_plus_price_configured": bool(STRIPE_PRO_PLUS_PRICE_ID and STRIPE_PRO_PLUS_PRICE_ID.strip()),
+        "smtp_configured": bool(SMTP_HOST and SMTP_USER and SMTP_PASSWORD),
+        "smtp_security": SMTP_SECURITY,
+        "smtp_port": SMTP_PORT,
+        "url_prefix_configured": bool(URL_PREFIX),
     }

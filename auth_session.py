@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional
 
 from fastapi import Header, HTTPException, Request
 
-from config import ADMIN_EMAILS, API_RATE_LIMIT_PER_DAY, API_RATE_LIMIT_PER_MINUTE
+from config import ADMIN_EMAILS, API_RATE_LIMIT_PER_DAY, API_RATE_LIMIT_PER_MINUTE, PASSWORD_RESET_TOKEN_TTL_HOURS
 from db import db
 from time_utils import now_iso
 
@@ -32,7 +32,9 @@ def verify_password(password: str, password_hash_value: str) -> bool:
 
 def create_reset_token(user_id: int) -> str:
     token = secrets.token_urlsafe(32)
-    expires_at = (datetime.now(timezone.utc) + timedelta(hours=2)).isoformat()
+    expires_at = (
+        datetime.now(timezone.utc) + timedelta(hours=PASSWORD_RESET_TOKEN_TTL_HOURS)
+    ).isoformat()
     with db() as conn:
         conn.execute(
             """
@@ -45,21 +47,32 @@ def create_reset_token(user_id: int) -> str:
 
 
 def consume_reset_token(token: str) -> Optional[int]:
-    now_ts = datetime.now(timezone.utc).isoformat()
+    """Marca el token usado y devuelve user_id, o None si no existe, caducó o ya se usó."""
     with db() as conn:
         row = conn.execute(
-            """
-            SELECT * FROM password_resets
-            WHERE token = ? AND used = 0 AND expires_at > ?
-            """,
-            (token, now_ts),
+            "SELECT * FROM password_resets WHERE token = ? AND used = 0",
+            (token,),
         ).fetchone()
         if not row:
             return None
-        conn.execute(
-            "UPDATE password_resets SET used = 1 WHERE id = ?",
+        exp_raw = row["expires_at"]
+        try:
+            exp_s = (str(exp_raw) if exp_raw is not None else "").replace("Z", "+00:00")
+            exp = datetime.fromisoformat(exp_s)
+            if exp.tzinfo is None:
+                exp = exp.replace(tzinfo=timezone.utc)
+            else:
+                exp = exp.astimezone(timezone.utc)
+        except (ValueError, TypeError):
+            return None
+        if exp <= datetime.now(timezone.utc):
+            return None
+        cur = conn.execute(
+            "UPDATE password_resets SET used = 1 WHERE id = ? AND used = 0",
             (row["id"],),
         )
+        if cur.rowcount == 0:
+            return None
         return int(row["user_id"])
 
 

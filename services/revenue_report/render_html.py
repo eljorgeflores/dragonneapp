@@ -6,6 +6,7 @@ from typing import Any, Dict
 from templating import templates
 
 from .brand_assets import file_uri, resolve_logo_cover, resolve_logo_interior
+from .display_util import derive_closing_strategic_implication, derive_executive_highlights
 
 
 def render_revenue_report_html(report: Dict[str, Any], extra: Dict[str, Any] | None = None) -> str:
@@ -16,6 +17,8 @@ def render_revenue_report_html(report: Dict[str, Any], extra: Dict[str, Any] | N
         "report": report,
         "logo_cover_src": file_uri(logo_cover) if logo_cover.is_file() else "",
         "logo_interior_src": file_uri(logo_interior) if logo_interior.is_file() else "",
+        "executive_highlights": derive_executive_highlights(report),
+        "closing_strategic_implication": derive_closing_strategic_implication(report),
         **extra,
     }
     return templates.get_template("revenue_report/dragonne_report.html").render(**ctx)
