@@ -15,6 +15,7 @@ router = APIRouter(tags=["marketing"])
 
 @router.get("/", response_class=HTMLResponse)
 def home(request: Request, lang: str = Query("es", alias="lang")):
+    """Home pública del dominio (p. ej. dragonne.co/): landing de consultoría (`consulting.html`)."""
     _debug_log("routes.marketing:home", "GET / entry", {"has_user": bool(get_current_user(request))}, "H2")
     user = get_current_user(request)
     if user:

@@ -31,14 +31,13 @@
   .pp-nav{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:14px 0}
   .pp-brand{display:flex;align-items:center;gap:12px;font-size:1.02rem;font-weight:700;letter-spacing:-.03em;color:#343434}
   .pp-brand img{height:34px;width:auto;display:block}
-  .pp-brand-group{flex-wrap:wrap;align-items:baseline;gap:6px 10px}
-  .pp-brand-group .pp-brand-product{
-    font-size:1.08rem;font-weight:800;letter-spacing:-.04em;color:#343434;line-height:1.05;text-decoration:none;
+  .pp-brand-group{flex-wrap:nowrap;align-items:center;gap:10px 12px}
+  .pp-brand-mother{display:flex;align-items:center;flex-shrink:0;line-height:0}
+  .pp-brand-mother:focus-visible{outline:2px solid #f07e07;outline-offset:4px;border-radius:4px}
+  .pp-brand-lockup-divider{width:1px;height:22px;background:rgba(52,52,52,.12);flex-shrink:0}
+  .pp-brand-group .pp-brand-product--header{
+    font-size:.92rem;font-weight:700;letter-spacing:-.03em;color:#343434;white-space:nowrap;line-height:1.2;
   }
-  .pp-brand-group .pp-brand-endorse{
-    font-size:.74rem;font-weight:600;color:#7d7d7d;letter-spacing:.01em;white-space:nowrap;line-height:1;text-decoration:none;
-  }
-  .pp-brand-group .pp-brand-endorse:hover{color:#343434}
   .pp-mark{display:none}
   .pp-links{display:flex;gap:28px;color:var(--muted);font-size:.95rem}
   .pp-links a{color:var(--muted)}
@@ -271,8 +270,7 @@
     }
     .pp-links a{min-height:0;display:block;padding:6px 2px}
     .pp-nav-toggle-btn{display:flex;margin-left:10px}
-    .pp-brand-group .pp-brand-product{font-size:1.02rem}
-    .pp-brand-group .pp-brand-endorse{font-size:.7rem}
+    .pp-brand-group .pp-brand-product--header{font-size:.88rem}
     .pp-nav-wrap{position:sticky;top:0;z-index:120}
     .pp-nav-toggle:checked + .pp-brand + .pp-nav-toggle-btn + .pp-links{
       max-height:min(80vh,420px);
@@ -303,7 +301,7 @@
   @media (max-width:768px){
     .pp-nav{display:flex;align-items:center;flex-wrap:wrap;min-height:50px}
     .pp-brand{order:0;display:flex;align-items:center}
-    .pp-brand-group .pp-brand-product{font-size:1rem}
+    .pp-brand-group .pp-brand-product--header{font-size:.86rem}
     .pp-actions{order:1;margin-left:auto;gap:8px;display:flex;align-items:center;height:38px}
     .pp-actions .pp-btn-dark{display:none}
     .pp-actions .pp-btn-light{
@@ -354,7 +352,7 @@
     .pp-footer-nav{grid-template-columns:1fr}
     .pp-hero-actions{flex-direction:column;align-items:stretch;margin-bottom:16px}
     .pp-hero-actions .pp-btn{min-height:44px;width:100%;justify-content:center;font-size:.9rem}
-    .pp-brand-group .pp-brand-product{font-size:.98rem}
+    .pp-brand-group .pp-brand-product--header{font-size:.84rem}
     .pp-micro{font-size:.8rem}
     .pp-micro img.pp-openai-logo{height:18px}
     .pp-section{padding:24px 0}
@@ -443,14 +441,16 @@
     <div class="ppc pp-nav">
       <input type="checkbox" id="pp-nav-toggle" class="pp-nav-toggle" />
       <div class="pp-brand pp-brand-group">
-        <a href="{{ url_prefix }}/verticals/hospitality#top" class="pp-brand-product">Pullso</a>
-        <a href="{{ url_prefix }}/" class="pp-brand-endorse" aria-label="Dragonné — sitio corporativo">by Dragonné</a>
+        <a href="{{ url_prefix }}/" class="pp-brand-mother" aria-label="Dragonné — Inicio">
+          <img src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" />
+        </a>
+        <span class="pp-brand-lockup-divider" aria-hidden="true"></span>
+        <span class="pp-brand-product pp-brand-product--header">Pullso</span>
       </div>
       <label for="pp-nav-toggle" class="pp-nav-toggle-btn">
         <span></span>
       </label>
       <nav class="pp-links" aria-label="Navegación principal">
-        <a href="{{ url_prefix }}/">Dragonné</a>
         <div class="pp-nav-item">
           <button type="button" class="pp-nav-sub-btn">Verticales</button>
           <div class="pp-nav-sub" role="menu">
@@ -462,7 +462,6 @@
         </div>
         <a href="#producto">Producto</a>
         <a href="#como-funciona">Cómo funciona</a>
-        <a href="#integraciones">Integraciones</a>
         <a href="{{ url_prefix }}/precios">Precios</a>
       </nav>
       <div class="pp-actions">
@@ -476,7 +475,7 @@
     <section class="pp-hero">
       <div class="ppc pp-grid pp-hero-grid">
         <div class="pp-hero-top">
-          <div class="pp-eyebrow">Pullso by Dragonné · Inteligencia de revenue hotelera</div>
+          <div class="pp-eyebrow">Inteligencia de revenue hotelera</div>
           <p class="pp-hero-tagline">Lectura senior de tus reportes, en español, en minutos.</p>
           <h1>Analista de revenue inteligente para tu hotel</h1>
           <p class="pp-lead">Sube el reporte que ya exportas de tu PMS o channel manager. Recibe una lectura clara y senior: qué canales te llenan pero te comen margen, en qué días realmente ganas dinero y qué mover en precio y mix para mejorar resultados.</p>
@@ -547,7 +546,7 @@
     <section id="prueba" class="pp-section"><div class="ppc"><div class="pp-box"><h2>Empieza gratis</h2><p class="pp-muted">Prueba Pullso con un reporte de hasta <strong>{{ free_max_days }}</strong> días y descubre en minutos qué está pasando realmente en tu negocio. Ideal para que lo pruebes sin invertir. No necesitas tarjeta de crédito.</p><div class="pp-hero-actions" style="margin-top:20px;margin-bottom:0;"><a class="pp-btn pp-btn-dark" href="{{ url_prefix }}/signup">Probar gratis</a></div></div></div></section>
     <section id="integraciones" class="pp-section">
       <div class="ppc">
-        <div class="pp-section-hero"><h2 class="pp-section-title">Muy pronto</h2><div class="pp-section-lead"><p>Pullso está diseñado para convivir con tu stack hotelero. Las primeras conexiones serán con PMS y channel managers muy usados por hoteles independientes.</p></div></div>
+        <div class="pp-section-hero"><h2 class="pp-section-title">Nuestra visión</h2><div class="pp-section-lead"><p>Pullso está diseñado para convivir con tu stack hotelero. Las primeras conexiones serán con PMS y channel managers muy usados por hoteles independientes.</p></div></div>
         <div class="pp-box">
           <p class="pp-muted" style="margin-top:0;">Plataformas con las que conectaremos:</p>
           <div class="pp-badges" style="gap:18px;flex-wrap:wrap;">
