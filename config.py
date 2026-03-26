@@ -149,6 +149,17 @@ def smtp_host_tcp_reachable(timeout_sec: float = 2.0) -> bool | None:
     except OSError:
         return False
 
+
+# API HTTPS (alternativa a SMTP en hosting que bloquea puerto o credenciales difíciles — p. ej. Resend)
+RESEND_API_KEY = os.getenv("RESEND_API_KEY", "").strip()
+RESEND_FROM = _first_nonempty_env("RESEND_FROM")
+
+
+def password_reset_email_delivery_configured() -> bool:
+    """True si hay una vía configurada para enviar el correo de recuperación (Resend o SMTP completo)."""
+    return bool(RESEND_API_KEY) or bool(SMTP_HOST and SMTP_USER and SMTP_PASSWORD)
+
+
 # Caducidad del enlace de restablecimiento (debe coincidir con textos de correo y UI)
 PASSWORD_RESET_TOKEN_TTL_HOURS = max(1, int(os.getenv("PASSWORD_RESET_TOKEN_TTL_HOURS", "1")))
 

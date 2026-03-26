@@ -18,9 +18,11 @@ from auth_session import (
 )
 from config import (
     PASSWORD_RESET_TOKEN_TTL_HOURS,
+    RESEND_API_KEY,
     SMTP_HOST,
     SMTP_PASSWORD,
     SMTP_USER,
+    password_reset_email_delivery_configured,
     reset_password_public_path,
     url_path,
 )
@@ -131,6 +133,7 @@ def forgot_password_page(request: Request):
     if get_current_user(request):
         return RedirectResponse(url_path("/app"), status_code=303)
     notice = (request.query_params.get("notice") or "").strip().lower()
+    _smtp = bool(SMTP_HOST and SMTP_USER and SMTP_PASSWORD)
     return templates.TemplateResponse(
         "forgot_password.html",
         {
@@ -139,7 +142,8 @@ def forgot_password_page(request: Request):
             "error": None,
             "reset_link": None,
             "reset_link_alt": None,
-            "smtp_configured": bool(SMTP_HOST and SMTP_USER and SMTP_PASSWORD),
+            "smtp_configured": _smtp,
+            "email_delivery_configured": password_reset_email_delivery_configured(),
             "reset_ttl_hours": PASSWORD_RESET_TOKEN_TTL_HOURS,
             "unknown_email": False,
             "link_notice_incomplete": notice == "incomplete_link",
@@ -155,6 +159,7 @@ def _forgot_template_ctx(
     reset_link: str | None,
     email_sent: bool,
     smtp_configured: bool,
+    email_delivery_configured: bool,
     unknown_email: bool,
     reset_link_alt: str | None = None,
     link_notice_incomplete: bool = False,
@@ -167,6 +172,7 @@ def _forgot_template_ctx(
         "reset_link_alt": reset_link_alt,
         "email_sent": email_sent,
         "smtp_configured": smtp_configured,
+        "email_delivery_configured": email_delivery_configured,
         "reset_ttl_hours": PASSWORD_RESET_TOKEN_TTL_HOURS,
         "unknown_email": unknown_email,
         "link_notice_incomplete": link_notice_incomplete,
@@ -180,6 +186,7 @@ def forgot_password(request: Request, email: str = Form(...)):
     reset_link_alt = None
     email_sent = False
     smtp_configured = bool(SMTP_HOST and SMTP_USER and SMTP_PASSWORD)
+    delivery_ok = password_reset_email_delivery_configured()
 
     try:
         with db() as conn:
@@ -189,7 +196,11 @@ def forgot_password(request: Request, email: str = Form(...)):
             _log.info(
                 "forgot_password_metrics %s",
                 json.dumps(
-                    {"branch": "unknown_email", "smtp_configured": smtp_configured},
+                    {
+                        "branch": "unknown_email",
+                        "smtp_configured": smtp_configured,
+                        "resend_configured": bool(RESEND_API_KEY),
+                    },
                     ensure_ascii=False,
                 ),
             )
@@ -203,16 +214,16 @@ def forgot_password(request: Request, email: str = Form(...)):
                     reset_link=None,
                     email_sent=False,
                     smtp_configured=smtp_configured,
+                    email_delivery_configured=delivery_ok,
                     unknown_email=True,
                     reset_link_alt=None,
                     link_notice_incomplete=False,
                 ),
             )
-        if not smtp_configured:
+        if not delivery_ok:
             _log.warning(
-                "forgot_password: hay usuario para el correo indicado pero SMTP no está completo "
-                "(definir SMTP_HOST, SMTP_USER y SMTP_PASSWORD en el entorno del servicio). "
-                "No se enviará correo; solo enlace en pantalla."
+                "forgot_password: hay usuario pero no hay SMTP completo ni RESEND_API_KEY; "
+                "solo enlace en pantalla."
             )
         token = create_reset_token(user["id"])
         base = origin_for_user_facing_links(request)
@@ -225,10 +236,10 @@ def forgot_password(request: Request, email: str = Form(...)):
             reset_link,
             reset_link_fallback=reset_link_alt,
         )
-        if smtp_configured and not email_sent:
+        if delivery_ok and not email_sent:
             _log.warning(
-                "forgot_password: SMTP configurado pero el envío falló o fue rechazado; "
-                "revisar log anterior y SMTP_SECURITY/SMTP_PORT."
+                "forgot_password: canal de correo configurado pero el envío falló; "
+                "revisar logs (Resend HTTP o SMTP)."
             )
         # #region agent log
         _log.info(
@@ -237,6 +248,7 @@ def forgot_password(request: Request, email: str = Form(...)):
                 {
                     "branch": "user_found",
                     "smtp_configured": smtp_configured,
+                    "resend_configured": bool(RESEND_API_KEY),
                     "email_sent": email_sent,
                 },
                 ensure_ascii=False,
@@ -254,6 +266,7 @@ def forgot_password(request: Request, email: str = Form(...)):
                 reset_link=reset_link,
                 email_sent=email_sent,
                 smtp_configured=smtp_configured,
+                email_delivery_configured=delivery_ok,
                 unknown_email=False,
                 reset_link_alt=reset_link_alt,
                 link_notice_incomplete=False,
@@ -270,6 +283,7 @@ def forgot_password(request: Request, email: str = Form(...)):
                 reset_link=reset_link,
                 email_sent=False,
                 smtp_configured=smtp_configured,
+                email_delivery_configured=delivery_ok,
                 unknown_email=False,
                 reset_link_alt=reset_link_alt,
                 link_notice_incomplete=False,

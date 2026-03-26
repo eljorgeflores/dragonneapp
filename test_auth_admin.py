@@ -10,6 +10,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 import config
+import email_smtp
 import templating
 from app import app, db
 
@@ -28,6 +29,8 @@ def test_health_config_smtp_flags():
         "smtp_envelope_configured",
         "smtp_security",
         "smtp_port",
+        "resend_configured",
+        "password_reset_email_delivery_configured",
     ):
         assert key in data
     assert "smtp_tcp_reachable" not in data
@@ -56,6 +59,23 @@ def test_internal_path_strips_prefix(monkeypatch):
     assert config.internal_path("/sub/app") == "/app"
     assert config.internal_path("/sub") == "/"
     assert config.internal_path("/app") == "/app"
+
+
+def test_forgot_password_sends_via_resend_when_stub_succeeds(monkeypatch):
+    monkeypatch.setattr(config, "RESEND_API_KEY", "re_test_key")
+    monkeypatch.setattr(email_smtp, "RESEND_API_KEY", "re_test_key")
+    monkeypatch.setattr(email_smtp, "_send_via_resend", lambda *a, **k: True)
+    email = _unique_email()
+    password = "password123"
+    client.post(
+        "/signup",
+        data={"email": email, "password": password, "password_confirm": password},
+        follow_redirects=True,
+    )
+    r = client.post("/forgot-password", data={"email": email})
+    assert r.status_code == 200
+    assert "Revisa tu bandeja de entrada" in (r.text or "")
+    client.post("/logout", follow_redirects=True)
 
 
 def test_forgot_password_page_form_action_respects_prefix(monkeypatch):

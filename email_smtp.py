@@ -5,9 +5,13 @@ import ssl
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+import requests
+
 from config import (
     EMAIL_FROM,
     PASSWORD_RESET_TOKEN_TTL_HOURS,
+    RESEND_API_KEY,
+    RESEND_FROM,
     SMTP_ENVELOPE_FROM,
     SMTP_HOST,
     SMTP_PASSWORD,
@@ -53,6 +57,47 @@ def _reset_ttl_label_es(hours: int) -> str:
     return "1 hora" if hours == 1 else f"{hours} horas"
 
 
+_RESEND_API_URL = "https://api.resend.com/emails"
+
+
+def _send_via_resend(to_addr: str, subject: str, text: str, html: str) -> bool:
+    """Envío vía Resend (HTTPS). `from` debe ser un remitente verificado en el panel de Resend."""
+    if not RESEND_API_KEY:
+        return False
+    from_addr = (RESEND_FROM or EMAIL_FROM or "").strip()
+    if not from_addr:
+        _log.warning("Resend: define RESEND_FROM o EMAIL_FROM con un remitente verificado")
+        return False
+    try:
+        r = requests.post(
+            _RESEND_API_URL,
+            headers={
+                "Authorization": f"Bearer {RESEND_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "from": from_addr,
+                "to": [to_addr],
+                "subject": subject,
+                "text": text,
+                "html": html,
+            },
+            timeout=30,
+        )
+    except requests.RequestException as exc:
+        _log.warning("Resend: error de red: %s", exc, exc_info=True)
+        return False
+    if r.status_code in (200, 201):
+        _log.info("Correo recuperación: Resend API aceptó el envío (HTTP %s)", r.status_code)
+        return True
+    _log.warning(
+        "Resend API rechazó el envío (HTTP %s): %s",
+        r.status_code,
+        (r.text or "")[:800],
+    )
+    return False
+
+
 def send_password_reset_email(
     to_email: str,
     reset_link: str,
@@ -60,9 +105,6 @@ def send_password_reset_email(
     reset_link_fallback: str | None = None,
     ttl_hours: int | None = None,
 ) -> bool:
-    if not SMTP_HOST or not SMTP_USER or not SMTP_PASSWORD:
-        _log.info("Recuperación contraseña: SMTP no configurado (faltan HOST/USER/PASSWORD), no se envía correo")
-        return False
     to_addr = (to_email or "").strip()
     if not to_addr:
         _log.warning("Recuperación contraseña: destinatario vacío, no se envía")
@@ -81,10 +123,7 @@ Si el enlace anterior no abre en tu correo (algunos programas cortan la direcci�
         alt_html = f"""<p>Si el enlace anterior no funciona (algunos correos cortan la dirección), copia y pega esto en el navegador:</p>
 <p><a href="{reset_link_fallback}">Abrir restablecimiento (enlace alternativo)</a></p>
 <p class="muted" style="font-size:0.85em;word-break:break-all;">{reset_link_fallback}</p>"""
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = "Recuperar contraseña — DRAGONNÉ"
-    msg["From"] = EMAIL_FROM
-    msg["To"] = to_addr
+    subject = "Recuperar contraseña — DRAGONNÉ"
     text = f"""Hola,
 
 Alguien pidió restablecer la contraseña de tu cuenta en DRAGONNÉ.
@@ -104,6 +143,22 @@ DRAGONNÉ
 {alt_html}
 <p>Si no pediste esto, ignora este correo.</p>
 <p>—<br>DRAGONNÉ</p>"""
+
+    if RESEND_API_KEY:
+        if _send_via_resend(to_addr, subject, text, html):
+            return True
+        _log.warning("Resend no pudo enviar; se intentará SMTP si está configurado")
+
+    if not SMTP_HOST or not SMTP_USER or not SMTP_PASSWORD:
+        _log.info(
+            "Recuperación contraseña: sin Resend exitoso y SMTP incompleto; no se envía correo"
+        )
+        return False
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = EMAIL_FROM
+    msg["To"] = to_addr
     msg.attach(MIMEText(text, "plain", "utf-8"))
     msg.attach(MIMEText(html, "html", "utf-8"))
     try:

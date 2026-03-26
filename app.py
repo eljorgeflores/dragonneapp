@@ -17,6 +17,7 @@ from config import (
     PREMIUM_MONTHLY_PRICE,
     PRO_180_MAX_FILES,
     PRO_90_MAX_FILES,
+    RESEND_API_KEY,
     SECRET_KEY,
     SMTP_ENVELOPE_FROM,
     SMTP_HOST,
@@ -31,6 +32,7 @@ from config import (
     STRIPE_SECRET_KEY,
     STRIPE_WEBHOOK_SECRET,
     internal_path,
+    password_reset_email_delivery_configured,
     url_path,
 )
 from db import db, init_db
@@ -61,19 +63,26 @@ from time_utils import now_iso
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Arranque del worker: registra si SMTP está completo (sin secretos)."""
-    ok = bool(SMTP_HOST and SMTP_USER and SMTP_PASSWORD)
+    """Arranque del worker: vías de envío para recuperación de contraseña (sin secretos)."""
     log = logging.getLogger(__name__)
-    if ok:
+    delivery = password_reset_email_delivery_configured()
+    smtp_ok = bool(SMTP_HOST and SMTP_USER and SMTP_PASSWORD)
+    resend_ok = bool(RESEND_API_KEY)
+    if delivery:
         log.info(
-            "DragonApp startup: smtp_configured=True smtp_security=%s smtp_port=%s",
-            SMTP_SECURITY,
-            SMTP_PORT,
+            "DragonApp startup: password_reset_delivery=True smtp=%s resend=%s%s",
+            smtp_ok,
+            resend_ok,
+            (
+                f" smtp_security={SMTP_SECURITY} smtp_port={SMTP_PORT}"
+                if smtp_ok
+                else ""
+            ),
         )
     else:
         log.warning(
-            "DragonApp startup: smtp_configured=False — la recuperación de contraseña no enviará correo "
-            "hasta definir SMTP_HOST, SMTP_USER y SMTP_PASSWORD (o alias EMAIL_* / MAIL_*)."
+            "DragonApp startup: password_reset_delivery=False — definir SMTP completo "
+            "(+ alias EMAIL_*/MAIL_*) o RESEND_API_KEY para enviar correo de recuperación."
         )
     yield
 
@@ -252,6 +261,8 @@ def health_config(smtp_probe: bool = Query(False)):
         "smtp_envelope_configured": bool((SMTP_ENVELOPE_FROM or SMTP_USER or "").strip()),
         "smtp_security": SMTP_SECURITY,
         "smtp_port": SMTP_PORT,
+        "resend_configured": bool(RESEND_API_KEY),
+        "password_reset_email_delivery_configured": password_reset_email_delivery_configured(),
         "url_prefix_configured": bool(URL_PREFIX),
     }
     if smtp_probe:
