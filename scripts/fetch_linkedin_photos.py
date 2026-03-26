@@ -27,12 +27,13 @@ USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36
 
 # slug LinkedIn -> nombre de archivo local
 PROFILES = [
-    ("vaniadragonne", "vania-dragonne.jpg"),
+    ("hefzi-arroyo-3aa8b23aa", "hefzi-dragonne.png"),
+    ("vaniadragonne", "vania-dragonne.png"),
     ("jorgefloresacevedo", "jorge-flores.jpg"),
-    ("juanjoflores", "juanjo-flores.jpg"),
-    ("sylviagn", "sylvia-gallegos.jpg"),
-    ("joelkamus", "joel-gomez.jpg"),
+    ("juanjoflores", "juanjo-flores.png"),
+    ("joelkamus", "joel-gomez.png"),
     ("joaquinbenitezm", "joaquin-benitez.jpg"),
+    ("jorgedecordova", "jorge-decordova.png"),
 ]
 
 
