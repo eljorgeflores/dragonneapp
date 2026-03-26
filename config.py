@@ -23,6 +23,12 @@ def _first_nonempty_env(*names: str) -> str:
     return ""
 
 
+def _normalize_api_secret(val: str) -> str:
+    """Quita BOM/espacios y saltos de línea (copiar/pegar desde panel o .env mal formado)."""
+    s = (val or "").strip().lstrip("\ufeff").strip()
+    return s.replace("\r\n", "").replace("\n", "").strip()
+
+
 _env_file = BASE_DIR / ".env"
 if _env_file.exists():
     try:
@@ -151,7 +157,7 @@ def smtp_host_tcp_reachable(timeout_sec: float = 2.0) -> bool | None:
 
 
 # API HTTPS (alternativa a SMTP en hosting que bloquea puerto o credenciales difíciles — p. ej. Resend)
-RESEND_API_KEY = os.getenv("RESEND_API_KEY", "").strip()
+RESEND_API_KEY = _normalize_api_secret(os.getenv("RESEND_API_KEY", ""))
 RESEND_FROM = _first_nonempty_env("RESEND_FROM")
 
 

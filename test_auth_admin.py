@@ -17,6 +17,13 @@ from app import app, db
 client = TestClient(app)
 
 
+def test_normalize_api_secret_strips_bom_and_newlines():
+    from config import _normalize_api_secret
+
+    assert _normalize_api_secret("  re_test\n") == "re_test"
+    assert _normalize_api_secret("\ufeffre_other") == "re_other"
+
+
 def test_health_config_smtp_flags():
     r = client.get("/health/config")
     assert r.status_code == 200
