@@ -1,5 +1,13 @@
 {% extends 'base.html' %}
-{% block title %}Precios — DRAGONNÉ{% endblock %}
+{% block title %}Precios — Pullso by Dragonné{% endblock %}
+{% block canonical %}{{ app_url }}/precios{% endblock %}
+{% block meta %}
+<meta name="description" content="Planes Pullso by Dragonné: prueba gratis y escala con Pro. Inteligencia de revenue para hoteles — mismo flujo, más periodos y reportes cuando tu propiedad lo necesite." />
+<meta name="keywords" content="Pullso, Dragonné, precios, revenue management, hotel, planes Pro" />
+<meta name="robots" content="index, follow" />
+{% endblock %}
+{% block og_title %}Precios — Pullso by Dragonné{% endblock %}
+{% block og_description %}Planes de Pullso (Dragonné): gratis, Pro y Pro+. Inteligencia de revenue para equipos hoteleros, sin cambiar tu forma de exportar reportes.{% endblock %}
 {% block body %}
 <style>
   .pp *{box-sizing:border-box}
@@ -11,11 +19,21 @@
     font-family:"SF Pro Display","SF Pro Text",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   }
   .pp a{text-decoration:none}
+  .pp-skip{position:absolute;left:-9999px;z-index:999;padding:12px 20px;background:#343434;color:#fff;font-weight:600;border-radius:0 0 12px 0}
+  .pp-skip:focus{left:0;top:0;outline:2px solid #f07e07;outline-offset:2px}
   .ppc{width:min(1180px,calc(100% - 40px));margin:0 auto}
   .pp-nav-wrap{position:sticky;top:0;z-index:100;backdrop-filter:blur(18px);background:rgba(246,248,251,.82);border-bottom:1px solid rgba(15,23,32,.04)}
   .pp-nav{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:14px 0}
   .pp-brand{display:flex;align-items:center;gap:12px;font-size:1.02rem;font-weight:700;letter-spacing:-.03em;color:#343434}
   .pp-brand img{height:34px;width:auto;display:block}
+  .pp-brand-group{flex-wrap:wrap;align-items:baseline;gap:6px 10px}
+  .pp-brand-group .pp-brand-product{
+    font-size:1.08rem;font-weight:800;letter-spacing:-.04em;color:#343434;line-height:1.05;text-decoration:none;
+  }
+  .pp-brand-group .pp-brand-endorse{
+    font-size:.74rem;font-weight:600;color:#7d7d7d;letter-spacing:.01em;white-space:nowrap;line-height:1;text-decoration:none;
+  }
+  .pp-brand-group .pp-brand-endorse:hover{color:#343434}
   .pp-links{display:flex;gap:28px;color:var(--muted);font-size:.95rem}
   .pp-links a{color:var(--muted)}
   .pp-actions{display:flex;gap:12px}
@@ -27,6 +45,8 @@
   .pp-nav-toggle-btn span::after{top:5px}
   .pp-btn{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 18px;border-radius:999px;font-weight:600;border:1px solid transparent;transition:.2s ease}
   .pp-btn:hover{transform:translateY(-1px)}
+  .pp-btn:focus-visible,.pp-links a:focus-visible,.pp-nav-sub-btn:focus-visible{outline:2px solid #f07e07;outline-offset:2px}
+  .pp-links a:hover{color:var(--text)}
   .pp-btn-dark,.pp-btn-dark:visited{background:linear-gradient(90deg,#f6a905,#f07e07) !important;color:#fff !important;box-shadow:0 16px 30px rgba(240,126,7,.25)}
   .pp-btn-light,.pp-btn-light:visited{background:#fff !important;border-color:var(--line);color:var(--text) !important}
   .pp-section{padding:34px 0;text-align:left}
@@ -75,9 +95,10 @@
     .pp-links{position:absolute;inset:auto 0 auto 0;top:100%;margin-top:8px;padding:10px 14px 12px;width:100%;max-height:0;overflow:hidden;display:flex;flex-direction:column;gap:8px;background:rgba(255,255,255,.96);border-radius:16px;box-shadow:0 16px 40px rgba(15,23,32,.18);border:1px solid rgba(15,23,32,.06);transform-origin:top center;transform:scaleY(0.9);opacity:0;pointer-events:none;font-size:.9rem}
     .pp-links a{min-height:0;display:block;padding:6px 2px}
     .pp-nav-toggle-btn{display:flex;margin-left:10px}
-    .pp-brand img{height:30px}
+    .pp-brand-group .pp-brand-product{font-size:1.02rem}
+    .pp-brand-group .pp-brand-endorse{font-size:.7rem}
     .pp-nav-wrap{position:sticky;top:0;z-index:120}
-    .pp-nav-toggle:checked + .pp-brand + .pp-nav-toggle-btn + .pp-links{max-height:240px;opacity:1;transform:scaleY(1);pointer-events:auto}
+    .pp-nav-toggle:checked + .pp-brand + .pp-nav-toggle-btn + .pp-links{max-height:min(80vh,420px);opacity:1;transform:scaleY(1);pointer-events:auto}
     .pp-footer-grid{grid-template-columns:1fr;gap:24px}
     .pp-footer-nav{grid-template-columns:1fr 1fr;gap:20px}
     .pp-footer-brand p{max-width:100%}
@@ -89,7 +110,7 @@
   @media (max-width:768px){
     .pp-nav{display:flex;align-items:center;flex-wrap:wrap;min-height:50px}
     .pp-brand{order:0}
-    .pp-brand img{height:28px;width:auto !important}
+    .pp-brand-group .pp-brand-product{font-size:1rem}
     .pp-actions{order:1;margin-left:auto;gap:8px;display:flex;align-items:center;height:38px}
     .pp-actions .pp-btn-dark{display:none}
     .pp-actions .pp-btn-light{min-width:38px;width:38px;height:38px;max-height:38px;padding:0;box-sizing:border-box;font-size:0;line-height:0;text-indent:-999px;overflow:hidden;border-radius:999px;position:relative;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -100,40 +121,86 @@
   }
   @media (max-width:480px){
     .pp-footer-nav{grid-template-columns:1fr}
-    .pp-brand img{height:26px}
+    .pp-brand-group .pp-brand-product{font-size:.98rem}
     .pp-section{padding:24px 0}
     .pp-section-hero .pp-section-title{font-size:1.5rem;text-align:left}
+  }
+  .pp-nav-item{position:relative;width:100%}
+  .pp-nav-sub-btn{
+    background:none;border:0;padding:6px 2px;font:inherit;font-size:.9rem;font-weight:500;
+    color:var(--muted);text-align:left;cursor:pointer;width:100%;
+  }
+  .pp-nav-sub{
+    display:none;position:absolute;left:0;top:100%;margin-top:6px;min-width:210px;padding:8px 0;
+    background:#fff;border:1px solid rgba(15,23,32,.08);border-radius:14px;
+    box-shadow:0 14px 36px rgba(15,23,32,.1);z-index:130
+  }
+  .pp-nav-sub a,.pp-nav-sub .pp-nav-soon{display:block;padding:9px 14px;font-size:.88rem;font-weight:500}
+  .pp-nav-sub a{color:var(--text)}
+  .pp-nav-sub .pp-nav-soon{color:#9ca3af;cursor:default}
+  @media (min-width:761px){
+    .pp-nav-item{width:auto}
+    .pp-nav-item::after{
+      content:"";
+      position:absolute;
+      left:0;
+      width:100%;
+      height:12px;
+      top:100%;
+      z-index:129;
+    }
+    .pp-nav-sub-btn{padding:0;color:var(--muted);font-size:.95rem;width:auto}
+    .pp-nav-item:hover .pp-nav-sub,.pp-nav-item:focus-within .pp-nav-sub{display:block}
+  }
+  @media (max-width:760px){
+    .pp-nav-sub{
+      display:block;position:static;margin:0;padding:4px 0 10px 12px;border:0;box-shadow:none;
+      max-height:none;opacity:1;transform:none;pointer-events:auto
+    }
+    .pp-nav-sub a,.pp-nav-sub .pp-nav-soon{padding:6px 2px}
   }
 </style>
 
 <div class="pp">
+  <a href="#top" class="pp-skip">Saltar al contenido</a>
   <div class="pp-nav-wrap">
     <div class="ppc pp-nav">
       <input type="checkbox" id="pp-nav-toggle" class="pp-nav-toggle" />
-      <a href="/" class="pp-brand">
-        <img src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" style="height:40px;width:auto;display:block" />
-      </a>
-      <label for="pp-nav-toggle" class="pp-nav-toggle-btn"><span></span></label>
-      <nav class="pp-links">
-        <a href="/#producto">Producto</a>
-        <a href="/#como-funciona">Cómo funciona</a>
-        <a href="/#integraciones">Integraciones</a>
-        <a href="/precios">Precios</a>
+      <div class="pp-brand pp-brand-group">
+        <a href="{{ url_prefix }}/verticals/hospitality#top" class="pp-brand-product">Pullso</a>
+        <a href="{{ url_prefix }}/" class="pp-brand-endorse" aria-label="Dragonné — sitio corporativo">by Dragonné</a>
+      </div>
+      <label for="pp-nav-toggle" class="pp-nav-toggle-btn" aria-label="Abrir menú"><span></span></label>
+      <nav class="pp-links" aria-label="Navegación principal">
+        <a href="{{ url_prefix }}/">Dragonné</a>
+        <div class="pp-nav-item">
+          <button type="button" class="pp-nav-sub-btn">Verticales</button>
+          <div class="pp-nav-sub" role="menu">
+            <a href="{{ url_prefix }}/verticals/hospitality" role="menuitem">Hospitalidad</a>
+            <span class="pp-nav-soon" role="menuitem" aria-disabled="true">Startups — Próximamente</span>
+            <span class="pp-nav-soon" role="menuitem" aria-disabled="true">SMBs — Próximamente</span>
+            <span class="pp-nav-soon" role="menuitem" aria-disabled="true">Medios / PR — Próximamente</span>
+          </div>
+        </div>
+        <a href="{{ url_prefix }}/verticals/hospitality#producto">Producto</a>
+        <a href="{{ url_prefix }}/verticals/hospitality#como-funciona">Cómo funciona</a>
+        <a href="{{ url_prefix }}/verticals/hospitality#integraciones">Integraciones</a>
+        <a href="{{ url_prefix }}/precios">Precios</a>
       </nav>
       <div class="pp-actions">
-        <a class="pp-btn pp-btn-light" href="/login">Iniciar sesión</a>
-        <a class="pp-btn pp-btn-dark" href="/signup">Probar gratis</a>
+        <a class="pp-btn pp-btn-light" href="{{ url_prefix }}/login">Iniciar sesión</a>
+        <a class="pp-btn pp-btn-dark" href="{{ url_prefix }}/signup">Probar gratis</a>
       </div>
     </div>
   </div>
 
-  <main>
+  <main id="top">
     <section class="pp-section">
       <div class="ppc">
         <div class="pp-section-hero">
           <h1 class="pp-section-title">Empieza gratis. Escala cuando tu hotel lo necesite.</h1>
           <div class="pp-section-lead">
-            <p>Prueba DRAGONNÉ sin costo con un primer análisis. Cuando te haga sentido leer más periodos o más reportes, pasa a Pro sin cambiar de flujo.</p>
+            <p>Prueba Pullso sin costo con un primer análisis. Cuando te haga sentido leer más periodos o más reportes, pasa a Pro sin cambiar de flujo.</p>
           </div>
         </div>
         <div class="pp-box">
@@ -147,7 +214,7 @@
                 <li><strong>Soporte por email</strong> en horario laboral</li>
               </ul>
               <div class="pp-price-cta">
-                <a class="pp-btn pp-btn-light" href="/signup">Empezar gratis</a>
+                <a class="pp-btn pp-btn-light" href="{{ url_prefix }}/signup">Empezar gratis</a>
               </div>
             </div>
             <div class="pp-price-card highlight">
@@ -160,7 +227,7 @@
                 <li><strong>Soporte prioritario por email</strong></li>
               </ul>
               <div class="pp-price-cta">
-                <a class="pp-btn pp-btn-dark" href="/signup">Pro {{ monthly_price }} USD/mes</a>
+                <a class="pp-btn pp-btn-dark" href="{{ url_prefix }}/signup">Pro {{ monthly_price }} USD/mes</a>
               </div>
             </div>
             <div class="pp-price-card">
@@ -172,7 +239,7 @@
                 <li><strong>Account manager asignado</strong></li>
               </ul>
               <div class="pp-price-cta">
-                <a class="pp-btn pp-btn-light" href="/signup">Pro {{ premium_monthly_price }} USD/mes</a>
+                <a class="pp-btn pp-btn-light" href="{{ url_prefix }}/signup">Pro {{ premium_monthly_price }} USD/mes</a>
               </div>
             </div>
           </div>
@@ -185,39 +252,40 @@
     <div class="ppc pp-footer-inner">
       <div class="pp-footer-grid">
         <section class="pp-footer-brand" aria-labelledby="footer-brand">
-          <h2 id="footer-brand" class="pp-footer-title">DRAGONNÉ</h2>
+          <h2 id="footer-brand" class="pp-footer-title">Pullso by Dragonné</h2>
           <p>Análisis inteligente de reportes para hoteles. Lectura comercial en español: métricas, hallazgos y recomendaciones accionables.</p>
+          <p style="margin-top:12px;"><a href="{{ url_prefix }}/" style="color:#f07e07;font-weight:600;">← Sitio Dragonné</a></p>
         </section>
         <nav class="pp-footer-nav" aria-label="Navegación del sitio">
           <section aria-labelledby="footer-producto">
             <h3 id="footer-producto" class="pp-footer-head">Producto</h3>
             <ul>
-              <li><a href="/#producto">Qué ofrece</a></li>
-              <li><a href="/#como-funciona">Cómo funciona</a></li>
-              <li><a href="/#prueba">Probar gratis</a></li>
-              <li><a href="/#integraciones">Integraciones</a></li>
-              <li><a href="/precios">Precios</a></li>
+              <li><a href="{{ url_prefix }}/verticals/hospitality#producto">Qué ofrece</a></li>
+              <li><a href="{{ url_prefix }}/verticals/hospitality#como-funciona">Cómo funciona</a></li>
+              <li><a href="{{ url_prefix }}/verticals/hospitality#prueba">Probar gratis</a></li>
+              <li><a href="{{ url_prefix }}/verticals/hospitality#integraciones">Integraciones</a></li>
+              <li><a href="{{ url_prefix }}/precios">Precios</a></li>
             </ul>
           </section>
           <section aria-labelledby="footer-cuenta">
             <h3 id="footer-cuenta" class="pp-footer-head">Cuenta</h3>
             <ul>
-              <li><a href="/login">Iniciar sesión</a></li>
-              <li><a href="/signup">Crear cuenta</a></li>
+              <li><a href="{{ url_prefix }}/login">Iniciar sesión</a></li>
+              <li><a href="{{ url_prefix }}/signup">Crear cuenta</a></li>
             </ul>
           </section>
           <section aria-labelledby="footer-recursos">
             <h3 id="footer-recursos" class="pp-footer-head">Recursos</h3>
             <ul>
-              <li><a href="/api">Documentación API</a></li>
-              <li><a href="/mockup-analisis">Ver ejemplo de análisis</a></li>
-              <li><a href="/sitemap.xml">Mapa del sitio</a></li>
+              <li><a href="{{ url_prefix }}/api">Documentación API</a></li>
+              <li><a href="{{ url_prefix }}/mockup-analisis">Ver ejemplo de análisis</a></li>
+              <li><a href="{{ url_prefix }}/sitemap.xml">Mapa del sitio</a></li>
             </ul>
           </section>
         </nav>
       </div>
       <div class="pp-footer-bottom">
-        <p>&copy; {{ current_year or '2025' }} DRAGONNÉ. Análisis de reportes para hoteles.</p>
+        <p>&copy; {{ current_year or '2025' }} Pullso by Dragonné · Inteligencia de revenue para hoteles.</p>
       </div>
     </div>
   </footer>

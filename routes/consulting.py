@@ -9,9 +9,9 @@ import re
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Form, Query, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
-from config import BASE_DIR, CONSULTING_CALENDAR_URL
+from config import BASE_DIR, CONSULTING_CALENDAR_URL, url_path
 from db import db
 from email_smtp import send_consulting_lead_email
 from templating import templates
@@ -36,8 +36,8 @@ class _DefaultT(dict):
         return ""
 
 
-@router.get("/consultoria", response_class=HTMLResponse)
-def consulting_landing(request: Request, lang: str = Query("es", alias="lang")):
+def render_consulting_landing(request: Request, lang: str = "es"):
+    """HTML de la homepage corporativa (plantilla consulting). Usada en `/` y tests."""
     if lang not in ("es", "en"):
         lang = "es"
     trans = _consulting_translations()
@@ -46,10 +46,7 @@ def consulting_landing(request: Request, lang: str = Query("es", alias="lang")):
         t = _DefaultT()
     else:
         t = _DefaultT(t)
-    try:
-        lead_path = request.url_for("consulting_lead_submit").path
-    except Exception:
-        lead_path = "/consultoria/lead"
+    lead_path = url_path("/consultoria/lead")
     return templates.TemplateResponse(
         "consulting.html",
         {
@@ -63,9 +60,20 @@ def consulting_landing(request: Request, lang: str = Query("es", alias="lang")):
     )
 
 
-@router.get("/consulting", response_class=HTMLResponse)
-def consulting_landing_en(request: Request, lang: str = Query("en", alias="lang")):
-    return consulting_landing(request=request, lang=lang)
+@router.get("/consultoria", include_in_schema=False)
+def consulting_legacy_redirect(request: Request, lang: str = Query("es", alias="lang")):
+    if lang not in ("es", "en"):
+        lang = "es"
+    base = url_path("/")
+    return RedirectResponse(f"{base}?lang={lang}", status_code=302)
+
+
+@router.get("/consulting", include_in_schema=False)
+def consulting_en_legacy_redirect(request: Request, lang: str = Query("en", alias="lang")):
+    if lang not in ("es", "en"):
+        lang = "en"
+    base = url_path("/")
+    return RedirectResponse(f"{base}?lang={lang}", status_code=302)
 
 
 @router.post("/consultoria/lead", name="consulting_lead_submit")

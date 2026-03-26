@@ -15,7 +15,7 @@
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="DRAGONNÉ" />
   <meta property="og:title" content="{% block og_title %}DRAGONNÉ{% endblock %}" />
-  <meta property="og:description" content="Análisis inteligente de reportes para hoteles. Lectura comercial en español: métricas, hallazgos y recomendaciones accionables." />
+  <meta property="og:description" content="{% block og_description %}Análisis inteligente de reportes para hoteles. Lectura comercial en español: métricas, hallazgos y recomendaciones accionables.{% endblock %}" />
   <meta property="og:locale" content="es_MX" />
   {% if app_url %}<meta property="og:url" content="{{ app_url }}" />{% endif %}
   {% block og_image %}{% if app_url %}<meta property="og:image" content="{{ app_url }}/static/branding/dragonne-wordmark.png" />{% endif %}{% endblock %}

@@ -1,31 +1,42 @@
 """Marketing público: home, precios, SEO, mockup, docs HTML."""
-from fastapi import APIRouter, Request, Response
+from fastapi import APIRouter, Query, Request, Response
 from fastapi.openapi.docs import get_redoc_html
 from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse
 
 from auth_session import get_current_user
-from config import APP_NAME, APP_URL
+from config import APP_NAME, APP_URL, url_path
 from debuglog import _debug_log
 from marketing_context import marketing_page_context
+from routes.consulting import render_consulting_landing
 from templating import templates
 
 router = APIRouter(tags=["marketing"])
 
 
 @router.get("/", response_class=HTMLResponse)
-def home(request: Request):
+def home(request: Request, lang: str = Query("es", alias="lang")):
     _debug_log("routes.marketing:home", "GET / entry", {"has_user": bool(get_current_user(request))}, "H2")
     user = get_current_user(request)
     if user:
-        return RedirectResponse("/app", status_code=303)
+        return RedirectResponse(url_path("/app"), status_code=303)
+    if lang not in ("es", "en"):
+        lang = "es"
+    _debug_log("routes.marketing:home", "homepage=consulting", {"lang": lang}, "H2")
+    return render_consulting_landing(request, lang=lang)
+
+
+@router.get("/verticals/hospitality", response_class=HTMLResponse)
+def verticals_hospitality(request: Request):
+    user = get_current_user(request)
+    if user:
+        return RedirectResponse(url_path("/app"), status_code=303)
     ctx = marketing_page_context()
-    _debug_log("routes.marketing:home", "marketing context keys", {"keys": list(ctx.keys())}, "H2")
     return templates.TemplateResponse("marketing.html", {"request": request, **ctx})
 
 
-@router.get("/marketing", response_class=HTMLResponse)
+@router.get("/marketing", include_in_schema=False)
 def marketing_alias(request: Request):
-    return home(request)
+    return RedirectResponse(url_path("/verticals/hospitality"), status_code=302)
 
 
 @router.get("/precios", response_class=HTMLResponse)
@@ -58,14 +69,17 @@ def sitemap_xml():
     base = (APP_URL or "http://127.0.0.1:8000").rstrip("/")
     urls = [
         base + "/",
+        base + "/verticals/hospitality",
+        base + "/consulting",
+        base + "/consultoria",
         base + "/login",
         base + "/signup",
         base + "/precios",
         base + "/api",
-        base + "/#producto",
-        base + "/#como-funciona",
-        base + "/#prueba",
-        base + "/#integraciones",
+        base + "/verticals/hospitality#producto",
+        base + "/verticals/hospitality#como-funciona",
+        base + "/verticals/hospitality#prueba",
+        base + "/verticals/hospitality#integraciones",
     ]
     xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
     xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'

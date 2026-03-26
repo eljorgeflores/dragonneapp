@@ -2,6 +2,12 @@
 
 CONSULTING_TRANSLATIONS = {
     "es": {
+        "nav_home": "Inicio",
+        "nav_verticals": "Verticales",
+        "nav_soon": "Próximamente",
+        "vert_nav_startups": "Startups",
+        "vert_nav_smbs": "SMBs",
+        "vert_nav_media": "Medios / PR",
         "nav_work_with": "Con quiénes trabajamos",
         "nav_services": "Servicios",
         "nav_method": "Metodología",
@@ -151,6 +157,12 @@ CONSULTING_TRANSLATIONS = {
         "form_error": "Hubo un error. Intenta de nuevo o escríbenos a hefzi@dragonne.co",
     },
     "en": {
+        "nav_home": "Home",
+        "nav_verticals": "Verticals",
+        "nav_soon": "Coming soon",
+        "vert_nav_startups": "Startups",
+        "vert_nav_smbs": "SMBs",
+        "vert_nav_media": "Media / PR",
         "nav_work_with": "Who we work with",
         "nav_services": "Services",
         "nav_method": "Method",
