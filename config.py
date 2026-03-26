@@ -155,11 +155,6 @@ RESEND_API_KEY = os.getenv("RESEND_API_KEY", "").strip()
 RESEND_FROM = _first_nonempty_env("RESEND_FROM")
 
 
-def password_reset_email_delivery_configured() -> bool:
-    """True si hay una vía configurada para enviar el correo de recuperación (Resend o SMTP completo)."""
-    return bool(RESEND_API_KEY) or bool(SMTP_HOST and SMTP_USER and SMTP_PASSWORD)
-
-
 def resend_sender_plausible() -> bool:
     """Con RESEND_API_KEY, el From no debe ser placeholder (Resend rechaza localhost/ejemplo)."""
     if not RESEND_API_KEY:
@@ -171,6 +166,13 @@ def resend_sender_plausible() -> bool:
     if "localhost" in low or "ejemplo.com" in low or "example.com" in low:
         return False
     return True
+
+
+def password_reset_email_delivery_configured() -> bool:
+    """True si SMTP está completo o Resend está listo (clave + remitente plausible)."""
+    smtp_ok = bool(SMTP_HOST and SMTP_USER and SMTP_PASSWORD)
+    resend_ok = bool(RESEND_API_KEY) and resend_sender_plausible()
+    return smtp_ok or resend_ok
 
 
 # Caducidad del enlace de restablecimiento (debe coincidir con textos de correo y UI)

@@ -62,9 +62,22 @@ def test_internal_path_strips_prefix(monkeypatch):
     assert config.internal_path("/app") == "/app"
 
 
+def test_password_reset_delivery_requires_plausible_resend_from(monkeypatch):
+    monkeypatch.setattr(config, "RESEND_API_KEY", "re_x", raising=False)
+    monkeypatch.setattr(config, "SMTP_HOST", "", raising=False)
+    monkeypatch.setattr(config, "SMTP_USER", "", raising=False)
+    monkeypatch.setattr(config, "SMTP_PASSWORD", "", raising=False)
+    monkeypatch.setattr(config, "EMAIL_FROM", "DRAGONNÉ <noreply@localhost>", raising=False)
+    assert config.resend_sender_plausible() is False
+    assert config.password_reset_email_delivery_configured() is False
+
+
 def test_forgot_password_sends_via_resend_when_stub_succeeds(monkeypatch):
+    _from = "DRAGONNÉ <onboarding@resend.dev>"
     monkeypatch.setattr(config, "RESEND_API_KEY", "re_test_key")
+    monkeypatch.setattr(config, "EMAIL_FROM", _from)
     monkeypatch.setattr(email_smtp, "RESEND_API_KEY", "re_test_key")
+    monkeypatch.setattr(email_smtp, "EMAIL_FROM", _from)
     monkeypatch.setattr(email_smtp, "_send_via_resend", lambda *a, **k: True)
     email = _unique_email()
     password = "password123"

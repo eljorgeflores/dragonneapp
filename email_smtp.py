@@ -12,6 +12,7 @@ from config import (
     PASSWORD_RESET_TOKEN_TTL_HOURS,
     RESEND_API_KEY,
     RESEND_FROM,
+    resend_sender_plausible,
     SMTP_ENVELOPE_FROM,
     SMTP_HOST,
     SMTP_PASSWORD,
@@ -145,9 +146,15 @@ DRAGONNÉ
 <p>—<br>DRAGONNÉ</p>"""
 
     if RESEND_API_KEY:
-        if _send_via_resend(to_addr, subject, text, html):
+        if not resend_sender_plausible():
+            _log.warning(
+                "RESEND_API_KEY definida pero remitente no usable (define RESEND_FROM o EMAIL_FROM verificable; "
+                "evita localhost/ejemplo/example en el dominio). Se ignora Resend y se sigue con SMTP si hay."
+            )
+        elif _send_via_resend(to_addr, subject, text, html):
             return True
-        _log.warning("Resend no pudo enviar; se intentará SMTP si está configurado")
+        else:
+            _log.warning("Resend no pudo enviar; se intentará SMTP si está configurado")
 
     if not SMTP_HOST or not SMTP_USER or not SMTP_PASSWORD:
         _log.info(
