@@ -7,19 +7,8 @@ from email.mime.text import MIMEText
 
 import requests
 
-from config import (
-    EMAIL_FROM,
-    PASSWORD_RESET_TOKEN_TTL_HOURS,
-    RESEND_API_KEY,
-    RESEND_FROM,
-    resend_sender_plausible,
-    SMTP_ENVELOPE_FROM,
-    SMTP_HOST,
-    SMTP_PASSWORD,
-    SMTP_PORT,
-    SMTP_SECURITY,
-    SMTP_USER,
-)
+import config
+from debuglog import fd2ebf_log
 
 _log = logging.getLogger(__name__)
 
@@ -27,7 +16,7 @@ _SMTP_TIMEOUT_SEC = 30
 
 
 def _envelope_from() -> str:
-    return (SMTP_ENVELOPE_FROM or SMTP_USER or "").strip()
+    return (config.SMTP_ENVELOPE_FROM or config.SMTP_USER or "").strip()
 
 
 def _sendmail(recipients: list[str], raw_message: str) -> None:
@@ -35,22 +24,24 @@ def _sendmail(recipients: list[str], raw_message: str) -> None:
     if not env_from:
         raise ValueError("smtp_envelope_from_missing")
     tls_ctx = ssl.create_default_context()
-    if SMTP_SECURITY == "ssl":
+    if config.SMTP_SECURITY == "ssl":
         with smtplib.SMTP_SSL(
-            SMTP_HOST,
-            SMTP_PORT,
+            config.SMTP_HOST,
+            config.SMTP_PORT,
             timeout=_SMTP_TIMEOUT_SEC,
             context=tls_ctx,
         ) as server:
             server.ehlo()
-            server.login(SMTP_USER, SMTP_PASSWORD)
+            server.login(config.SMTP_USER, config.SMTP_PASSWORD)
             server.sendmail(env_from, recipients, raw_message)
         return
-    with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=_SMTP_TIMEOUT_SEC) as server:
+    with smtplib.SMTP(
+        config.SMTP_HOST, config.SMTP_PORT, timeout=_SMTP_TIMEOUT_SEC
+    ) as server:
         server.ehlo()
         server.starttls(context=tls_ctx)
         server.ehlo()
-        server.login(SMTP_USER, SMTP_PASSWORD)
+        server.login(config.SMTP_USER, config.SMTP_PASSWORD)
         server.sendmail(env_from, recipients, raw_message)
 
 
@@ -81,9 +72,9 @@ def _resend_response_detail(resp: requests.Response, max_len: int = 1200) -> str
 
 def _send_via_resend(to_addr: str, subject: str, text: str, html: str) -> bool:
     """Envío vía Resend (HTTPS). `from` debe ser un remitente verificado en el panel de Resend."""
-    if not RESEND_API_KEY:
+    if not config.RESEND_API_KEY:
         return False
-    from_addr = (RESEND_FROM or EMAIL_FROM or "").strip()
+    from_addr = (config.RESEND_FROM or config.EMAIL_FROM or "").strip()
     if not from_addr:
         _log.warning("Resend: define RESEND_FROM o EMAIL_FROM con un remitente verificado")
         return False
@@ -91,7 +82,7 @@ def _send_via_resend(to_addr: str, subject: str, text: str, html: str) -> bool:
         r = requests.post(
             _RESEND_API_URL,
             headers={
-                "Authorization": f"Bearer {RESEND_API_KEY}",
+                "Authorization": f"Bearer {config.RESEND_API_KEY}",
                 "Content-Type": "application/json",
             },
             json={
@@ -116,12 +107,28 @@ def _send_via_resend(to_addr: str, subject: str, text: str, html: str) -> bool:
             r.status_code,
             jid or "?",
         )
+        # #region agent log
+        fd2ebf_log(
+            "email_smtp.py:_send_via_resend",
+            "response",
+            {"ok": True, "http": r.status_code, "has_id": bool(jid)},
+            "H4",
+        )
+        # #endregion
         return True
     _log.warning(
         "Resend API rechazó el envío (HTTP %s): %s",
         r.status_code,
         _resend_response_detail(r),
     )
+    # #region agent log
+    fd2ebf_log(
+        "email_smtp.py:_send_via_resend",
+        "response",
+        {"ok": False, "http": r.status_code},
+        "H4",
+    )
+    # #endregion
     return False
 
 
@@ -136,7 +143,11 @@ def send_password_reset_email(
     if not to_addr:
         _log.warning("Recuperación contraseña: destinatario vacío, no se envía")
         return False
-    h = PASSWORD_RESET_TOKEN_TTL_HOURS if ttl_hours is None else ttl_hours
+    h = (
+        config.PASSWORD_RESET_TOKEN_TTL_HOURS
+        if ttl_hours is None
+        else ttl_hours
+    )
     ttl_es = _reset_ttl_label_es(h)
     alt_plain = ""
     alt_html = ""
@@ -171,8 +182,24 @@ DRAGONNÉ
 <p>Si no pediste esto, ignora este correo.</p>
 <p>—<br>DRAGONNÉ</p>"""
 
-    if RESEND_API_KEY:
-        if not resend_sender_plausible():
+    _rp = config.resend_sender_plausible()
+    # #region agent log
+    fd2ebf_log(
+        "email_smtp.py:send_password_reset_email",
+        "pre_channels",
+        {
+            "resend_key_set": bool(config.RESEND_API_KEY),
+            "resend_sender_plausible": _rp if config.RESEND_API_KEY else None,
+            "smtp_complete": bool(
+                config.SMTP_HOST and config.SMTP_USER and config.SMTP_PASSWORD
+            ),
+        },
+        "H3,H5",
+    )
+    # #endregion
+
+    if config.RESEND_API_KEY:
+        if not _rp:
             _log.warning(
                 "RESEND_API_KEY definida pero remitente no usable (define RESEND_FROM o EMAIL_FROM verificable; "
                 "evita localhost/ejemplo/example en el dominio). Se ignora Resend y se sigue con SMTP si hay."
@@ -182,7 +209,11 @@ DRAGONNÉ
         else:
             _log.warning("Resend no pudo enviar; se intentará SMTP si está configurado")
 
-    if not SMTP_HOST or not SMTP_USER or not SMTP_PASSWORD:
+    if (
+        not config.SMTP_HOST
+        or not config.SMTP_USER
+        or not config.SMTP_PASSWORD
+    ):
         _log.info(
             "Recuperación contraseña: sin Resend exitoso y SMTP incompleto; no se envía correo"
         )
@@ -190,7 +221,7 @@ DRAGONNÉ
 
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
-    msg["From"] = EMAIL_FROM
+    msg["From"] = config.EMAIL_FROM
     msg["To"] = to_addr
     msg.attach(MIMEText(text, "plain", "utf-8"))
     msg.attach(MIMEText(html, "html", "utf-8"))
@@ -198,15 +229,15 @@ DRAGONNÉ
         _sendmail([to_addr], msg.as_string())
         _log.info(
             "Correo recuperación contraseña: SMTP aceptó el mensaje (SECURITY=%s puerto=%s)",
-            SMTP_SECURITY,
-            SMTP_PORT,
+            config.SMTP_SECURITY,
+            config.SMTP_PORT,
         )
         return True
     except Exception as exc:
         _log.warning(
             "Falló envío correo recuperación contraseña (revisar SMTP_SECURITY=%s puerto=%s): %s",
-            SMTP_SECURITY,
-            SMTP_PORT,
+            config.SMTP_SECURITY,
+            config.SMTP_PORT,
             exc,
             exc_info=True,
         )
@@ -214,12 +245,16 @@ DRAGONNÉ
 
 
 def send_analysis_share_link_email(to_email: str, share_url: str, hotel_label: str) -> bool:
-    if not SMTP_HOST or not SMTP_USER or not SMTP_PASSWORD:
+    if (
+        not config.SMTP_HOST
+        or not config.SMTP_USER
+        or not config.SMTP_PASSWORD
+    ):
         return False
     subject = f"Informe compartido — {hotel_label} — DRAGONNÉ"
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
-    msg["From"] = EMAIL_FROM
+    msg["From"] = config.EMAIL_FROM
     msg["To"] = to_email.strip()
     text = f"""Hola,
 
@@ -261,12 +296,16 @@ def send_consulting_lead_email(
     phone: str,
     lang: str,
 ) -> bool:
-    if not SMTP_HOST or not SMTP_USER or not SMTP_PASSWORD:
+    if (
+        not config.SMTP_HOST
+        or not config.SMTP_USER
+        or not config.SMTP_PASSWORD
+    ):
         return False
     subject = "Nuevo lead consultoría — DRAGONNÉ"
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
-    msg["From"] = EMAIL_FROM
+    msg["From"] = config.EMAIL_FROM
     msg["To"] = to_email
     if from_email:
         msg["Reply-To"] = from_email

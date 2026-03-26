@@ -1,5 +1,9 @@
 """Origen HTTP público para enlaces (p. ej. reset password) detrás de proxy o en local."""
+from urllib.parse import urlparse
+
 from fastapi import Request
+
+import config
 
 
 def origin_for_user_facing_links(request: Request) -> str:
@@ -14,4 +18,15 @@ def origin_for_user_facing_links(request: Request) -> str:
         if proto not in ("http", "https"):
             proto = request.url.scheme
         return f"{proto}://{host}".rstrip("/")
-    return str(request.base_url).rstrip("/")
+    base = str(request.base_url).rstrip("/")
+    # TestClient de Starlette usa host "testserver"; el correo debe llevar APP_URL (p. ej. 127.0.0.1:8000).
+    if (request.url.hostname or "").lower() == "testserver":
+        app_raw = (config.APP_URL or "").strip().rstrip("/")
+        if app_raw.startswith(("http://", "https://")):
+            try:
+                pu = urlparse(app_raw)
+                if pu.netloc:
+                    return f"{pu.scheme}://{pu.netloc}".rstrip("/")
+            except Exception:
+                pass
+    return base

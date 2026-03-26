@@ -72,9 +72,9 @@
       {% if pwd_reset == 'sent' %}
       <div class="alert success" style="margin: 0 0 16px;">Se envió un enlace de restablecimiento de contraseña al correo del cliente.</div>
       {% elif pwd_reset == 'smtp' %}
-      <div class="alert error" style="margin: 0 0 16px;">No hay SMTP configurado: no se puede enviar el correo. Configura SMTP_HOST, SMTP_USER y SMTP_PASSWORD.</div>
+      <div class="alert error" style="margin: 0 0 16px;">No hay canal de correo para restablecer contraseña: configura SMTP completo (host, usuario, contraseña) o RESEND_API_KEY con un remitente válido (p. ej. RESEND_FROM / dominio verificado en Resend).</div>
       {% elif pwd_reset == 'fail' %}
-      <div class="alert error" style="margin: 0 0 16px;">No se pudo enviar el correo. Revisa la configuración SMTP o los logs del servidor.</div>
+      <div class="alert error" style="margin: 0 0 16px;">No se pudo enviar el correo. Revisa Resend, SMTP y los logs del servidor.</div>
       {% endif %}
       <div class="admin-manage-grid">
         <form class="admin-plan-form" method="post" action="/admin/users/{{ user['id'] }}/plan">

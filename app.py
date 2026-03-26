@@ -41,8 +41,6 @@ from db import db, init_db
 # Esquema SQLite al importar el módulo (comportamiento previo a Fase 1).
 init_db()
 
-from debuglog import _debug_log
-
 """
 DragonApp — ensamblador FastAPI: middleware, /app, health; routers en routes/*.
 Servicios: services/analysis_core, share_service, pdf_service, billing_stripe. Ver docs/dragonapp_phase3.md.
@@ -90,6 +88,14 @@ async def lifespan(app: FastAPI):
             "DragonApp startup: password_reset_delivery=False — definir SMTP completo "
             "(+ alias EMAIL_*/MAIL_*) o RESEND_API_KEY para enviar correo de recuperación."
         )
+    if (os.getenv("RENDER_SERVICE_ID") or "").strip() or (
+        os.getenv("RENDER_EXTERNAL_HOSTNAME") or ""
+    ).strip():
+        log.info(
+            "DragonApp startup: entorno Render detectado. Si escalas a varias instancias o el disco "
+            "no es persistente, SQLite puede diverger (por ejemplo registro en un dyno y olvidé mi "
+            "contraseña en otro). Usa una instancia, disco persistente o base gestionada."
+        )
     yield
 
 
@@ -108,6 +114,13 @@ _app_url_lower = (APP_URL or "").strip().lower()
 _session_insecure = os.getenv("SESSION_INSECURE_COOKIES", "").strip().lower() in ("1", "true", "yes")
 _https_only = _app_url_lower.startswith("https://") and not _session_insecure
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY, same_site="lax", https_only=_https_only)
+# En Render/nginx: TRUST_PROXY_HEADERS=1 para que X-Forwarded-* ajuste el host/esquema vistos por la app
+# (enlaces absolutos en correos de recuperación de contraseña).
+_trust_proxy = os.getenv("TRUST_PROXY_HEADERS", "").strip().lower() in ("1", "true", "yes")
+if _trust_proxy:
+    from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
+
+    app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 
 
@@ -177,11 +190,8 @@ def dashboard(request: Request):
         analyses = conn.execute("SELECT * FROM analyses WHERE user_id = ? ORDER BY created_at DESC LIMIT 20", (user["id"],)).fetchall()
     formatted = []
     for row in analyses:
-        # #region agent log
         _created = row["created_at"]
         _days = row["days_covered"]
-        _debug_log("app.py:dashboard", "analysis row", {"id": row["id"], "created_at_is_none": _created is None, "days_covered_is_none": _days is None}, "H1")
-        # #endregion
         analysis = json.loads(row["analysis_json"])
         summary = json.loads(row["summary_json"])
         created_at_str = (_created[:19].replace("T", " ") if _created else "")

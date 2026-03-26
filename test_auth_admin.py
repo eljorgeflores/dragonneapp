@@ -83,8 +83,6 @@ def test_forgot_password_sends_via_resend_when_stub_succeeds(monkeypatch):
     _from = "DRAGONNÉ <onboarding@resend.dev>"
     monkeypatch.setattr(config, "RESEND_API_KEY", "re_test_key")
     monkeypatch.setattr(config, "EMAIL_FROM", _from)
-    monkeypatch.setattr(email_smtp, "RESEND_API_KEY", "re_test_key")
-    monkeypatch.setattr(email_smtp, "EMAIL_FROM", _from)
     monkeypatch.setattr(email_smtp, "_send_via_resend", lambda *a, **k: True)
     email = _unique_email()
     password = "password123"
@@ -271,6 +269,27 @@ def test_forgot_password_unknown_email_does_not_leak():
     assert "no existe" not in (r.text or "").lower() or "no está registrado" not in (r.text or "").lower()
 
 
+def test_forgot_password_link_host_matches_app_url_not_testserver():
+    """Regresión H6: TestClient usa host 'testserver'; enlaces deben usar APP_URL (conftest)."""
+    from urllib.parse import urlparse
+
+    email = _unique_email()
+    password = "password123"
+    client.post(
+        "/signup",
+        data={"email": email, "password": password, "password_confirm": password},
+        follow_redirects=True,
+    )
+    r = client.post("/forgot-password", data={"email": email})
+    assert r.status_code == 200
+    html = r.text or ""
+    netloc = urlparse(config.APP_URL).netloc
+    assert netloc
+    assert "reset-password" in html
+    assert netloc in html
+    assert "http://testserver" not in html
+
+
 def test_forgot_password_finds_legacy_email_trim_case():
     """Correo en BD con espacios / mayúsculas debe coincidir con el tecleado normalizado."""
     email = _unique_email()
@@ -408,6 +427,36 @@ def test_admin_send_password_reset_without_smtp_redirects():
     r = client.post(f"/admin/users/{uid_other}/send-password-reset", follow_redirects=False)
     assert r.status_code == 303
     assert "pwd_reset=smtp" in (r.headers.get("location") or "")
+
+
+def test_admin_send_password_reset_succeeds_with_resend_only(monkeypatch):
+    """Panel admin: antes solo miraba SMTP; con solo Resend debe poder enviar."""
+    _from = "DRAGONNÉ <onboarding@resend.dev>"
+    monkeypatch.setattr(config, "RESEND_API_KEY", "re_test_key")
+    monkeypatch.setattr(config, "EMAIL_FROM", _from)
+    monkeypatch.setattr(email_smtp, "_send_via_resend", lambda *a, **k: True)
+    email_admin = _unique_email()
+    email_other = _unique_email()
+    password = "password123"
+    client.post(
+        "/signup",
+        data={"email": email_other, "password": password, "password_confirm": password},
+    )
+    with db() as conn:
+        uid_other = conn.execute("SELECT id FROM users WHERE email = ?", (email_other,)).fetchone()["id"]
+    client.post("/logout")
+    client.post(
+        "/signup",
+        data={"email": email_admin, "password": password, "password_confirm": password},
+    )
+    with db() as conn:
+        conn.execute("UPDATE users SET is_admin = 1 WHERE email = ?", (email_admin,))
+    client.post("/logout")
+    client.post("/login", data={"email": email_admin, "password": password})
+    r = client.post(f"/admin/users/{uid_other}/send-password-reset", follow_redirects=False)
+    assert r.status_code == 303
+    assert "pwd_reset=sent" in (r.headers.get("location") or "")
+    client.post("/logout", follow_redirects=True)
 
 
 def test_admin_send_password_reset_requires_admin():

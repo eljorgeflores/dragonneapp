@@ -1,6 +1,8 @@
 """Registro, login, logout, onboarding, recuperación de contraseña."""
 import json
 import logging
+import os
+from urllib.parse import urlparse
 
 from fastapi import APIRouter, Form, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -16,18 +18,15 @@ from auth_session import (
     require_user,
     verify_password,
 )
+import config
 from config import (
     PASSWORD_RESET_TOKEN_TTL_HOURS,
-    RESEND_API_KEY,
-    SMTP_HOST,
-    SMTP_PASSWORD,
-    SMTP_USER,
     password_reset_email_delivery_configured,
     reset_password_public_path,
     url_path,
 )
 from db import db
-from debuglog import _debug_log
+from debuglog import _debug_log, fd2ebf_log
 from email_smtp import send_password_reset_email
 
 _log = logging.getLogger(__name__)
@@ -133,7 +132,7 @@ def forgot_password_page(request: Request):
     if get_current_user(request):
         return RedirectResponse(url_path("/app"), status_code=303)
     notice = (request.query_params.get("notice") or "").strip().lower()
-    _smtp = bool(SMTP_HOST and SMTP_USER and SMTP_PASSWORD)
+    _smtp = bool(config.SMTP_HOST and config.SMTP_USER and config.SMTP_PASSWORD)
     return templates.TemplateResponse(
         "forgot_password.html",
         {
@@ -185,26 +184,55 @@ def forgot_password(request: Request, email: str = Form(...)):
     reset_link = None
     reset_link_alt = None
     email_sent = False
-    smtp_configured = bool(SMTP_HOST and SMTP_USER and SMTP_PASSWORD)
+    smtp_configured = bool(
+        config.SMTP_HOST and config.SMTP_USER and config.SMTP_PASSWORD
+    )
     delivery_ok = password_reset_email_delivery_configured()
+    # #region agent log
+    fd2ebf_log(
+        "routes/auth.py:forgot_password",
+        "start",
+        {
+            "delivery_ok": delivery_ok,
+            "smtp_configured": smtp_configured,
+            "resend_key_set": bool(config.RESEND_API_KEY),
+            "render_hosted": bool((os.getenv("RENDER_SERVICE_ID") or "").strip()),
+        },
+        "H1,H3",
+    )
+    # #endregion
 
     try:
         with db() as conn:
             user = conn.execute(_SQL_USER_BY_EMAIL_NORM, (email,)).fetchone()
+        # #region agent log
+        fd2ebf_log(
+            "routes/auth.py:forgot_password",
+            "after_user_lookup",
+            {"user_found": bool(user)},
+            "H2",
+        )
+        # #endregion
         if not user:
             # #region agent log
+            fd2ebf_log(
+                "routes/auth.py:forgot_password",
+                "unknown_email_branch",
+                {"delivery_ok": delivery_ok},
+                "H2",
+            )
+            # #endregion
             _log.info(
                 "forgot_password_metrics %s",
                 json.dumps(
                     {
                         "branch": "unknown_email",
                         "smtp_configured": smtp_configured,
-                        "resend_configured": bool(RESEND_API_KEY),
+                        "resend_configured": bool(config.RESEND_API_KEY),
                     },
                     ensure_ascii=False,
                 ),
             )
-            # #endregion
             return templates.TemplateResponse(
                 "forgot_password.html",
                 _forgot_template_ctx(
@@ -231,6 +259,20 @@ def forgot_password(request: Request, email: str = Form(...)):
         reset_path = reset_password_public_path()
         reset_link = f"{base}{reset_path}?token={token}"
         reset_link_alt = f"{base}{reset_path}/{token}"
+        # #region agent log
+        _pu = urlparse(reset_link)
+        fd2ebf_log(
+            "routes/auth.py:forgot_password",
+            "reset_links_built",
+            {
+                "link_scheme": _pu.scheme or "",
+                "link_host": _pu.netloc or "",
+                "reset_path_len": len(reset_path),
+                "url_prefix_configured": bool(config.URL_PREFIX),
+            },
+            "H6",
+        )
+        # #endregion
         email_sent = send_password_reset_email(
             email,
             reset_link,
@@ -242,19 +284,25 @@ def forgot_password(request: Request, email: str = Form(...)):
                 "revisar logs (Resend HTTP o SMTP)."
             )
         # #region agent log
+        fd2ebf_log(
+            "routes/auth.py:forgot_password",
+            "after_send",
+            {"email_sent": email_sent, "delivery_ok": delivery_ok},
+            "H4,H5",
+        )
+        # #endregion
         _log.info(
             "forgot_password_metrics %s",
             json.dumps(
                 {
                     "branch": "user_found",
                     "smtp_configured": smtp_configured,
-                    "resend_configured": bool(RESEND_API_KEY),
+                    "resend_configured": bool(config.RESEND_API_KEY),
                     "email_sent": email_sent,
                 },
                 ensure_ascii=False,
             ),
         )
-        # #endregion
         # Conservar reset_link en la plantilla aunque el SMTP devuelva True (spam, demora,
         # “éxito” engañoso del proveedor): respaldo en la misma pantalla.
         return templates.TemplateResponse(
