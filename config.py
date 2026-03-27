@@ -84,6 +84,12 @@ def reset_password_public_path() -> str:
     return f"{p}/reset-password" if p else "/reset-password"
 
 
+def magic_link_consume_public_path() -> str:
+    """Ruta base para consumir el enlace mágico (añadir ?token= o /{token})."""
+    px = (URL_PREFIX or "").rstrip("/")
+    return f"{px}/login/magic-link/consume" if px else "/login/magic-link/consume"
+
+
 def url_path(relative: str) -> str:
     """Ruta para cabecera Location / href internos cuando hay URL_PREFIX (proxy con subruta)."""
     rel = (relative or "").strip()
@@ -183,6 +189,12 @@ def password_reset_email_delivery_configured() -> bool:
 
 # Caducidad del enlace de restablecimiento (debe coincidir con textos de correo y UI)
 PASSWORD_RESET_TOKEN_TTL_HOURS = max(1, int(os.getenv("PASSWORD_RESET_TOKEN_TTL_HOURS", "1")))
+
+# Magic link (login sin contraseña): TTL y límites anti-abuso (ventana en segundos).
+MAGIC_LINK_TTL_MINUTES = max(5, min(60, int(os.getenv("MAGIC_LINK_TTL_MINUTES", "15"))))
+MAGIC_LINK_RATE_LIMIT_EMAIL = max(1, int(os.getenv("MAGIC_LINK_RATE_LIMIT_EMAIL", "5")))
+MAGIC_LINK_RATE_LIMIT_IP = max(1, int(os.getenv("MAGIC_LINK_RATE_LIMIT_IP", "20")))
+MAGIC_LINK_RATE_LIMIT_WINDOW_SEC = max(60, int(os.getenv("MAGIC_LINK_RATE_LIMIT_WINDOW_SEC", "900")))
 
 API_RATE_LIMIT_PER_MINUTE = int(os.getenv("API_RATE_LIMIT_PER_MINUTE", "60"))
 API_RATE_LIMIT_PER_DAY = int(os.getenv("API_RATE_LIMIT_PER_DAY", "1000"))

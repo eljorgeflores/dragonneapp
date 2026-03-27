@@ -244,6 +244,92 @@ DRAGONNÉ
         return False
 
 
+def send_magic_link_email(
+    to_email: str,
+    magic_link: str,
+    *,
+    magic_link_fallback: str | None = None,
+    ttl_minutes: int | None = None,
+) -> bool:
+    """Enlace de acceso sin contraseña (misma canalización que recuperación: Resend o SMTP)."""
+    to_addr = (to_email or "").strip()
+    if not to_addr:
+        _log.warning("Magic link: destinatario vacío, no se envía")
+        return False
+    m = int(config.MAGIC_LINK_TTL_MINUTES) if ttl_minutes is None else max(1, int(ttl_minutes))
+    ttl_label = f"{m} minutos" if m != 1 else "1 minuto"
+    alt_plain = ""
+    alt_html = ""
+    if magic_link_fallback:
+        alt_plain = f"""
+
+Si el enlace anterior no abre en tu correo, copia y pega esta dirección en el navegador:
+
+{magic_link_fallback}
+"""
+        alt_html = f"""<p>Si el enlace anterior no funciona, copia y pega esto en el navegador:</p>
+<p><a href="{magic_link_fallback}">Abrir acceso (enlace alternativo)</a></p>
+<p class="muted" style="font-size:0.85em;word-break:break-all;">{magic_link_fallback}</p>"""
+    subject = "Tu enlace para entrar — DRAGONNÉ"
+    text = f"""Hola,
+
+Usa este enlace para entrar a tu cuenta en DRAGONNÉ (válido {ttl_label}):
+
+{magic_link}
+{alt_plain}
+Si no pediste este acceso, ignora este correo.
+
+—
+DRAGONNÉ
+"""
+    html = f"""<p>Hola,</p>
+<p>Usa este enlace para entrar a tu cuenta en <strong>DRAGONNÉ</strong> (válido {ttl_label}).</p>
+<p><a href="{magic_link}">Entrar ahora</a></p>
+{alt_html}
+<p>Si no pediste este acceso, ignora este correo.</p>
+<p>—<br>DRAGONNÉ</p>"""
+
+    _rp = config.resend_sender_plausible()
+    if config.RESEND_API_KEY:
+        if not _rp:
+            _log.warning(
+                "Magic link: RESEND_API_KEY definida pero remitente no usable; se intentará SMTP si hay."
+            )
+        elif _send_via_resend(to_addr, subject, text, html):
+            return True
+        _log.warning("Magic link: Resend no pudo enviar; se intentará SMTP si está configurado")
+
+    if not config.SMTP_HOST or not config.SMTP_USER or not config.SMTP_PASSWORD:
+        _log.warning(
+            "Magic link: no hay envío (Resend falló o no aplica y SMTP incompleto)."
+        )
+        return False
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = config.EMAIL_FROM
+    msg["To"] = to_addr
+    msg.attach(MIMEText(text, "plain", "utf-8"))
+    msg.attach(MIMEText(html, "html", "utf-8"))
+    try:
+        _sendmail([to_addr], msg.as_string())
+        _log.info(
+            "Magic link: SMTP aceptó el mensaje (SECURITY=%s puerto=%s)",
+            config.SMTP_SECURITY,
+            config.SMTP_PORT,
+        )
+        return True
+    except Exception as exc:
+        _log.warning(
+            "Magic link: falló envío SMTP (SECURITY=%s puerto=%s): %s",
+            config.SMTP_SECURITY,
+            config.SMTP_PORT,
+            exc,
+            exc_info=True,
+        )
+        return False
+
+
 def send_analysis_share_link_email(to_email: str, share_url: str, hotel_label: str) -> bool:
     if (
         not config.SMTP_HOST

@@ -138,6 +138,29 @@ def init_db():
             );
             """
         )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS login_tokens (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                token_hash TEXT NOT NULL,
+                purpose TEXT NOT NULL DEFAULT 'magic_link',
+                expires_at TEXT NOT NULL,
+                used_at TEXT,
+                created_at TEXT NOT NULL,
+                requested_ip TEXT,
+                user_agent TEXT,
+                FOREIGN KEY(user_id) REFERENCES users(id),
+                UNIQUE(token_hash)
+            );
+            """
+        )
+        try:
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_login_tokens_user_purpose ON login_tokens(user_id, purpose)"
+            )
+        except sqlite3.OperationalError:
+            pass
         # Leads consultoría (/consultoria) — fuera del núcleo SaaS; ver docs/dragonapp_phase1.md
         conn.execute(
             """

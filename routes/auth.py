@@ -2,17 +2,23 @@
 import json
 import logging
 import os
-from urllib.parse import urlparse
+from urllib.parse import quote, urlparse
 
 from fastapi import APIRouter, Form, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from auth_session import (
-    create_reset_token,
+    MagicLinkConsumeResult,
+    client_ip_from_request,
+    consume_magic_link_token,
     consume_reset_token,
+    create_magic_link_token,
+    create_reset_token,
+    establish_web_session,
     get_current_user,
     is_admin_user,
     login_rate_limiter,
+    magic_link_rate_limiter,
     onboarding_pending,
     password_hash,
     require_user,
@@ -20,24 +26,65 @@ from auth_session import (
 )
 import config
 from config import (
+    MAGIC_LINK_TTL_MINUTES,
     PASSWORD_RESET_TOKEN_TTL_HOURS,
+    magic_link_consume_public_path,
     password_reset_email_delivery_configured,
     reset_password_public_path,
     url_path,
 )
 from db import db
 from debuglog import _debug_log, fd2ebf_log
-from email_smtp import send_password_reset_email
-
-_log = logging.getLogger(__name__)
+from email_smtp import send_magic_link_email, send_password_reset_email
 from request_public_url import origin_for_user_facing_links
 from templating import templates
 from time_utils import now_iso
+
+_log = logging.getLogger(__name__)
 
 router = APIRouter(tags=["auth"])
 
 # Coincide correos guardados con espacios o mayúsculas heredadas
 _SQL_USER_BY_EMAIL_NORM = "SELECT * FROM users WHERE LOWER(TRIM(email)) = ?"
+
+
+def _email_domain_for_log(addr: str) -> str:
+    a = (addr or "").strip().lower()
+    return a.rsplit("@", 1)[-1] if "@" in a else "invalid"
+
+
+def _safe_next_url(raw: str) -> str:
+    n = (raw or "").strip()
+    if n.startswith("/") and not n.startswith("//"):
+        return n
+    return ""
+
+
+def _token_prefix_for_log(t: str) -> str:
+    s = (t or "").strip()
+    if not s:
+        return "?"
+    return (s[:12] + "…") if len(s) > 12 else s
+
+
+def _login_template_ctx(
+    request: Request,
+    *,
+    error: str | None = None,
+    next_safe: str = "",
+    magic_link_info: bool = False,
+    magic_link_delivery_warning: bool = False,
+    magic_link_error: str | None = None,
+) -> dict:
+    return {
+        "request": request,
+        "error": error,
+        "next": next_safe,
+        "magic_link_info": magic_link_info,
+        "magic_link_delivery_warning": magic_link_delivery_warning,
+        "magic_link_error": magic_link_error,
+        "magic_link_ttl_minutes": MAGIC_LINK_TTL_MINUTES,
+    }
 
 
 @router.get("/signup", response_class=HTMLResponse)
@@ -94,37 +141,206 @@ def login_page(request: Request, next_url: str = Query("", alias="next")):
             url_path("/admin" if is_admin_user(user) else "/app"),
             status_code=303,
         )
-    next_safe = next_url.strip() if next_url and next_url.strip().startswith("/") and not next_url.strip().startswith("//") else ""
-    return templates.TemplateResponse("login.html", {"request": request, "error": None, "next": next_safe})
+    next_safe = _safe_next_url(next_url)
+    magic_link_error = None
+    if (request.query_params.get("magic_link_error") or "").strip() == "1":
+        magic_link_error = (
+            "El enlace de acceso no es válido o ha caducado. Solicita uno nuevo desde aquí."
+        )
+    return templates.TemplateResponse(
+        "login.html",
+        _login_template_ctx(request, next_safe=next_safe, magic_link_error=magic_link_error),
+    )
 
 
 @router.post("/login")
 def login(request: Request, email: str = Form(...), password: str = Form(...), next_url: str = Form("", alias="next")):
+    next_safe = _safe_next_url(next_url)
     if login_rate_limiter.is_blocked(request):
-        return templates.TemplateResponse("login.html", {"request": request, "error": "Demasiados intentos. Espera unos minutos e intenta de nuevo."}, status_code=429)
+        return templates.TemplateResponse(
+            "login.html",
+            _login_template_ctx(
+                request,
+                error="Demasiados intentos. Espera unos minutos e intenta de nuevo.",
+                next_safe=next_safe,
+            ),
+            status_code=429,
+        )
+    email_norm = email.strip().lower()
     with db() as conn:
-        user = conn.execute(_SQL_USER_BY_EMAIL_NORM, (email.strip().lower(),)).fetchone()
+        user = conn.execute(_SQL_USER_BY_EMAIL_NORM, (email_norm,)).fetchone()
     if not user or not verify_password(password, user["password_hash"]):
         login_rate_limiter.record_failed(request)
-        return templates.TemplateResponse("login.html", {"request": request, "error": "Correo o contraseña incorrectos."}, status_code=400)
-    with db() as conn:
-        conn.execute(
-            "UPDATE users SET last_login_at = ?, login_count = COALESCE(login_count, 0) + 1, updated_at = ? WHERE id = ?",
-            (now_iso(), now_iso(), user["id"]),
+        return templates.TemplateResponse(
+            "login.html",
+            _login_template_ctx(
+                request,
+                error="Correo o contraseña incorrectos.",
+                next_safe=next_safe,
+            ),
+            status_code=400,
         )
-        cur = conn.execute(
-            "INSERT INTO user_sessions (user_id, started_at, last_seen_at, request_count) VALUES (?, ?, ?, ?)",
-            (user["id"], now_iso(), now_iso(), 1),
-        )
-        session_id = cur.lastrowid
-    request.session["user_id"] = user["id"]
-    request.session["session_id"] = session_id
-    next_safe = next_url.strip() if next_url and next_url.strip().startswith("/") and not next_url.strip().startswith("//") else ""
+    establish_web_session(request, user["id"])
     redirect_to = next_safe or "/app"
     if not next_safe and is_admin_user(user):
         redirect_to = "/admin"
     _debug_log("routes.auth:login", "POST login success", {"redirect_to": redirect_to}, "H3")
     return RedirectResponse(url_path(redirect_to), status_code=303)
+
+
+@router.post("/login/magic-link", response_class=HTMLResponse)
+def login_magic_link_post(
+    request: Request,
+    email: str = Form(...),
+    next_url: str = Form("", alias="next"),
+):
+    next_safe = _safe_next_url(next_url)
+    email_norm = email.strip().lower()
+    limited, lim_reason = magic_link_rate_limiter.record_and_check_limited(request, email_norm)
+    if limited:
+        _log.warning(
+            "magic_link.rate_limited reason=%s domain=%s ip_prefix=%s",
+            lim_reason,
+            _email_domain_for_log(email_norm),
+            (client_ip_from_request(request) or "")[:32],
+        )
+        return templates.TemplateResponse(
+            "login.html",
+            _login_template_ctx(request, next_safe=next_safe, magic_link_info=True),
+        )
+
+    _log.info("magic_link.requested domain=%s", _email_domain_for_log(email_norm))
+    delivery_ok = password_reset_email_delivery_configured()
+
+    try:
+        with db() as conn:
+            user = conn.execute(_SQL_USER_BY_EMAIL_NORM, (email_norm,)).fetchone()
+        if not user:
+            _log.info("magic_link.unknown_email domain=%s", _email_domain_for_log(email_norm))
+            return templates.TemplateResponse(
+                "login.html",
+                _login_template_ctx(request, next_safe=next_safe, magic_link_info=True),
+            )
+
+        _log.info(
+            "magic_link.user_found user_id=%s domain=%s",
+            user["id"],
+            _email_domain_for_log(email_norm),
+        )
+        token = create_magic_link_token(
+            user["id"],
+            requested_ip=client_ip_from_request(request),
+            user_agent=request.headers.get("user-agent"),
+        )
+        _log.info(
+            "magic_link.token_issued user_id=%s prefix=%s",
+            user["id"],
+            _token_prefix_for_log(token),
+        )
+        base = origin_for_user_facing_links(request)
+        consume_base = magic_link_consume_public_path()
+        q_suffix = f"?token={quote(token, safe='')}"
+        if next_safe:
+            q_suffix += f"&next={quote(next_safe, safe='')}"
+        magic_url = f"{base}{consume_base}{q_suffix}"
+        magic_url_alt = f"{base}{consume_base}/{token}"
+        if next_safe:
+            magic_url_alt += f"?next={quote(next_safe, safe='')}"
+        email_sent = send_magic_link_email(
+            email_norm,
+            magic_url,
+            magic_link_fallback=magic_url_alt,
+            ttl_minutes=MAGIC_LINK_TTL_MINUTES,
+        )
+        if email_sent:
+            _log.info(
+                "magic_link.email_sent user_id=%s domain=%s",
+                user["id"],
+                _email_domain_for_log(email_norm),
+            )
+        else:
+            _log.warning(
+                "magic_link.email_failed user_id=%s domain=%s delivery_configured=%s",
+                user["id"],
+                _email_domain_for_log(email_norm),
+                delivery_ok,
+            )
+        delivery_warn = bool(delivery_ok and not email_sent)
+        return templates.TemplateResponse(
+            "login.html",
+            _login_template_ctx(
+                request,
+                next_safe=next_safe,
+                magic_link_info=True,
+                magic_link_delivery_warning=delivery_warn,
+            ),
+        )
+    except Exception:
+        _log.exception(
+            "magic_link.request_error domain=%s",
+            _email_domain_for_log(email_norm),
+        )
+        return templates.TemplateResponse(
+            "login.html",
+            _login_template_ctx(
+                request,
+                next_safe=next_safe,
+                magic_link_info=True,
+                magic_link_delivery_warning=delivery_ok,
+            ),
+        )
+
+
+def _magic_link_consume(request: Request, token: str, next_raw: str):
+    next_safe = _safe_next_url(next_raw)
+    prefix = _token_prefix_for_log(token)
+    result, user_id = consume_magic_link_token(token)
+    if result == MagicLinkConsumeResult.OK and user_id is not None:
+        with db() as conn:
+            user = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+        if not user:
+            _log.error("magic_link.user_missing_after_consume user_id=%s", user_id)
+            return RedirectResponse(url_path("/login?magic_link_error=1"), status_code=303)
+        establish_web_session(request, user["id"])
+        redirect_to = next_safe or "/app"
+        if not next_safe and is_admin_user(user):
+            redirect_to = "/admin"
+        _log.info(
+            "magic_link.token_consumed user_id=%s prefix=%s",
+            user["id"],
+            prefix,
+        )
+        return RedirectResponse(url_path(redirect_to), status_code=303)
+
+    if result == MagicLinkConsumeResult.EXPIRED:
+        _log.info("magic_link.token_expired prefix=%s", prefix)
+    elif result == MagicLinkConsumeResult.ALREADY_USED:
+        _log.info("magic_link.token_reused prefix=%s", prefix)
+    else:
+        _log.info("magic_link.token_invalid prefix=%s", prefix)
+    return RedirectResponse(url_path("/login?magic_link_error=1"), status_code=303)
+
+
+@router.get("/login/magic-link/consume")
+def login_magic_link_consume_get(
+    request: Request,
+    token: str | None = Query(None),
+    next_url: str = Query("", alias="next"),
+):
+    t = (token or "").strip()
+    if not t:
+        _log.info("magic_link.token_invalid reason=missing_query")
+        return RedirectResponse(url_path("/login?magic_link_error=1"), status_code=303)
+    return _magic_link_consume(request, t, next_url)
+
+
+@router.get("/login/magic-link/consume/{token}")
+def login_magic_link_consume_path(
+    request: Request,
+    token: str,
+    next_url: str = Query("", alias="next"),
+):
+    return _magic_link_consume(request, (token or "").strip(), next_url)
 
 
 @router.get("/forgot-password", response_class=HTMLResponse)

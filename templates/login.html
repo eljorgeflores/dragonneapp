@@ -5,23 +5,67 @@
 <div class="auth-shell">
   <div class="auth-card light-card narrow">
     <div class="brand brand-center">
-      <a href="/" class="logo-link" aria-label="Volver al inicio"><img class="brand-logo" src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" /></a>
+      <a href="{{ url_path('/') }}" class="logo-link" aria-label="Volver al inicio"><img class="brand-logo" src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" /></a>
     </div>
     <h1>Bienvenido de vuelta</h1>
-    <p class="muted center">Entra para analizar tus reportes hoteleros.</p>
+    <p class="muted center">Entra con un enlace en tu correo o con contraseña.</p>
+    {% if magic_link_error %}<div class="alert error">{{ magic_link_error }}</div>{% endif %}
     {% if error %}<div class="alert error">{{ error }}</div>{% endif %}
-    <form method="post" class="auth-form">
+    {% if magic_link_info %}
+    <div class="alert {% if magic_link_delivery_warning %}error{% else %}success{% endif %}">
+      <p style="margin:0 0 0.5rem">Si existe una cuenta para este correo, te enviaremos un enlace para entrar. Expira en {{ magic_link_ttl_minutes }} minutos.</p>
+      {% if magic_link_delivery_warning %}
+      <p style="margin:0">Hubo un problema al enviar el correo. Revisa tu configuración de envío o inténtalo de nuevo en unos minutos (también revisa la carpeta de spam).</p>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <form method="post" action="{{ url_prefix }}/login/magic-link" class="auth-form" id="form-magic-link">
       {% if next %}<input type="hidden" name="next" value="{{ next }}" />{% endif %}
-      <label>Correo</label>
-      <input type="email" name="email" required />
-      <label>Contraseña</label>
-      <input type="password" name="password" required />
-      <button class="btn btn-primary full" type="submit">Entrar</button>
+      <label for="magic-email">Correo</label>
+      <input id="magic-email" type="email" name="email" required autocomplete="email" />
+      <button class="btn btn-primary full" type="submit">Enviar enlace de acceso</button>
     </form>
-    <p class="muted center">
-      <a href="/forgot-password">¿Olvidaste tu contraseña?</a>
+
+    <p class="muted center" style="margin-top:1rem">
+      <a href="#" id="link-show-password" aria-expanded="false" aria-controls="panel-password-login">Entrar con contraseña</a>
     </p>
-    <p class="muted center">¿No tienes cuenta? <a href="/signup">Créala aquí</a></p>
+
+    <div id="panel-password-login" class="password-login-panel" hidden>
+      <hr style="border:0;border-top:1px solid var(--line);margin:1.25rem 0" />
+      <p class="muted center lede small" style="max-width:none;margin-bottom:0.75rem">Acceso con la contraseña de tu cuenta</p>
+      <form method="post" action="{{ url_prefix }}/login" class="auth-form">
+        {% if next %}<input type="hidden" name="next" value="{{ next }}" />{% endif %}
+        <label for="pwd-email">Correo</label>
+        <input id="pwd-email" type="email" name="email" required autocomplete="email" />
+        <label for="pwd-password">Contraseña</label>
+        <input id="pwd-password" type="password" name="password" required autocomplete="current-password" />
+        <button class="btn btn-secondary full" type="submit">Entrar con contraseña</button>
+      </form>
+      <p class="muted center">
+        <a href="{{ url_prefix }}/forgot-password">¿Olvidaste tu contraseña?</a>
+      </p>
+    </div>
+
+    <p class="muted center">¿No tienes cuenta? <a href="{{ url_prefix }}/signup">Créala aquí</a></p>
   </div>
 </div>
+<script>
+(function () {
+  var trigger = document.getElementById("link-show-password");
+  var panel = document.getElementById("panel-password-login");
+  if (!trigger || !panel) return;
+  trigger.addEventListener("click", function (e) {
+    e.preventDefault();
+    var open = panel.hasAttribute("hidden");
+    if (open) {
+      panel.removeAttribute("hidden");
+      trigger.setAttribute("aria-expanded", "true");
+    } else {
+      panel.setAttribute("hidden", "");
+      trigger.setAttribute("aria-expanded", "false");
+    }
+  });
+})();
+</script>
 {% endblock %}
