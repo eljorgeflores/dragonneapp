@@ -103,7 +103,7 @@ def test_request_magic_link_existing_user_sends_email(monkeypatch):
     monkeypatch.setattr(config, "EMAIL_FROM", "DRAGONNÉ <onboarding@resend.dev>", raising=False)
     sent = {"n": 0}
 
-    def _stub_send(to, subj, text, html):
+    def _stub_send(to, subj, text, html, **kwargs):
         sent["n"] += 1
         assert "login/magic-link/consume" in text
         assert to.endswith("@example.com")

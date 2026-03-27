@@ -39,7 +39,12 @@ if _env_file.exists():
         pass
 
 APP_NAME = "DRAGONNÉ"
-DB_PATH = BASE_DIR / "data" / "profitpilot.db"
+_db_override = (os.getenv("DATABASE_PATH") or os.getenv("DB_PATH") or "").strip()
+DB_PATH = (
+    Path(_db_override).expanduser()
+    if _db_override
+    else BASE_DIR / "data" / "profitpilot.db"
+)
 DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 UPLOAD_DIR = BASE_DIR / "uploads"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
@@ -190,11 +195,22 @@ def password_reset_email_delivery_configured() -> bool:
 # Caducidad del enlace de restablecimiento (debe coincidir con textos de correo y UI)
 PASSWORD_RESET_TOKEN_TTL_HOURS = max(1, int(os.getenv("PASSWORD_RESET_TOKEN_TTL_HOURS", "1")))
 
+def _safe_int_env(name: str, default: int) -> int:
+    """Evita ValueError si la variable existe pero está vacía o no es entero (p. ej. en Render)."""
+    raw = (os.getenv(name) or "").strip()
+    if not raw:
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        return default
+
+
 # Magic link (login sin contraseña): TTL y límites anti-abuso (ventana en segundos).
-MAGIC_LINK_TTL_MINUTES = max(5, min(60, int(os.getenv("MAGIC_LINK_TTL_MINUTES", "15"))))
-MAGIC_LINK_RATE_LIMIT_EMAIL = max(1, int(os.getenv("MAGIC_LINK_RATE_LIMIT_EMAIL", "5")))
-MAGIC_LINK_RATE_LIMIT_IP = max(1, int(os.getenv("MAGIC_LINK_RATE_LIMIT_IP", "20")))
-MAGIC_LINK_RATE_LIMIT_WINDOW_SEC = max(60, int(os.getenv("MAGIC_LINK_RATE_LIMIT_WINDOW_SEC", "900")))
+MAGIC_LINK_TTL_MINUTES = max(5, min(60, _safe_int_env("MAGIC_LINK_TTL_MINUTES", 15)))
+MAGIC_LINK_RATE_LIMIT_EMAIL = max(1, _safe_int_env("MAGIC_LINK_RATE_LIMIT_EMAIL", 5))
+MAGIC_LINK_RATE_LIMIT_IP = max(1, _safe_int_env("MAGIC_LINK_RATE_LIMIT_IP", 20))
+MAGIC_LINK_RATE_LIMIT_WINDOW_SEC = max(60, _safe_int_env("MAGIC_LINK_RATE_LIMIT_WINDOW_SEC", 900))
 
 API_RATE_LIMIT_PER_MINUTE = int(os.getenv("API_RATE_LIMIT_PER_MINUTE", "60"))
 API_RATE_LIMIT_PER_DAY = int(os.getenv("API_RATE_LIMIT_PER_DAY", "1000"))

@@ -15,6 +15,10 @@ _log = logging.getLogger(__name__)
 _SMTP_TIMEOUT_SEC = 30
 
 
+def _yn(b: bool) -> str:
+    return "Y" if b else "N"
+
+
 def _envelope_from() -> str:
     return (config.SMTP_ENVELOPE_FROM or config.SMTP_USER or "").strip()
 
@@ -70,13 +74,26 @@ def _resend_response_detail(resp: requests.Response, max_len: int = 1200) -> str
     return raw
 
 
-def _send_via_resend(to_addr: str, subject: str, text: str, html: str) -> bool:
+def _send_via_resend(
+    to_addr: str,
+    subject: str,
+    text: str,
+    html: str,
+    *,
+    purpose: str = "email",
+    sender_plausible: bool,
+) -> bool:
     """Envío vía Resend (HTTPS). `from` debe ser un remitente verificado en el panel de Resend."""
     if not config.RESEND_API_KEY:
         return False
     from_addr = (config.RESEND_FROM or config.EMAIL_FROM or "").strip()
     if not from_addr:
-        _log.warning("Resend: define RESEND_FROM o EMAIL_FROM con un remitente verificado")
+        _log.warning(
+            "resend.rejected purpose=%s reason=sender_address_missing tried_resend=%s sender_plausible=%s",
+            purpose,
+            "Y",
+            _yn(sender_plausible),
+        )
         return False
     try:
         r = requests.post(
@@ -95,7 +112,14 @@ def _send_via_resend(to_addr: str, subject: str, text: str, html: str) -> bool:
             timeout=30,
         )
     except requests.RequestException as exc:
-        _log.warning("Resend: error de red: %s", exc, exc_info=True)
+        _log.warning(
+            "resend.rejected purpose=%s reason=network_error tried_resend=%s sender_plausible=%s detail=%s",
+            purpose,
+            "Y",
+            _yn(sender_plausible),
+            type(exc).__name__,
+            exc_info=True,
+        )
         return False
     if r.status_code in (200, 201):
         try:
@@ -103,9 +127,12 @@ def _send_via_resend(to_addr: str, subject: str, text: str, html: str) -> bool:
         except Exception:
             jid = None
         _log.info(
-            "Correo recuperación: Resend API aceptó el envío (HTTP %s id=%s)",
+            "resend.accepted purpose=%s http=%s resend_id=%s tried_resend=%s sender_plausible=%s",
+            purpose,
             r.status_code,
             jid or "?",
+            "Y",
+            _yn(sender_plausible),
         )
         # #region agent log
         fd2ebf_log(
@@ -117,8 +144,11 @@ def _send_via_resend(to_addr: str, subject: str, text: str, html: str) -> bool:
         # #endregion
         return True
     _log.warning(
-        "Resend API rechazó el envío (HTTP %s): %s",
+        "resend.rejected purpose=%s http=%s tried_resend=%s sender_plausible=%s detail=%s",
+        purpose,
         r.status_code,
+        "Y",
+        _yn(sender_plausible),
         _resend_response_detail(r),
     )
     # #region agent log
@@ -141,7 +171,10 @@ def send_password_reset_email(
 ) -> bool:
     to_addr = (to_email or "").strip()
     if not to_addr:
-        _log.warning("Recuperación contraseña: destinatario vacío, no se envía")
+        _log.warning(
+            "password_reset.email_failed purpose=password_reset reason=empty_recipient "
+            "tried_resend=N smtp_attempted=N"
+        )
         return False
     h = (
         config.PASSWORD_RESET_TOKEN_TTL_HOURS
@@ -183,39 +216,69 @@ DRAGONNÉ
 <p>—<br>DRAGONNÉ</p>"""
 
     _rp = config.resend_sender_plausible()
+    resend_key = bool(config.RESEND_API_KEY)
+    smtp_complete = bool(
+        config.SMTP_HOST and config.SMTP_USER and config.SMTP_PASSWORD
+    )
+    resend_will_try = bool(resend_key and _rp)
     # #region agent log
     fd2ebf_log(
         "email_smtp.py:send_password_reset_email",
         "pre_channels",
         {
-            "resend_key_set": bool(config.RESEND_API_KEY),
-            "resend_sender_plausible": _rp if config.RESEND_API_KEY else None,
-            "smtp_complete": bool(
-                config.SMTP_HOST and config.SMTP_USER and config.SMTP_PASSWORD
-            ),
+            "resend_key_set": resend_key,
+            "resend_sender_plausible": _rp if resend_key else None,
+            "smtp_complete": smtp_complete,
         },
         "H3,H5",
     )
     # #endregion
 
-    if config.RESEND_API_KEY:
+    _log.info(
+        "password_reset.email_attempt purpose=password_reset resend_key_set=%s "
+        "sender_plausible=%s resend_will_try=%s smtp_complete=%s",
+        _yn(resend_key),
+        _yn(_rp),
+        _yn(resend_will_try),
+        _yn(smtp_complete),
+    )
+
+    resend_http_attempted = False
+    if resend_key:
         if not _rp:
             _log.warning(
-                "RESEND_API_KEY definida pero remitente no usable (define RESEND_FROM o EMAIL_FROM verificable; "
-                "evita localhost/ejemplo/example en el dominio). Se ignora Resend y se sigue con SMTP si hay."
+                "password_reset.skipped_resend purpose=password_reset reason=sender_not_plausible "
+                "resend_key_set=Y sender_plausible=N will_try_smtp=%s",
+                _yn(smtp_complete),
             )
-        elif _send_via_resend(to_addr, subject, text, html):
-            return True
         else:
-            _log.warning("Resend no pudo enviar; se intentará SMTP si está configurado")
+            resend_http_attempted = True
+            if _send_via_resend(
+                to_addr,
+                subject,
+                text,
+                html,
+                purpose="password_reset",
+                sender_plausible=_rp,
+            ):
+                _log.info(
+                    "password_reset.email_sent purpose=password_reset channel=resend "
+                    "fallback_to_smtp=N sender_plausible=%s",
+                    _yn(_rp),
+                )
+                return True
+            _log.warning(
+                "password_reset.resend_failed_fallback purpose=password_reset "
+                "will_try_smtp=%s",
+                _yn(smtp_complete),
+            )
 
-    if (
-        not config.SMTP_HOST
-        or not config.SMTP_USER
-        or not config.SMTP_PASSWORD
-    ):
+    if not smtp_complete:
         _log.info(
-            "Recuperación contraseña: sin Resend exitoso y SMTP incompleto; no se envía correo"
+            "password_reset.email_failed purpose=password_reset reason=no_delivery_channel "
+            "resend_http_attempted=%s smtp_complete=N sender_plausible=%s",
+            _yn(resend_http_attempted),
+            _yn(_rp),
         )
         return False
 
@@ -228,18 +291,34 @@ DRAGONNÉ
     try:
         _sendmail([to_addr], msg.as_string())
         _log.info(
-            "Correo recuperación contraseña: SMTP aceptó el mensaje (SECURITY=%s puerto=%s)",
+            "smtp.accepted purpose=password_reset security=%s port=%s "
+            "fallback_after_resend=%s sender_plausible=%s",
             config.SMTP_SECURITY,
             config.SMTP_PORT,
+            _yn(resend_http_attempted),
+            _yn(_rp),
+        )
+        _log.info(
+            "password_reset.email_sent purpose=password_reset channel=smtp "
+            "fallback_after_resend=%s sender_plausible=%s",
+            _yn(resend_http_attempted),
+            _yn(_rp),
         )
         return True
     except Exception as exc:
         _log.warning(
-            "Falló envío correo recuperación contraseña (revisar SMTP_SECURITY=%s puerto=%s): %s",
+            "smtp.failed purpose=password_reset security=%s port=%s "
+            "fallback_after_resend=%s detail=%s",
             config.SMTP_SECURITY,
             config.SMTP_PORT,
-            exc,
+            _yn(resend_http_attempted),
+            type(exc).__name__,
             exc_info=True,
+        )
+        _log.warning(
+            "password_reset.email_failed purpose=password_reset reason=smtp_error "
+            "resend_http_attempted=%s",
+            _yn(resend_http_attempted),
         )
         return False
 
@@ -254,7 +333,10 @@ def send_magic_link_email(
     """Enlace de acceso sin contraseña (misma canalización que recuperación: Resend o SMTP)."""
     to_addr = (to_email or "").strip()
     if not to_addr:
-        _log.warning("Magic link: destinatario vacío, no se envía")
+        _log.warning(
+            "magic_link.email_failed purpose=magic_link reason=empty_recipient "
+            "tried_resend=N smtp_attempted=N"
+        )
         return False
     m = int(config.MAGIC_LINK_TTL_MINUTES) if ttl_minutes is None else max(1, int(ttl_minutes))
     ttl_label = f"{m} minutos" if m != 1 else "1 minuto"
@@ -290,18 +372,56 @@ DRAGONNÉ
 <p>—<br>DRAGONNÉ</p>"""
 
     _rp = config.resend_sender_plausible()
-    if config.RESEND_API_KEY:
+    resend_key = bool(config.RESEND_API_KEY)
+    smtp_complete = bool(
+        config.SMTP_HOST and config.SMTP_USER and config.SMTP_PASSWORD
+    )
+    resend_will_try = bool(resend_key and _rp)
+
+    _log.info(
+        "magic_link.email_attempt purpose=magic_link resend_key_set=%s "
+        "sender_plausible=%s resend_will_try=%s smtp_complete=%s",
+        _yn(resend_key),
+        _yn(_rp),
+        _yn(resend_will_try),
+        _yn(smtp_complete),
+    )
+
+    resend_http_attempted = False
+    if resend_key:
         if not _rp:
             _log.warning(
-                "Magic link: RESEND_API_KEY definida pero remitente no usable; se intentará SMTP si hay."
+                "magic_link.skipped_resend purpose=magic_link reason=sender_not_plausible "
+                "resend_key_set=Y sender_plausible=N will_try_smtp=%s",
+                _yn(smtp_complete),
             )
-        elif _send_via_resend(to_addr, subject, text, html):
-            return True
-        _log.warning("Magic link: Resend no pudo enviar; se intentará SMTP si está configurado")
+        else:
+            resend_http_attempted = True
+            if _send_via_resend(
+                to_addr,
+                subject,
+                text,
+                html,
+                purpose="magic_link",
+                sender_plausible=_rp,
+            ):
+                _log.info(
+                    "magic_link.email_sent purpose=magic_link channel=resend "
+                    "fallback_to_smtp=N sender_plausible=%s",
+                    _yn(_rp),
+                )
+                return True
+            _log.warning(
+                "magic_link.resend_failed_fallback purpose=magic_link will_try_smtp=%s",
+                _yn(smtp_complete),
+            )
 
-    if not config.SMTP_HOST or not config.SMTP_USER or not config.SMTP_PASSWORD:
+    if not smtp_complete:
         _log.warning(
-            "Magic link: no hay envío (Resend falló o no aplica y SMTP incompleto)."
+            "magic_link.email_failed purpose=magic_link reason=no_delivery_channel "
+            "resend_http_attempted=%s smtp_complete=N sender_plausible=%s",
+            _yn(resend_http_attempted),
+            _yn(_rp),
         )
         return False
 
@@ -314,18 +434,34 @@ DRAGONNÉ
     try:
         _sendmail([to_addr], msg.as_string())
         _log.info(
-            "Magic link: SMTP aceptó el mensaje (SECURITY=%s puerto=%s)",
+            "smtp.accepted purpose=magic_link security=%s port=%s "
+            "fallback_after_resend=%s sender_plausible=%s",
             config.SMTP_SECURITY,
             config.SMTP_PORT,
+            _yn(resend_http_attempted),
+            _yn(_rp),
+        )
+        _log.info(
+            "magic_link.email_sent purpose=magic_link channel=smtp "
+            "fallback_after_resend=%s sender_plausible=%s",
+            _yn(resend_http_attempted),
+            _yn(_rp),
         )
         return True
     except Exception as exc:
         _log.warning(
-            "Magic link: falló envío SMTP (SECURITY=%s puerto=%s): %s",
+            "smtp.failed purpose=magic_link security=%s port=%s "
+            "fallback_after_resend=%s detail=%s",
             config.SMTP_SECURITY,
             config.SMTP_PORT,
-            exc,
+            _yn(resend_http_attempted),
+            type(exc).__name__,
             exc_info=True,
+        )
+        _log.warning(
+            "magic_link.email_failed purpose=magic_link reason=smtp_error "
+            "resend_http_attempted=%s",
+            _yn(resend_http_attempted),
         )
         return False
 

@@ -1,13 +1,17 @@
 import json
 import logging
 import os
+import sqlite3
+import sys
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from config import (
     ANNUAL_PRICE,
     APP_NAME,
     APP_URL,
     BASE_DIR,
+    DB_PATH,
     URL_PREFIX,
     FREE_MAX_ANALYSES,
     FREE_MAX_DAYS,
@@ -36,6 +40,33 @@ from config import (
     resend_sender_plausible,
     url_path,
 )
+
+
+def _configure_application_logging() -> None:
+    """Uvicorn sólo adjunta handlers a loggers ``uvicorn*`` (propagate=false).
+
+    El logger raíz queda efectivamente en WARNING sin un StreamHandler propio para INFO,
+    así que ``logging.getLogger(__name__).info()`` en módulos de aplicación no aparece
+    en Render. Fijamos handlers dedicados (stderr) para auth/correo sin duplicar access logs.
+    """
+    raw = (os.getenv("LOG_LEVEL") or "INFO").strip().upper()
+    level = getattr(logging, raw, logging.INFO)
+    if not isinstance(level, int):
+        level = logging.INFO
+    fmt = logging.Formatter("%(levelname)s %(name)s %(message)s")
+    handler = logging.StreamHandler(sys.stderr)
+    handler.setLevel(level)
+    handler.setFormatter(fmt)
+    for name in ("email_smtp", "routes.auth", "app"):
+        lg = logging.getLogger(name)
+        lg.setLevel(level)
+        lg.propagate = False
+        if not lg.handlers:
+            lg.addHandler(handler)
+
+
+_configure_application_logging()
+
 from db import db, init_db
 
 # Esquema SQLite al importar el módulo (comportamiento previo a Fase 1).
@@ -60,10 +91,62 @@ from templating import templates
 from time_utils import now_iso
 
 
+def _sqlite_startup_audit(log: logging.Logger) -> None:
+    """Ruta SQLite efectiva (mismo ``DB_PATH`` que ``db.py`` / ``init_db()``)."""
+    dp = (os.getenv("DATABASE_PATH") or "").strip()
+    dbp = (os.getenv("DB_PATH") or "").strip()
+    if dp:
+        source = "DATABASE_PATH"
+    elif dbp:
+        source = "DB_PATH"
+    else:
+        source = "default(BASE_DIR/data/profitpilot.db)"
+    path = Path(DB_PATH)
+    try:
+        resolved = str(path.resolve())
+    except OSError:
+        resolved = str(path)
+    exists = path.exists()
+    size = path.stat().st_size if exists else -1
+    users_table = "?"
+    user_count = "?"
+    open_err = "-"
+    try:
+        conn = sqlite3.connect(str(path))
+        row = conn.execute(
+            "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='users'"
+        ).fetchone()
+        if row and row[0]:
+            users_table = "Y"
+            user_count = str(conn.execute("SELECT COUNT(*) FROM users").fetchone()[0])
+        else:
+            users_table = "N"
+            user_count = "0"
+        conn.close()
+    except sqlite3.Error as exc:
+        open_err = type(exc).__name__
+    log.info(
+        "DragonApp startup: SQLITE effective_path=%s resolved=%s source=%s "
+        "env_DATABASE_PATH_set=%s env_DB_PATH_set=%s file_exists=%s size_bytes=%s "
+        "users_table=%s user_count=%s connect_error=%s",
+        str(path),
+        resolved,
+        source,
+        "Y" if dp else "N",
+        "Y" if dbp else "N",
+        "Y" if exists else "N",
+        size,
+        users_table,
+        user_count,
+        open_err,
+    )
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Arranque del worker: vías de envío para recuperación de contraseña (sin secretos)."""
     log = logging.getLogger(__name__)
+    _sqlite_startup_audit(log)
     delivery = password_reset_email_delivery_configured()
     smtp_ok = bool(SMTP_HOST and SMTP_USER and SMTP_PASSWORD)
     resend_ok = bool(RESEND_API_KEY)
