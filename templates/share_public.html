@@ -1,14 +1,10 @@
+{# SEO desde services/share_service (noindex + canonical_url) #}
 {% extends "base.html" %}
-{% block title %}{{ page_title }} — DRAGONNÉ{% endblock %}
-{% block meta %}
-<meta name="robots" content="noindex, nofollow" />
-<meta name="description" content="Lectura comercial hotelera compartida con DRAGONNÉ. Solo lectura." />
-{% endblock %}
 {% block jsonld %}{% endblock %}
 {% block body %}
-<div class="share-public-wrap">
+<main class="share-public-wrap">
   <header class="share-public-header">
-    <a href="/" class="share-public-brand"><img src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" width="120" height="28" /></a>
+    <a href="{{ url_path('/consultoria') }}" class="share-public-brand"><img src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" width="120" height="28" loading="eager" decoding="async" /></a>
     <p class="muted small share-public-meta">{{ created_at }} · Vista de solo lectura</p>
   </header>
   <h1 class="share-public-title">{{ page_title }}</h1>
@@ -80,7 +76,7 @@
   {% endif %}
 
   <footer class="share-public-footer muted small">
-    Generado con <a href="/">DRAGONNÉ</a>. Para análisis propios y PDF, crea una cuenta en la plataforma.
+    Generado con DRAGONNÉ. <a href="{{ url_path('/signup') }}">Crear cuenta</a> para análisis propios.
   </footer>
-</div>
+</main>
 {% endblock %}

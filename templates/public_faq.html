@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block body %}
+<main class="marketing-shell" style="max-width: 760px; margin: 0 auto; padding: 48px 24px;">
+  <article itemscope itemtype="https://schema.org/FAQPage">
+    <h1>Preguntas frecuentes</h1>
+    <p class="muted" style="line-height: 1.65; margin-bottom: 2rem;">
+      Sobre DRAGONNÉ, Pullso y precios. Detalle en <a href="{{ url_path('/precios') }}">Precios</a>.
+    </p>
+    <section style="margin-bottom: 1.75rem;" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+      <h2 style="font-size: 1.15rem; margin: 0 0 0.5rem;" itemprop="name">¿Qué es Pullso dentro de DRAGONNÉ?</h2>
+      <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+        <p itemprop="text" style="margin: 0; line-height: 1.65;">
+          Pullso analiza exports de PMS y channel managers y produce un informe ejecutivo con KPIs para equipos hoteleros.
+        </p>
+      </div>
+    </section>
+    <section style="margin-bottom: 1.75rem;" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+      <h2 style="font-size: 1.15rem; margin: 0 0 0.5rem;" itemprop="name">¿DRAGONNÉ solo trabaja con hoteles?</h2>
+      <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+        <p itemprop="text" style="margin: 0; line-height: 1.65;">
+          La consultoría cubre startups, SMBs, hospitalidad y medios; Pullso está enfocado en hotelería.
+        </p>
+      </div>
+    </section>
+    <section style="margin-bottom: 1.75rem;" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+      <h2 style="font-size: 1.15rem; margin: 0 0 0.5rem;" itemprop="name">¿Dónde están los precios?</h2>
+      <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+        <p itemprop="text" style="margin: 0; line-height: 1.65;">
+          En <a href="{{ url_path('/precios') }}">Precios</a> están los planes gratuitos, Pro y Pro+.
+        </p>
+      </div>
+    </section>
+    <p style="margin-top: 2rem;"><a href="{{ url_path('/consultoria') }}">ES</a> · <a href="{{ url_path('/consulting') }}">EN</a></p>
+  </article>
+</main>
+{% endblock %}

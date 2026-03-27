@@ -1,14 +1,6 @@
-{# FUERA DE ALCANCE DragonApp (SaaS hoteles): landing de consultoría / parent company. Candidata a extraer a otro despliegue. Ver docs/dragonapp_phase1.md #}
+{# FUERA DE ALCANCE DragonApp (SaaS hoteles): landing de consultoría / parent company. Ver docs/dragonapp_phase1.md #}
+{# SEO inyectado desde routes/consulting.py render_consulting_landing #}
 {% extends 'base.html' %}
-{% block title %}DRAGONNÉ — {% if lang == 'en' %}Consulting for early-stage startups, SMBs & hospitality{% else %}Consultoría para startups, SMBs e hospitalidad{% endif %}{% endblock %}
-{% block meta %}
-<meta name="description" content="{% if lang == 'en' %}Dragonné works with early-stage startups, SMBs and hospitality. Talent, technology implementation, profitability.{% else %}Dragonné acompaña a startups en etapa de aceleración, SMBs y empresas de hospitalidad. Talento, tecnología, rentabilidad.{% endif %}" />
-<meta name="keywords" content="consultoría, early-stage, SMBs, hospitalidad, rentabilidad, tecnología, talento, revenue, México, LatAm" />
-<meta name="robots" content="index, follow" />
-{% endblock %}
-{% block og_title %}DRAGONNÉ — {% if lang == 'en' %}Startups, SMBs & hospitality{% else %}Startups, SMBs e hospitalidad{% endif %}{% endblock %}
-{% block og_description %}{% if lang == 'en' %}Dragonné works with early-stage startups, SMBs and hospitality. Talent, technology implementation, profitability.{% else %}Dragonné acompaña a startups en etapa de aceleración, SMBs y empresas de hospitalidad. Talento, tecnología, rentabilidad.{% endif %}{% endblock %}
-{% block og_image_alt %}{% if lang == 'en' %}DRAGONNÉ — brand isotype and headline: We connect your vision with the talent that makes it real{% else %}DRAGONNÉ — isotipo de marca y titular: We connect your vision with the talent that makes it real{% endif %}{% endblock %}
 {% block body %}
 <style>
   .cp *{box-sizing:border-box}
@@ -386,12 +378,12 @@
     <input type="checkbox" id="cp-nav-toggle" class="cp-nav-toggle" aria-hidden="true" aria-label="Menú" />
     <div class="cp-nav">
       <div class="cp-nav-left">
-        <a href="{{ url_prefix }}/?lang={{ lang }}#top" class="cp-brand">
-          <img src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" />
+        <a href="{{ url_path('/consultoria') if lang == 'es' else url_path('/consulting') }}#top" class="cp-brand">
+          <img src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" width="160" height="36" loading="eager" decoding="async" />
         </a>
         <div class="cp-lang">
-          <a href="{{ url_prefix }}/?lang=en" class="cp-lang-link {% if lang == 'en' %}is-active{% endif %}" aria-current="{% if lang == 'en' %}true{% else %}false{% endif %}">EN</a>
-          <a href="{{ url_prefix }}/?lang=es" class="cp-lang-link {% if lang == 'es' %}is-active{% endif %}" aria-current="{% if lang == 'es' %}true{% else %}false{% endif %}">ES</a>
+          <a href="{{ url_path('/consulting') }}" hreflang="en" class="cp-lang-link {% if lang == 'en' %}is-active{% endif %}" aria-current="{% if lang == 'en' %}true{% else %}false{% endif %}">EN</a>
+          <a href="{{ url_path('/consultoria') }}" hreflang="es" class="cp-lang-link {% if lang == 'es' %}is-active{% endif %}" aria-current="{% if lang == 'es' %}true{% else %}false{% endif %}">ES</a>
         </div>
       </div>
       <nav class="cp-nav-links" aria-label="Navegación principal">
@@ -862,9 +854,9 @@
       <p>{{ t.footer_vert }}</p>
       <p>Querétaro, México · &copy; {{ current_year or '2025' }} DRAGONNÉ</p>
       <nav class="cp-footer-links" aria-label="Enlaces">
-        <a href="{{ url_prefix }}/?lang={{ lang }}#con-quienes">{{ t.footer_links_work }}</a>
-        <a href="{{ url_prefix }}/?lang={{ lang }}#servicios">{{ t.footer_links_services }}</a>
-        <a href="{{ url_prefix }}/?lang={{ lang }}#contacto">{{ t.footer_links_contact }}</a>
+        <a href="{{ url_path('/consultoria') if lang == 'es' else url_path('/consulting') }}#con-quienes">{{ t.footer_links_work }}</a>
+        <a href="{{ url_path('/consultoria') if lang == 'es' else url_path('/consulting') }}#servicios">{{ t.footer_links_services }}</a>
+        <a href="{{ url_path('/consultoria') if lang == 'es' else url_path('/consulting') }}#contacto">{{ t.footer_links_contact }}</a>
       </nav>
     </div>
   </footer>

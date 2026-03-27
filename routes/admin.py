@@ -21,10 +21,15 @@ from debuglog import fd2ebf_log
 from email_smtp import send_password_reset_email
 from request_public_url import origin_for_user_facing_links
 from plans import plan_label
+from seo_helpers import noindex_page_seo
 from templating import templates
 from time_utils import now_iso
 
 router = APIRouter(tags=["admin"])
+
+
+def _admin_seo(path: str, title: str) -> dict:
+    return noindex_page_seo(path, title, "Panel de administración DRAGONNÉ (privado).")
 
 
 @router.get("/admin", response_class=HTMLResponse)
@@ -100,6 +105,7 @@ def admin_home(request: Request):
         "current_user": admin,
         "users": users,
         "totals": totals,
+        **_admin_seo("/admin", "Admin — DRAGONNÉ"),
     })
 
 
@@ -169,6 +175,7 @@ def admin_user_detail(request: Request, user_id: int):
         "sessions": sessions,
         "stats": stats,
         "pwd_reset": pwd_reset,
+        **_admin_seo(f"/admin/users/{user_id}", f"Usuario {user_id} — Admin"),
     })
 
 
@@ -296,6 +303,7 @@ def admin_admins(request: Request):
         "current_user": admin,
         "admins": admins,
         "non_admins": non_admins,
+        **_admin_seo("/admin/admins", "Administradores — DRAGONNÉ"),
     })
 
 
@@ -349,6 +357,7 @@ def admin_api(request: Request):
         "api_key_flash": api_key_flash,
         "rate_limit_min": API_RATE_LIMIT_PER_MINUTE,
         "rate_limit_day": API_RATE_LIMIT_PER_DAY,
+        **_admin_seo("/admin/api", "API — Admin DRAGONNÉ"),
     })
 
 

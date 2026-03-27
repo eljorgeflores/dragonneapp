@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block body %}
+<main class="marketing-shell" style="max-width: 820px; margin: 0 auto; padding: 48px 24px;">
+  <article>
+    <h1>Servicios DRAGONNÉ</h1>
+    <p class="muted" style="line-height: 1.65; margin-bottom: 2rem;">
+      Consultoría estratégica y producto Pullso para decisiones sobre datos hoteleros.
+    </p>
+    <section style="margin-bottom: 2rem;">
+      <h2 style="font-size: 1.25rem; margin: 0 0 0.75rem;">Consultoría</h2>
+      <p style="line-height: 1.65; margin: 0;">
+        Talento, procesos, tecnología y rentabilidad.
+        <a href="{{ url_path('/consultoria') }}">Español</a> · <a href="{{ url_path('/consulting') }}">English</a>.
+      </p>
+    </section>
+    <section>
+      <h2 style="font-size: 1.25rem; margin: 0 0 0.75rem;">Pullso</h2>
+      <p style="line-height: 1.65; margin: 0;">
+        <a href="{{ url_path('/verticals/hospitality') }}">Producto</a> ·
+        <a href="{{ url_path('/mockup-analisis') }}">Demo</a> ·
+        <a href="{{ url_path('/precios') }}">Precios</a>.
+      </p>
+    </section>
+  </article>
+</main>
+{% endblock %}

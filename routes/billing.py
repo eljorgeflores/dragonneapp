@@ -17,6 +17,7 @@ from config import (
 )
 from db import db
 from services.billing_stripe import ensure_stripe_customer, stripe_request, sync_user_from_stripe_customer
+from seo_helpers import noindex_page_seo
 from templating import templates
 from time_utils import now_iso
 
@@ -58,7 +59,18 @@ def create_checkout_session(request: Request, billing_cycle: str = Form(...), pl
 @router.get("/billing/success", response_class=HTMLResponse)
 def billing_success(request: Request):
     user = require_user(request)
-    return templates.TemplateResponse("billing_success.html", {"request": request, "user": user})
+    return templates.TemplateResponse(
+        "billing_success.html",
+        {
+            "request": request,
+            "user": user,
+            **noindex_page_seo(
+                "/billing/success",
+                "Pago exitoso — DRAGONNÉ",
+                "Confirmación de checkout (no indexar).",
+            ),
+        },
+    )
 
 
 @router.post("/billing/create-portal-session")

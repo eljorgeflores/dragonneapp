@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block body %}
+<main class="marketing-shell" style="max-width: 720px; margin: 0 auto; padding: 48px 24px;">
+  <article>
+    <h1>{{ stub_h1 }}</h1>
+    <p class="muted" style="line-height: 1.65; margin: 0 0 1rem;">{{ stub_lead }}</p>
+    <p style="line-height: 1.65; margin: 0;"><a href="{{ url_path('/consultoria') }}">Consultoría</a> · <a href="{{ url_path('/verticals/hospitality') }}">Pullso</a></p>
+  </article>
+</main>
+{% endblock %}

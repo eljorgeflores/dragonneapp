@@ -1,6 +1,4 @@
 {% extends 'base.html' %}
-{% block title %}Documentación API — DRAGONNÉ{% endblock %}
-{% block canonical %}{% if app_url %}{{ app_url }}/api{% endif %}{% endblock %}
 {% block body %}
 <div class="marketing-shell" style="max-width: 720px; margin: 0 auto; padding: 48px 24px;">
   <h1 style="font-size: 1.75rem; font-weight: 700; margin: 0 0 12px;">Documentación API</h1>
@@ -15,11 +13,11 @@
     Endpoints principales: <strong>POST /api/v1/analyze</strong> (subir reportes y obtener análisis), <strong>GET /api/v1/analyses</strong> (listar), <strong>GET /api/v1/analyses/{id}</strong> (detalle), <strong>GET /api/v1/analyses/{id}/pdf</strong> (descargar PDF).
   </p>
   <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-    <a href="/docs" class="btn btn-primary">Abrir Swagger (interactivo)</a>
-    <a href="/redoc" class="btn btn-secondary">Abrir ReDoc</a>
+    <a href="{{ url_path('/docs') }}" class="btn btn-primary">Abrir Swagger (interactivo)</a>
+    <a href="{{ url_path('/redoc') }}" class="btn btn-secondary">Abrir ReDoc</a>
   </div>
   <p class="muted" style="margin: 28px 0 0; font-size: 0.875rem;">
-    El esquema OpenAPI está disponible en <a href="/openapi.json">/openapi.json</a>.
+    El esquema OpenAPI está disponible en <a href="{{ url_path('/openapi.json') }}">/openapi.json</a>.
   </p>
 </div>
 {% endblock %}

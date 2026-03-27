@@ -1,0 +1,400 @@
+{% extends 'base.html' %}
+{% block title %}Pullso · Demo WhatsApp — Alertas e insights por tu analista con IA{% endblock %}
+{% block canonical %}{{ app_url }}/demo/pullso-whatsapp{% endblock %}
+{% block meta %}
+<meta name="description" content="Demo Pullso: vincula WhatsApp y recibe alertas, resúmenes y recomendaciones de tu analista con IA en texto, audio y video. Sin reemplazar el dashboard: acción donde ya trabajas." />
+<meta name="keywords" content="Pullso, Dragonné, WhatsApp, IA, revenue, alertas, insights, demo" />
+<meta name="robots" content="noindex, nofollow" />
+{% endblock %}
+{% block og_title %}Pullso — Insights que llegan a tu WhatsApp{% endblock %}
+{% block og_description %}Demo: tu analista con IA te notifica lo importante en texto, audio y video. Comunicación accionable, sin depender de otro tablero más.{% endblock %}
+{% block jsonld %}{% endblock %}
+{% block body %}
+<style>
+  .pws *{box-sizing:border-box}
+  .pws{
+    --text:#343434;--muted:#808081;--line:rgba(52,52,52,0.14);--soft:#e6e6e6;--surface:#fff;
+    --orange:#f6a905;--orange-deep:#f07e07;
+    color:var(--text);
+    background:
+      radial-gradient(ellipse 80% 50% at 0% -10%, rgba(246,169,5,.09), transparent 55%),
+      radial-gradient(ellipse 70% 45% at 100% 0%, rgba(240,126,7,.07), transparent 50%),
+      linear-gradient(180deg,#fbfcfe 0%,#f3f5f9 100%);
+    min-height:100vh;
+    font-family:"Inter",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  }
+  .pws a{text-decoration:none}
+  .pws-skip{position:absolute;left:-9999px;z-index:999;padding:12px 20px;background:#343434;color:#fff;font-weight:600;border-radius:0 0 12px 0}
+  .pws-skip:focus{left:0;top:0;outline:2px solid var(--orange-deep);outline-offset:2px}
+  .pws-c{width:min(1180px,calc(100% - 40px));margin:0 auto}
+  .pws-badge-demo{
+    display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;
+    background:rgba(52,52,52,.06);border:1px solid var(--line);font-size:.78rem;font-weight:700;
+    letter-spacing:.06em;text-transform:uppercase;color:#5a5a5a;margin-bottom:14px
+  }
+  .pws-badge-demo span{width:6px;height:6px;border-radius:999px;background:var(--orange-deep);animation:pwsPulse 2.4s ease-in-out infinite}
+  @keyframes pwsPulse{0%,100%{opacity:.45;transform:scale(1)}50%{opacity:1;transform:scale(1.15)}}
+  @media (prefers-reduced-motion:reduce){
+    .pws-badge-demo span,.pws-float-card,.pws-chat-wrap,.pws-bridge{animation:none !important}
+    .pws-btn-primary:hover,.pws-btn-ghost:hover{transform:none}
+  }
+  .pws-nav-wrap{position:sticky;top:0;z-index:100;backdrop-filter:blur(16px);background:rgba(251,252,254,.88);border-bottom:1px solid rgba(15,23,32,.06)}
+  .pws-nav{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 0}
+  .pws-brand{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .pws-brand a:focus-visible{outline:2px solid var(--orange-deep);outline-offset:3px;border-radius:4px}
+  .pws-brand img{height:32px;width:auto;display:block}
+  .pws-brand-div{width:1px;height:20px;background:rgba(52,52,52,.12)}
+  .pws-brand-product{font-size:.9rem;font-weight:800;letter-spacing:-.03em;color:var(--text)}
+  .pws-nav-note{font-size:.82rem;color:var(--muted);display:none}
+  @media (min-width:900px){.pws-nav-note{display:block}}
+  .pws-nav-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .pws-btn{
+    display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 18px;
+    border-radius:999px;font-weight:600;font-size:.92rem;border:1px solid transparent;transition:transform .2s ease,box-shadow .2s ease
+  }
+  .pws-btn:focus-visible{outline:2px solid var(--orange-deep);outline-offset:2px}
+  .pws-btn-primary{
+    background:linear-gradient(90deg,var(--orange),var(--orange-deep));color:#fff !important;
+    box-shadow:0 14px 32px rgba(240,126,7,.28)
+  }
+  .pws-btn-primary:hover{transform:translateY(-1px)}
+  .pws-btn-ghost{background:#fff;border-color:var(--line);color:var(--text) !important}
+  .pws-btn-ghost:hover{transform:translateY(-1px);border-color:rgba(240,126,7,.35)}
+  .pws-hero{padding:28px 0 40px}
+  .pws-hero-grid{display:grid;grid-template-columns:1fr 1.05fr;gap:40px;align-items:center}
+  @media (max-width:960px){.pws-hero-grid{grid-template-columns:1fr;gap:32px}}
+  .pws-eyebrow{font-size:.95rem;color:var(--muted);font-weight:500;margin:0 0 12px;max-width:36ch;line-height:1.5;letter-spacing:-.02em}
+  .pws h1{
+    font-size:clamp(2rem,4.2vw,3.35rem);line-height:1.14;letter-spacing:-.055em;margin:0 0 16px;max-width:22ch;font-weight:800;
+    background:linear-gradient(90deg,#343434 0%,#343434 35%,var(--orange) 55%,var(--orange-deep) 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    animation:pwsTitleDrift 8s ease-in-out infinite
+  }
+  @keyframes pwsTitleDrift{0%,100%{filter:hue-rotate(0deg)}50%{filter:hue-rotate(-4deg)}}
+  .pws-lead{font-size:1.05rem;line-height:1.65;color:var(--muted);margin:0 0 22px;max-width:52ch}
+  .pws-cta-row{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px}
+  .pws-micro{font-size:.84rem;color:var(--muted);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .pws-micro img.pws-openai{height:18px;opacity:.85}
+  .pws-visual{position:relative}
+  .pws-float-card{
+    position:absolute;z-index:3;top:-12px;right:-8px;max-width:200px;
+    background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px 14px;
+    box-shadow:0 20px 50px rgba(15,23,32,.12);font-size:.78rem;line-height:1.45;color:var(--muted);
+    animation:pwsFloatSoft 5s ease-in-out infinite
+  }
+  .pws-float-card strong{display:block;color:var(--text);font-size:.82rem;margin-bottom:4px;letter-spacing:-.02em}
+  @keyframes pwsFloatSoft{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+  @media (max-width:960px){.pws-float-card{position:relative;top:0;right:0;max-width:100%;margin-bottom:12px}}
+  .pws-chat-wrap{
+    background:rgba(255,255,255,.85);border:1px solid rgba(255,255,255,.9);
+    border-radius:28px;padding:18px;box-shadow:0 24px 60px rgba(15,23,32,.1);
+    animation:pwsFloatSoft 7s ease-in-out infinite .5s
+  }
+  .pws-chat{
+    background:linear-gradient(180deg,#e8f5e9 0%,#e8f5e9 18%,#ece5dd 18%,#d9d2ca 100%);
+    border-radius:22px;overflow:hidden;border:1px solid rgba(0,0,0,.06);min-height:420px;display:flex;flex-direction:column
+  }
+  .pws-chat-top{
+    background:#075e54;color:#fff;padding:12px 14px;display:flex;align-items:center;gap:10px;
+    font-size:.88rem;font-weight:600
+  }
+  .pws-chat-avatar{width:36px;height:36px;border-radius:999px;background:linear-gradient(145deg,var(--orange),var(--orange-deep));display:grid;place-items:center;font-weight:800;font-size:.75rem;color:#fff;flex-shrink:0}
+  .pws-chat-meta{flex:1;min-width:0}
+  .pws-chat-meta span{display:block;font-size:.68rem;font-weight:500;opacity:.88}
+  .pws-chat-body{padding:16px 14px 20px;display:flex;flex-direction:column;gap:10px;flex:1;overflow:hidden}
+  .pws-bubble{
+    max-width:92%;padding:11px 13px;border-radius:14px 14px 14px 4px;font-size:.86rem;line-height:1.52;
+    background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.08);color:#111;border:1px solid rgba(0,0,0,.04)
+  }
+  .pws-bubble--pullso{margin-left:auto;border-radius:14px 14px 4px 14px;background:#dcf8c6;border-color:rgba(0,0,0,.03)}
+  .pws-bubble time{display:block;font-size:.65rem;color:var(--muted);margin-top:6px;text-align:right}
+  .pws-bubble-type{display:inline-flex;align-items:center;gap:6px;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--orange-deep);margin-bottom:6px}
+  .pws-bubble-type svg{width:14px;height:14px;flex-shrink:0}
+  .pws-audio-ui{
+    display:flex;align-items:center;gap:10px;margin-top:4px;padding:8px 0 2px;border-top:1px solid rgba(0,0,0,.06)
+  }
+  .pws-audio-play{width:34px;height:34px;border-radius:999px;background:var(--text);color:#fff;display:grid;place-items:center;border:0;cursor:default;flex-shrink:0}
+  .pws-audio-wave{flex:1;height:28px;display:flex;align-items:center;gap:3px}
+  .pws-audio-wave span{width:3px;border-radius:999px;background:var(--orange-deep);opacity:.45;animation:pwsBar 1.2s ease-in-out infinite}
+  .pws-audio-wave span:nth-child(2){animation-delay:.15s;height:18px}.pws-audio-wave span:nth-child(3){animation-delay:.3s;height:22px}
+  .pws-audio-wave span:nth-child(4){animation-delay:.45s;height:14px}.pws-audio-wave span:nth-child(5){animation-delay:.6s;height:20px}
+  @keyframes pwsBar{0%,100%{transform:scaleY(.4);opacity:.4}50%{transform:scaleY(1);opacity:.9}}
+  .pws-video-thumb{
+    margin-top:8px;border-radius:12px;overflow:hidden;position:relative;aspect-ratio:16/9;background:#1a1a1a;
+    display:grid;place-items:center;color:#fff;font-size:.75rem;font-weight:600
+  }
+  .pws-video-thumb::before{
+    content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(246,169,5,.25),transparent 60%)
+  }
+  .pws-play-ic{
+    width:44px;height:44px;border-radius:999px;background:rgba(255,255,255,.92);color:var(--orange-deep);
+    display:grid;place-items:center;font-size:1.1rem;z-index:1;box-shadow:0 8px 24px rgba(0,0,0,.25)
+  }
+  .pws-bridge{
+    position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);
+    display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--surface);
+    border:1px solid var(--line);border-radius:999px;font-size:.78rem;font-weight:600;color:var(--muted);
+    box-shadow:0 12px 30px rgba(15,23,32,.1);white-space:nowrap;animation:pwsFloatSoft 6s ease-in-out infinite .2s
+  }
+  .pws-bridge svg{width:18px;height:18px;color:var(--orange-deep)}
+  @media (max-width:960px){.pws-bridge{position:relative;left:0;transform:none;margin-top:14px;justify-content:center;white-space:normal;text-align:center}}
+  .pws-section{padding:48px 0}
+  .pws-section--tint{background:linear-gradient(180deg,rgba(255,255,255,.45) 0%,rgba(230,230,230,.28) 100%)}
+  .pws-section-head{margin-bottom:28px;max-width:720px}
+  .pws-section-head h2{
+    font-size:clamp(1.65rem,2.8vw,2.45rem);line-height:1.15;letter-spacing:-.045em;margin:0 0 12px;font-weight:800;
+    background:linear-gradient(90deg,var(--orange),var(--orange-deep));-webkit-background-clip:text;background-clip:text;color:transparent
+  }
+  .pws-section-head p{margin:0;font-size:1.02rem;line-height:1.68;color:var(--muted)}
+  .pws-two-problem{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  @media (max-width:760px){.pws-two-problem{grid-template-columns:1fr}}
+  .pws-panel{
+    background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:24px 26px;
+    box-shadow:0 18px 44px rgba(15,23,32,.06)
+  }
+  .pws-panel h3{margin:0 0 10px;font-size:1.05rem;font-weight:800;letter-spacing:-.03em;color:var(--text)}
+  .pws-panel p{margin:0;font-size:.98rem;line-height:1.65;color:var(--muted)}
+  .pws-cards3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  @media (max-width:960px){.pws-cards3{grid-template-columns:1fr}}
+  .pws-card{
+    background:var(--surface);border:1px solid var(--line);border-radius:24px;padding:26px 24px;
+    box-shadow:0 20px 48px rgba(15,23,32,.07);transition:border-color .2s ease,box-shadow .2s ease
+  }
+  .pws-card:hover{border-color:rgba(240,126,7,.25);box-shadow:0 22px 56px rgba(240,126,7,.1)}
+  .pws-card-icon{
+    width:44px;height:44px;border-radius:14px;display:grid;place-items:center;margin-bottom:16px;
+    background:linear-gradient(145deg,rgba(246,169,5,.2),rgba(240,126,7,.12));color:var(--orange-deep);font-size:1.25rem
+  }
+  .pws-card h3{margin:0 0 10px;font-size:1.08rem;font-weight:800;letter-spacing:-.03em}
+  .pws-card p{margin:0;font-size:.94rem;line-height:1.65;color:var(--muted)}
+  .pws-casos-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+  @media (max-width:760px){.pws-casos-grid{grid-template-columns:1fr}}
+  .pws-caso{
+    padding:18px 20px;border-radius:18px;border:1px solid var(--line);background:rgba(255,255,255,.92);
+    font-size:.92rem;line-height:1.55;color:var(--muted)
+  }
+  .pws-caso strong{display:block;color:var(--text);font-size:.95rem;margin-bottom:6px;letter-spacing:-.02em}
+  .pws-benefits{display:grid;gap:14px;max-width:720px}
+  .pws-benefit{display:flex;gap:14px;align-items:flex-start}
+  .pws-benefit-mark{
+    flex-shrink:0;width:28px;height:28px;border-radius:999px;background:linear-gradient(90deg,var(--orange),var(--orange-deep));
+    display:grid;place-items:center;color:#fff;font-size:.75rem;font-weight:800
+  }
+  .pws-benefit p{margin:0;font-size:1rem;line-height:1.62;color:var(--muted)}
+  .pws-benefit strong{color:var(--text)}
+  .pws-closing{
+    text-align:center;padding:56px 20px;border-radius:28px;
+    background:linear-gradient(135deg,#343434 0%,#2a2a2a 45%,#3d2a1a 100%);
+    color:#fff;border:1px solid rgba(255,255,255,.08);box-shadow:0 28px 70px rgba(15,23,32,.25)
+  }
+  .pws-closing h2{
+    font-size:clamp(1.5rem,3vw,2.1rem);margin:0 0 14px;font-weight:800;letter-spacing:-.04em;line-height:1.2;
+    background:linear-gradient(90deg,#fff,#e6e6e6);-webkit-background-clip:text;background-clip:text;color:transparent
+  }
+  .pws-closing p{margin:0 auto 22px;max-width:52ch;font-size:1.02rem;line-height:1.65;color:rgba(230,230,230,.88)}
+  .pws-closing .pws-cta-row{justify-content:center}
+  .pws-footer{padding:36px 0 28px;color:var(--muted);font-size:.9rem;border-top:1px solid var(--line)}
+  .pws-footer-inner{display:flex;flex-wrap:wrap;gap:16px 28px;justify-content:space-between;align-items:center}
+  .pws-footer a{color:var(--orange-deep);font-weight:600}
+  .pws-footer a:hover{text-decoration:underline}
+  .pws-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.88em;background:rgba(52,52,52,.07);padding:3px 10px;border-radius:8px;color:var(--text)}
+  @media (max-width:760px){.pws-c{width:min(1180px,calc(100% - 24px))}.pws-hero{padding:20px 0 32px}}
+</style>
+
+<div class="pws">
+  <a href="#pws-main" class="pws-skip">Saltar al contenido</a>
+  <header class="pws-nav-wrap">
+    <div class="pws-c pws-nav">
+      <div class="pws-brand">
+        <a href="{{ url_prefix }}/" aria-label="Dragonné — Inicio">
+          <img src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" />
+        </a>
+        <span class="pws-brand-div" aria-hidden="true"></span>
+        <span class="pws-brand-product">Pullso</span>
+      </div>
+      <span class="pws-nav-note">Demo · WhatsApp + analista IA</span>
+      <div class="pws-nav-actions">
+        <a class="pws-btn pws-btn-ghost" href="{{ url_prefix }}/verticals/hospitality">Producto Pullso</a>
+        <a class="pws-btn pws-btn-primary" href="{{ url_prefix }}/signup">Solicitar acceso</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="pws-main">
+    <section class="pws-hero" id="pws-preview" aria-labelledby="pws-hero-title">
+      <div class="pws-c pws-hero-grid">
+        <div>
+          <div class="pws-badge-demo" role="status"><span aria-hidden="true"></span> Vista previa · no indexada</div>
+          <p class="pws-eyebrow">Cuando el dato importante tiene que llegar, no esperar a que entres al panel.</p>
+          <h1 id="pws-hero-title">Tu analista con IA ahora te habla por WhatsApp</h1>
+          <p class="pws-lead">Conecta tu WhatsApp y recibe alertas, explicaciones y recomendaciones en <strong style="color:var(--text);font-weight:700">texto</strong>, <strong style="color:var(--text);font-weight:700">audio</strong> y <strong style="color:var(--text);font-weight:700">video</strong>: el mismo rigor de Pullso, en el canal donde ya respondes.</p>
+          <div class="pws-cta-row">
+            <a class="pws-btn pws-btn-primary" href="#pws-formats">Ver demo</a>
+            <a class="pws-btn pws-btn-ghost" href="{{ url_prefix }}/signup">Solicitar acceso</a>
+            <a class="pws-btn pws-btn-ghost" href="{{ url_prefix }}/signup">Conectar mi WhatsApp</a>
+          </div>
+          <p class="pws-micro">Demo conceptual · impulsado por <img src="/static/branding/openai-logo.svg" alt="OpenAI" class="pws-openai" loading="lazy" /></p>
+        </div>
+        <div class="pws-visual">
+          <div class="pws-float-card">
+            <strong>Pullso detectó</strong>
+            Caída de conversión en canal directo vs. semana pasada. Mensaje enviado ahora.
+          </div>
+          <div class="pws-chat-wrap">
+            <div class="pws-chat">
+              <div class="pws-chat-top">
+                <div class="pws-chat-avatar" aria-hidden="true">IA</div>
+                <div class="pws-chat-meta">
+                  Analista Pullso
+                  <span>en línea · prioridad operativa</span>
+                </div>
+              </div>
+              <div class="pws-chat-body">
+                <div class="pws-bubble">
+                  <span class="pws-bubble-type">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+                    Texto
+                  </span>
+                  Alerta: la conversión web cayó <strong style="color:var(--text)">−18%</strong> vs. la semana anterior, con tráfico estable. Sugiero revisar tarifa BAR del fin de semana y la paridad vs. la OTA que más presiona en tu compset.
+                  <time>09:42</time>
+                </div>
+                <div class="pws-bubble">
+                  <span class="pws-bubble-type">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/></svg>
+                    Audio
+                  </span>
+                  Te explico en 45s por qué el mix OTA está erosionando contribución y qué mover primero.
+                  <div class="pws-audio-ui">
+                    <span class="pws-audio-play" aria-hidden="true">▶</span>
+                    <div class="pws-audio-wave" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+                    <span style="font-size:.72rem;color:var(--muted)">0:45</span>
+                  </div>
+                  <time>09:43</time>
+                </div>
+                <div class="pws-bubble pws-bubble--pullso">
+                  <span class="pws-bubble-type">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M10 21l2-3 2 3"/></svg>
+                    Video
+                  </span>
+                  Cápsula: contexto del compset + recomendación de tarifa para captar demanda sin regalar margen.
+                  <div class="pws-video-thumb">
+                    <span class="pws-play-ic" aria-hidden="true">▶</span>
+                    <span style="position:absolute;bottom:8px;left:10px;z-index:1;font-size:.68rem;opacity:.9">1:12 · Solo tú</span>
+                  </div>
+                  <time>09:44</time>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="pws-bridge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            Dashboard Pullso → WhatsApp · mismo contexto, menos fricción
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="pws-section pws-section--tint" aria-labelledby="pws-dash-title">
+      <div class="pws-c">
+        <div class="pws-section-head">
+          <h2 id="pws-dash-title">Del dashboard a la acción</h2>
+          <p>Los reportes suelen llegar tarde, interpretarse a medias o quedar archivados. Pullso prioriza lo que mueve la aguja y te lo lleva a WhatsApp en el formato que te permite decidir ya.</p>
+        </div>
+        <div class="pws-two-problem">
+          <div class="pws-panel">
+            <h3>El problema</h3>
+            <p>Muchos equipos descubren desviaciones cuando ya costó caro. El tablero es necesario; el cuello de botella es <strong style="color:var(--text)">la atención</strong>: no alcanza abrir otra pestaña más.</p>
+          </div>
+          <div class="pws-panel">
+            <h3>La decisión</h3>
+            <p>Pullso sigue analizando tus datos como siempre. Cuando hay señal fuerte, tu analista con IA te escribe con <strong style="color:var(--text)">claridad ejecutiva</strong>: qué pasó, por qué importa y qué hacer después.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="pws-section" id="pws-formats" aria-labelledby="pws-formats-title">
+      <div class="pws-c">
+        <div class="pws-section-head">
+          <h2 id="pws-formats-title">Tres formatos. Una sola intención: que ejecutes</h2>
+          <p>Elegimos el medio según la urgencia y la complejidad del mensaje. Nada de ruido: solo lo que un director comercial o de revenue necesitaría escuchar de un analista senior.</p>
+        </div>
+        <div class="pws-cards3">
+          <article class="pws-card">
+            <div class="pws-card-icon" aria-hidden="true">A</div>
+            <h3>Texto</h3>
+            <p>Resumen operativo y punzante: métrica, causa probable y siguiente movimiento. Para leer en 20 segundos y reenviar al equipo.</p>
+          </article>
+          <article class="pws-card">
+            <div class="pws-card-icon" aria-hidden="true">♪</div>
+            <h3>Audio</h3>
+            <p>Explicación compacta mientras caminas al lobby o vas en tránsito. Tono profesional, sin improvisación superficial.</p>
+          </article>
+          <article class="pws-card">
+            <div class="pws-card-icon" aria-hidden="true">▶</div>
+            <h3>Video</h3>
+            <p>Cápsula con contexto visual cuando el mensaje lo pide: compset, tendencia o storytelling de la recomendación. Siempre accionable.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="pws-section pws-section--tint" aria-labelledby="pws-casos-title">
+      <div class="pws-c">
+        <div class="pws-section-head">
+          <h2 id="pws-casos-title">Ejemplos de notificaciones</h2>
+          <p>Alertas que merecen interrumpir tu día — porque evitan pérdida o capturan oportunidad.</p>
+        </div>
+        <div class="pws-casos-grid">
+          <div class="pws-caso"><strong>Caída de conversión en canal directo</strong> con tráfico estable: revisión de paridad y restricción de tarifa.</div>
+          <div class="pws-caso"><strong>Subida agresiva de competencia</strong> en fechas altas: impacto en pickup y sugerencia de límite mínimo de estancia.</div>
+          <div class="pws-caso"><strong>Ventana para ajustar tarifa</strong> antes de que el compset cierre el gap en un segmento rentable.</div>
+          <div class="pws-caso"><strong>Cambio anormal en pace u ocupación</strong> frente al presupuesto: explicación y escenario base / conservador.</div>
+          <div class="pws-caso"><strong>Recomendación puntual</strong> de acción (“hoy mover X en Y canal”) con estimación de efecto cualitativo.</div>
+          <div class="pws-caso"><strong>Riesgo de mix</strong> cuando una OTA concentra demanda de bajo margen: palancas de equilibrio.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="pws-section" aria-labelledby="pws-ben-title">
+      <div class="pws-c">
+        <div class="pws-section-head">
+          <h2 id="pws-ben-title">Por qué importa</h2>
+          <p>La IA deja de ser un experimento en un slide y entra al ritmo real de tu operación.</p>
+        </div>
+        <div class="pws-benefits">
+          <div class="pws-benefit"><span class="pws-benefit-mark">1</span><p><strong>Menos fricción</strong> para enterarte: el mensaje llega donde ya gestionas crisis y acuerdos.</p></div>
+          <div class="pws-benefit"><span class="pws-benefit-mark">2</span><p><strong>Más velocidad de reacción</strong>: priorización automática de lo crítico sobre el ruido analítico.</p></div>
+          <div class="pws-benefit"><span class="pws-benefit-mark">3</span><p><strong>Comunicación más humana</strong>: tono de analista, no de ticket de sistema.</p></div>
+          <div class="pws-benefit"><span class="pws-benefit-mark">4</span><p><strong>Decisiones más claras</strong>: siempre con narrativa, no solo con variaciones porcentuales aisladas.</p></div>
+          <div class="pws-benefit"><span class="pws-benefit-mark">5</span><p><strong>IA en tu flujo real</strong>: el mismo modelo de lectura Pullso, extendido al canal que sí usas bajo presión.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="pws-section">
+      <div class="pws-c">
+        <div class="pws-closing" id="pws-cta-final">
+          <h2>No necesitas revisar otro dashboard más. Necesitas saber qué está pasando y qué hacer después.</h2>
+          <p>Esta página es una demo de mensaje y experiencia. Para activarlo en tu operación, coordinamos acceso y configuración contigo.</p>
+          <div class="pws-cta-row">
+            <a class="pws-btn pws-btn-primary" href="{{ url_prefix }}/signup">Quiero ver esta demo en vivo</a>
+            <a class="pws-btn pws-btn-ghost" style="background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.25);color:#fff !important" href="{{ url_prefix }}/signup">Quiero activar WhatsApp con Pullso</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="pws-footer">
+      <div class="pws-c pws-footer-inner">
+        <p>Pullso by Dragonné · Demo <span class="pws-mono">/demo/pullso-whatsapp</span></p>
+        <p>
+          <a href="{{ url_prefix }}/">Inicio Dragonné</a>
+          ·
+          <a href="{{ url_prefix }}/verticals/hospitality">Landing Pullso</a>
+        </p>
+      </div>
+    </footer>
+  </main>
+</div>
+{% endblock %}

@@ -1,11 +1,9 @@
 {% extends 'base.html' %}
-{% block title %}Crear cuenta — DRAGONNÉ{% endblock %}
-{% block canonical %}{% if app_url %}{{ app_url }}/signup{% endif %}{% endblock %}
 {% block body %}
 <div class="auth-shell">
   <div class="auth-card light-card narrow">
     <div class="brand brand-center">
-      <a href="/" class="logo-link" aria-label="Volver al inicio"><img class="brand-logo" src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" /></a>
+      <a href="{{ url_path('/consultoria') }}" class="logo-link" aria-label="Volver al inicio"><img class="brand-logo" src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" /></a>
     </div>
     <h1>Crea tu cuenta</h1>
     <p class="muted center">Empieza en segundos. Luego te pediremos los datos de tu hotel.</p>

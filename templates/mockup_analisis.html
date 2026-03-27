@@ -1,26 +1,26 @@
+{# SEO: routes/marketing.py mockup_analisis #}
 {% extends 'base.html' %}
-{% block title %}Mockup: Resultado del análisis — DRAGONNÉ{% endblock %}
 {% block body %}
-<div class="page-mockup-analisis">
+<main class="page-mockup-analisis" id="main">
   <div class="app-shell mockup-shell">
     <header class="app-topbar">
       <div class="mockup-topbar-inner">
         <div>
           <div class="brand">
-            <img class="brand-logo" style="margin:0" src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" />
+            <img class="brand-logo" style="margin:0" src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ Pullso" width="140" height="32" loading="eager" decoding="async" />
           </div>
           <div class="muted">Hotel Ejemplo · Boutique · Plan Pro+</div>
         </div>
         <div class="top-actions">
-          <a href="/" class="btn btn-secondary btn-sm">Volver al inicio</a>
+          <a href="{{ url_path('/consultoria') }}" class="btn btn-secondary btn-sm">Volver al inicio</a>
         </div>
       </div>
     </header>
 
     <div class="mockup-demo-container">
       {% include 'partials/demo_resultado_analisis.html' %}
-      <p class="muted mockup-footer-cta">Esta es una vista de ejemplo. <a href="/signup">Crear cuenta</a> para subir tus propios reportes y recibir análisis reales.</p>
+      <p class="muted mockup-footer-cta">Vista de ejemplo. <a href="{{ url_path('/signup') }}">Crear cuenta</a> para análisis reales.</p>
     </div>
   </div>
-</div>
+</main>
 {% endblock %}

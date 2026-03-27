@@ -87,6 +87,7 @@ from fastapi.staticfiles import StaticFiles
 from plans import max_upload_files_for_plan, plan_label
 from services.analysis_core import upload_eligibility
 from starlette.middleware.sessions import SessionMiddleware
+from seo_helpers import noindex_page_seo
 from templating import templates
 from time_utils import now_iso
 
@@ -246,6 +247,7 @@ def account_page(request: Request):
     user = require_user(request)
     if onboarding_pending(user):
         return RedirectResponse(url_path("/onboarding"), status_code=303)
+    _seo = noindex_page_seo("/app/account", "Mi cuenta — DRAGONNÉ", "Área privada del panel Pullso.")
     return templates.TemplateResponse("account.html", {
         "request": request,
         "user": user,
@@ -253,6 +255,7 @@ def account_page(request: Request):
         "monthly_price": MONTHLY_PRICE,
         "premium_monthly_price": PREMIUM_MONTHLY_PRICE,
         "stripe_publishable_key": STRIPE_PUBLISHABLE_KEY,
+        **_seo,
     })
 
 
@@ -290,6 +293,7 @@ def dashboard(request: Request):
             "reports_detected": summary.get("reports_detected", 0),
         })
     eligibility = upload_eligibility(user)
+    _seo = noindex_page_seo("/app", "Panel Pullso — DRAGONNÉ", "Área autenticada (no indexar).")
     return templates.TemplateResponse("app.html", {
         "request": request,
         "user": user,
@@ -312,6 +316,7 @@ def dashboard(request: Request):
         "invite_contact": eligibility["invite_contact"],
         "contact_email": eligibility["contact_email"],
         "smtp_configured": bool(SMTP_HOST and SMTP_USER and SMTP_PASSWORD),
+        **_seo,
     })
 
 

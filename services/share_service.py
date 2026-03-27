@@ -12,6 +12,7 @@ from auth_session import require_user
 from config import APP_URL, SMTP_HOST, SMTP_PASSWORD, SMTP_USER
 from db import db
 from email_smtp import send_analysis_share_link_email
+from seo_helpers import noindex_page_seo
 from templating import templates
 
 _SHARE_EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
@@ -102,13 +103,21 @@ def shared_analysis_page_response(request: Request, share_token: str):
     summary = json.loads(row["summary_json"])
     analysis = json.loads(row["analysis_json"])
     created = (row["created_at"] or "")[:19].replace("T", " ")
+    title = row["title"] or "Informe compartido"
+    share_path = f"/s/{share_token}"
+    seo = noindex_page_seo(
+        share_path,
+        f"{title} — compartido",
+        "Vista de solo lectura con token; no indexar.",
+    )
     return templates.TemplateResponse(
         "share_public.html",
         {
             "request": request,
-            "page_title": row["title"] or "Informe compartido",
+            "page_title": title,
             "created_at": created,
             "summary": summary,
             "analysis": analysis,
+            **seo,
         },
     )

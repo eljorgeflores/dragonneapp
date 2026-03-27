@@ -37,12 +37,19 @@ from db import db
 from debuglog import _debug_log, fd2ebf_log
 from email_smtp import send_magic_link_email, send_password_reset_email
 from request_public_url import origin_for_user_facing_links
+from seo_helpers import noindex_page_seo
 from templating import templates
 from time_utils import now_iso
 
 _log = logging.getLogger(__name__)
 
 router = APIRouter(tags=["auth"])
+
+_LOGIN_SEO = noindex_page_seo("/login", "Entrar — DRAGONNÉ", "Inicio de sesión al panel Pullso (no indexar).")
+_SIGNUP_SEO = noindex_page_seo("/signup", "Crear cuenta — DRAGONNÉ", "Registro de usuario (no indexar).")
+_ONBOARDING_SEO = noindex_page_seo("/onboarding", "Completar perfil — DRAGONNÉ", "Formulario post-registro (no indexar).")
+_FORGOT_SEO = noindex_page_seo("/forgot-password", "Recuperar contraseña — DRAGONNÉ", "Recuperación de acceso (no indexar).")
+_RESET_SEO = noindex_page_seo("/reset-password", "Nueva contraseña — DRAGONNÉ", "Restablecer contraseña (no indexar).")
 
 # Coincide correos guardados con espacios o mayúsculas heredadas
 _SQL_USER_BY_EMAIL_NORM = "SELECT * FROM users WHERE LOWER(TRIM(email)) = ?"
@@ -84,6 +91,7 @@ def _login_template_ctx(
         "magic_link_delivery_warning": magic_link_delivery_warning,
         "magic_link_error": magic_link_error,
         "magic_link_ttl_minutes": MAGIC_LINK_TTL_MINUTES,
+        **_LOGIN_SEO,
     }
 
 
@@ -91,7 +99,7 @@ def _login_template_ctx(
 def signup_page(request: Request):
     if get_current_user(request):
         return RedirectResponse(url_path("/app"), status_code=303)
-    return templates.TemplateResponse("signup.html", {"request": request, "error": None})
+    return templates.TemplateResponse("signup.html", {"request": request, "error": None, **_SIGNUP_SEO})
 
 
 @router.post("/signup")
@@ -103,15 +111,21 @@ def signup(
 ):
     email = email.strip().lower()
     if len(password) < 8:
-        return templates.TemplateResponse("signup.html", {"request": request, "error": "La contraseña debe tener al menos 8 caracteres."}, status_code=400)
+        return templates.TemplateResponse(
+            "signup.html", {"request": request, "error": "La contraseña debe tener al menos 8 caracteres.", **_SIGNUP_SEO}, status_code=400
+        )
     if password != password_confirm:
-        return templates.TemplateResponse("signup.html", {"request": request, "error": "Las contraseñas no coinciden."}, status_code=400)
+        return templates.TemplateResponse(
+            "signup.html", {"request": request, "error": "Las contraseñas no coinciden.", **_SIGNUP_SEO}, status_code=400
+        )
     with db() as conn:
         exists = conn.execute(
             "SELECT id FROM users WHERE LOWER(TRIM(email)) = ?", (email,)
         ).fetchone()
         if exists:
-            return templates.TemplateResponse("signup.html", {"request": request, "error": "Ese correo ya está registrado."}, status_code=400)
+            return templates.TemplateResponse(
+                "signup.html", {"request": request, "error": "Ese correo ya está registrado.", **_SIGNUP_SEO}, status_code=400
+            )
         cur = conn.execute(
             """
             INSERT INTO users (
@@ -362,6 +376,7 @@ def forgot_password_page(request: Request):
             "reset_ttl_hours": PASSWORD_RESET_TOKEN_TTL_HOURS,
             "unknown_email": False,
             "link_notice_incomplete": notice == "incomplete_link",
+            **_FORGOT_SEO,
         },
     )
 
@@ -391,6 +406,7 @@ def _forgot_template_ctx(
         "reset_ttl_hours": PASSWORD_RESET_TOKEN_TTL_HOURS,
         "unknown_email": unknown_email,
         "link_notice_incomplete": link_notice_incomplete,
+        **_FORGOT_SEO,
     }
 
 
@@ -565,12 +581,12 @@ def _reset_password_submit(
     if password != password_confirm:
         return templates.TemplateResponse(
             "reset_password.html",
-            {"request": request, "token": token, "error": "Las contraseñas no coinciden."},
+            {"request": request, "token": token, "error": "Las contraseñas no coinciden.", **_RESET_SEO},
         )
     if len(password) < 8:
         return templates.TemplateResponse(
             "reset_password.html",
-            {"request": request, "token": token, "error": "La contraseña debe tener al menos 8 caracteres."},
+            {"request": request, "token": token, "error": "La contraseña debe tener al menos 8 caracteres.", **_RESET_SEO},
         )
     user_id = consume_reset_token(token)
     if not user_id:
@@ -580,6 +596,7 @@ def _reset_password_submit(
                 "request": request,
                 "token": None,
                 "error": "El enlace ya no es válido. Solicita uno nuevo.",
+                **_RESET_SEO,
             },
         )
     with db() as conn:
@@ -598,7 +615,9 @@ def reset_password_page_query(request: Request, token: str | None = Query(None))
             url_path("/forgot-password?notice=incomplete_link"),
             status_code=303,
         )
-    return templates.TemplateResponse("reset_password.html", {"request": request, "token": t, "error": None})
+    return templates.TemplateResponse(
+        "reset_password.html", {"request": request, "token": t, "error": None, **_RESET_SEO}
+    )
 
 
 @router.post("/reset-password", response_class=HTMLResponse)
@@ -614,7 +633,9 @@ def reset_password_form(
 @router.get("/reset-password/{token}", response_class=HTMLResponse)
 def reset_password_page(request: Request, token: str):
     t = (token or "").strip()
-    return templates.TemplateResponse("reset_password.html", {"request": request, "token": t, "error": None})
+    return templates.TemplateResponse(
+        "reset_password.html", {"request": request, "token": t, "error": None, **_RESET_SEO}
+    )
 
 
 @router.post("/reset-password/{token}", response_class=HTMLResponse)
@@ -641,8 +662,12 @@ def onboarding_page(request: Request):
     if not user:
         return RedirectResponse(url_path("/login"), status_code=303)
     if not onboarding_pending(user):
-        return templates.TemplateResponse("onboarding.html", {"request": request, "error": None, "user": user, "editing": True})
-    return templates.TemplateResponse("onboarding.html", {"request": request, "error": None, "user": user, "editing": False})
+        return templates.TemplateResponse(
+            "onboarding.html", {"request": request, "error": None, "user": user, "editing": True, **_ONBOARDING_SEO}
+        )
+    return templates.TemplateResponse(
+        "onboarding.html", {"request": request, "error": None, "user": user, "editing": False, **_ONBOARDING_SEO}
+    )
 
 
 @router.post("/onboarding")
@@ -686,9 +711,29 @@ def onboarding(
     expedia_url = hotel_expedia_url.strip() or None
     booking_url = hotel_booking_url.strip() or None
     if not hotel_name or not contact_name:
-        return templates.TemplateResponse("onboarding.html", {"request": request, "error": "Nombre del hotel y contacto son obligatorios."}, status_code=400)
+        return templates.TemplateResponse(
+            "onboarding.html",
+            {
+                "request": request,
+                "error": "Nombre del hotel y contacto son obligatorios.",
+                "user": user,
+                "editing": False,
+                **_ONBOARDING_SEO,
+            },
+            status_code=400,
+        )
     if not hotel_size or not hotel_category:
-        return templates.TemplateResponse("onboarding.html", {"request": request, "error": "Indica el tamaño y la categoría de tu hotel para personalizar las recomendaciones."}, status_code=400)
+        return templates.TemplateResponse(
+            "onboarding.html",
+            {
+                "request": request,
+                "error": "Indica el tamaño y la categoría de tu hotel para personalizar las recomendaciones.",
+                "user": user,
+                "editing": False,
+                **_ONBOARDING_SEO,
+            },
+            status_code=400,
+        )
     with db() as conn:
         conn.execute(
             """
