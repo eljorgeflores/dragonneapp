@@ -36,6 +36,7 @@ from config import (
     UPLOAD_DIR,
 )
 from db import db
+from plan_entitlements import get_effective_plan
 from time_utils import now_iso
 
 DATE_ALIASES = [
@@ -642,7 +643,7 @@ def upload_eligibility(user: sqlite3.Row) -> Dict[str, Any]:
     Devuelve: can_upload, limit_reason, invite_upgrade, invite_contact, contact_email.
     """
     uid = user["id"]
-    plan = user["plan"]
+    plan = get_effective_plan(user)
     contact_email = next(iter(ADMIN_EMAILS), None) if ADMIN_EMAILS else None
 
     if plan == "free":
@@ -695,7 +696,7 @@ def upload_eligibility(user: sqlite3.Row) -> Dict[str, Any]:
 
 def enforce_plan(user: sqlite3.Row, summary: Dict[str, Any]):
     uid = user["id"]
-    plan = user["plan"]
+    plan = get_effective_plan(user)
 
     if plan == "free":
         if summary["total_files"] > FREE_MAX_FILES_PER_ANALYSIS:

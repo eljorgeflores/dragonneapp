@@ -68,7 +68,9 @@
             <span>{{ u.email }}</span>
           </div>
           <p class="muted small" style="margin: 8px 0 0;">
-            Plan {{ u.plan_label }} · {{ u.total_analyses }} análisis · {{ u.total_files }} archivos en análisis.
+            Plan {{ u.plan_label }}{% if u.manual_override_active %} (incluye manual){% endif %}
+            {% if u.paid_plan_label != u.plan_label %}· facturación {{ u.paid_plan_label }}{% endif %}
+            · {{ u.total_analyses }} análisis · {{ u.total_files }} archivos en análisis.
           </p>
           <div class="history-meta">
             <span>Creado: {{ u.created_at[:10] }}</span>

@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 
 from auth_session import onboarding_pending, require_user
 from debuglog import _dbg, _debug_log
+from plan_entitlements import get_effective_plan, get_paid_plan, plan_for_openai_model
 from services.analysis_core import (
     call_openai,
     enforce_plan,
@@ -49,21 +50,18 @@ async def run_web_analyze(request: Request, business_context: str, files: List[U
             "hotel_booking_url": user.get("hotel_booking_url") or "",
         }
         combined_business_context = business_context or ""
-        if user["plan"] == "free":
-            plan_for_model = "free_30"
-        elif user["plan"] == "pro":
-            plan_for_model = "pro_90"
-        else:
-            plan_for_model = "pro_180"
+        effective = get_effective_plan(user)
+        plan_for_model = plan_for_openai_model(effective)
         _dbg("services.analysis_service", "before_call_openai", {}, "H_D")
         analysis = call_openai(summary, combined_business_context, hotel_context, plan_for_model)
         n = summary["reports_detected"]
         title = f"Lectura comercial · {n} fuente{'s' if n != 1 else ''} · {datetime.now().strftime('%d/%m/%Y %H:%M')}"
-        analysis_id, share_token = save_analysis(user["id"], title, user["plan"], summary, analysis, files)
+        analysis_id, share_token = save_analysis(user["id"], title, effective, summary, analysis, files)
         created_at = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")[:19].replace("T", " ")
         share_url = f"{public_share_base_url()}/s/{share_token}"
         _debug_log("services.analysis_service", "POST /analyze success", {"analysis_id": analysis_id}, "H4")
         _dbg("services.analysis_service", "success", {"analysis_id": analysis_id}, "H_D")
+        billing = get_paid_plan(user)
         return JSONResponse({
             "ok": True,
             "analysis_id": analysis_id,
@@ -71,7 +69,9 @@ async def run_web_analyze(request: Request, business_context: str, files: List[U
             "created_at": created_at,
             "summary": summary,
             "analysis": analysis,
-            "plan": user["plan"],
+            "plan": billing,
+            "billing_plan": billing,
+            "effective_plan": effective,
             "share_url": share_url,
         })
     except HTTPException as e:

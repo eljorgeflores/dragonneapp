@@ -105,6 +105,10 @@ def init_db():
             "hotel_google_business_url",
             "hotel_expedia_url",
             "hotel_booking_url",
+            "manual_plan_override",
+            "manual_plan_expires_at",
+            "manual_plan_note",
+            "manual_plan_updated_at",
         ]:
             try:
                 if col in ["login_count", "is_admin", "hotel_stars"]:
@@ -113,6 +117,10 @@ def init_db():
                     conn.execute(f"ALTER TABLE users ADD COLUMN {col} TEXT")
             except sqlite3.OperationalError:
                 pass
+        try:
+            conn.execute("ALTER TABLE users ADD COLUMN manual_plan_updated_by INTEGER")
+        except sqlite3.OperationalError:
+            pass
 
         try:
             conn.execute("ALTER TABLE analyses ADD COLUMN share_token TEXT")

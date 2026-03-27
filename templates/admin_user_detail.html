@@ -23,7 +23,7 @@
   <div class="app-content">
     <section class="dashboard-welcome admin-page-intro">
       <h1 class="dashboard-page-title">{{ user['hotel_name'] }}</h1>
-      <p class="dashboard-page-desc muted">{{ user['email'] }} · Plan {{ plan_label }}</p>
+      <p class="dashboard-page-desc muted">{{ user['email'] }} · Efectivo {{ plan_label }} · Base {{ paid_plan_label }}</p>
     </section>
 
     <section class="dashboard-hero light-card">
@@ -66,7 +66,7 @@
       <div class="section-head">
         <div>
           <h2>Gestionar cuenta</h2>
-          <p class="muted">Cambiar plan (solo en la app; Stripe puede seguir cobrando hasta que canceles en el portal). Eliminar usuario borra todos sus análisis y archivos.</p>
+          <p class="muted">El plan base refleja facturación (Stripe sincroniza este campo). El override manual suma acceso sin tocar la suscripción. Eliminar usuario borra todos sus análisis y archivos.</p>
         </div>
       </div>
       {% if pwd_reset == 'sent' %}
@@ -77,15 +77,55 @@
       <div class="alert error" style="margin: 0 0 16px;">No se pudo enviar el correo. Revisa Resend, SMTP y los logs del servidor.</div>
       {% endif %}
       <div class="admin-manage-grid">
+        <div class="light-card" style="padding:12px; margin-bottom:8px; grid-column:1/-1;">
+          <p class="muted small" style="margin:0 0 8px;"><strong>Resumen de acceso</strong> (<code>users.plan</code> = solo billing; efectivo = límites reales).</p>
+          <dl class="account-dl account-dl--compact" style="margin:0;">
+            <dt>Billing plan</dt>
+            <dd>{{ paid_plan_label }} <span class="muted">(<code>users.plan</code>)</span></dd>
+            <dt>Override manual configurado</dt>
+            <dd>{{ manual_override_stored_label }} {% if manual_override_configured and not manual_override_active %}<span class="muted">(no aplica al acceso)</span>{% endif %}</dd>
+            <dt>Override activo</dt>
+            <dd>{{ manual_override_active_label }}</dd>
+            <dt>Plan efectivo</dt>
+            <dd><strong>{{ plan_label }}</strong> <span class="muted">(máx. billing vs. manual vigente; un manual inferior no degrada un pago superior)</span></dd>
+            <dt>Caducidad override</dt>
+            <dd>{{ manual_expiry_summary }}</dd>
+            <dt>Nota interna</dt>
+            <dd>{% if manual_plan_note %}{{ manual_plan_note }}{% else %}<span class="muted">—</span>{% endif %}</dd>
+          </dl>
+          {% if manual_plan_updated_at %}
+          <p class="muted small" style="margin:8px 0 0;">Última modificación override: {{ manual_plan_updated_at }}{% if manual_plan_updated_by_email %} · {{ manual_plan_updated_by_email }}{% endif %}</p>
+          {% endif %}
+        </div>
         <form class="admin-plan-form" method="post" action="/admin/users/{{ user['id'] }}/plan">
-          <label for="admin_plan_select">Plan del producto</label>
+          <label for="admin_plan_select">Plan base (campo <code>users.plan</code>)</label>
+          <p class="muted small" style="margin:0 0 8px;">Usado por Stripe y como plan “pagado”. No borra el override manual.</p>
           <div class="admin-plan-row">
             <select id="admin_plan_select" name="plan" class="admin-select">
               <option value="free" {% if user['plan'] == 'free' %}selected{% endif %}>Gratis</option>
               <option value="pro" {% if user['plan'] == 'pro' %}selected{% endif %}>Pro</option>
               <option value="pro_plus" {% if user['plan'] == 'pro_plus' %}selected{% endif %}>Pro+</option>
             </select>
-            <button type="submit" class="btn btn-primary btn-sm">Guardar plan</button>
+            <button type="submit" class="btn btn-primary btn-sm">Guardar plan base</button>
+          </div>
+        </form>
+        <form class="admin-plan-form" method="post" action="/admin/users/{{ user['id'] }}/manual-plan-override">
+          <label for="manual_plan_select">Acceso manual (entitlements)</label>
+          <p class="muted small" style="margin:0 0 8px;">Se combina con el plan base: siempre gana el mejor (p. ej. pago Pro+ + manual Pro → sigue Pro+).</p>
+          <div class="admin-plan-row">
+            <select id="manual_plan_select" name="manual_plan" class="admin-select">
+              <option value="clear" {% if not manual_override_stored %}selected{% endif %}>Sin override / quitar</option>
+              <option value="pro" {% if manual_override_stored == 'pro' %}selected{% endif %}>Pro</option>
+              <option value="pro_plus" {% if manual_override_stored == 'pro_plus' %}selected{% endif %}>Pro+</option>
+            </select>
+          </div>
+          <label for="manual_expires_at" style="margin-top:10px;">Caducidad opcional (interpretado como UTC)</label>
+          <input id="manual_expires_at" name="manual_expires_at" type="datetime-local" class="admin-select" style="max-width:280px;" value="{{ manual_expires_at_input }}" />
+          <label for="manual_plan_note" style="margin-top:10px;">Nota interna</label>
+          <textarea id="manual_plan_note" name="manual_plan_note" class="admin-select" rows="2" style="width:100%; max-width:520px; resize:vertical;">{{ manual_plan_note }}</textarea>
+          <p class="muted small" style="margin:8px 0 0;">Al guardar o quitar override se registran fecha y administrador arriba (auditoría).</p>
+          <div style="margin-top:10px;">
+            <button type="submit" class="btn btn-secondary btn-sm">Guardar acceso manual</button>
           </div>
         </form>
         <form method="post" action="/admin/users/{{ user['id'] }}/send-password-reset" class="admin-plan-form">

@@ -17,6 +17,7 @@ from reportlab.pdfbase.pdfmetrics import stringWidth
 
 from config import BASE_DIR
 from db import db
+from plan_entitlements import get_effective_plan
 from plans import plan_label
 
 logger = logging.getLogger(__name__)
@@ -68,7 +69,7 @@ def _pdf_build_analysis_pdf(
     c: canvas.Canvas, width: float, height: float, user: dict, row: dict, summary: dict, analysis: dict
 ) -> None:
     hotel_name = user.get("hotel_name") or "Hotel"
-    plan = plan_label(user.get("plan") or "free")
+    plan = plan_label(get_effective_plan(user))
     report_date = (row.get("created_at") or "")[:19].replace("T", " ")
     analysis_id = row.get("id", 0)
 

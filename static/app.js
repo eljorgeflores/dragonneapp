@@ -576,7 +576,7 @@ if (form) {
         downloadPdfBtn.disabled = !currentAnalysisId;
       }
       setShareControlsEnabled(!!currentAnalysisId);
-      renderSummary(data.summary, data.plan);
+      renderSummary(data.summary, data.effective_plan ?? data.plan ?? 'free');
       renderCharts(data.summary);
       renderAnalysis(data.analysis);
       renderResultHero(data.title, data.created_at, data.analysis, data.summary);
@@ -684,7 +684,7 @@ document.querySelector('.history-card')?.addEventListener('click', async (e) => 
     downloadPdfBtn.disabled = !currentAnalysisId;
   }
   setShareControlsEnabled(!!currentAnalysisId);
-  renderSummary(data.summary, data.plan || 'free');
+  renderSummary(data.summary, data.effective_plan ?? data.plan || 'free');
   renderCharts(data.summary);
   renderAnalysis(data.analysis);
   renderResultHero(data.title, data.created_at, data.analysis, data.summary);

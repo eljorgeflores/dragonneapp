@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}DRAGONNÉ — Panel{% endblock %}
 {% block body %}
-<div class="app-shell" id="appShell" data-app-url="{{ app_url or '' }}" data-max-files="{{ max_files_per_analysis }}" data-plan="{{ user['plan'] }}">
+<div class="app-shell" id="appShell" data-app-url="{{ app_url or '' }}" data-max-files="{{ max_files_per_analysis }}" data-plan="{{ effective_plan }}">
   <header class="app-topbar">
     <div class="app-topbar-inner">
       <a href="/app" class="brand-link">
@@ -9,7 +9,7 @@
       </a>
       <div class="app-context muted">
         {{ user['hotel_name'] }}{% if user['hotel_category'] %} · {{ user['hotel_category'] }}{% endif %}{% if user['hotel_size'] %} · {{ user['hotel_size'] }}{% endif %}{% if user['hotel_location'] %} · {{ user['hotel_location'] }}{% endif %}
-        <span class="plan-badge-inline pill {% if user['plan'] == 'pro' %}pill-pro{% endif %}{% if user['plan'] == 'pro_plus' %} pill-pro-plus{% endif %}">Plan {{ plan_label }}</span>
+        <span class="plan-badge-inline pill {% if effective_plan == 'pro' %}pill-pro{% endif %}{% if effective_plan == 'pro_plus' %} pill-pro-plus{% endif %}">Plan {{ plan_label }}</span>
       </div>
       <div class="top-actions">
         {% if is_admin %}<a href="/admin" class="btn btn-secondary btn-sm">Admin</a>{% endif %}
@@ -22,7 +22,7 @@
   <div class="app-content">
   <section class="dashboard-welcome">
     <h1 class="dashboard-page-title">Panel</h1>
-    <p class="dashboard-page-desc muted">Carga exports de tu PMS o channel manager y obtén una lectura comercial en minutos. Plan {{ plan_label }}: {% if user['plan'] == 'pro_plus' %}hasta {{ pro_plus_max_files }} archivos por corrida y hasta 180 días de contexto.{% elif user['plan'] == 'pro' %}hasta {{ pro_max_files }} archivos por corrida y hasta 90 días.{% else %}hasta {{ free_max_days }} días de datos, <strong>un archivo</strong> por corrida y {{ free_max_analyses }} lecturas guardadas.{% endif %}</p>
+    <p class="dashboard-page-desc muted">Carga exports de tu PMS o channel manager y obtén una lectura comercial en minutos. Plan {{ plan_label }}: {% if effective_plan == 'pro_plus' %}hasta {{ pro_plus_max_files }} archivos por corrida y hasta 180 días de contexto.{% elif effective_plan == 'pro' %}hasta {{ pro_max_files }} archivos por corrida y hasta 90 días.{% else %}hasta {{ free_max_days }} días de datos, <strong>un archivo</strong> por corrida y {{ free_max_analyses }} lecturas guardadas.{% endif %}</p>
   </section>
 
   <main class="dashboard-grid">
@@ -40,7 +40,7 @@
           <ul class="upload-coach-list">
             <li><strong>Qué subir:</strong> archivos <strong>CSV o Excel</strong> exportados desde PMS, channel manager o motor: producción por canal, historial de habitaciones, pickup, forecast con fechas, etc.</li>
             <li><strong>Qué ayuda más:</strong> columnas con <strong>fechas</strong> (estancia, negocio o reserva), <strong>canal o fuente</strong>, e <strong>ingresos o tarifa (ADR)</strong>. Más señal en el archivo, lectura más precisa.</li>
-            {% if user['plan'] == 'free' %}
+            {% if effective_plan == 'free' %}
             <li class="upload-coach-highlight"><strong>Plan gratis:</strong> <strong>un archivo</strong> por corrida. Si cruzas varias fuentes, usa el export más completo o <a href="/app/account">amplía tu plan</a>.</li>
             {% else %}
             <li><strong>Tu plan:</strong> hasta <strong>{{ max_files_per_analysis }} archivos</strong> en una corrida para cruzar, por ejemplo, producción y forecast.</li>
@@ -75,7 +75,7 @@
         <p class="muted small">Para seguir generando lecturas, amplía tu plan o escríbenos.</p>
         <div class="limit-actions">
           {% if invite_upgrade %}
-            {% if user['plan'] == 'free' %}
+            {% if effective_plan == 'free' %}
           <button type="button" class="btn btn-primary" data-billing-cycle="monthly" data-plan-tier="pro">Pásate a Pro</button>
             {% else %}
           <button type="button" class="btn btn-primary" data-billing-cycle="monthly" data-plan-tier="pro_plus">Subir a Pro+</button>

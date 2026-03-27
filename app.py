@@ -84,6 +84,7 @@ from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.exception_handlers import http_exception_handler as default_http_exception_handler
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from plan_entitlements import get_effective_plan, get_paid_plan, manual_access_notice_for_account
 from plans import max_upload_files_for_plan, plan_label
 from services.analysis_core import upload_eligibility
 from starlette.middleware.sessions import SessionMiddleware
@@ -248,10 +249,16 @@ def account_page(request: Request):
     if onboarding_pending(user):
         return RedirectResponse(url_path("/onboarding"), status_code=303)
     _seo = noindex_page_seo("/app/account", "Mi cuenta — DRAGONNÉ", "Área privada del panel Pullso.")
+    eff = get_effective_plan(user)
+    paid = get_paid_plan(user)
     return templates.TemplateResponse("account.html", {
         "request": request,
         "user": user,
-        "plan_label": plan_label(user["plan"]),
+        "effective_plan": eff,
+        "paid_plan": paid,
+        "plan_label": plan_label(eff),
+        "paid_plan_label": plan_label(paid),
+        "manual_access_notice": manual_access_notice_for_account(user),
         "monthly_price": MONTHLY_PRICE,
         "premium_monthly_price": PREMIUM_MONTHLY_PRICE,
         "stripe_publishable_key": STRIPE_PUBLISHABLE_KEY,
@@ -293,14 +300,16 @@ def dashboard(request: Request):
             "reports_detected": summary.get("reports_detected", 0),
         })
     eligibility = upload_eligibility(user)
+    eff = get_effective_plan(user)
     _seo = noindex_page_seo("/app", "Panel Pullso — DRAGONNÉ", "Área autenticada (no indexar).")
     return templates.TemplateResponse("app.html", {
         "request": request,
         "user": user,
+        "effective_plan": eff,
         "is_admin": is_admin_user(user),
         "analyses": formatted,
-        "plan_label": plan_label(user["plan"]),
-        "max_files_per_analysis": max_upload_files_for_plan(user["plan"]),
+        "plan_label": plan_label(eff),
+        "max_files_per_analysis": max_upload_files_for_plan(eff),
         "pro_max_files": PRO_90_MAX_FILES,
         "pro_plus_max_files": PRO_180_MAX_FILES,
         "free_max_days": FREE_MAX_DAYS,

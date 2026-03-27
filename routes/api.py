@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 
 from auth_session import get_api_user
 from db import db
+from plan_entitlements import get_effective_plan, get_paid_plan, plan_for_openai_model
 from services.analysis_core import (
     call_openai,
     enforce_plan,
@@ -25,12 +26,18 @@ router = APIRouter(prefix="/api/v1", tags=["API v1"])
 
 @router.get("/me", summary="Perfil del usuario asociado a la API key")
 def api_me(user: sqlite3.Row = Depends(get_api_user)):
-    """Devuelve el perfil del usuario autenticado por API key (solo campos no sensibles)."""
+    """
+    `plan` y `billing_plan` reflejan `users.plan` (facturación / Stripe).
+    `effective_plan` aplica a límites y análisis (máximo entre base y override manual vigente).
+    """
+    billing = get_paid_plan(user)
     return {
         "id": user["id"],
         "email": user["email"],
         "hotel_name": user["hotel_name"],
-        "plan": user["plan"],
+        "plan": billing,
+        "billing_plan": billing,
+        "effective_plan": get_effective_plan(user),
         "hotel_size": user["hotel_size"],
         "hotel_category": user["hotel_category"],
         "hotel_location": user["hotel_location"],
@@ -46,6 +53,8 @@ async def api_analyze(
     """
     Sube uno o más reportes (CSV/Excel) y devuelve el análisis en JSON.
     Mismo límite de plan que en la web (días, archivos, número de análisis).
+
+    Respuesta: `plan` y `billing_plan` = `users.plan`; `effective_plan` = plan aplicado al análisis.
     """
     user = user_row_as_dict(user)
     if not files:
@@ -69,23 +78,22 @@ async def api_analyze(
             "hotel_booking_url": user.get("hotel_booking_url") or "",
         }
         combined_business_context = business_context or ""
-        if user["plan"] == "free":
-            plan_for_model = "free_30"
-        elif user["plan"] == "pro":
-            plan_for_model = "pro_90"
-        else:
-            plan_for_model = "pro_180"
+        effective = get_effective_plan(user)
+        plan_for_model = plan_for_openai_model(effective)
         analysis = call_openai(summary, combined_business_context, hotel_context, plan_for_model)
         nrep = summary["reports_detected"]
         title = f"Lectura comercial · {nrep} fuente{'s' if nrep != 1 else ''} · {datetime.now().strftime('%d/%m/%Y %H:%M')}"
-        analysis_id, share_token = save_analysis(user["id"], title, user["plan"], summary, analysis, files)
+        analysis_id, share_token = save_analysis(user["id"], title, effective, summary, analysis, files)
+        billing = get_paid_plan(user)
         return {
             "ok": True,
             "analysis_id": analysis_id,
             "title": title,
             "summary": summary,
             "analysis": analysis,
-            "plan": user["plan"],
+            "plan": billing,
+            "billing_plan": billing,
+            "effective_plan": effective,
             "share_url": f"{public_share_base_url()}/s/{share_token}",
         }
     except HTTPException:

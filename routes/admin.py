@@ -20,6 +20,17 @@ from db import db
 from debuglog import fd2ebf_log
 from email_smtp import send_password_reset_email
 from request_public_url import origin_for_user_facing_links
+from plan_entitlements import (
+    VALID_MANUAL_PLANS,
+    get_active_manual_plan,
+    get_effective_plan,
+    get_paid_plan,
+    manual_expiry_input_value,
+    manual_override_expiry_summary,
+    manual_override_is_configured,
+    normalize_manual_expiry_form,
+    stored_manual_override_plan,
+)
 from plans import plan_label
 from seo_helpers import noindex_page_seo
 from templating import templates
@@ -80,11 +91,15 @@ def admin_home(request: Request):
 
     users = []
     for r in rows:
+        eff = get_effective_plan(r)
+        paid = get_paid_plan(r)
         users.append({
             "id": r["id"],
             "hotel_name": r["hotel_name"],
             "email": r["email"],
-            "plan_label": plan_label(r["plan"]),
+            "plan_label": plan_label(eff),
+            "paid_plan_label": plan_label(paid),
+            "manual_override_active": get_active_manual_plan(r) is not None,
             "created_at": r["created_at"],
             "last_login_at": r["last_login_at"],
             "login_count": r["login_count"] or 0,
@@ -139,6 +154,15 @@ def admin_user_detail(request: Request, user_id: int):
             "SELECT MAX(COALESCE(ended_at, last_seen_at)) AS last_activity FROM user_sessions WHERE user_id = ?",
             (user_id,),
         ).fetchone()
+        try:
+            manual_updated_by = user["manual_plan_updated_by"]
+        except (KeyError, IndexError):
+            manual_updated_by = None
+        updater_email = None
+        if manual_updated_by:
+            ur = conn.execute("SELECT email FROM users WHERE id = ?", (manual_updated_by,)).fetchone()
+            if ur:
+                updater_email = ur["email"]
 
     analyses_list = []
     for row in analysis_rows:
@@ -166,11 +190,40 @@ def admin_user_detail(request: Request, user_id: int):
 
     pwd_reset = (request.query_params.get("pwd_reset") or "").strip().lower()
 
+    paid = get_paid_plan(user)
+    eff = get_effective_plan(user)
+    active_manual = get_active_manual_plan(user)
+    try:
+        _mn = user["manual_plan_note"]
+        manual_note_display = "" if _mn is None else str(_mn)
+    except (KeyError, IndexError):
+        manual_note_display = ""
+    try:
+        manual_updated_at_display = user["manual_plan_updated_at"]
+    except (KeyError, IndexError):
+        manual_updated_at_display = None
+    stored_ov = stored_manual_override_plan(user)
     return templates.TemplateResponse("admin_user_detail.html", {
         "request": request,
         "current_user": admin,
         "user": user,
-        "plan_label": plan_label(user["plan"]),
+        "paid_plan": paid,
+        "effective_plan": eff,
+        "paid_plan_label": plan_label(paid),
+        "plan_label": plan_label(eff),
+        "manual_override_active": active_manual is not None,
+        "manual_override_value": active_manual,
+        "manual_override_active_label": (
+            f"Sí · {plan_label(active_manual)}" if active_manual else "No"
+        ),
+        "manual_override_configured": manual_override_is_configured(user),
+        "manual_override_stored": stored_ov,
+        "manual_override_stored_label": plan_label(stored_ov) if stored_ov else "Ninguno",
+        "manual_expiry_summary": manual_override_expiry_summary(user),
+        "manual_expires_at_input": manual_expiry_input_value(user),
+        "manual_plan_note": manual_note_display,
+        "manual_plan_updated_at": manual_updated_at_display,
+        "manual_plan_updated_by_email": updater_email,
         "analyses": analyses_list,
         "sessions": sessions,
         "stats": stats,
@@ -240,6 +293,68 @@ def admin_user_set_plan(request: Request, user_id: int, plan: str = Form(...)):
         if not u:
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
         conn.execute("UPDATE users SET plan = ?, updated_at = ? WHERE id = ?", (plan, now_iso(), user_id))
+    return RedirectResponse(f"/admin/users/{user_id}", status_code=303)
+
+
+@router.post("/admin/users/{user_id}/manual-plan-override")
+def admin_user_manual_plan_override(
+    request: Request,
+    user_id: int,
+    manual_plan: str = Form(...),
+    manual_expires_at: str = Form(""),
+    manual_plan_note: str = Form(""),
+):
+    admin = require_admin(request)
+    mp = (manual_plan or "").strip().lower()
+    with db() as conn:
+        u = conn.execute("SELECT id FROM users WHERE id = ?", (user_id,)).fetchone()
+        if not u:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        if mp in ("", "clear", "none"):
+            conn.execute(
+                """
+                UPDATE users SET
+                  manual_plan_override = NULL,
+                  manual_plan_expires_at = NULL,
+                  manual_plan_note = NULL,
+                  manual_plan_updated_at = ?,
+                  manual_plan_updated_by = ?,
+                  updated_at = ?
+                WHERE id = ?
+                """,
+                (now_iso(), admin["id"], now_iso(), user_id),
+            )
+        else:
+            if mp not in VALID_MANUAL_PLANS:
+                raise HTTPException(status_code=400, detail="Override no válido")
+            cur = conn.execute(
+                "SELECT manual_plan_override, manual_plan_expires_at FROM users WHERE id = ?",
+                (user_id,),
+            ).fetchone()
+            prev_tier = stored_manual_override_plan(cur) if cur else None
+            prev_exp = cur["manual_plan_expires_at"] if cur else None
+            exp_in = (manual_expires_at or "").strip()
+            exp_out = None
+            if exp_in:
+                exp_out = normalize_manual_expiry_form(exp_in)
+                if exp_out is None:
+                    raise HTTPException(status_code=400, detail="Fecha de caducidad no válida")
+            elif prev_tier == mp:
+                exp_out = prev_exp
+            note = (manual_plan_note or "").strip() or None
+            conn.execute(
+                """
+                UPDATE users SET
+                  manual_plan_override = ?,
+                  manual_plan_expires_at = ?,
+                  manual_plan_note = ?,
+                  manual_plan_updated_at = ?,
+                  manual_plan_updated_by = ?,
+                  updated_at = ?
+                WHERE id = ?
+                """,
+                (mp, exp_out, note, now_iso(), admin["id"], now_iso(), user_id),
+            )
     return RedirectResponse(f"/admin/users/{user_id}", status_code=303)
 
 

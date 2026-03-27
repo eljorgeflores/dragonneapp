@@ -19,6 +19,10 @@
     <h1 class="dashboard-page-title">Mi cuenta</h1>
     <p class="dashboard-page-desc muted">Datos de tu perfil, edición y suscripción.</p>
 
+    {% if manual_access_notice %}
+    <p class="muted small" style="margin:0 0 16px; padding:10px 12px; background:rgba(0,0,0,0.04); border-radius:8px;">{{ manual_access_notice.body }} {{ manual_access_notice.detail }}</p>
+    {% endif %}
+
     <section class="account-section light-card account-section--profile">
       <h2 class="account-section-title">Tu perfil</h2>
       <dl class="account-dl">
@@ -53,7 +57,7 @@
         <dt>Booking.com</dt>
         <dd>{% if user.hotel_booking_url %}<a href="{{ user.hotel_booking_url }}" target="_blank" rel="noopener">Ver listado</a>{% else %}—{% endif %}</dd>
         <dt>Plan actual</dt>
-        <dd><span class="pill {% if user.plan == 'pro' %}pill-pro{% endif %}{% if user.plan == 'pro_plus' %} pill-pro-plus{% endif %}">Plan {{ plan_label }}</span></dd>
+        <dd><span class="pill {% if effective_plan == 'pro' %}pill-pro{% endif %}{% if effective_plan == 'pro_plus' %} pill-pro-plus{% endif %}">Plan {{ plan_label }}</span></dd>
       </dl>
       <p><a href="/onboarding" class="btn btn-secondary btn-sm">Editar datos del hotel</a></p>
     </section>
@@ -65,9 +69,9 @@
         <h3 class="account-subtitle">Tu suscripción</h3>
         <dl class="account-dl account-dl--compact">
           <dt>Plan actual</dt>
-          <dd><span class="pill {% if user.plan == 'pro' %}pill-pro{% endif %}{% if user.plan == 'pro_plus' %}pill-pro-plus{% endif %}">Plan {{ plan_label }}</span></dd>
+          <dd><span class="pill {% if effective_plan == 'pro' %}pill-pro{% endif %}{% if effective_plan == 'pro_plus' %}pill-pro-plus{% endif %}">Plan {{ plan_label }}</span></dd>
           <dt>Estado</dt>
-          <dd>{% if user.plan == 'free' %}Sin suscripción activa{% else %}Activo · Facturación mensual{% endif %}</dd>
+          <dd>{% if paid_plan == 'free' %}Sin suscripción activa{% else %}Activo · Facturación mensual{% endif %}</dd>
         </dl>
         {% if user.stripe_customer_id %}
         <p class="muted small" style="margin-top:12px">Actualiza tu método de pago, descarga facturas o revisa tu suscripción cuando lo necesites.</p>
@@ -92,7 +96,7 @@
       <h3 class="account-subtitle">Elegir plan</h3>
       <p class="muted small" style="margin-bottom:14px">Selecciona el plan que quieres. Al confirmar, añadirás tu método de pago y tu suscripción empezará de inmediato.</p>
       <div class="account-plans">
-        <div class="account-plan-card {% if user.plan == 'pro' %}account-plan-current{% endif %}">
+        <div class="account-plan-card {% if effective_plan == 'pro' %}account-plan-current{% endif %}">
           <div class="account-plan-name">Pro</div>
           <div class="account-plan-price">{{ monthly_price }} USD <span>/mes</span></div>
           <ul class="account-plan-benefits clean-list muted">
@@ -100,15 +104,15 @@
             <li>Más archivos y análisis guardados</li>
             <li>Comparación de tendencias en el tiempo</li>
           </ul>
-          {% if user.plan == 'free' %}
+          {% if paid_plan == 'free' %}
           <button type="button" class="btn btn-primary full account-upgrade-btn" data-billing-cycle="monthly" data-plan-tier="pro">Confirmar Pro — {{ monthly_price }} USD/mes</button>
-          {% elif user.plan == 'pro' %}
+          {% elif paid_plan == 'pro' %}
           <span class="pill pill-pro">Tu plan actual</span>
           {% else %}
           <button type="button" class="btn btn-secondary full account-upgrade-btn" data-billing-cycle="monthly" data-plan-tier="pro">Cambiar a Pro</button>
           {% endif %}
         </div>
-        <div class="account-plan-card {% if user.plan == 'pro_plus' %}account-plan-current{% endif %}">
+        <div class="account-plan-card {% if effective_plan == 'pro_plus' %}account-plan-current{% endif %}">
           <div class="account-plan-name">Pro+</div>
           <div class="account-plan-price">{{ premium_monthly_price }} USD <span>/mes</span></div>
           <ul class="account-plan-benefits clean-list muted">
@@ -116,7 +120,7 @@
             <li>Máxima capacidad de análisis guardados</li>
             <li>Prioridad en nuevas funciones</li>
           </ul>
-          {% if user.plan == 'pro_plus' %}
+          {% if paid_plan == 'pro_plus' %}
           <span class="pill pill-pro-plus">Tu plan actual</span>
           {% else %}
           <button type="button" class="btn btn-primary full account-upgrade-btn" data-billing-cycle="monthly" data-plan-tier="pro_plus">Confirmar Pro+ — {{ premium_monthly_price }} USD/mes</button>
