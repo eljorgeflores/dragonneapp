@@ -1,7 +1,11 @@
 """Marketing público: home, precios, SEO, mockup, docs HTML."""
+import re
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Query, Request, Response
 from fastapi.openapi.docs import get_redoc_html
-from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
+from pydantic import BaseModel, Field
 
 from auth_session import get_current_user
 from config import APP_NAME, APP_URL, url_path
@@ -17,10 +21,21 @@ from seo_helpers import (
     noindex_page_seo,
     organization_node,
     software_application_mockup_node,
+    website_node,
 )
+from db import db
+from email_smtp import send_pullso_whatsapp_waitlist_email
 from templating import templates
 
 router = APIRouter(tags=["marketing"])
+
+
+class PullsoWaitlistPayload(BaseModel):
+    full_name: str = Field(..., min_length=1, max_length=200)
+    email: str = Field(..., min_length=3, max_length=254)
+    company: str = Field("", max_length=300)
+    whatsapp: str = Field(..., min_length=5, max_length=40)
+    note: str = Field("", max_length=2000)
 
 
 def _sitemap_entries():
@@ -371,16 +386,108 @@ def servicios_page(request: Request):
     return templates.TemplateResponse("public_servicios.html", {"request": request, **seo})
 
 
-@router.get("/demo/pullso-whatsapp", response_class=HTMLResponse, include_in_schema=False)
-def pullso_whatsapp_demo(request: Request):
-    """Landing demo aislada (no sustituye home ni /verticals/hospitality). Sin entrada en sitemap."""
-    ctx = marketing_page_context()
-    return templates.TemplateResponse(
-        "pullso_whatsapp_demo.html",
-        {"request": request, **ctx},
+@router.get("/pullsobrief", response_class=HTMLResponse, include_in_schema=False)
+def pullsobrief_page(request: Request):
+    """Pullso Brief: no está enlazada desde el sitio público ni en sitemap; sólo acceso por URL directa."""
+    canonical = absolute_url("/pullsobrief")
+    meta_title = "Pullso Brief — La lectura comercial de Pullso en WhatsApp — DRAGONNÉ"
+    meta_description = (
+        "Pullso Brief lleva la lectura comercial de tu hotel a WhatsApp: ocupación, ADR, ritmo de reserva y "
+        "mezcla de canales en texto, audio y video. Menos fricción para actuar a tiempo."
     )
+    _site = website_node()
+    _org = organization_node()
+    structured = {
+        "@context": "https://schema.org",
+        "@graph": [
+            _org,
+            _site,
+            {
+                "@type": "WebPage",
+                "@id": canonical + "#webpage",
+                "url": canonical,
+                "name": meta_title,
+                "description": meta_description,
+                "inLanguage": "es-MX",
+                "isPartOf": {"@id": _site["@id"]},
+                "publisher": {"@id": _org["@id"]},
+            },
+        ],
+    }
+    seo = {
+        "meta_title": meta_title,
+        "meta_description": meta_description,
+        "meta_keywords": (
+            "Pullso Brief, Pullso, Dragonné, WhatsApp, revenue hotelero, lectura comercial, hospitality"
+        ),
+        "canonical_url": canonical,
+        "robots_meta": "noindex, nofollow",
+        "og_title": "Pullso Brief — Lectura comercial en WhatsApp",
+        "og_description": meta_description,
+        "og_locale": "es_MX",
+        "twitter_title": "Pullso Brief — DRAGONNÉ",
+        "twitter_description": meta_description,
+        "html_lang": "es-MX",
+        "structured_data": structured,
+        "og_image_alt": "Pullso Brief — La lectura comercial de Pullso en WhatsApp — DRAGONNÉ",
+    }
+    return templates.TemplateResponse(
+        "pullso_whatsapp.html",
+        {
+            "request": request,
+            **marketing_page_context(),
+            **seo,
+            "waitlist_post_url": url_path("/pullsobrief/waitlist"),
+        },
+    )
+
+
+@router.post("/pullsobrief/waitlist", include_in_schema=False)
+@router.post("/pullso/whatsapp/waitlist", include_in_schema=False)
+def pullsobrief_waitlist_submit(payload: PullsoWaitlistPayload):
+    """Waitlist Pullso Brief (/pullsobrief/waitlist). Persistencia SQLite + correo interno si SMTP está configurado."""
+    email = payload.email.strip().lower()
+    if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
+        return JSONResponse({"ok": False, "error": "invalid_email"}, status_code=400)
+    ws = re.sub(r"\s+", " ", (payload.whatsapp or "").strip())
+    if len(ws) < 5:
+        return JSONResponse({"ok": False, "error": "invalid_whatsapp"}, status_code=400)
+    now = datetime.now(timezone.utc).isoformat()
+    full_name = payload.full_name.strip()[:200]
+    company = (payload.company or "").strip()[:300]
+    note = (payload.note or "").strip()[:2000]
+    with db() as conn:
+        conn.execute(
+            """INSERT INTO pullso_whatsapp_waitlist (full_name, email, company, whatsapp, note, created_at)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (full_name, email, company, ws[:40], note or None, now),
+        )
+    try:
+        send_pullso_whatsapp_waitlist_email(
+            to_email=CONTACT_EMAIL_PUBLIC,
+            full_name=full_name,
+            from_email=email,
+            company=company,
+            whatsapp=ws[:40],
+            note=note,
+        )
+    except Exception:
+        pass
+    return JSONResponse({"ok": True})
+
+
+@router.get("/pullso/whatsapp", include_in_schema=False)
+def pullso_whatsapp_canonical_moved():
+    """Slug anterior; no enlazado en el sitio. Redirige a la ruta acordada /pullsobrief."""
+    return RedirectResponse(url_path("/pullsobrief"), status_code=301)
+
+
+@router.get("/demo/pullso-whatsapp", include_in_schema=False)
+def pullso_whatsapp_legacy_demo_path():
+    """Ruta histórica no promocionada; misma redirección que /pullso/whatsapp."""
+    return RedirectResponse(url_path("/pullsobrief"), status_code=302)
 
 
 @router.get("/pullso-demo", include_in_schema=False)
 def pullso_demo_short_alias():
-    return RedirectResponse(url_path("/demo/pullso-whatsapp"), status_code=302)
+    return RedirectResponse(url_path("/pullsobrief"), status_code=302)

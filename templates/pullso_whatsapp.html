@@ -1,0 +1,781 @@
+{% extends 'base.html' %}
+{% block body_class %}pws-page{% endblock %}
+{% block body %}
+<style>
+  body.pws-page{overflow-x:hidden;max-width:100vw}
+  .pws *{box-sizing:border-box}
+  .pws{
+    --text:#2a2a2c;--muted:#5c5d62;--line:rgba(38,42,50,0.12);--surface:#fff;
+    --orange:#f6a905;--orange-deep:#f07e07;
+    --ink-tint:#1c1d22;
+    --glow-warm:0 0 140px -36px rgba(246,169,5,.42);
+    --shadow-elev:0 28px 72px rgba(18,22,30,.11);
+    color:var(--text);
+    background:
+      radial-gradient(ellipse 120% 70% at 50% -20%, rgba(246,169,5,.13), transparent 45%),
+      radial-gradient(circle at 0% 35%, rgba(255,252,248,.85), transparent 38%),
+      radial-gradient(circle at 100% 25%, rgba(229,234,243,.9), transparent 34%),
+      radial-gradient(ellipse 80% 50% at 70% 105%, rgba(28,29,34,.045), transparent 50%),
+      linear-gradient(165deg,#f8f9fc 0%,#eef1f7 38%,#e6eaf2 72%,#dfe5ee 100%);
+    min-height:100vh;
+    font-family:"Inter",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    overflow-x:clip;
+    max-width:100%;
+    width:100%;
+  }
+  #pws-main{overflow-x:clip;max-width:100%}
+  .pws a{text-decoration:none}
+  .pws-skip{position:absolute;left:-9999px;z-index:999;padding:12px 20px;background:#343434;color:#fff;font-weight:600;border-radius:0 0 12px 0}
+  .pws-skip:focus{left:0;top:0;outline:2px solid var(--orange-deep);outline-offset:2px}
+  .pws-c{width:min(1180px,calc(100% - 32px));margin:0 auto;max-width:100%;padding-left:max(0px, env(safe-area-inset-left));padding-right:max(0px, env(safe-area-inset-right))}
+  .pws-hero-pill{
+    display:inline-flex;align-items:center;gap:8px;padding:7px 16px;border-radius:999px;
+    background:linear-gradient(145deg,rgba(255,255,255,.92),rgba(255,252,248,.78));
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    border:1px solid rgba(240,126,7,.2);
+    box-shadow:0 8px 28px rgba(15,23,32,.07),0 0 0 1px rgba(255,255,255,.65) inset,var(--glow-warm);
+    font-size:.76rem;font-weight:800;
+    letter-spacing:.06em;text-transform:uppercase;color:#4b4b4b;margin-bottom:14px
+  }
+  .pws-hero-pill span{width:6px;height:6px;border-radius:999px;background:var(--orange-deep);animation:pwsPulse 2.4s ease-in-out infinite}
+  @keyframes pwsPulse{0%,100%{opacity:.45;transform:scale(1)}50%{opacity:1;transform:scale(1.15)}}
+  @media (prefers-reduced-motion:reduce){
+    .pws-hero-pill span,.pws-float-card,.pws-chat-wrap,.pws-bridge{animation:none !important}
+    .pws-btn-primary:hover,.pws-btn-ghost:hover{transform:none}
+    .pws-hero::after{opacity:0}
+    .pws h1{animation:none}
+  }
+  .pws-nav-wrap{
+    position:sticky;top:0;z-index:100;
+    backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
+    background:rgba(252,253,255,.78);
+    border-bottom:1px solid rgba(28,29,34,.07);
+    box-shadow:0 1px 0 rgba(255,255,255,.88) inset,0 18px 48px rgba(18,22,30,.06),0 0 80px -40px rgba(246,169,5,.12)
+  }
+  .pws-nav{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:16px 0}
+  .pws-brand{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .pws-brand a:focus-visible{outline:2px solid var(--orange-deep);outline-offset:3px;border-radius:4px}
+  .pws-brand img{height:32px;width:auto;display:block}
+  .pws-brand-div{width:1px;height:20px;background:rgba(52,52,52,.12)}
+  .pws-brand-pullso{font-size:.9rem;font-weight:800;letter-spacing:-.03em;color:var(--text);padding:6px 4px;border-radius:8px}
+  .pws-brand-pullso:hover{color:var(--orange-deep)}
+  .pws-brand-pullso:focus-visible{outline:2px solid var(--orange-deep);outline-offset:3px}
+  .pws-nav-note{font-size:.76rem;font-weight:600;color:var(--muted);letter-spacing:.01em;line-height:1.35;max-width:32ch;text-align:right;display:none}
+  @media (min-width:900px){.pws-nav-note{display:block}}
+  .pws-nav-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .pws-btn{
+    display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 18px;
+    border-radius:999px;font-weight:600;font-size:.92rem;border:1px solid transparent;transition:transform .2s ease,box-shadow .2s ease
+  }
+  .pws-btn:focus-visible{outline:2px solid var(--orange-deep);outline-offset:2px}
+  .pws-btn-primary{
+    background:linear-gradient(90deg,var(--orange),var(--orange-deep));color:#fff !important;
+    box-shadow:0 14px 36px rgba(240,126,7,.32),0 0 24px -8px rgba(246,169,5,.45),inset 0 1px 0 rgba(255,255,255,.22)
+  }
+  .pws-btn-primary:hover{transform:translateY(-1px)}
+  .pws-btn-ghost{
+    background:linear-gradient(180deg,#fff,#fafbfc);border-color:var(--line);color:var(--text) !important;
+    box-shadow:0 6px 20px rgba(15,23,32,.05),inset 0 1px 0 rgba(255,255,255,.9)
+  }
+  .pws-btn-ghost:hover{transform:translateY(-1px);border-color:rgba(240,126,7,.38);box-shadow:0 10px 28px rgba(15,23,32,.08),0 0 20px -10px rgba(246,169,5,.2),inset 0 1px 0 #fff}
+  .pws-hero{
+    padding:clamp(28px,5vw,52px) 0 clamp(40px,6vw,64px);position:relative;overflow:clip;
+    isolation:isolate
+  }
+  .pws-hero::before{
+    content:"";position:absolute;inset:-12% -18% 28%;pointer-events:none;z-index:0;
+    background:
+      radial-gradient(ellipse 85% 65% at 15% 0%, rgba(246,169,5,.13), transparent 58%),
+      radial-gradient(ellipse 60% 55% at 95% 18%, rgba(240,126,7,.1), transparent 48%),
+      radial-gradient(ellipse 70% 45% at 50% 110%, rgba(255,255,255,.5), transparent 42%)
+  }
+  .pws-hero::after{
+    content:"";position:absolute;inset:0;pointer-events:none;z-index:0;opacity:.35;
+    background-image:linear-gradient(125deg, rgba(255,255,255,.03) 25%, transparent 25%, transparent 50%, rgba(28,29,34,.015) 50%, rgba(28,29,34,.015) 75%, transparent 75%);
+    background-size:4px 4px;mix-blend-mode:multiply
+  }
+  .pws-hero .pws-hero-grid{position:relative;z-index:1}
+  .pws-hero-grid{display:grid;grid-template-columns:1fr 1.14fr;gap:clamp(28px, 4.5vw, 48px);align-items:center}
+  .pws-hero-grid > *{min-width:0}
+  @media (max-width:960px){.pws-hero-grid{grid-template-columns:1fr;gap:28px}}
+  .pws-eyebrow{font-size:.9rem;color:var(--muted);font-weight:500;margin:0 0 10px;max-width:36ch;line-height:1.45;letter-spacing:-.02em}
+  .pws h1{
+    font-size:clamp(1.85rem,4vw,2.85rem);line-height:1.08;letter-spacing:-.055em;margin:0 0 18px;max-width:26ch;font-weight:800;
+    background:linear-gradient(92deg,var(--ink-tint) 0%,var(--ink-tint) 38%,#4a4a4e 55%,var(--orange) 72%,var(--orange-deep) 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    animation:pwsTitleDrift 8s ease-in-out infinite
+  }
+  @keyframes pwsTitleDrift{0%,100%{filter:hue-rotate(0deg)}50%{filter:hue-rotate(-4deg)}}
+  .pws-lead{
+    font-size:clamp(.98rem,1.35vw,1.06rem);line-height:1.58;color:var(--muted);margin:0 0 14px;
+    max-width:56ch;font-weight:500;letter-spacing:-.015em
+  }
+  .pws-hero-copy .pws-lead:last-child{margin-bottom:22px}
+  .pws-tech{margin-top:4px;max-width:46ch}
+  .pws-tech-inner{
+    display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;
+    padding:12px 16px;border-radius:18px;
+    background:linear-gradient(135deg,rgba(255,255,255,.82),rgba(255,255,255,.58));
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    border:1px solid rgba(255,255,255,.9);
+    box-shadow:var(--shadow-elev),0 0 0 1px rgba(255,255,255,.65) inset,0 0 60px -24px rgba(246,169,5,.22)
+  }
+  .pws-tech-label{font-size:.78rem;font-weight:700;letter-spacing:.01em;color:#4a4c52}
+  .pws-tech-logo--openai{height:19px;width:auto;display:block;opacity:.92;filter:contrast(1.02)}
+  .pws-tech-sep{width:5px;height:5px;border-radius:999px;background:linear-gradient(135deg,var(--orange),var(--orange-deep));opacity:.75;flex-shrink:0}
+  .pws-tech-wa{display:inline-flex;align-items:center;gap:7px;font-size:.82rem;font-weight:800;color:var(--text);letter-spacing:-.02em}
+  .pws-tech-wa-icon{width:19px;height:19px;flex-shrink:0;color:#25d366}
+  .pws-tech-meta{font-size:.64rem;font-weight:700;color:var(--muted);letter-spacing:.03em;text-transform:uppercase}
+  .pws-cta-row{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:14px}
+  .pws-visual{position:relative;min-width:0;max-width:100%}
+  .pws-float-card{
+    position:absolute;z-index:3;top:0;right:0;max-width:min(240px, calc(100% - 8px));
+    background:linear-gradient(155deg,#fff 0%,#f7f8fb 100%);border:1px solid rgba(38,42,50,.1);border-radius:18px;padding:14px 16px;
+    box-shadow:var(--shadow-elev),0 0 0 1px rgba(255,255,255,.9) inset,0 0 56px -22px rgba(246,169,5,.22);
+    font-size:.8rem;line-height:1.48;color:var(--muted);
+    animation:pwsFloatSoft 5s ease-in-out infinite
+  }
+  .pws-float-badge{
+    display:inline-block;font-size:.62rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--orange-deep);background:rgba(246,169,5,.14);border:1px solid rgba(240,126,7,.22);
+    padding:4px 9px;border-radius:999px;margin-bottom:8px
+  }
+  .pws-float-card strong{display:block;color:var(--text);font-size:.84rem;margin-bottom:6px;letter-spacing:-.02em;font-weight:800}
+  .pws-float-card .pws-float-sub{display:block;font-size:.78rem;line-height:1.45;color:var(--muted);font-weight:500}
+  @keyframes pwsFloatSoft{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+  @media (max-width:960px){.pws-float-card{position:relative;top:0;right:0;max-width:100%;margin-bottom:12px}}
+  .pws-chat-wrap{
+    background:linear-gradient(150deg,rgba(255,255,255,.96),rgba(249,250,253,.82));
+    border:1px solid rgba(255,255,255,.98);
+    border-radius:32px;padding:clamp(14px, 2.8vw, 22px);
+    box-shadow:
+      0 32px 88px rgba(18,22,30,.14),
+      0 0 0 1px rgba(255,255,255,.82) inset,
+      0 0 120px -40px rgba(240,126,7,.28),
+      0 -20px 60px -30px rgba(246,169,5,.15);
+    animation:pwsFloatSoft 7s ease-in-out infinite .5s;
+    max-width:100%;overflow:hidden
+  }
+  .pws-chat{
+    background:linear-gradient(180deg,#e8f5e9 0%,#e8f5e9 18%,#ece5dd 18%,#d9d2ca 100%);
+    border-radius:24px;overflow:hidden;border:1px solid rgba(0,0,0,.07);min-height:min(460px, 74vh);display:flex;flex-direction:column;
+    max-width:100%
+  }
+  .pws-chat-top{
+    background:#075e54;color:#fff;padding:12px 14px;display:flex;align-items:center;gap:10px;
+    font-size:.88rem;font-weight:600
+  }
+  .pws-chat-avatar{width:36px;height:36px;border-radius:999px;background:linear-gradient(145deg,var(--orange),var(--orange-deep));display:grid;place-items:center;font-weight:800;font-size:.62rem;color:#fff;flex-shrink:0;letter-spacing:-.02em}
+  .pws-chat-meta{flex:1;min-width:0}
+  .pws-chat-meta span{display:block;font-size:.68rem;font-weight:500;opacity:.88}
+  .pws-chat-body{padding:14px 12px 18px;display:flex;flex-direction:column;gap:10px;flex:1;overflow-x:hidden;overflow-y:auto;min-height:0}
+  .pws-bubble{
+    max-width:100%;padding:10px 12px;border-radius:14px 14px 14px 4px;font-size:.82rem;line-height:1.52;word-break:break-word;
+    background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.08);color:#111;border:1px solid rgba(0,0,0,.04)
+  }
+  .pws-bubble--pullso{margin-left:auto;max-width:100%;border-radius:14px 14px 4px 14px;background:#dcf8c6;border-color:rgba(0,0,0,.03)}
+  .pws-bubble time{display:block;font-size:.65rem;color:var(--muted);margin-top:6px;text-align:right}
+  .pws-bubble-type{display:inline-flex;align-items:center;gap:6px;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--orange-deep);margin-bottom:6px}
+  .pws-bubble-type svg{width:14px;height:14px;flex-shrink:0}
+  .pws-audio-ui{
+    display:flex;align-items:center;gap:10px;margin-top:4px;padding:8px 0 2px;border-top:1px solid rgba(0,0,0,.06)
+  }
+  .pws-audio-play{width:34px;height:34px;border-radius:999px;background:var(--text);color:#fff;display:grid;place-items:center;border:0;cursor:default;flex-shrink:0}
+  .pws-audio-wave{flex:1;height:28px;display:flex;align-items:center;gap:3px}
+  .pws-audio-wave span{width:3px;border-radius:999px;background:var(--orange-deep);opacity:.45;animation:pwsBar 1.2s ease-in-out infinite}
+  .pws-audio-wave span:nth-child(2){animation-delay:.15s;height:18px}.pws-audio-wave span:nth-child(3){animation-delay:.3s;height:22px}
+  .pws-audio-wave span:nth-child(4){animation-delay:.45s;height:14px}.pws-audio-wave span:nth-child(5){animation-delay:.6s;height:20px}
+  @keyframes pwsBar{0%,100%{transform:scaleY(.4);opacity:.4}50%{transform:scaleY(1);opacity:.9}}
+  .pws-video-thumb{
+    margin-top:8px;border-radius:12px;overflow:hidden;position:relative;aspect-ratio:16/9;background:linear-gradient(145deg,#1f2937,#111827);
+    display:grid;place-items:center;color:#fff;font-size:.75rem;font-weight:600
+  }
+  .pws-video-thumb::before{
+    content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(246,169,5,.2),transparent 55%)
+  }
+  .pws-play-ic{
+    width:44px;height:44px;border-radius:999px;background:rgba(255,255,255,.92);color:var(--orange-deep);
+    display:grid;place-items:center;font-size:1.1rem;z-index:1;box-shadow:0 8px 24px rgba(0,0,0,.25)
+  }
+  .pws-bridge{
+    position:relative;margin-top:18px;left:auto;transform:none;
+    display:flex;align-items:center;justify-content:center;gap:10px;padding:12px 20px;
+    background:linear-gradient(130deg,rgba(255,255,255,.98),rgba(255,252,246,.9));
+    border:1px solid rgba(240,126,7,.2);border-radius:999px;font-size:.8rem;font-weight:700;color:#444;
+    box-shadow:0 16px 40px rgba(18,22,30,.1),0 0 0 1px rgba(255,255,255,.8) inset,0 0 48px -20px rgba(246,169,5,.25);
+    white-space:normal;text-align:center;
+    max-width:100%;width:fit-content;margin-left:auto;margin-right:auto;
+    animation:pwsFloatSoft 6s ease-in-out infinite .2s
+  }
+  .pws-bridge svg{width:18px;height:18px;color:var(--orange-deep);flex-shrink:0}
+  .pws-section{padding:clamp(48px,7vw,76px) 0}
+  .pws-section--tint{
+    background:
+      radial-gradient(ellipse 90% 65% at 50% 0%, rgba(255,255,255,.65), transparent 58%),
+      linear-gradient(178deg,rgba(255,255,255,.45) 0%,rgba(226,230,240,.72) 45%,rgba(218,224,236,.55) 100%);
+    border-top:1px solid rgba(255,255,255,.65);border-bottom:1px solid rgba(28,29,34,.06);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.4)
+  }
+  .pws-section-head{margin-bottom:clamp(22px,4vw,32px);max-width:100%}
+  .pws-section-head h2{
+    font-size:clamp(1.28rem,2.4vw,1.85rem);line-height:1.16;letter-spacing:-.045em;margin:0;font-weight:800;max-width:36ch;
+    background:linear-gradient(92deg,var(--orange) 0%,#e8880a 40%,var(--orange-deep) 100%);-webkit-background-clip:text;background-clip:text;color:transparent
+  }
+  .pws-section-head p{
+    display:block;
+    margin:14px 0 0;
+    max-width:60ch;
+    font-size:clamp(.94rem,1.25vw,1.02rem);
+    line-height:1.55;
+    color:var(--muted);
+    font-weight:500;
+    letter-spacing:-.012em
+  }
+  .pws-value-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(14px,2vw,20px)}
+  @media (max-width:800px){.pws-value-grid{grid-template-columns:1fr}}
+  .pws-value-chip{
+    background:linear-gradient(165deg,#fff 0%,#f6f7fb 100%);border:1px solid rgba(38,42,50,.09);border-radius:20px;padding:22px 24px;
+    box-shadow:var(--shadow-elev),0 0 0 1px rgba(255,255,255,.88) inset,0 0 72px -36px rgba(246,169,5,.14);
+    min-width:0;position:relative;overflow:hidden
+  }
+  .pws-value-chip::before{
+    content:"";position:absolute;top:0;left:0;right:0;height:3px;
+    background:linear-gradient(90deg,var(--orange),var(--orange-deep));opacity:.85;border-radius:20px 20px 0 0
+  }
+  .pws-value-chip h3{
+    margin:6px 0 10px;font-size:1.02rem;font-weight:800;letter-spacing:-.03em;color:var(--text);line-height:1.2
+  }
+  .pws-value-chip p{margin:0;font-size:.92rem;line-height:1.52;color:var(--muted);font-weight:500;letter-spacing:-.01em}
+  .pws-format-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media (max-width:900px){.pws-format-row{grid-template-columns:1fr}}
+  .pws-format-item{
+    background:linear-gradient(170deg,#fff,#f4f6fa);border:1px solid rgba(38,42,50,.08);border-radius:22px;padding:22px 24px;min-width:0;
+    box-shadow:0 16px 40px rgba(18,22,30,.08),inset 0 1px 0 rgba(255,255,255,.95)
+  }
+  .pws-format-item h3{margin:0 0 10px;font-size:1rem;font-weight:800;color:var(--text);letter-spacing:-.025em}
+  .pws-format-item p{margin:0;font-size:.92rem;line-height:1.5;color:var(--muted);font-weight:500}
+  .pws-casos-grid{display:grid;grid-template-columns:1fr;gap:14px;max-width:900px}
+  .pws-caso{
+    padding:20px 24px;border-radius:16px;border:1px solid rgba(38,42,50,.08);
+    background:linear-gradient(100deg,rgba(255,255,255,.98),rgba(248,249,252,.94));
+    box-shadow:0 12px 32px rgba(18,22,30,.06),inset 0 1px 0 rgba(255,255,255,.95);
+    color:var(--text)
+  }
+  .pws-caso h3{margin:0 0 10px;font-size:1rem;font-weight:800;letter-spacing:-.03em;line-height:1.25;color:var(--ink-tint)}
+  .pws-caso p{margin:0;font-size:.94rem;line-height:1.55;color:var(--muted);font-weight:500;letter-spacing:-.01em}
+  .pws-closing{
+    text-align:center;padding:clamp(48px,8vw,68px) clamp(24px,5vw,40px);border-radius:32px;
+    background:
+      radial-gradient(ellipse 100% 80% at 50% -15%, rgba(246,169,5,.2), transparent 45%),
+      radial-gradient(circle at 100% 100%, rgba(240,126,7,.12), transparent 42%),
+      linear-gradient(152deg,#242428 0%,#1a1b1f 42%,#231c16 100%);
+    color:#fff;border:1px solid rgba(255,255,255,.12);
+    box-shadow:
+      0 40px 100px rgba(12,14,20,.45),
+      0 0 100px -34px rgba(246,169,5,.3),
+      inset 0 1px 0 rgba(255,255,255,.1)
+  }
+  .pws-closing h2{
+    font-size:clamp(1.45rem,3vw,2rem);margin:0 0 16px;font-weight:800;letter-spacing:-.04em;line-height:1.15;max-width:36ch;margin-left:auto;margin-right:auto;
+    background:linear-gradient(92deg,#fff 20%,rgba(255,220,180,.95));-webkit-background-clip:text;background-clip:text;color:transparent
+  }
+  .pws-closing p{margin:0 auto 22px;max-width:48ch;font-size:clamp(.95rem,1.2vw,1.05rem);line-height:1.58;color:rgba(235,236,240,.88);font-weight:500}
+  .pws-closing .pws-cta-row{justify-content:center;margin-bottom:8px}
+  .pws-closing-micro{
+    margin:20px auto 0;max-width:46ch;font-size:.88rem;line-height:1.5;
+    color:rgba(220,222,230,.72);font-weight:500;font-style:italic
+  }
+  .pws-footer{padding:36px 0 28px;color:var(--muted);font-size:.9rem;border-top:1px solid rgba(15,23,32,.06);background:linear-gradient(180deg,rgba(255,255,255,.35),transparent)}
+  .pws-footer-inner{display:flex;flex-wrap:wrap;gap:16px 28px;justify-content:space-between;align-items:center}
+  .pws-footer-tagline{margin:0;max-width:46ch;line-height:1.45;color:var(--text);font-weight:600}
+  .pws-footer a{color:var(--orange-deep);font-weight:600}
+  .pws-footer a:hover{text-decoration:underline}
+  .pws-foot-cap{color:var(--text);font-weight:600}
+  /* —— Waitlist modal + barra fija (sólo esta página) —— */
+  .pws-wl-overlay{
+    position:fixed;inset:0;z-index:10000;
+    background:rgba(15,23,32,.46);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    display:flex;align-items:center;justify-content:center;
+    padding:max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    opacity:0;visibility:hidden;pointer-events:none;
+    transition:opacity .28s ease, visibility .28s ease;
+  }
+  .pws-wl-overlay.pws-wl-overlay--open{opacity:1;visibility:visible;pointer-events:auto}
+  .pws-wl-dialog{
+    width:100%;max-width:440px;max-height:min(90vh, 640px);overflow:hidden;
+    display:flex;flex-direction:column;
+    background:var(--surface);border-radius:24px;border:1px solid var(--line);
+    box-shadow:0 28px 80px rgba(15,23,32,.22), 0 0 0 1px rgba(255,255,255,.06) inset;
+    transform:translateY(16px) scale(.97);
+    transition:transform .32s cubic-bezier(.22,1,.36,1);
+  }
+  .pws-wl-overlay.pws-wl-overlay--open .pws-wl-dialog{transform:translateY(0) scale(1)}
+  .pws-wl-head{
+    display:flex;align-items:flex-start;justify-content:space-between;gap:14px;
+    padding:22px 22px 16px;border-bottom:1px solid rgba(52,52,52,.08);
+  }
+  .pws-wl-head-text h2{
+    margin:0 0 8px;font-size:1.35rem;font-weight:800;letter-spacing:-.04em;color:var(--text);line-height:1.2;
+  }
+  .pws-wl-head-text p{
+    margin:0;font-size:.9rem;line-height:1.55;color:var(--muted);
+  }
+  .pws-wl-close{
+    flex-shrink:0;width:40px;height:40px;border-radius:12px;border:1px solid var(--line);
+    background:#fafbfc;color:var(--muted);cursor:pointer;display:grid;place-items:center;
+    transition:background .15s ease, color .15s ease, border-color .15s ease;
+  }
+  .pws-wl-close:hover{background:#fff;color:var(--text);border-color:rgba(240,126,7,.3)}
+  .pws-wl-close:focus-visible{outline:2px solid var(--orange-deep);outline-offset:2px}
+  .pws-wl-body{padding:18px 22px 22px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .pws-wl-field{margin-bottom:14px}
+  .pws-wl-field label{display:block;font-size:.78rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#6b6b6b;margin-bottom:6px}
+  .pws-wl-field input,.pws-wl-field textarea{
+    width:100%;padding:12px 14px;border-radius:14px;border:1px solid var(--line);
+    font:inherit;font-size:.94rem;color:var(--text);background:#fafbfc;
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  .pws-wl-field textarea{min-height:88px;resize:vertical}
+  .pws-wl-field input:focus,.pws-wl-field textarea:focus{
+    outline:none;border-color:rgba(240,126,7,.45);
+    box-shadow:0 0 0 3px rgba(246,169,5,.15);background:#fff;
+  }
+  .pws-wl-field input.pws-wl-input--err,.pws-wl-field textarea.pws-wl-input--err{border-color:#c45c5c}
+  .pws-wl-actions{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+  .pws-wl-actions .pws-btn{width:100%}
+  .pws-wl-secondary{
+    background:transparent !important;border-color:transparent !important;color:var(--muted) !important;
+    box-shadow:none !important;font-weight:600;
+  }
+  .pws-wl-secondary:hover{color:var(--text) !important;border-color:var(--line) !important;background:#fafbfc !important}
+  .pws-wl-err{font-size:.84rem;color:#a94442;margin-top:10px;display:none}
+  .pws-wl-err.pws-wl-err--show{display:block}
+  .pws-wl-success{display:none;text-align:center;padding:12px 6px 8px}
+  .pws-wl-success.pws-wl-success--show{display:block}
+  .pws-wl-success strong{display:block;font-size:1.1rem;font-weight:800;color:var(--text);margin-bottom:8px;letter-spacing:-.03em}
+  .pws-wl-success p{margin:0;font-size:.95rem;color:var(--muted);line-height:1.55}
+  .pws-wl-fab{
+    position:fixed;
+    bottom:max(88px, calc(20px + env(safe-area-inset-bottom)));
+    left:50%;
+    transform:translateX(-50%);
+    z-index:9998;
+    pointer-events:none;
+    max-width:calc(100vw - 32px);
+    width:max-content;
+  }
+  .pws-wl-fab button{
+    pointer-events:auto;
+    display:inline-flex;align-items:center;justify-content:center;
+    min-height:46px;padding:0 max(16px, 3vw);border-radius:999px;
+    font:inherit;font-weight:700;font-size:max(.78rem, 2.8vw);letter-spacing:.02em;
+    color:#fff !important;border:none;cursor:pointer;
+    background:linear-gradient(90deg,var(--orange),var(--orange-deep));
+    box-shadow:0 12px 36px rgba(240,126,7,.4), 0 1px 0 rgba(255,255,255,.2) inset;
+    transition:transform .2s ease, box-shadow .2s ease;
+    max-width:100%;
+    white-space:normal;text-align:center;line-height:1.25;
+  }
+  .pws-wl-fab button:hover{transform:translateY(-2px);box-shadow:0 16px 44px rgba(240,126,7,.45)}
+  @media (min-width:400px){.pws-wl-fab button{font-size:.84rem;white-space:nowrap}}
+  .pws-wl-fab button:focus-visible{outline:2px solid var(--orange-deep);outline-offset:3px}
+  @media (min-width:960px){
+    .pws-wl-fab{bottom:max(24px, env(safe-area-inset-bottom))}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .pws-wl-overlay,.pws-wl-dialog{transition:none}
+    .pws-wl-dialog{transform:none}
+  }
+  @media (max-width:760px){.pws-c{width:min(1180px,calc(100% - 24px))}.pws-hero{padding:18px 0 28px}.pws-float-card{position:relative;margin-bottom:10px;max-width:100%}}
+</style>
+
+<div class="pws">
+  <a href="#pws-main" class="pws-skip">Saltar al contenido</a>
+  <header class="pws-nav-wrap">
+    <div class="pws-c pws-nav">
+      <div class="pws-brand">
+        <a href="{{ url_prefix }}/verticals/hospitality" aria-label="DRAGONNÉ — Pullso hospitalidad">
+          <img src="{{ url_prefix }}/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" />
+        </a>
+        <span class="pws-brand-div" aria-hidden="true"></span>
+        <a class="pws-brand-pullso" href="{{ url_prefix }}/verticals/hospitality">Pullso</a>
+      </div>
+      <span class="pws-nav-note">La lectura comercial de Pullso, ahora en WhatsApp.</span>
+      <div class="pws-nav-actions">
+        <a class="pws-btn pws-btn-ghost" href="{{ url_prefix }}/verticals/hospitality">Back to Pullso</a>
+        <button type="button" class="pws-btn pws-btn-primary js-pws-waitlist-open">Join the waitlist</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="pws-main">
+    <section class="pws-hero" id="pws-conversacion" aria-labelledby="pws-hero-title">
+      <div class="pws-c pws-hero-grid">
+        <div>
+          <div class="pws-hero-pill" role="status"><span aria-hidden="true"></span> Pullso Brief · WhatsApp</div>
+          <h1 id="pws-hero-title">La lectura comercial de tu hotel, donde tu equipo sí responde.</h1>
+          <div class="pws-hero-copy">
+            <p class="pws-lead">Pullso Brief lleva alertas, contexto y recomendaciones a WhatsApp para que puedas actuar a tiempo, sin depender de entrar al tablero justo cuando ya se te está moviendo la operación.</p>
+            <p class="pws-lead">Ocupación, ADR, ritmo de reserva, mezcla de canales y peso del directo frente a OTAs. La misma lectura comercial de Pullso, entregada de forma más directa, más clara y más accionable.</p>
+          </div>
+          <div class="pws-cta-row">
+            <button type="button" class="pws-btn pws-btn-primary js-pws-waitlist-open">Join the waitlist</button>
+            <a class="pws-btn pws-btn-ghost" href="{{ url_prefix }}/verticals/hospitality">Back to Pullso</a>
+          </div>
+          <div class="pws-tech" aria-label="Credibilidad tecnológica">
+            <div class="pws-tech-inner">
+              <span class="pws-tech-label">Impulsado por OpenAI</span>
+              <img class="pws-tech-logo--openai" src="{{ url_prefix }}/static/branding/openai-logo.svg" alt="" width="72" height="19" loading="lazy" decoding="async" role="presentation" />
+              <span class="pws-tech-sep" aria-hidden="true"></span>
+              <span class="pws-tech-label">Canal de entrega: WhatsApp</span>
+              <span class="pws-tech-wa">
+                <svg class="pws-tech-wa-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.881 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                <span class="pws-tech-meta">Meta</span>
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="pws-visual">
+          <div class="pws-float-card">
+            <span class="pws-float-badge">Señal prioritaria</span>
+            <span class="pws-float-sub">El canal directo perdió peso esta semana y las OTAs están absorbiendo más demanda de la cuenta.</span>
+          </div>
+          <div class="pws-chat-wrap">
+            <div class="pws-chat">
+              <div class="pws-chat-top">
+                <div class="pws-chat-avatar" aria-hidden="true">PB</div>
+                <div class="pws-chat-meta">
+                  Pullso Brief
+                  <span>Lectura comercial · canal seguro</span>
+                </div>
+              </div>
+              <div class="pws-chat-body">
+                <div class="pws-bubble">
+                  <span class="pws-bubble-type">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+                    Texto
+                  </span>
+                  La ocupación del fin de semana viene por debajo del ritmo reciente y el canal directo perdió participación frente a las OTAs. Conviene revisar la estrategia comercial antes de que cierre la ventana de reserva.
+                  <time>09:42</time>
+                </div>
+                <div class="pws-bubble">
+                  <span class="pws-bubble-type">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2M12 19v4M8 23h8"/></svg>
+                    Audio
+                  </span>
+                  Te dejamos un resumen en audio con contexto sobre ocupación, ADR, mezcla de canales y una recomendación puntual para actuar hoy.
+                  <div class="pws-audio-ui">
+                    <span class="pws-audio-play" aria-hidden="true">▶</span>
+                    <div class="pws-audio-wave" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div>
+                    <span style="font-size:.72rem;color:var(--muted);font-weight:600">0:48</span>
+                  </div>
+                  <time>09:43</time>
+                </div>
+                <div class="pws-bubble">
+                  <span class="pws-bubble-type">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M10 21l2-3 2 3"/></svg>
+                    Video
+                  </span>
+                  La tarifa promedio se mantiene, pero el ingreso depende más de canales con mayor comisión. Hay espacio para corregir mezcla antes de sacrificar rentabilidad.
+                  <div class="pws-video-thumb">
+                    <span class="pws-play-ic" aria-hidden="true">▶</span>
+                    <span style="position:absolute;bottom:8px;left:8px;right:8px;z-index:1;font-size:.62rem;opacity:.92;font-weight:500;text-align:center;line-height:1.3">1:12 · lectura de canales y decisión comercial</span>
+                  </div>
+                  <time>09:45</time>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="pws-bridge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            Todavía hay margen para corregir.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="pws-section pws-section--tint" aria-labelledby="pws-dash-title">
+      <div class="pws-c">
+        <div class="pws-section-head">
+          <h2 id="pws-dash-title">La misma lectura de Pullso, en un canal más útil.</h2>
+          <p>Pullso Brief no cambia la lógica del análisis. Cambia la forma en que te llega. En vez de esperar a que alguien entre al tablero, la señal llega a WhatsApp con el contexto suficiente para entender qué está pasando y qué merece atención.</p>
+        </div>
+        <div class="pws-value-grid">
+          <div class="pws-value-chip">
+            <h3>Menos fricción para actuar</h3>
+            <p>La lectura llega al canal donde tu equipo ya conversa, coordina y responde. Menos dependencia de entrar al tablero en el momento exacto. Más capacidad de reaccionar cuando todavía hay margen.</p>
+          </div>
+          <div class="pws-value-chip">
+            <h3>Más claridad para decidir</h3>
+            <p>No se trata de mandar números por mandar números. Se trata de convertir ocupación, ADR, ritmo de reserva y mezcla de canales en una lectura clara para dirección comercial, revenue y operación.</p>
+          </div>
+          <div class="pws-value-chip">
+            <h3>Más cerca del momento correcto</h3>
+            <p>Hay señales que todavía permiten corregir. Otras llegan cuando ya es tarde. Pullso Brief busca que la lectura llegue cuando aún puedes mover estrategia, no solo explicar el resultado después.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="pws-section" id="pws-formatos" aria-labelledby="pws-formatos-title">
+      <div class="pws-c">
+        <div class="pws-section-head">
+          <h2 id="pws-formatos-title">El formato depende de la urgencia.</h2>
+          <p>No toda señal necesita el mismo nivel de explicación. Algunas se entienden en una lectura rápida. Otras conviene escucharlas o verlas con mayor contexto antes de tomar una decisión comercial.</p>
+        </div>
+        <div class="pws-format-row">
+          <div class="pws-format-item">
+            <h3>Texto</h3>
+            <p>Para alertas concretas que exigen lectura rápida, foco y siguiente paso claro.</p>
+          </div>
+          <div class="pws-format-item">
+            <h3>Audio</h3>
+            <p>Para resúmenes breves que puedes escuchar entre reuniones, en operación o camino al hotel.</p>
+          </div>
+          <div class="pws-format-item">
+            <h3>Video</h3>
+            <p>Para situaciones que conviene explicar con mayor contexto visual, especialmente cuando la lectura toca varias variables al mismo tiempo.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="pws-section pws-section--tint" aria-labelledby="pws-senales-title">
+      <div class="pws-c">
+        <div class="pws-section-head">
+          <h2 id="pws-senales-title">Situaciones que un hotel reconoce al instante</h2>
+          <p>Ejemplos del tipo de lectura que Pullso Brief puede llevar a WhatsApp cuando la cuenta ya está en marcha.</p>
+        </div>
+        <div class="pws-casos-grid">
+          <div class="pws-caso">
+            <h3>El canal directo perdió participación</h3>
+            <p>La reserva sigue entrando, pero cada vez más cargada hacia OTAs. Pullso Brief lo resume con claridad para que el equipo detecte a tiempo cuándo la mezcla se está volviendo más costosa.</p>
+          </div>
+          <div class="pws-caso">
+            <h3>La ocupación no avanza al ritmo esperado</h3>
+            <p>El fin de semana se acerca y el ritmo de reserva no acompaña. La señal llega antes de que la ventana se cierre, con contexto suficiente para revisar estrategia comercial, distribución o impulso de demanda.</p>
+          </div>
+          <div class="pws-caso">
+            <h3>El ADR sube, pero no necesariamente mejora el resultado</h3>
+            <p>La tarifa promedio se sostiene o incluso mejora, pero con menor tracción o con una mezcla menos rentable. Pullso Brief ayuda a leer cuándo el precio está funcionando y cuándo está frenando más de lo que conviene.</p>
+          </div>
+          <div class="pws-caso">
+            <h3>La cuenta vende, pero vende peor</h3>
+            <p>A simple vista hay producción, pero el ingreso depende más de canales caros o de una combinación menos eficiente. La lectura no se queda en el volumen: aterriza la calidad comercial de ese resultado.</p>
+          </div>
+          <div class="pws-caso">
+            <h3>La señal merece atención hoy</h3>
+            <p>Hay momentos en los que un ajuste pequeño todavía puede cambiar el resultado. Pullso Brief busca llevar esa lectura al momento de reacción, no al resumen posterior.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="pws-section">
+      <div class="pws-c">
+        <div class="pws-closing" id="pws-cierre">
+          <h2>No es otro tablero. Es una mejor forma de recibir la lectura comercial.</h2>
+          <p>Pullso Brief extiende la lectura comercial de tu hotel al canal donde los equipos ya conversan, responden y toman decisiones. Menos fricción para enterarte. Más claridad para actuar.</p>
+          <div class="pws-cta-row">
+            <button type="button" class="pws-btn pws-btn-primary js-pws-waitlist-open">Join the waitlist</button>
+            <a class="pws-btn pws-btn-ghost" href="{{ url_prefix }}/verticals/hospitality" style="background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.28);color:#fff !important">Back to Pullso</a>
+          </div>
+          <p class="pws-closing-micro">Acceso anticipado para equipos que quieren actuar antes, no enterarse después.</p>
+        </div>
+      </div>
+    </section>
+
+    <footer class="pws-footer">
+      <div class="pws-c pws-footer-inner">
+        <p class="pws-footer-tagline">Pullso Brief · La lectura comercial de Pullso, ahora en WhatsApp.</p>
+        <p>
+          <button type="button" class="js-pws-waitlist-open" style="background:none;border:0;padding:0;font:inherit;color:var(--orange-deep);font-weight:600;cursor:pointer">Join the waitlist</button>
+          ·
+          <a href="{{ url_prefix }}/verticals/hospitality">Back to Pullso</a>
+        </p>
+      </div>
+    </footer>
+  </main>
+
+  <div class="pws-wl-fab" aria-hidden="false">
+    <button type="button" class="js-pws-waitlist-open">Join the waitlist</button>
+  </div>
+
+  <div id="pws-wl-overlay" class="pws-wl-overlay" role="dialog" aria-modal="true" aria-labelledby="pws-wl-title" hidden>
+    <div class="pws-wl-dialog" role="document">
+      <div class="pws-wl-head">
+        <div class="pws-wl-head-text">
+          <h2 id="pws-wl-title">Join the waitlist</h2>
+          <p>Pullso Brief: lista de espera para acceso anticipado. Lectura comercial en WhatsApp en texto, audio y video, en el canal donde ya conversa tu equipo.</p>
+        </div>
+        <button type="button" class="pws-wl-close js-pws-waitlist-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="pws-wl-body">
+        <div id="pws-wl-success" class="pws-wl-success" aria-live="polite">
+          <strong>You’re on the list.</strong>
+          <p>We’ll be in touch soon.</p>
+        </div>
+        <form id="pws-wl-form" autocomplete="on" novalidate>
+          <div class="pws-wl-field">
+            <label for="pws-wl-name">Full name</label>
+            <input id="pws-wl-name" name="full_name" type="text" required maxlength="200" placeholder="Your name" />
+          </div>
+          <div class="pws-wl-field">
+            <label for="pws-wl-email">Work email</label>
+            <input id="pws-wl-email" name="email" type="email" required maxlength="254" placeholder="name@company.com" />
+          </div>
+          <div class="pws-wl-field">
+            <label for="pws-wl-company">Hotel / Company</label>
+            <input id="pws-wl-company" name="company" type="text" maxlength="300" placeholder="Property or group name" />
+          </div>
+          <div class="pws-wl-field">
+            <label for="pws-wl-wa">WhatsApp number</label>
+            <input id="pws-wl-wa" name="whatsapp" type="tel" required minlength="5" maxlength="40" placeholder="+52 …" />
+          </div>
+          <div class="pws-wl-field">
+            <label for="pws-wl-note">Optional note</label>
+            <textarea id="pws-wl-note" name="note" maxlength="2000" placeholder="Timing, integrations, or questions for our team"></textarea>
+          </div>
+          <p id="pws-wl-err" class="pws-wl-err" role="alert"></p>
+          <div class="pws-wl-actions">
+            <button type="submit" class="pws-btn pws-btn-primary" id="pws-wl-submit">Join waitlist</button>
+            <button type="button" class="pws-btn pws-wl-secondary js-pws-waitlist-close">Maybe later</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  var overlay = document.getElementById("pws-wl-overlay");
+  var form = document.getElementById("pws-wl-form");
+  var successEl = document.getElementById("pws-wl-success");
+  var errEl = document.getElementById("pws-wl-err");
+  var submitBtn = document.getElementById("pws-wl-submit");
+  var url = {{ waitlist_post_url | default(url_path('/pullsobrief/waitlist'), true) | tojson }};
+  var prevFocus = null;
+
+  function clearErr() {
+    errEl.textContent = "";
+    errEl.classList.remove("pws-wl-err--show");
+    [].forEach.call(form.querySelectorAll(".pws-wl-input--err"), function (el) { el.classList.remove("pws-wl-input--err"); });
+  }
+
+  function openModal() {
+    prevFocus = document.activeElement;
+    overlay.hidden = false;
+    requestAnimationFrame(function () {
+      overlay.classList.add("pws-wl-overlay--open");
+    });
+    document.body.style.overflow = "hidden";
+    var first = document.getElementById("pws-wl-name");
+    if (first && !successEl.getAttribute("data-done")) first.focus();
+  }
+
+  function closeModal() {
+    overlay.classList.remove("pws-wl-overlay--open");
+    document.body.style.overflow = "";
+    setTimeout(function () {
+      overlay.hidden = true;
+    }, 280);
+    if (successEl.getAttribute("data-done")) {
+      successEl.removeAttribute("data-done");
+      successEl.classList.remove("pws-wl-success--show");
+      form.removeAttribute("hidden");
+      form.reset();
+      submitBtn.disabled = false;
+      clearErr();
+    }
+    if (prevFocus && typeof prevFocus.focus === "function") prevFocus.focus();
+  }
+
+  function validate() {
+    clearErr();
+    var name = form.full_name.value.trim();
+    var email = form.email.value.trim();
+    var wa = form.whatsapp.value.trim();
+    if (!name) {
+      form.full_name.classList.add("pws-wl-input--err");
+      errEl.textContent = "Please enter your full name.";
+      errEl.classList.add("pws-wl-err--show");
+      return false;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      form.email.classList.add("pws-wl-input--err");
+      errEl.textContent = "Please enter a valid work email.";
+      errEl.classList.add("pws-wl-err--show");
+      return false;
+    }
+    if (wa.replace(/\s/g, "").length < 5) {
+      form.whatsapp.classList.add("pws-wl-input--err");
+      errEl.textContent = "Please enter a WhatsApp number (with country code).";
+      errEl.classList.add("pws-wl-err--show");
+      return false;
+    }
+    return true;
+  }
+
+  document.querySelectorAll(".js-pws-waitlist-open").forEach(function (btn) {
+    btn.addEventListener("click", function (e) {
+      e.preventDefault();
+      openModal();
+    });
+  });
+
+  overlay.querySelectorAll(".js-pws-waitlist-close").forEach(function (btn) {
+    btn.addEventListener("click", closeModal);
+  });
+
+  overlay.addEventListener("click", function (e) {
+    if (e.target === overlay) closeModal();
+  });
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && overlay.classList.contains("pws-wl-overlay--open")) closeModal();
+  });
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (!validate()) return;
+    submitBtn.disabled = true;
+    clearErr();
+    fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({
+        full_name: form.full_name.value.trim().slice(0, 200),
+        email: form.email.value.trim().toLowerCase().slice(0, 254),
+        company: form.company.value.trim().slice(0, 300),
+        whatsapp: form.whatsapp.value.trim().slice(0, 40),
+        note: form.note.value.trim().slice(0, 2000),
+      }),
+    })
+      .then(function (r) { return r.json().then(function (data) { return { ok: r.ok, data: data }; }); })
+      .then(function (_ref) {
+        submitBtn.disabled = false;
+        if (_ref.ok && _ref.data && _ref.data.ok) {
+          form.setAttribute("hidden", "");
+          successEl.classList.add("pws-wl-success--show");
+          successEl.setAttribute("data-done", "1");
+        } else {
+          var er = _ref.data && _ref.data.error;
+          errEl.textContent =
+            er === "invalid_email"
+              ? "Please enter a valid work email."
+              : er === "invalid_whatsapp"
+                ? "Please enter a valid WhatsApp number."
+                : "Something went wrong. Please try again or email us.";
+          errEl.classList.add("pws-wl-err--show");
+        }
+      })
+      .catch(function () {
+        submitBtn.disabled = false;
+        errEl.textContent = "Network error. Check your connection and try again.";
+        errEl.classList.add("pws-wl-err--show");
+      });
+  });
+})();
+</script>
+{% endblock %}

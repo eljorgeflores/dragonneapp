@@ -565,3 +565,59 @@ def send_consulting_lead_email(
     except Exception as exc:
         _log.warning("Falló envío correo lead consultoría: %s", exc, exc_info=True)
         return False
+
+
+def send_pullso_whatsapp_waitlist_email(
+    *,
+    to_email: str,
+    full_name: str,
+    from_email: str,
+    company: str,
+    whatsapp: str,
+    note: str,
+) -> bool:
+    """Aviso interno por nueva entrada en waitlist Pullso Brief (página /pullsobrief)."""
+    if (
+        not config.SMTP_HOST
+        or not config.SMTP_USER
+        or not config.SMTP_PASSWORD
+    ):
+        return False
+    subject = "Pullso Brief — nueva entrada en waitlist"
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = config.EMAIL_FROM
+    msg["To"] = to_email.strip()
+    if from_email:
+        msg["Reply-To"] = from_email.strip()
+    note_block = (note or "").strip() or "—"
+    lines = [
+        "Origen: Pullso Brief — waitlist /pullsobrief/waitlist",
+        f"Nombre: {full_name}",
+        f"Email trabajo: {from_email}",
+        f"Hotel / empresa: {company or '—'}",
+        f"WhatsApp: {whatsapp}",
+        "",
+        "Nota opcional:",
+        note_block,
+    ]
+    text = "\n".join(lines)
+    html = "<br>".join(
+        [
+            "<strong>Origen:</strong> Pullso Brief — waitlist /pullsobrief/waitlist",
+            f"<br><strong>Nombre:</strong> {full_name}",
+            f"<br><strong>Email trabajo:</strong> {from_email}",
+            f"<br><strong>Hotel / empresa:</strong> {company or '—'}",
+            f"<br><strong>WhatsApp:</strong> {whatsapp}",
+            "<br><br><strong>Nota opcional:</strong><br>",
+            note_block.replace("\n", "<br>"),
+        ]
+    )
+    msg.attach(MIMEText(text, "plain", "utf-8"))
+    msg.attach(MIMEText(html, "html", "utf-8"))
+    try:
+        _sendmail([to_email.strip()], msg.as_string())
+        return True
+    except Exception as exc:
+        _log.warning("Falló envío correo waitlist Pullso Brief: %s", exc, exc_info=True)
+        return False

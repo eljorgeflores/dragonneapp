@@ -177,3 +177,16 @@ def init_db():
             );
             """
         )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS pullso_whatsapp_waitlist (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                full_name TEXT NOT NULL,
+                email TEXT NOT NULL,
+                company TEXT,
+                whatsapp TEXT NOT NULL,
+                note TEXT,
+                created_at TEXT NOT NULL
+            );
+            """
+        )
