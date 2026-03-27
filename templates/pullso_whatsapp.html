@@ -66,9 +66,13 @@
   .pws-brand-pullso:hover{color:var(--orange-deep)}
   .pws-brand-pullso:focus-visible{outline:2px solid var(--orange-deep);outline-offset:3px}
   .pws-brand-beta{
-    font-size:.58rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
-    color:rgba(42,42,44,.72);background:rgba(255,255,255,.75);border:1px solid rgba(28,29,34,.12);
-    padding:3px 7px;border-radius:999px;box-shadow:0 1px 0 rgba(255,255,255,.9) inset;line-height:1
+    display:inline-flex;align-items:center;justify-content:center;
+    padding:5px 9px;border-radius:7px;
+    font-size:.625rem;font-weight:800;letter-spacing:.1em;line-height:1;
+    color:#fff;text-transform:uppercase;
+    background:linear-gradient(90deg,var(--orange),var(--orange-deep));
+    box-shadow:0 6px 16px rgba(240,126,7,.32);
+    flex-shrink:0;
   }
   .pws-nav-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex-shrink:0}
   .pws-lang{
@@ -732,7 +736,7 @@
     .pws-brand-div{height:14px}
     .pws-brand-nameblock{gap:4px}
     .pws-brand-pullso{font-size:.74rem;padding:2px 0;letter-spacing:-.04em}
-    .pws-brand-beta{font-size:.5rem;padding:2px 5px}
+    .pws-brand-beta{padding:4px 7px;font-size:.58rem;letter-spacing:.09em}
     .pws-nav-actions{gap:5px}
     .pws-nav .pws-btn{
       flex:0 1 auto;min-width:0;
@@ -767,7 +771,7 @@
         <span class="pws-brand-div" aria-hidden="true"></span>
         <div class="pws-brand-nameblock">
           <a class="pws-brand-pullso" href="{{ pws_self_url }}">Pullso Brief</a>
-          <span class="pws-brand-beta">Beta</span>
+          <span class="pws-brand-beta">BETA</span>
         </div>
       </div>
       <div class="pws-nav-actions">

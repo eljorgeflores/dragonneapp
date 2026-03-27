@@ -26,6 +26,15 @@
   .pp-brand-group{flex-wrap:nowrap;align-items:center;gap:10px 12px}
   .pp-brand-mother{display:flex;align-items:center;flex-shrink:0;line-height:0}
   .pp-brand-mother:focus-visible{outline:2px solid #f07e07;outline-offset:4px;border-radius:4px}
+  .pp-beta{
+    display:inline-flex;align-items:center;justify-content:center;
+    padding:5px 9px;border-radius:7px;
+    font-size:.625rem;font-weight:800;letter-spacing:.1em;line-height:1;
+    color:#fff;text-transform:uppercase;
+    background:linear-gradient(90deg,#f6a905,#f07e07);
+    box-shadow:0 6px 16px rgba(240,126,7,.32);
+    flex-shrink:0;
+  }
   .pp-brand-lockup-divider{width:1px;height:22px;background:rgba(52,52,52,.12);flex-shrink:0}
   .pp-brand-group .pp-brand-product--header{
     font-size:.92rem;font-weight:700;letter-spacing:-.03em;color:#343434;white-space:nowrap;line-height:1.2;
@@ -341,6 +350,7 @@
     .pp-demo-report .mix-bar-row,.pp-demo-report .panel-item{min-width:0}
   }
   @media (max-width:480px){
+    .pp-beta{padding:4px 7px;font-size:.58rem;letter-spacing:.09em}
     .pp-footer-nav{grid-template-columns:1fr}
     .pp-hero-actions{flex-direction:column;align-items:stretch;margin-bottom:16px}
     .pp-hero-actions .pp-btn{min-height:44px;width:100%;justify-content:center;font-size:.9rem}
@@ -432,12 +442,11 @@
   <div class="pp-nav-wrap">
     <div class="ppc pp-nav">
       <input type="checkbox" id="pp-nav-toggle" class="pp-nav-toggle" />
-      <div class="pp-brand pp-brand-group">
-        <a href="{{ url_prefix }}/" class="pp-brand-mother" aria-label="Dragonné — Inicio">
-          <img src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" />
+      <div class="pp-brand">
+        <a href="{{ url_prefix }}/" class="pp-brand-mother" aria-label="Pullso — Inicio">
+          <img src="/static/branding/pullso-logo.svg" alt="Pullso" />
         </a>
-        <span class="pp-brand-lockup-divider" aria-hidden="true"></span>
-        <span class="pp-brand-product pp-brand-product--header">Pullso</span>
+        <span class="pp-beta">BETA</span>
       </div>
       <label for="pp-nav-toggle" class="pp-nav-toggle-btn">
         <span></span>
