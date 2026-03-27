@@ -38,6 +38,384 @@ class PullsoWaitlistPayload(BaseModel):
     note: str = Field("", max_length=2000)
 
 
+def _pullsobrief_i18n(locale: str) -> dict:
+    """Copy + SEO for Pullso Brief landing (/pullsobrief vs /pullsobrief/en)."""
+    es = {
+        "html_lang": "es-MX",
+        "meta_title": "Pullso Brief — La lectura comercial de Pullso en WhatsApp — DRAGONNÉ",
+        "meta_description": (
+            "Pullso Brief lleva la lectura comercial de tu hotel a WhatsApp: ocupación, ADR, ritmo de reserva y "
+            "mezcla de canales en texto, audio y video. Menos fricción para actuar a tiempo."
+        ),
+        "meta_keywords": (
+            "Pullso Brief, Pullso, Dragonné, WhatsApp, revenue hotelero, lectura comercial, hospitality"
+        ),
+        "og_title": "Pullso Brief — Lectura comercial en WhatsApp",
+        "og_description": (
+            "Pullso Brief lleva la lectura comercial de tu hotel a WhatsApp: ocupación, ADR, ritmo de reserva y "
+            "mezcla de canales en texto, audio y video. Menos fricción para actuar a tiempo."
+        ),
+        "og_locale": "es_MX",
+        "twitter_title": "Pullso Brief — DRAGONNÉ",
+        "twitter_description": (
+            "Pullso Brief lleva la lectura comercial de tu hotel a WhatsApp: ocupación, ADR, ritmo de reserva y "
+            "mezcla de canales en texto, audio y video. Menos fricción para actuar a tiempo."
+        ),
+        "og_image_alt": "Pullso Brief — La lectura comercial de Pullso en WhatsApp — DRAGONNÉ",
+        "schema_in_language": "es-MX",
+        "lang_switch_aria": "Idioma",
+        "skip_to_content": "Saltar al contenido",
+        "nav_logo_aria": "Pullso — Pullso Brief, ir al inicio",
+        "hero_pill": "Pullso Brief · WhatsApp",
+        "hero_title": "La lectura comercial de tu hotel, donde tu equipo sí responde.",
+        "hero_lead_1": (
+            "Pullso Brief manda la lectura comercial al WhatsApp del equipo: ocupación, ADR, ritmo de reserva y "
+            "mezcla de canales, con el mismo criterio de Pullso pero sin depender de entrar al tablero en el momento justo."
+        ),
+        "hero_lead_2": (
+            "Alertas escritas, notas de voz y cápsulas en video cuando el contexto lo pide. La misma señal, en el canal "
+            "donde ya conversan dirección, revenue y operación."
+        ),
+        "tech_aria": "Credibilidad tecnológica",
+        "tech_label": "Impulsado por",
+        "float_badge": "Señal prioritaria",
+        "float_strong": "Canal directo bajo presión",
+        "float_sub": (
+            "Esta semana el directo perdió peso y las OTAs están absorbiendo más demanda de la cuenta."
+        ),
+        "orbit_text": "Texto",
+        "orbit_voice": "Voz",
+        "orbit_video": "Video",
+        "chat_subtitle": "Lectura comercial · canal seguro",
+        "bubble_text_format": "Alerta escrita",
+        "bubble_text_body": (
+            "La ocupación del fin de semana viene por debajo del ritmo reciente y el canal directo perdió participación "
+            "frente a las OTAs. Conviene revisar la estrategia comercial antes de que cierre la ventana de reserva."
+        ),
+        "bubble_voice_format": "Nota de voz",
+        "bubble_voice_body": (
+            "Te dejamos un resumen en audio con contexto sobre ocupación, ADR, mezcla de canales y una recomendación "
+            "puntual para actuar hoy."
+        ),
+        "bubble_video_format": "Cápsula de video",
+        "bubble_video_body": (
+            "La tarifa promedio se mantiene, pero el ingreso depende más de canales con mayor comisión. Hay espacio para "
+            "corregir mezcla antes de sacrificar rentabilidad."
+        ),
+        "bubble_video_caption": "1:12 · canales y decisión comercial",
+        "bridge_line": "Todavía hay margen para corregir.",
+        "dash_title": "La misma lectura de Pullso, en un canal más útil.",
+        "dash_intro": (
+            "Pullso Brief no cambia la lógica del análisis. Cambia la forma en que te llega. En vez de esperar a que "
+            "alguien entre al tablero, la señal llega a WhatsApp con el contexto suficiente para entender qué está pasando "
+            "y qué merece atención."
+        ),
+        "v01_lead": "Menos fricción para actuar",
+        "v01_note": (
+            "La lectura llega al canal donde tu equipo ya conversa, coordina y responde. Menos dependencia de entrar al "
+            "tablero en el momento exacto. Más capacidad de reaccionar cuando todavía hay margen."
+        ),
+        "v02_lead": "Más claridad para decidir",
+        "v02_note": (
+            "No se trata de mandar números por mandar números. Se trata de convertir ocupación, ADR, ritmo de reserva y "
+            "mezcla de canales en una lectura clara para dirección comercial, revenue y operación."
+        ),
+        "v03_lead": "Más cerca del momento correcto",
+        "v03_note": (
+            "Hay señales que todavía permiten corregir. Otras llegan cuando ya es tarde. Pullso Brief busca que la lectura "
+            "llegue cuando aún puedes mover estrategia, no solo explicar el resultado después."
+        ),
+        "formats_title": "El formato depende de la urgencia.",
+        "formats_intro": (
+            "No toda señal necesita el mismo nivel de explicación. Algunas se entienden en una lectura rápida. Otras "
+            "conviene escucharlas o verlas con mayor contexto antes de tomar una decisión comercial."
+        ),
+        "fmt_text_h": "Texto",
+        "fmt_text_p": "Para alertas concretas que exigen lectura rápida, foco y siguiente paso claro.",
+        "fmt_audio_h": "Audio",
+        "fmt_audio_p": "Para resúmenes breves que puedes escuchar entre reuniones, en operación o camino al hotel.",
+        "fmt_video_h": "Video",
+        "fmt_video_p": (
+            "Para situaciones que conviene explicar con mayor contexto visual, especialmente cuando la lectura toca varias "
+            "variables al mismo tiempo."
+        ),
+        "signals_title": "Situaciones que un hotel reconoce al instante",
+        "signals_intro": (
+            "Casos de lectura que Pullso Brief puede entregar en WhatsApp cuando la cuenta ya está en marcha: insight claro, "
+            "señal accionable y contexto sin abrir el tablero."
+        ),
+        "i1_badge": "Pullso · Mezcla",
+        "i1_title": "Canal directo pierde participación",
+        "i1_kicker": "Reserva activa, pero más cargada a OTAs.",
+        "i1_body": (
+            "Pullso Brief resume la mezcla para que el equipo detecte a tiempo cuándo el peso se desplaza hacia un canal más "
+            "costoso, antes de que el resultado quede fijado."
+        ),
+        "i2_badge": "Pullso · Ritmo",
+        "i2_title": "Ocupación sin el ritmo esperado",
+        "i2_kicker": "La ventana de reserva se acerca; el ritmo no acompaña.",
+        "i2_body": (
+            "La alerta llega antes del cierre con contexto para revisar comercial, distribución o impulso de demanda, "
+            "mientras todavía hay margen de acción."
+        ),
+        "i3_badge": "Pullso · ADR",
+        "i3_title": "ADR alto que no mejora el resultado",
+        "i3_kicker": "Tarifa sostenida o al alza, tracción o mezcla débiles.",
+        "i3_body": (
+            "La lectura separa cuándo el precio sostiene rentabilidad y cuándo enmascara menor demanda o un mix menos "
+            "eficiente — sin quedarse en el promedio aislado."
+        ),
+        "i4_badge": "Pullso · Rentabilidad",
+        "i4_title": "Producción con peor calidad comercial",
+        "i4_kicker": "Volumen visible; ingreso dependiente de canales caros.",
+        "i4_body": (
+            "No se detiene en el caudal: aterriza la calidad del resultado cuando el ingreso depende de OTAs u otra "
+            "combinación menos eficiente para la cuenta."
+        ),
+        "i5_badge": "Pullso · Ventana",
+        "i5_title": "Ajuste que aún mueve el resultado",
+        "i5_kicker": "Microcambio con impacto si llega en la ventana correcta.",
+        "i5_body": (
+            "Pullso Brief prioriza llevar esa lectura al instante de reacción: cuando todavía corrige la curva, no cuando solo "
+            "queda el post‑mortem."
+        ),
+        "i6_aria": "Entrega en WhatsApp",
+        "i6_badge": "Pullso Brief",
+        "i6_title": "Misma lectura Pullso, en el canal del equipo",
+        "i6_kicker": "Formato según urgencia: lectura rápida o contexto ampliado.",
+        "i6_pulse": "Listo para actuar, no solo informar",
+        "i6_body": (
+            "Todo sigue anclado al criterio comercial de Pullso; solo cambia el envío al hilo donde dirección, revenue y "
+            "operación ya responden."
+        ),
+        "closing_h2": "No es otro tablero. Es una mejor forma de recibir la lectura comercial.",
+        "closing_p": (
+            "Pullso Brief extiende la lectura comercial de tu hotel al canal donde los equipos ya conversan, responden y "
+            "toman decisiones. Menos fricción para enterarte. Más claridad para actuar."
+        ),
+        "closing_micro": "Acceso anticipado para equipos que quieren actuar antes, no enterarse después.",
+        "footer_tagline": "Pullso Brief · La lectura comercial de Pullso, ahora en WhatsApp.",
+    }
+    en = {
+        "html_lang": "en",
+        "meta_title": "Pullso Brief — Pullso's commercial readout on WhatsApp — DRAGONNÉ",
+        "meta_description": (
+            "Pullso Brief brings your hotel's commercial readout to WhatsApp: occupancy, ADR, booking pace and channel mix "
+            "in text, audio and video. Less friction so you can act in time."
+        ),
+        "meta_keywords": (
+            "Pullso Brief, Pullso, Dragonné, WhatsApp, hotel revenue, commercial readout, hospitality"
+        ),
+        "og_title": "Pullso Brief — Commercial readout on WhatsApp",
+        "og_description": (
+            "Pullso Brief brings your hotel's commercial readout to WhatsApp: occupancy, ADR, booking pace and channel mix "
+            "in text, audio and video. Less friction so you can act in time."
+        ),
+        "og_locale": "en_US",
+        "twitter_title": "Pullso Brief — DRAGONNÉ",
+        "twitter_description": (
+            "Pullso Brief brings your hotel's commercial readout to WhatsApp: occupancy, ADR, booking pace and channel mix "
+            "in text, audio and video. Less friction so you can act in time."
+        ),
+        "og_image_alt": "Pullso Brief — Pullso's commercial readout on WhatsApp — DRAGONNÉ",
+        "schema_in_language": "en",
+        "lang_switch_aria": "Language",
+        "skip_to_content": "Skip to content",
+        "nav_logo_aria": "Pullso — Pullso Brief, go to top",
+        "hero_pill": "Pullso Brief · WhatsApp",
+        "hero_title": "Your hotel's commercial readout, where your team actually responds.",
+        "hero_lead_1": (
+            "Pullso Brief sends the commercial readout to your team's WhatsApp: occupancy, ADR, booking pace and channel "
+            "mix—with the same Pullso judgment, without needing to open the dashboard at the perfect moment."
+        ),
+        "hero_lead_2": (
+            "Written alerts, voice notes and short videos when the context calls for it. The same signal, in the channel "
+            "where leadership, revenue and operations already talk."
+        ),
+        "tech_aria": "Technology partners",
+        "tech_label": "Powered by",
+        "float_badge": "Priority signal",
+        "float_strong": "Direct channel under pressure",
+        "float_sub": (
+            "This week direct share fell and OTAs are absorbing more of the demand on the books."
+        ),
+        "orbit_text": "Text",
+        "orbit_voice": "Voice",
+        "orbit_video": "Video",
+        "chat_subtitle": "Commercial readout · secure channel",
+        "bubble_text_format": "Written alert",
+        "bubble_text_body": (
+            "Weekend occupancy is trailing recent pace and the direct channel lost share to OTAs. It's worth reviewing "
+            "commercial strategy before the booking window closes."
+        ),
+        "bubble_voice_format": "Voice note",
+        "bubble_voice_body": (
+            "Here's a short audio summary with context on occupancy, ADR, channel mix and a specific recommendation to act on today."
+        ),
+        "bubble_video_format": "Video clip",
+        "bubble_video_body": (
+            "Average rate is holding, but revenue depends more on higher-commission channels. There's room to fix the mix "
+            "before sacrificing profitability."
+        ),
+        "bubble_video_caption": "1:12 · channels and commercial decisions",
+        "bridge_line": "There's still room to correct course.",
+        "dash_title": "The same Pullso readout, in a more useful channel.",
+        "dash_intro": (
+            "Pullso Brief doesn't change how the analysis works. It changes how it reaches you. Instead of waiting for "
+            "someone to open the dashboard, the signal arrives on WhatsApp with enough context to understand what's happening "
+            "and what deserves attention."
+        ),
+        "v01_lead": "Less friction to act",
+        "v01_note": (
+            "The readout lands in the channel where your team already talks, coordinates and responds. Less reliance on opening "
+            "the dashboard at the exact moment. More ability to react while there's still room."
+        ),
+        "v02_lead": "More clarity to decide",
+        "v02_note": (
+            "It's not about pushing numbers for the sake of it. It's about turning occupancy, ADR, booking pace and channel "
+            "mix into a clear read for commercial leadership, revenue and operations."
+        ),
+        "v03_lead": "Closer to the right moment",
+        "v03_note": (
+            "Some signals still let you correct. Others arrive when it's already late. Pullso Brief aims to deliver the readout "
+            "while you can still move strategy—not only explain the result afterward."
+        ),
+        "formats_title": "Format depends on urgency.",
+        "formats_intro": (
+            "Not every signal needs the same depth. Some are clear from a quick line. Others are better heard or seen with more "
+            "context before a commercial call."
+        ),
+        "fmt_text_h": "Text",
+        "fmt_text_p": "For concrete alerts that need a fast read, focus and a clear next step.",
+        "fmt_audio_h": "Audio",
+        "fmt_audio_p": "For short summaries you can listen to between meetings, on the floor or on the way to the hotel.",
+        "fmt_video_h": "Video",
+        "fmt_video_p": (
+            "For situations that need more visual context, especially when the read touches several variables at once."
+        ),
+        "signals_title": "Situations a hotel recognizes instantly",
+        "signals_intro": (
+            "Example readouts Pullso Brief can deliver on WhatsApp when the account is live: clear insight, actionable signal "
+            "and context without opening the dashboard."
+        ),
+        "i1_badge": "Pullso · Mix",
+        "i1_title": "Direct channel losing share",
+        "i1_kicker": "Booking is active, but weighted more to OTAs.",
+        "i1_body": (
+            "Pullso Brief summarizes the mix so the team spots in time when weight shifts toward a costlier channel—before "
+            "the result is locked in."
+        ),
+        "i2_badge": "Pullso · Pace",
+        "i2_title": "Occupancy without the expected pace",
+        "i2_kicker": "The booking window is closing; pace isn't keeping up.",
+        "i2_body": (
+            "The alert lands before the close with context to review commercial, distribution or demand push while there's "
+            "still room to act."
+        ),
+        "i3_badge": "Pullso · ADR",
+        "i3_title": "Strong ADR that doesn't improve the outcome",
+        "i3_kicker": "Rate holding or rising; traction or mix weaker.",
+        "i3_body": (
+            "The read separates when price supports profitability and when it masks softer demand or a less efficient "
+            "mix—without stopping at the average alone."
+        ),
+        "i4_badge": "Pullso · Profitability",
+        "i4_title": "Volume with weaker commercial quality",
+        "i4_kicker": "Flow is visible; revenue depends on expensive channels.",
+        "i4_body": (
+            "It doesn't stop at volume: it grounds outcome quality when revenue depends on OTAs or another less efficient "
+            "combination for the account."
+        ),
+        "i5_badge": "Pullso · Window",
+        "i5_title": "A change that can still move the outcome",
+        "i5_kicker": "A small shift with impact if it lands in the right window.",
+        "i5_body": (
+            "Pullso Brief prioritizes delivering that read at the reaction moment—when the curve can still change, not only "
+            "for the post-mortem."
+        ),
+        "i6_aria": "Delivered on WhatsApp",
+        "i6_badge": "Pullso Brief",
+        "i6_title": "Same Pullso readout, in the team's channel",
+        "i6_kicker": "Format by urgency: quick read or richer context.",
+        "i6_pulse": "Built to act, not only to inform",
+        "i6_body": (
+            "Everything stays anchored to Pullso's commercial judgment; only the delivery changes to the thread where "
+            "leadership, revenue and operations already respond."
+        ),
+        "closing_h2": "Not another dashboard. A better way to receive the commercial readout.",
+        "closing_p": (
+            "Pullso Brief extends your hotel's commercial readout to the channel where teams already talk, respond and decide. "
+            "Less friction to know. More clarity to act."
+        ),
+        "closing_micro": "Early access for teams that want to act sooner—not only find out later.",
+        "footer_tagline": "Pullso Brief — Pullso's commercial readout, now on WhatsApp.",
+    }
+    return en if locale == "en" else es
+
+
+def _pullsobrief_page_bundle(request: Request, locale: str):
+    """Shared context for Pullso Brief HTML (es-MX default vs en)."""
+    copy = _pullsobrief_i18n(locale)
+    pws_url_es = url_path("/pullsobrief")
+    pws_url_en = url_path("/pullsobrief/en")
+    canonical = absolute_url("/pullsobrief/en" if locale == "en" else "/pullsobrief")
+    meta_title = copy["meta_title"]
+    meta_description = copy["meta_description"]
+    _site = website_node()
+    _org = organization_node()
+    structured = {
+        "@context": "https://schema.org",
+        "@graph": [
+            _org,
+            _site,
+            {
+                "@type": "WebPage",
+                "@id": canonical + "#webpage",
+                "url": canonical,
+                "name": meta_title,
+                "description": meta_description,
+                "inLanguage": copy["schema_in_language"],
+                "isPartOf": {"@id": _site["@id"]},
+                "publisher": {"@id": _org["@id"]},
+            },
+        ],
+    }
+    seo = {
+        "meta_title": meta_title,
+        "meta_description": meta_description,
+        "meta_keywords": copy["meta_keywords"],
+        "canonical_url": canonical,
+        "robots_meta": "noindex, nofollow",
+        "og_title": copy["og_title"],
+        "og_description": copy["og_description"],
+        "og_locale": copy["og_locale"],
+        "twitter_title": copy["twitter_title"],
+        "twitter_description": copy["twitter_description"],
+        "html_lang": copy["html_lang"],
+        "structured_data": structured,
+        "og_image_alt": copy["og_image_alt"],
+        "hreflang_alternates": [
+            {"hreflang": "es-MX", "href": absolute_url("/pullsobrief")},
+            {"hreflang": "en", "href": absolute_url("/pullsobrief/en")},
+        ],
+        "waitlist_post_url": url_path("/pullsobrief/waitlist"),
+        "pws_lang": locale,
+        "pws_self_url": pws_url_en if locale == "en" else pws_url_es,
+        "pws_url_es": pws_url_es,
+        "pws_url_en": pws_url_en,
+        "pws": copy,
+    }
+    if locale == "en":
+        seo["og_locale_alternate"] = "es_MX"
+    else:
+        seo["og_locale_alternate"] = "en_US"
+    return {
+        "request": request,
+        **marketing_page_context(),
+        **seo,
+    }
+
+
 def _sitemap_entries():
     return [
         ("/", "weekly", "1.0"),
@@ -389,57 +767,13 @@ def servicios_page(request: Request):
 @router.get("/pullsobrief", response_class=HTMLResponse, include_in_schema=False)
 def pullsobrief_page(request: Request):
     """Pullso Brief: no está enlazada desde el sitio público ni en sitemap; sólo acceso por URL directa."""
-    canonical = absolute_url("/pullsobrief")
-    meta_title = "Pullso Brief — La lectura comercial de Pullso en WhatsApp — DRAGONNÉ"
-    meta_description = (
-        "Pullso Brief lleva la lectura comercial de tu hotel a WhatsApp: ocupación, ADR, ritmo de reserva y "
-        "mezcla de canales en texto, audio y video. Menos fricción para actuar a tiempo."
-    )
-    _site = website_node()
-    _org = organization_node()
-    structured = {
-        "@context": "https://schema.org",
-        "@graph": [
-            _org,
-            _site,
-            {
-                "@type": "WebPage",
-                "@id": canonical + "#webpage",
-                "url": canonical,
-                "name": meta_title,
-                "description": meta_description,
-                "inLanguage": "es-MX",
-                "isPartOf": {"@id": _site["@id"]},
-                "publisher": {"@id": _org["@id"]},
-            },
-        ],
-    }
-    seo = {
-        "meta_title": meta_title,
-        "meta_description": meta_description,
-        "meta_keywords": (
-            "Pullso Brief, Pullso, Dragonné, WhatsApp, revenue hotelero, lectura comercial, hospitality"
-        ),
-        "canonical_url": canonical,
-        "robots_meta": "noindex, nofollow",
-        "og_title": "Pullso Brief — Lectura comercial en WhatsApp",
-        "og_description": meta_description,
-        "og_locale": "es_MX",
-        "twitter_title": "Pullso Brief — DRAGONNÉ",
-        "twitter_description": meta_description,
-        "html_lang": "es-MX",
-        "structured_data": structured,
-        "og_image_alt": "Pullso Brief — La lectura comercial de Pullso en WhatsApp — DRAGONNÉ",
-    }
-    return templates.TemplateResponse(
-        "pullso_whatsapp.html",
-        {
-            "request": request,
-            **marketing_page_context(),
-            **seo,
-            "waitlist_post_url": url_path("/pullsobrief/waitlist"),
-        },
-    )
+    return templates.TemplateResponse("pullso_whatsapp.html", _pullsobrief_page_bundle(request, "es"))
+
+
+@router.get("/pullsobrief/en", response_class=HTMLResponse, include_in_schema=False)
+def pullsobrief_page_en(request: Request):
+    """Pullso Brief — English locale."""
+    return templates.TemplateResponse("pullso_whatsapp.html", _pullsobrief_page_bundle(request, "en"))
 
 
 @router.post("/pullsobrief/waitlist", include_in_schema=False)
