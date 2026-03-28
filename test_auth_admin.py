@@ -370,6 +370,31 @@ def test_reset_password_expired_token_rejected():
     assert r_ok.status_code == 303
 
 
+def test_admin_user_detail_get_renders_html():
+    """Regresión: sqlite3.Row no tiene .get; la plantilla debe usar user['api_key'] u dict."""
+    email_target = _unique_email()
+    email_admin = _unique_email()
+    password = "password123"
+    client.post(
+        "/signup",
+        data={"email": email_target, "password": password, "password_confirm": password},
+    )
+    with db() as conn:
+        uid_target = conn.execute("SELECT id FROM users WHERE email = ?", (email_target,)).fetchone()["id"]
+    client.post("/logout")
+    client.post(
+        "/signup",
+        data={"email": email_admin, "password": password, "password_confirm": password},
+    )
+    with db() as conn:
+        conn.execute("UPDATE users SET is_admin = 1 WHERE email = ?", (email_admin,))
+    client.post("/logout")
+    client.post("/login", data={"email": email_admin, "password": password})
+    r = client.get(f"/admin/users/{uid_target}")
+    assert r.status_code == 200
+    assert "Gestionar cuenta" in (r.text or "")
+
+
 def test_delete_user_removes_password_resets():
     email_target = _unique_email()
     email_admin = _unique_email()

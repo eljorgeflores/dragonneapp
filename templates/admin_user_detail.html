@@ -30,7 +30,7 @@
       <div>
         <div class="eyebrow">Actividad</div>
         <h2 class="admin-card-heading">Resumen comercial</h2>
-        {% if user.get('api_key') %}
+        {% if user['api_key'] %}
         <p class="lede small">API: activa (clave asignada). <a href="/admin/api">Gestionar acceso API</a></p>
         {% else %}
         <p class="lede small">API: sin acceso. <a href="/admin/api">Dar acceso desde Acceso API</a></p>
@@ -156,12 +156,12 @@
         {% for s in sessions %}
         <div class="admin-row-card">
           <div class="history-top">
-            <strong>Inicio: {{ s.started_at[:19].replace('T', ' ') }}</strong>
+            <strong>Inicio: {{ s.started_at and s.started_at[:19].replace('T', ' ') or '—' }}</strong>
             <span>Fin: {{ s.ended_at and s.ended_at[:19].replace('T', ' ') or 'Abierta / desconocido' }}</span>
           </div>
           <p class="muted small" style="margin: 8px 0 0;">
             Requests: {{ s.request_count }} ·
-            Último toque: {{ s.last_seen_at[:19].replace('T', ' ') }}.
+            Último toque: {{ s.last_seen_at and s.last_seen_at[:19].replace('T', ' ') or '—' }}.
           </p>
         </div>
         {% endfor %}
