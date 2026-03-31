@@ -1,0 +1,3704 @@
+<!DOCTYPE html>
+<html lang="{{ html_lang }}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0b0d" />
+  <meta name="robots" content="{{ robots_meta }}" />
+  <title>{{ meta_title }}</title>
+  <meta name="description" content="{{ meta_description }}" />
+  <link rel="canonical" href="{{ canonical_url }}" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="{{ og_title }}" />
+  <meta property="og:description" content="{{ og_description }}" />
+  <meta property="og:locale" content="{{ og_locale }}" />
+  <meta property="og:url" content="{{ canonical_url }}" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="{{ twitter_title }}" />
+  <meta name="twitter:description" content="{{ twitter_description }}" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="{{ url_prefix }}/static/branding/favicon.png" />
+  <link rel="shortcut icon" href="{{ url_prefix }}/static/branding/favicon.ico" />
+  <script type="application/ld+json">{{ structured_data | tojson | safe }}</script>
+  <style>
+    .pyc-mvp-home * { box-sizing: border-box; }
+    body.pyc-mvp-home--body {
+      scroll-behavior: smooth;
+      margin: 0;
+      --void: #050506;
+      --ink: #0c0d10;
+      --card: rgba(255,255,255,0.035);
+      --line: rgba(255,255,255,0.08);
+      --text: #f4f5f7;
+      --mute: #8b919d;
+      --soft: #c5cad3;
+      --gold: #e8a317;
+      --amber: #ffcf4a;
+      --glow: rgba(232,163,23,0.35);
+      --lime: #d4ff4a;
+      --whatsapp: #25d366;
+      --max: 1240px;
+      --font-display: "Outfit", system-ui, sans-serif;
+      --font-sans: "DM Sans", system-ui, sans-serif;
+      font-family: var(--font-sans);
+      color: var(--text);
+      background: var(--void);
+      line-height: 1.4;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .pyc-mvp-home .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .pyc-mvp-home a { color: inherit; text-decoration: none; }
+    .pyc-mvp-home img { max-width: 100%; display: block; }
+
+    .pyc-mvp-home .canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .pyc-mvp-home .canvas__blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.5;
+      will-change: transform, opacity;
+      animation: pmvp-field-pulse 17s ease-in-out infinite;
+    }
+    .pyc-mvp-home .canvas__blob--1 {
+      width: min(52vw, 520px);
+      height: min(52vw, 520px);
+      top: -12%;
+      left: -8%;
+      background: radial-gradient(circle, rgba(232,163,23,0.5), transparent 70%);
+    }
+    .pyc-mvp-home .canvas__blob--2 {
+      width: min(48vw, 480px);
+      height: min(48vw, 480px);
+      top: 18%;
+      right: -14%;
+      background: radial-gradient(circle, rgba(37,211,102,0.22), transparent 68%);
+      animation-delay: -5.5s;
+      animation-duration: 19s;
+    }
+    .pyc-mvp-home .canvas__blob--3 {
+      width: min(60vw, 600px);
+      height: min(60vw, 600px);
+      bottom: -25%;
+      left: 20%;
+      background: radial-gradient(circle, rgba(212,255,74,0.12), transparent 72%);
+      animation-delay: -11s;
+      animation-duration: 21s;
+    }
+    .pyc-mvp-home .canvas__grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 64px 64px;
+      mask-image: radial-gradient(ellipse 80% 60% at 50% 35%, black 10%, transparent 70%);
+      opacity: 0.4;
+    }
+    /* Soft field: calm baseline + faint “return” pulses (signal echo, not aurora drift) */
+    @keyframes pmvp-field-pulse {
+      0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.47; }
+      7% { transform: translate(5px, -3px) scale(1.018); opacity: 0.54; }
+      14% { transform: translate(0, 0) scale(1); opacity: 0.46; }
+      46% { transform: translate(0, 0) scale(1); opacity: 0.46; }
+      52% { transform: translate(-4px, 3px) scale(1.026); opacity: 0.53; }
+      60% { transform: translate(0, 0) scale(1); opacity: 0.47; }
+      74% { transform: translate(3px, -2px) scale(1.012); opacity: 0.51; }
+      86% { transform: translate(0, 0) scale(1); opacity: 0.48; }
+    }
+
+    /* Very subtle sweep: energy passing through the field (not a UI radar) */
+    .pyc-mvp-home .canvas__sweep {
+      position: absolute;
+      inset: -25% -80%;
+      width: 260%;
+      height: 150%;
+      top: -25%;
+      pointer-events: none;
+      background: linear-gradient(
+        102deg,
+        transparent 0%,
+        transparent 40%,
+        rgba(255,207,74,0.045) 47.5%,
+        rgba(232,163,23,0.065) 50%,
+        rgba(255,207,74,0.04) 52.5%,
+        transparent 60%,
+        transparent 100%
+      );
+      filter: blur(28px);
+      opacity: 0.75;
+      mix-blend-mode: screen;
+      animation: pyc-canvas-sweep 18s cubic-bezier(0.42, 0, 0.58, 1) infinite alternate;
+    }
+    .pyc-mvp-home .canvas__sweep--late {
+      animation-delay: -9s;
+      animation-duration: 22s;
+      opacity: 0.55;
+      background: linear-gradient(
+        98deg,
+        transparent 0%,
+        transparent 43%,
+        rgba(37,211,102,0.035) 49.5%,
+        rgba(212,255,74,0.028) 50.5%,
+        transparent 57%,
+        transparent 100%
+      );
+    }
+    @keyframes pyc-canvas-sweep {
+      0% { transform: translateX(-30%); opacity: 0.32; }
+      45% { transform: translateX(4%); opacity: 0.68; }
+      100% { transform: translateX(28%); opacity: 0.4; }
+    }
+
+    /* Local blips: brief glow surges (monitoring activity) */
+    .pyc-mvp-home .canvas__spark {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      filter: blur(48px);
+      mix-blend-mode: screen;
+      opacity: 0.4;
+      will-change: transform, opacity;
+      animation: pyc-signal-blip 11s ease-in-out infinite;
+    }
+    .pyc-mvp-home .canvas__spark--1 {
+      width: min(28vw, 220px);
+      height: min(28vw, 220px);
+      top: 42%;
+      left: 4%;
+      background: radial-gradient(circle, rgba(255,207,74,0.45) 0%, rgba(232,163,23,0.15) 45%, transparent 70%);
+      animation-delay: -1.2s;
+      animation-duration: 10.5s;
+    }
+    .pyc-mvp-home .canvas__spark--2 {
+      width: min(22vw, 180px);
+      height: min(22vw, 180px);
+      top: 62%;
+      right: 8%;
+      background: radial-gradient(circle, rgba(37,211,102,0.22) 0%, rgba(212,255,74,0.12) 50%, transparent 70%);
+      animation-delay: -4s;
+      animation-duration: 12s;
+    }
+    .pyc-mvp-home .canvas__spark--3 {
+      width: min(18vw, 140px);
+      height: min(18vw, 140px);
+      bottom: 8%;
+      left: 35%;
+      background: radial-gradient(circle, rgba(255,207,74,0.28) 0%, transparent 65%);
+      animation-delay: -7s;
+      animation-duration: 13s;
+    }
+    @keyframes pyc-signal-blip {
+      0%, 100% { transform: scale(1); opacity: 0.3; }
+      11% { transform: scale(1.07); opacity: 0.52; }
+      22% { transform: scale(0.99); opacity: 0.32; }
+      41% { transform: scale(1); opacity: 0.32; }
+      48% { transform: scale(1.05); opacity: 0.46; }
+      58% { transform: scale(1); opacity: 0.34; }
+      76% { transform: scale(1.03); opacity: 0.4; }
+      88% { transform: scale(1); opacity: 0.31; }
+    }
+
+    .pyc-mvp-home .shell { position: relative; z-index: 1; }
+    .pyc-mvp-home .container { width: min(calc(100% - 48px), var(--max)); margin: 0 auto; }
+
+    .pyc-mvp-home .nav-wrap {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      background: rgba(5,5,6,0.72);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+    .pyc-mvp-home nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 72px;
+      gap: 20px;
+    }
+    .pyc-mvp-home .nav-start {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      flex-wrap: wrap;
+    }
+    .pyc-mvp-home .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      font-family: var(--font-display);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      font-size: 1.15rem;
+    }
+    .pyc-mvp-home .brand-mark {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: linear-gradient(145deg, var(--amber), var(--gold));
+      display: grid;
+      place-items: center;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.12), 0 12px 40px var(--glow);
+    }
+    .pyc-mvp-home .brand-mark img { width: 22px; height: auto; }
+    .pyc-mvp-home .nav-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px 20px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .pyc-mvp-home .nav-anchor {
+      display: none;
+      align-items: center;
+      gap: 22px;
+      color: var(--mute);
+      font-size: 0.88rem;
+      font-weight: 500;
+    }
+    @media (min-width: 900px) {
+      .pyc-mvp-home .nav-anchor { display: flex; }
+    }
+    .pyc-mvp-home .nav-anchor a:hover { color: var(--soft); }
+    .pyc-mvp-home .nav-cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 0 22px;
+      border-radius: 999px;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.92rem;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #fff 0%, #e8ecf2 100%);
+      color: #111;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.12), 0 16px 50px rgba(0,0,0,0.35);
+    }
+    .pyc-mvp-home .nav-cta:hover { transform: translateY(-2px); }
+
+    .pyc-mvp-home .nav-lang-switch {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      flex-shrink: 0;
+      padding: 3px 5px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.03);
+    }
+    .pyc-mvp-home .nav-lang-pill {
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      line-height: 1;
+      padding: 7px 9px;
+      border-radius: 6px;
+      box-sizing: border-box;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .pyc-mvp-home .nav-lang-pill--current {
+      color: var(--text);
+      background: rgba(255,255,255,0.1);
+      cursor: default;
+    }
+    .pyc-mvp-home .nav-lang-pill--link {
+      color: rgba(165,178,195,0.95);
+      text-decoration: none;
+      transition: color 0.15s ease, background 0.15s ease;
+      -webkit-tap-highlight-color: rgba(255, 207, 74, 0.15);
+    }
+    .pyc-mvp-home .nav-lang-pill--link:hover {
+      color: var(--text);
+      background: rgba(255,207,74,0.1);
+    }
+    .pyc-mvp-home .nav-lang-sep {
+      color: rgba(120,132,150,0.55);
+      font-size: 0.65rem;
+      font-weight: 600;
+      user-select: none;
+      padding: 0 1px;
+    }
+
+    /* —— Hero —— */
+    .pyc-mvp-home .hero {
+      position: relative;
+      padding: clamp(48px, 8vw, 100px) 0 clamp(56px, 10vw, 120px);
+      overflow: hidden;
+    }
+    .pyc-mvp-home .hero-fx {
+      position: absolute;
+      inset: -12% -8% -8%;
+      pointer-events: none;
+      z-index: 0;
+      overflow: visible;
+    }
+    .pyc-mvp-home .hero-fx__sheen {
+      position: absolute;
+      width: min(80vw, 720px);
+      height: min(40vw, 320px);
+      top: 18%;
+      right: -15%;
+      background: linear-gradient(
+        118deg,
+        transparent 36%,
+        rgba(255,207,74,0.14) 48%,
+        rgba(212,255,74,0.08) 52%,
+        transparent 64%
+      );
+      transform: rotate(-18deg);
+      animation: pyc-hero-sheen 12s ease-in-out infinite;
+    }
+    .pyc-mvp-home .hero-fx__orb {
+      position: absolute;
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      filter: blur(56px);
+      mix-blend-mode: screen;
+      animation: pyc-orb-echo 7.5s ease-in-out infinite;
+    }
+    .pyc-mvp-home .hero-fx__orb--1 {
+      top: 8%;
+      right: 12%;
+      background: radial-gradient(circle, rgba(232,163,23,0.55), transparent 68%);
+    }
+    .pyc-mvp-home .hero-fx__orb--2 {
+      bottom: 20%;
+      left: 2%;
+      background: radial-gradient(circle, rgba(37,211,102,0.22), transparent 70%);
+      animation-delay: -3.5s;
+    }
+    /* Pause → soft sweep → settle (signal pass, not decorative shimmer) */
+    @keyframes pyc-hero-sheen {
+      0%, 28% { opacity: 0.22; transform: rotate(-18deg) translateX(-16%); }
+      40% { opacity: 0.68; transform: rotate(-18deg) translateX(-5%); }
+      52% { opacity: 0.36; transform: rotate(-18deg) translateX(12%); }
+      64% { opacity: 0.22; transform: rotate(-18deg) translateX(16%); }
+      78%, 100% { opacity: 0.22; transform: rotate(-18deg) translateX(-16%); }
+    }
+    @keyframes pyc-orb-echo {
+      0%, 100% { transform: scale(0.96); opacity: 0.42; }
+      22% { transform: scale(1.09); opacity: 0.74; }
+      36% { transform: scale(0.98); opacity: 0.44; }
+      58% { transform: scale(1.06); opacity: 0.64; }
+      78% { transform: scale(0.97); opacity: 0.45; }
+    }
+    .pyc-mvp-home .hero .container { position: relative; z-index: 1; }
+    .pyc-mvp-home .hero-layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: clamp(40px, 6vw, 64px);
+      align-items: center;
+    }
+    @media (min-width: 1024px) {
+      .pyc-mvp-home .hero-layout {
+        grid-template-columns: 1fr minmax(280px, 0.95fr);
+        gap: 32px;
+      }
+    }
+
+    .pyc-mvp-home .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px 8px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--line);
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--soft);
+      margin-bottom: clamp(26px, 3vw, 32px);
+    }
+    .pyc-mvp-home .hero-tag i {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--whatsapp);
+      box-shadow: 0 0 0 4px rgba(37,211,102,0.2);
+    }
+
+    .pyc-mvp-home h1 {
+      margin: 0;
+      font-family: var(--font-display);
+      font-weight: 800;
+      letter-spacing: -0.035em;
+      line-height: 1.05;
+      font-size: clamp(2.35rem, 5.5vw, 3.85rem);
+      max-width: 16ch;
+      font-stretch: normal;
+    }
+    .pyc-mvp-home .hero h1 { max-width: 22ch; }
+    .pyc-mvp-home .hero-h1 {
+      background: linear-gradient(180deg, #fff 30%, rgba(245,247,251,0.88) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .pyc-mvp-home .hero-sub {
+      margin: clamp(28px, 3.2vw, 36px) 0 0;
+      max-width: 38ch;
+      font-size: clamp(1rem, 1.45vw, 1.12rem);
+      color: var(--soft);
+      font-weight: 500;
+      line-height: 1.55;
+    }
+    .pyc-mvp-home .hero-support {
+      margin: clamp(18px, 2.2vw, 24px) 0 0;
+      max-width: 42ch;
+      font-size: 0.93rem;
+      color: var(--mute);
+      line-height: 1.48;
+    }
+    .pyc-mvp-home .hero-proofs {
+      list-style: none;
+      margin: clamp(34px, 3.8vw, 46px) 0 0;
+      padding: 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .pyc-mvp-home .hero-proofs li {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--soft);
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--line);
+    }
+
+    /* Mismo patrón que /pullsobrief (.pws-tech): cápsula clara, logos OpenAI + Meta */
+    .pyc-mvp-home .pws-tech {
+      margin-top: clamp(22px, 2.8vw, 30px);
+      margin-bottom: 2px;
+      max-width: 100%;
+    }
+    .pyc-mvp-home .pws-tech-inner {
+      display: inline-flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px 14px;
+      padding: 9px 17px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.88), rgba(252,252,254,0.72));
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(38,42,50,0.08);
+      box-shadow:
+        0 10px 36px rgba(18,22,30,0.07),
+        0 0 0 1px rgba(255,255,255,0.8) inset,
+        0 0 48px -28px rgba(246,169,5,0.14);
+    }
+    .pyc-mvp-home .pws-tech-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #5c5f66;
+      line-height: 1;
+      padding-top: 1px;
+    }
+    .pyc-mvp-home .pws-tech-logo--openai {
+      height: 18px;
+      width: auto;
+      display: block;
+      flex-shrink: 0;
+      opacity: 0.9;
+      filter: contrast(1.03);
+      transform: translateY(0.5px);
+    }
+    .pyc-mvp-home .pws-tech-meta-wrap {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 0;
+      flex-shrink: 0;
+      transform: translateY(0.25px);
+    }
+    .pyc-mvp-home .pws-tech-logo--meta {
+      height: 15px;
+      width: auto;
+      max-width: none;
+      display: block;
+      object-fit: contain;
+      object-position: 50% 48%;
+      opacity: 0.9;
+    }
+    @media (max-width: 420px) {
+      .pyc-mvp-home .pws-tech-inner {
+        gap: 8px 12px;
+        padding: 8px 14px;
+      }
+      .pyc-mvp-home .pws-tech-logo--openai {
+        height: 17px;
+        transform: translateY(0.5px);
+      }
+      .pyc-mvp-home .pws-tech-logo--meta {
+        height: 14px;
+        max-width: min(86px, 46vw);
+      }
+    }
+    @media (max-width: 960px) {
+      .pyc-mvp-home .pws-tech {
+        margin-top: clamp(20px, 4vw, 26px);
+        margin-bottom: 4px;
+      }
+      .pyc-mvp-home .pws-tech-inner {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        text-align: center;
+        gap: 8px 14px;
+      }
+      .pyc-mvp-home .pws-tech-label {
+        width: 100%;
+        flex-basis: 100%;
+        padding-top: 0;
+        line-height: 1.2;
+        margin-bottom: 2px;
+      }
+    }
+
+    .pyc-mvp-home .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-top: clamp(30px, 3.4vw, 38px);
+    }
+    .pyc-mvp-home .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 52px;
+      padding: 0 28px;
+      border-radius: 999px;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.98rem;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, var(--amber), var(--gold));
+      color: #141109;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 0 0 1px rgba(255,207,74,0.25), 0 20px 50px var(--glow);
+    }
+    .pyc-mvp-home .btn-primary:hover { transform: translateY(-2px); }
+    .pyc-mvp-home .btn-ghost {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 52px;
+      padding: 0 26px;
+      border-radius: 999px;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.95rem;
+      letter-spacing: -0.02em;
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--line);
+      cursor: pointer;
+      transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+    }
+    .pyc-mvp-home .btn-ghost:hover {
+      background: rgba(255,255,255,0.04);
+      border-color: rgba(255,255,255,0.18);
+      transform: translateY(-2px);
+    }
+
+    /* Phone mock */
+    .pyc-mvp-home .stage {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 480px;
+    }
+    @media (min-width: 1024px) {
+      .pyc-mvp-home .stage { min-height: 628px; }
+    }
+    .pyc-mvp-home .hero-product { display: flex; justify-content: center; }
+    .pyc-mvp-home .hero-device {
+      container-type: inline-size;
+      container-name: hero-device;
+      width: min(336px, 90vw);
+      aspect-ratio: 393 / 920;
+      max-height: min(900px, 90vh);
+      position: relative;
+      z-index: 1;
+      filter: drop-shadow(0 32px 64px rgba(0,0,0,0.55));
+    }
+
+    /* Mock más legible cuando el “teléfono” es estrecho (viewport chico) */
+    @container hero-device (max-width: 320px) {
+      .pyc-mvp-home .hero-feed {
+        padding: 10px 9px 32px;
+        gap: 11px;
+        scroll-padding-bottom: 18px;
+      }
+      .pyc-mvp-home .hero-msg {
+        padding: 10px 10px;
+        border-radius: 13px;
+      }
+      .pyc-mvp-home .hero-msg__kicker {
+        font-size: 0.52rem;
+        margin-bottom: 5px;
+      }
+      .pyc-mvp-home .hero-msg__title {
+        font-size: 0.72rem;
+        line-height: 1.22;
+        margin-bottom: 5px;
+      }
+      .pyc-mvp-home .hero-msg__body {
+        font-size: 0.62rem;
+        line-height: 1.48;
+      }
+      .pyc-mvp-home .hero-msg__meta {
+        font-size: 0.54rem;
+        margin-top: 7px;
+        padding-top: 7px;
+      }
+      .pyc-mvp-home .hero-app-topbar {
+        padding: 9px 11px 10px;
+        gap: 8px;
+      }
+      .pyc-mvp-home .hero-app-title {
+        font-size: 0.8rem;
+      }
+      .pyc-mvp-home .hero-app-sub {
+        font-size: 0.61rem;
+      }
+      .pyc-mvp-home .hero-clip-preview {
+        border-radius: 12px;
+      }
+      .pyc-mvp-home .hero-clip-caption {
+        font-size: 0.59rem;
+        line-height: 1.44;
+        margin-top: 8px;
+      }
+      .pyc-mvp-home .hero-action-chips {
+        gap: 8px;
+        margin-top: 10px;
+        padding: 5px 0 6px;
+      }
+      .pyc-mvp-home .hero-action-chip {
+        font-size: 0.51rem;
+        padding: 8px 6px;
+        line-height: 1.2;
+      }
+      .pyc-mvp-home .hero-voice-play {
+        width: 34px;
+        height: 34px;
+      }
+    }
+
+    .pyc-mvp-home .hero-phone-frame {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      border-radius: clamp(42px, 14cqw, 54px);
+      padding: 2.5%;
+      background: linear-gradient(160deg, #3a3d45 0%, #23262d 38%, #12141a 100%);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 0 0 1px rgba(0,0,0,0.4);
+    }
+    .pyc-mvp-home .hero-phone-frame::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+      background: linear-gradient(125deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.04) 22%, transparent 45%, transparent 55%, rgba(0,0,0,0.4) 100%);
+      opacity: 0.85;
+    }
+    .pyc-mvp-home .hero-phone-inner {
+      position: relative;
+      z-index: 1;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      border-radius: clamp(36px, 12cqw, 48px);
+      overflow: hidden;
+      background: #080c10;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .pyc-mvp-home .hero-phone-bar {
+      height: 32px;
+      background: #0a0e12;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding-top: 8px;
+    }
+    .pyc-mvp-home .hero-phone-bar span:first-child {
+      width: 64px;
+      height: 25px;
+      border-radius: 14px;
+      background: linear-gradient(180deg, #0f141a 0%, #070a0e 100%);
+      border: 1px solid rgba(255,255,255,0.07);
+    }
+    .pyc-mvp-home .hero-phone-content {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      background:
+        repeating-linear-gradient(-12deg, transparent, transparent 6px, rgba(255,255,255,0.018) 6px, rgba(255,255,255,0.018) 7px),
+        linear-gradient(168deg, #0c1418 0%, #070b0d 48%, #0a1014 100%);
+    }
+    .pyc-mvp-home .hero-phone-status {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 18px 5px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: rgba(235,240,248,0.92);
+      background: rgba(0,0,0,0.35);
+    }
+    .pyc-mvp-home .hero-phone-status-icons { display: flex; gap: 5px; opacity: 0.88; }
+    .pyc-mvp-home .hero-phone-status-icons svg { display: block; }
+    .pyc-mvp-home .hero-app-topbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 14px 12px;
+      background: linear-gradient(105deg, #0f2420 0%, #133028 42%, #0f221c 100%);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    .pyc-mvp-home .hero-app-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      background: linear-gradient(145deg, rgba(232,163,23,0.95), #c87510);
+      display: grid;
+      place-items: center;
+    }
+    .pyc-mvp-home .hero-app-avatar img { width: 19px; height: auto; }
+    .pyc-mvp-home .hero-app-titles { min-width: 0; flex: 1; }
+    .pyc-mvp-home .hero-app-title-row { display: flex; align-items: center; gap: 6px; }
+    .pyc-mvp-home .hero-app-title {
+      font-weight: 800;
+      font-size: 0.88rem;
+      letter-spacing: -0.03em;
+      color: #fff;
+    }
+    .pyc-mvp-home .hero-app-badge {
+      font-size: 0.52rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: rgba(37,211,102,0.18);
+      color: rgba(180,245,200,0.98);
+      border: 1px solid rgba(37,211,102,0.28);
+    }
+    .pyc-mvp-home .hero-app-sub {
+      margin-top: 2px;
+      font-size: 0.66rem;
+      color: rgba(186,198,210,0.92);
+    }
+    .pyc-mvp-home .hero-feed {
+      flex: 1;
+      padding: 12px 12px 34px;
+      display: flex;
+      flex-direction: column;
+      gap: 13px;
+      overflow-x: hidden;
+      overflow-y: auto;
+      min-height: 0;
+      scroll-padding-bottom: 20px;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .pyc-mvp-home .hero-feed::-webkit-scrollbar {
+      width: 0;
+      height: 0;
+    }
+    .pyc-mvp-home .hero-msg {
+      border-radius: 14px;
+      padding: 11px 12px;
+      background: rgba(18,26,32,0.94);
+      border: 1px solid rgba(255,255,255,0.07);
+    }
+    /* Mock: texto → voz → clip (blur+play → face-cam en el mismo card) → chips; bucle ~15s; scroll solo manual */
+    .pyc-mvp-home .hero-msg--text.hero-msg--live .hero-msg__kicker {
+      opacity: 0;
+      transform: translateY(5px);
+      animation: hero-mock-kicker-in 0.42s cubic-bezier(0.22, 1, 0.36, 1) 0.12s forwards;
+    }
+    .pyc-mvp-home .hero-msg__typing {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      min-height: 12px;
+      margin: 0 0 2px;
+      opacity: 0;
+      max-height: 0;
+      overflow: hidden;
+      animation: hero-mock-typing-slot 2.35s cubic-bezier(0.4, 0, 0.2, 1) 0.38s forwards;
+    }
+    .pyc-mvp-home .hero-msg__typing span {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: rgba(200,208,220,0.55);
+      animation: hero-mock-dot 0.55s ease-in-out infinite alternate;
+    }
+    .pyc-mvp-home .hero-msg__typing span:nth-child(2) {
+      animation-delay: 0.12s;
+    }
+    .pyc-mvp-home .hero-msg__typing span:nth-child(3) {
+      animation-delay: 0.24s;
+    }
+    .pyc-mvp-home .hero-msg--text.hero-msg--live .hero-msg__arrive {
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      transform: translateY(10px);
+      animation: hero-mock-arrive 0.62s cubic-bezier(0.22, 1, 0.36, 1) 0.92s forwards;
+    }
+    .pyc-mvp-home .hero-msg--voice.hero-msg--live {
+      opacity: 0;
+      transform: translateY(12px);
+      animation: hero-mock-card-pop 0.52s cubic-bezier(0.22, 1, 0.36, 1) 1.42s forwards;
+    }
+    .pyc-mvp-home .hero-msg--clip.hero-msg--live {
+      opacity: 0;
+      transform: translateY(12px);
+      animation: hero-mock-card-pop 0.52s cubic-bezier(0.22, 1, 0.36, 1) 2.08s forwards;
+    }
+    .pyc-mvp-home .hero-voice-wave {
+      flex: 1;
+      height: 32px;
+      border-radius: 10px;
+      background: rgba(0,0,0,0.22);
+      border: 1px solid rgba(255,255,255,0.05);
+      padding: 8px;
+      overflow: hidden;
+    }
+    .pyc-mvp-home .hero-voice-wave-inner {
+      width: 155%;
+      height: 100%;
+      animation: hero-voice-wave-pan 2.2s linear infinite;
+      animation-delay: 1.82s;
+      animation-play-state: paused;
+    }
+    .pyc-mvp-home .hero-msg--voice.hero-msg--live .hero-voice-wave-inner {
+      animation-play-state: running;
+    }
+    .pyc-mvp-home .hero-voice-wave-inner svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    @keyframes hero-voice-wave-pan {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-32%); }
+    }
+    .pyc-mvp-home .hero-msg--voice.hero-msg--live .hero-voice-play {
+      animation: hero-voice-play-glow 1.65s ease-in-out infinite;
+      animation-delay: 1.78s;
+    }
+    @keyframes hero-voice-play-glow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(232,163,23,0); }
+      50% { box-shadow: 0 0 0 5px rgba(232,163,23,0.12); }
+    }
+    @keyframes hero-clip-frame-pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.025); }
+    }
+    @keyframes hero-clip-ph1-out {
+      to {
+        opacity: 0;
+        visibility: hidden;
+      }
+    }
+    @keyframes hero-clip-ph2-in {
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+    @keyframes hero-clip-play-out {
+      to {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.82);
+      }
+    }
+    @keyframes hero-clip-time-out {
+      to { opacity: 0; }
+    }
+    @keyframes hero-mock-kicker-in {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    @keyframes hero-mock-typing-slot {
+      0%, 18% {
+        opacity: 0;
+        max-height: 0;
+        margin-bottom: 0;
+      }
+      22%, 52% {
+        opacity: 1;
+        max-height: 16px;
+        margin-bottom: 6px;
+      }
+      58%, 100% {
+        opacity: 0;
+        max-height: 0;
+        margin-bottom: 0;
+      }
+    }
+    @keyframes hero-mock-dot {
+      from {
+        transform: translateY(0);
+        opacity: 0.45;
+      }
+      to {
+        transform: translateY(-2px);
+        opacity: 1;
+      }
+    }
+    @keyframes hero-mock-arrive {
+      from {
+        max-height: 0;
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        max-height: 280px;
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    @keyframes hero-mock-card-pop {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .pyc-mvp-home .hero-msg__kicker {
+      font-size: 0.56rem;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(255,198,78,0.98);
+      margin-bottom: 6px;
+    }
+    .pyc-mvp-home .hero-msg__title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      line-height: 1.25;
+      color: #f2f5fa;
+      margin: 0 0 6px;
+    }
+    .pyc-mvp-home .hero-msg__body {
+      margin: 0;
+      font-size: 0.68rem;
+      line-height: 1.45;
+      color: rgba(184,194,208,0.95);
+    }
+    .pyc-mvp-home .hero-msg__meta {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      font-size: 0.58rem;
+      color: rgba(140,152,168,0.95);
+    }
+    .pyc-mvp-home .hero-msg--voice { padding: 10px 11px; }
+    .pyc-mvp-home .hero-voice-row { display: flex; align-items: center; gap: 10px; }
+    .pyc-mvp-home .hero-voice-play {
+      width: 36px;
+      height: 36px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: linear-gradient(165deg, rgba(232,163,23,0.22), rgba(200,117,16,0.12));
+      display: grid;
+      place-items: center;
+    }
+    .pyc-mvp-home .hero-msg--clip {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding: 10px 10px 11px;
+    }
+    .pyc-mvp-home .hero-msg--clip .hero-msg__kicker {
+      margin-bottom: 7px;
+    }
+    .pyc-mvp-home .hero-clip-preview {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      min-height: 0;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.35), 0 6px 18px rgba(0,0,0,0.35);
+      background: #0a0e12;
+    }
+    .pyc-mvp-home .hero-clip-preview__media {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+    .pyc-mvp-home .hero-clip-preview__placeholder {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      opacity: 1;
+    }
+    .pyc-mvp-home .hero-msg--clip.hero-msg--live .hero-clip-preview__placeholder {
+      animation:
+        hero-clip-frame-pulse 2.35s ease-in-out 2.35s infinite,
+        hero-clip-ph1-out 0.52s cubic-bezier(0.22, 1, 0.36, 1) 2.62s forwards;
+    }
+    .pyc-mvp-home .hero-clip-preview__avatar {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      opacity: 0;
+      transform: scale(1.04);
+      background: #060a0e;
+    }
+    .pyc-mvp-home .hero-msg--clip.hero-msg--live .hero-clip-preview__avatar {
+      animation: hero-clip-ph2-in 0.58s cubic-bezier(0.22, 1, 0.36, 1) 2.62s forwards;
+    }
+    .pyc-mvp-home .hero-clip-preview__video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 28%;
+      z-index: 0;
+      background: #060a0e;
+    }
+    .pyc-mvp-home .hero-clip-preview__video-shade {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background: linear-gradient(180deg, rgba(0,0,0,0.12) 0%, transparent 38%, rgba(0,0,0,0.38) 100%);
+    }
+    .pyc-mvp-home .hero-clip-avatar--photo {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #3a3d42;
+    }
+    .pyc-mvp-home .hero-clip-avatar__img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 30%;
+      display: block;
+    }
+    .pyc-mvp-home .hero-clip-preview__blur {
+      position: absolute;
+      inset: -18%;
+      background:
+        radial-gradient(ellipse 85% 70% at 28% 22%, rgba(232,163,23,0.32), transparent 52%),
+        radial-gradient(ellipse 70% 55% at 78% 75%, rgba(37,211,102,0.14), transparent 48%),
+        radial-gradient(circle at 50% 100%, rgba(15,40,50,0.9), transparent 55%),
+        linear-gradient(165deg, #1a2c28 0%, #0e1820 45%, #060a0e 100%);
+      filter: blur(10px);
+      transform: scale(1.08);
+      opacity: 0.92;
+    }
+    @keyframes hero-clip-ken {
+      0% { transform: scale(1.06) translate(-1.5%, -0.8%); }
+      50% { transform: scale(1.14) translate(2%, 1.1%); }
+      100% { transform: scale(1.06) translate(-1.5%, -0.8%); }
+    }
+    @keyframes hero-clip-grain-shimmer {
+      0%, 100% { opacity: 0.11; }
+      45% { opacity: 0.17; }
+      70% { opacity: 0.09; }
+    }
+    .pyc-mvp-home .hero-clip-preview__blur--demo {
+      animation: hero-clip-ken 16s ease-in-out infinite;
+      will-change: transform;
+    }
+    .pyc-mvp-home .hero-clip-preview__grain {
+      position: absolute;
+      inset: 0;
+      opacity: 0.12;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      mix-blend-mode: overlay;
+      pointer-events: none;
+    }
+    .pyc-mvp-home .hero-clip-preview__grain--demo {
+      animation: hero-clip-grain-shimmer 4.2s ease-in-out infinite;
+    }
+    .pyc-mvp-home .hero-clip-preview__shade {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 35%, rgba(0,0,0,0.5) 100%);
+      pointer-events: none;
+    }
+    .pyc-mvp-home .hero-clip-preview__play {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 48px;
+      height: 48px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: rgba(255,252,248,0.94);
+      color: #141312;
+      border: none;
+      box-shadow:
+        0 0 0 3px rgba(255,255,255,0.22),
+        0 10px 28px rgba(0,0,0,0.45);
+      cursor: default;
+      z-index: 3;
+      padding: 0;
+      margin: 0;
+    }
+    .pyc-mvp-home .hero-msg--clip.hero-msg--live .hero-clip-preview__play {
+      animation: hero-clip-play-out 0.45s ease-out 2.62s forwards;
+    }
+    .pyc-mvp-home .hero-clip-preview__play svg {
+      width: 19px;
+      height: 19px;
+      margin-left: 3px;
+      display: block;
+    }
+    .pyc-mvp-home .hero-msg--clip.hero-msg--live .hero-clip-preview__time {
+      animation: hero-clip-time-out 0.45s ease-out 2.65s forwards;
+    }
+    .pyc-mvp-home .hero-clip-preview__time {
+      position: absolute;
+      right: 8px;
+      bottom: 7px;
+      z-index: 3;
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: rgba(248,250,252,0.95);
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(0,0,0,0.52);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      line-height: 1;
+    }
+    .pyc-mvp-home .hero-clip-caption {
+      margin: 9px 1px 0;
+      font-size: 0.64rem;
+      line-height: 1.45;
+      color: rgba(168,178,192,0.96);
+    }
+    .pyc-mvp-home .hero-msg--clip .hero-msg__meta {
+      margin-top: 8px;
+    }
+    .pyc-mvp-home .hero-clip-send-hint {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin: 6px 1px 4px;
+      font-size: 0.58rem;
+      font-weight: 600;
+      line-height: 1.2;
+      letter-spacing: 0.02em;
+      color: rgba(130,220,170,0.98);
+      min-height: 15px;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .pyc-mvp-home .hero-clip-send-dots {
+      display: inline-flex;
+      gap: 2px;
+      align-items: flex-end;
+      height: 11px;
+    }
+    .pyc-mvp-home .hero-clip-send-dots span {
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: rgba(130,220,170,0.95);
+      animation: hero-clip-send-dot 0.42s ease-in-out infinite alternate;
+    }
+    .pyc-mvp-home .hero-clip-send-dots span:nth-child(2) {
+      animation-delay: 0.12s;
+    }
+    .pyc-mvp-home .hero-clip-send-dots span:nth-child(3) {
+      animation-delay: 0.24s;
+    }
+    @keyframes hero-clip-send-dot {
+      from { transform: translateY(0); opacity: 0.4; }
+      to { transform: translateY(-3px); opacity: 1; }
+    }
+    .pyc-mvp-home .hero-msg--clip.hero-msg--live .hero-clip-send-hint {
+      animation: hero-clip-send-hint-anim 1.35s cubic-bezier(0.22, 1, 0.36, 1) 2.92s forwards;
+    }
+    @keyframes hero-clip-send-hint-anim {
+      0% { opacity: 0; transform: translateX(6px); }
+      18%, 72% { opacity: 1; transform: translateX(0); }
+      100% { opacity: 0; transform: translateX(0); }
+    }
+    .pyc-mvp-home .hero-action-chips {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      gap: 10px;
+      align-items: stretch;
+      justify-content: stretch;
+      margin: 12px 0 0;
+      padding: 6px 2px 4px;
+      min-height: 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .pyc-mvp-home .hero-action-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 1 1 0;
+      min-width: 0;
+      max-width: none;
+      padding: 9px 10px;
+      border-radius: 999px;
+      font-size: 0.56rem;
+      font-weight: 600;
+      line-height: 1.25;
+      text-align: center;
+      letter-spacing: 0.01em;
+      color: rgba(198,244,214,0.96);
+      background: rgba(37,211,102,0.1);
+      border: 1px solid rgba(37,211,102,0.35);
+      box-shadow: 0 1px 0 rgba(0,0,0,0.2);
+    }
+    .pyc-mvp-home .hero-action-chips--live .hero-action-chip {
+      opacity: 0;
+      transform: translateY(12px) scale(0.94);
+    }
+    .pyc-mvp-home .hero-action-chips--live .hero-action-chip:nth-child(1) {
+      animation: hero-action-chip-pop 0.48s cubic-bezier(0.22, 1, 0.36, 1) 3.18s forwards;
+    }
+    .pyc-mvp-home .hero-action-chips--live .hero-action-chip:nth-child(2) {
+      animation: hero-action-chip-pop 0.48s cubic-bezier(0.22, 1, 0.36, 1) 3.38s forwards;
+    }
+    @keyframes hero-action-chip-pop {
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    /* Pullso narrative sections (pnv) */
+    .pyc-mvp-home .pnv-k {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin: 0 0 12px;
+    }
+    .pyc-mvp-home .pnv-h2 {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: clamp(1.75rem, 3.4vw, 2.85rem);
+      font-weight: 800;
+      letter-spacing: -0.045em;
+      line-height: 1.08;
+      max-width: 20ch;
+    }
+    .pyc-mvp-home .pnv-h2--compact {
+      max-width: 28ch;
+      font-size: clamp(1.45rem, 2.8vw, 2.15rem);
+    }
+    .pyc-mvp-home .pnv-lede {
+      margin: 14px 0 0;
+      color: var(--mute);
+      font-size: 1.02rem;
+      line-height: 1.5;
+      max-width: 48ch;
+    }
+    .pyc-mvp-home .pnv-lede--narrow { max-width: 40ch; }
+    .pyc-mvp-home .pnv-section {
+      padding: clamp(52px, 9vw, 88px) 0;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+    .pyc-mvp-home .pnv-thesis {
+      padding: clamp(28px, 5vw, 44px) 0;
+      border-bottom: 1px solid var(--line);
+      background: rgba(0,0,0,0.35);
+    }
+    .pyc-mvp-home .pnv-thesis__head {
+      margin: 0 0 18px;
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(255,207,74,0.9);
+    }
+    .pyc-mvp-home .pnv-thesis__row {
+      display: grid;
+      gap: 20px;
+      align-items: stretch;
+    }
+    @media (min-width: 900px) {
+      .pyc-mvp-home .pnv-thesis__row {
+        grid-template-columns: 1fr auto 1fr auto 1fr;
+        gap: 12px 8px;
+        align-items: center;
+      }
+    }
+    .pyc-mvp-home .pnv-thesis__col {
+      border-radius: 16px;
+      padding: 20px 18px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 100%;
+      justify-content: flex-start;
+    }
+    @media (min-width: 900px) {
+      .pyc-mvp-home .pnv-thesis__col {
+        min-height: 132px;
+      }
+    }
+    .pyc-mvp-home .pnv-thesis__l {
+      font-family: var(--font-display);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--mute);
+    }
+    .pyc-mvp-home .pnv-thesis__s {
+      font-family: var(--font-display);
+      font-size: clamp(0.98rem, 1.25vw, 1.1rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.3;
+      color: var(--text);
+      flex: 1;
+    }
+    .pyc-mvp-home .pnv-thesis__arr {
+      display: none;
+      text-align: center;
+      font-weight: 800;
+      font-size: 1.25rem;
+      color: var(--amber);
+      opacity: 0.85;
+    }
+    @media (min-width: 900px) {
+      .pyc-mvp-home .pnv-thesis__arr { display: block; align-self: center; }
+    }
+
+    .pyc-mvp-home .pnv-strip {
+      padding: clamp(36px, 6vw, 56px) 0;
+      background: rgba(255,255,255,0.02);
+      border-block: 1px solid var(--line);
+    }
+    .pyc-mvp-home .pnv-strip-grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 800px) {
+      .pyc-mvp-home .pnv-strip-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    .pyc-mvp-home .pnv-icon-card {
+      border-radius: 20px;
+      padding: 22px 20px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      position: relative;
+      overflow: hidden;
+    }
+    .pyc-mvp-home .pnv-icon-card__glyph {
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      background: linear-gradient(145deg, rgba(255,207,74,0.2), rgba(232,163,23,0.08));
+      border: 1px solid rgba(255,207,74,0.25);
+      display: grid;
+      place-items: center;
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 0.95rem;
+      color: var(--amber);
+      margin-bottom: 14px;
+    }
+    .pyc-mvp-home .pnv-icon-card__t {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 1.12rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+    }
+    .pyc-mvp-home .pnv-icon-card__b {
+      margin: 8px 0 0;
+      font-size: 0.9rem;
+      color: var(--mute);
+      line-height: 1.45;
+    }
+    .pyc-mvp-home .pnv-split {
+      display: grid;
+      gap: 32px;
+      align-items: center;
+      margin-bottom: 0;
+    }
+    @media (min-width: 900px) {
+      .pyc-mvp-home .pnv-split {
+        grid-template-columns: 1fr minmax(300px, 448px);
+        gap: clamp(36px, 5vw, 56px);
+        align-items: stretch;
+      }
+    }
+    .pyc-mvp-home .pnv-problem .pnv-h2 {
+      max-width: 22ch;
+      font-size: clamp(1.55rem, 3vw, 2.35rem);
+      line-height: 1.12;
+    }
+    .pyc-mvp-home .pnv-prob-viz {
+      position: relative;
+      border-radius: 20px;
+      padding: clamp(20px, 3.2vw, 28px) clamp(16px, 2.8vw, 24px);
+      min-height: min(300px, 56vw);
+      background:
+        radial-gradient(ellipse 92% 78% at 45% 35%, rgba(255,207,74,0.1) 0%, transparent 58%),
+        radial-gradient(ellipse 70% 55% at 88% 75%, rgba(232,163,23,0.07) 0%, transparent 52%),
+        linear-gradient(168deg, rgba(22,24,30,0.98) 0%, rgba(7,8,11,1) 100%);
+      border: 1px solid rgba(255,207,74,0.14);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.06),
+        0 20px 48px rgba(0,0,0,0.35);
+      overflow: hidden;
+    }
+    .pyc-mvp-home .pnv-prob-nodes {
+      position: relative;
+      z-index: 1;
+      min-height: min(252px, 46vw);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .pyc-mvp-home .pnv-prob-nodes--live .pnv-prob-node {
+      left: 0 !important;
+      top: 0 !important;
+      right: auto !important;
+      bottom: auto !important;
+      margin: 0;
+      z-index: 3;
+      will-change: transform;
+    }
+    .pyc-mvp-home .pnv-prob-node {
+      position: absolute;
+      font-size: 0.66rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 9px 14px;
+      border-radius: 999px;
+      line-height: 1;
+      white-space: nowrap;
+      color: #14120c;
+      background: linear-gradient(155deg, #ffcf4a 0%, var(--gold) 48%, #c9830b 100%);
+      border: 1px solid rgba(255,255,255,0.42);
+      box-shadow:
+        0 1px 0 rgba(255,255,255,0.45) inset,
+        0 6px 22px rgba(232,163,23,0.35),
+        0 2px 8px rgba(0,0,0,0.28);
+      text-shadow: 0 1px 0 rgba(255,255,255,0.22);
+    }
+    .pyc-mvp-home .pnv-prob-ripple {
+      position: absolute;
+      width: 44px;
+      height: 44px;
+      margin: -22px 0 0 -22px;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 2;
+      background: radial-gradient(
+        circle,
+        rgba(255,230,150,0.44) 0%,
+        rgba(232,163,23,0.16) 36%,
+        transparent 68%
+      );
+      box-shadow: 0 0 22px rgba(232,163,23,0.12);
+      animation: pnv-prob-ripple-out 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+    @keyframes pnv-prob-ripple-out {
+      0% { transform: scale(0.42); opacity: 0.78; filter: blur(0); }
+      100% { transform: scale(2.2); opacity: 0; filter: blur(5px); }
+    }
+    /* Static fallbacks (no JS / reduced motion): dispersed, no hub */
+    .pyc-mvp-home .pnv-prob-node--pms { left: 7%; top: 14%; }
+    .pyc-mvp-home .pnv-prob-node--cm { left: 46%; top: 6%; }
+    .pyc-mvp-home .pnv-prob-node--pickup { right: 6%; top: 22%; }
+    .pyc-mvp-home .pnv-prob-node--rates { left: 12%; top: 52%; }
+    .pyc-mvp-home .pnv-prob-node--sheet { right: 14%; top: 48%; }
+    .pyc-mvp-home .pnv-prob-node--ota { left: 34%; bottom: 14%; }
+    @media (max-width: 520px) {
+      .pyc-mvp-home .pnv-prob-viz { min-height: min(288px, 62vw); }
+      .pyc-mvp-home .pnv-prob-nodes { min-height: min(236px, 54vw); }
+      .pyc-mvp-home .pnv-prob-node { font-size: 0.58rem; padding: 8px 12px; }
+      .pyc-mvp-home .pnv-prob-node--pms { left: 4%; top: 10%; }
+      .pyc-mvp-home .pnv-prob-node--cm { left: 40%; top: 4%; }
+      .pyc-mvp-home .pnv-prob-node--pickup { right: 4%; top: 18%; }
+      .pyc-mvp-home .pnv-prob-node--rates { left: 6%; top: 46%; }
+      .pyc-mvp-home .pnv-prob-node--sheet { right: 6%; top: 44%; }
+      .pyc-mvp-home .pnv-prob-node--ota { left: 22%; bottom: 10%; }
+    }
+    .pyc-mvp-home .pnv-problem .pnv-cards-3 {
+      margin-top: clamp(44px, 6vw, 64px);
+      gap: 16px;
+      align-items: stretch;
+    }
+    .pyc-mvp-home .pnv-problem .pnv-mini-card {
+      min-height: 152px;
+      padding: 22px 20px;
+      display: flex;
+      flex-direction: column;
+      border-radius: 16px;
+    }
+    .pyc-mvp-home .pnv-problem .pnv-mini-card h3 {
+      margin: 0 0 10px;
+      font-size: 1.02rem;
+      line-height: 1.2;
+    }
+    .pyc-mvp-home .pnv-problem .pnv-mini-card p {
+      margin: 0;
+      flex: 1;
+      font-size: 0.89rem;
+      line-height: 1.48;
+    }
+    .pyc-mvp-home .pnv-cards-3 {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 720px) {
+      .pyc-mvp-home .pnv-cards-3 { grid-template-columns: repeat(3, 1fr); }
+    }
+    .pyc-mvp-home .pnv-delivery-kicker {
+      margin-top: clamp(26px, 4vw, 40px);
+      margin-bottom: 0;
+    }
+    .pyc-mvp-home .pnv-delivery-row {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: 1fr;
+      margin-top: 14px;
+    }
+    @media (min-width: 720px) {
+      .pyc-mvp-home .pnv-delivery-row {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-top: 16px;
+      }
+    }
+    .pyc-mvp-home .pnv-delivery-chip {
+      border-radius: 16px;
+      padding: 16px 17px;
+      background: rgba(255,255,255,0.028);
+      border: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      min-height: 100%;
+    }
+    .pyc-mvp-home .pnv-delivery-chip__t {
+      font-family: var(--font-display);
+      font-size: 0.96rem;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      color: var(--text);
+      line-height: 1.15;
+    }
+    .pyc-mvp-home .pnv-delivery-chip__b {
+      font-size: 0.82rem;
+      color: var(--mute);
+      line-height: 1.45;
+    }
+    .pyc-mvp-home .pnv-mini-card {
+      border-radius: 18px;
+      padding: 20px 18px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--line);
+    }
+    .pyc-mvp-home .pnv-mini-card--accent {
+      border-color: rgba(255,207,74,0.2);
+      background: linear-gradient(165deg, rgba(232,163,23,0.08), transparent 65%);
+    }
+    .pyc-mvp-home .pnv-mini-card h3 {
+      margin: 0 0 8px;
+      font-family: var(--font-display);
+      font-size: 1.05rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .pyc-mvp-home .pnv-mini-card p {
+      margin: 0;
+      font-size: 0.9rem;
+      color: var(--mute);
+      line-height: 1.45;
+    }
+    .pyc-mvp-home .pnv-flow {
+      margin-top: 32px;
+      display: grid;
+      gap: 14px;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 720px) {
+      .pyc-mvp-home .pnv-flow {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        align-items: stretch;
+      }
+    }
+    .pyc-mvp-home .pnv-flow__step {
+      border-radius: 18px;
+      padding: 18px 16px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 100%;
+      position: relative;
+    }
+    @media (min-width: 720px) {
+      .pyc-mvp-home .pnv-flow__step:not(:last-child)::after {
+        content: "→";
+        position: absolute;
+        right: -13px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-weight: 800;
+        font-size: 1rem;
+        color: var(--amber);
+        opacity: 0.7;
+        z-index: 2;
+        pointer-events: none;
+      }
+    }
+    .pyc-mvp-home .pnv-flow__step--accent {
+      border-color: rgba(255,207,74,0.28);
+      background: linear-gradient(165deg, rgba(232,163,23,0.09), rgba(0,0,0,0.22));
+    }
+    .pyc-mvp-home .pnv-flow__n {
+      font-size: 0.65rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--amber);
+    }
+    .pyc-mvp-home .pnv-flow__t {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 1.02rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+      color: var(--text);
+    }
+    .pyc-mvp-home .pnv-flow__b {
+      margin: 0;
+      font-size: 0.86rem;
+      color: var(--mute);
+      line-height: 1.45;
+    }
+    .pyc-mvp-home .pnv-mid-cta {
+      margin-top: 32px;
+      text-align: center;
+    }
+    .pyc-mvp-home .pnv-wa {
+      background: linear-gradient(180deg, rgba(37,211,102,0.06), transparent 90%);
+    }
+    .pyc-mvp-home .pnv-wa-inner {
+      display: grid;
+      gap: 28px;
+      align-items: start;
+    }
+    @media (min-width: 800px) {
+      .pyc-mvp-home .pnv-wa-inner { grid-template-columns: 1.1fr 0.9fr; }
+    }
+    .pyc-mvp-home .pnv-wa-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .pyc-mvp-home .pnv-wa-list li {
+      display: grid;
+      grid-template-columns: 24px 1fr;
+      column-gap: 14px;
+      align-items: start;
+      font-size: 0.95rem;
+      color: var(--soft);
+      line-height: 1.45;
+      min-height: 3.25rem;
+    }
+    .pyc-mvp-home .pnv-wa-ico {
+      flex-shrink: 0;
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      background: rgba(37,211,102,0.15);
+      border: 1px solid rgba(37,211,102,0.35);
+      color: #82f7ad;
+      font-size: 0.72rem;
+      display: grid;
+      place-items: center;
+      margin-top: 1px;
+    }
+    .pyc-mvp-home .pnv-vision {
+      background: linear-gradient(180deg, rgba(232,163,23,0.09), transparent 70%);
+    }
+    .pyc-mvp-home .pnv-ladder {
+      list-style: none;
+      margin: 32px 0 0;
+      padding: 0;
+      display: grid;
+      gap: 12px;
+      counter-reset: pnv;
+    }
+    @media (min-width: 900px) {
+      .pyc-mvp-home .pnv-ladder {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 28px;
+      }
+    }
+    .pyc-mvp-home .pnv-ladder__step {
+      border-radius: 20px;
+      padding: 22px 20px;
+      background: rgba(0,0,0,0.28);
+      border: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+      min-height: 168px;
+    }
+    @media (min-width: 900px) {
+      .pyc-mvp-home .pnv-ladder__step:not(:last-child)::after {
+        content: "→";
+        position: absolute;
+        right: -22px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-weight: 800;
+        font-size: 1.2rem;
+        color: var(--amber);
+        opacity: 0.75;
+        pointer-events: none;
+        z-index: 2;
+      }
+    }
+    .pyc-mvp-home .pnv-ladder__stage {
+      font-size: 0.65rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--amber);
+    }
+    .pyc-mvp-home .pnv-ladder__title {
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--text);
+    }
+    .pyc-mvp-home .pnv-ladder__b {
+      font-size: 0.88rem;
+      color: var(--mute);
+      line-height: 1.45;
+      flex: 1;
+    }
+    .pyc-mvp-home .pnv-replace-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 24px;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 640px) {
+      .pyc-mvp-home .pnv-replace-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (min-width: 1000px) {
+      .pyc-mvp-home .pnv-replace-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    .pyc-mvp-home .pnv-replace-cell {
+      border-radius: 16px;
+      padding: 16px 18px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .pyc-mvp-home .pnv-replace-cell__t {
+      font-family: var(--font-display);
+      font-size: 0.98rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .pyc-mvp-home .pnv-replace-cell__b {
+      font-size: 0.82rem;
+      color: var(--mute);
+      line-height: 1.4;
+    }
+    .pyc-mvp-home .pnv-how-track {
+      display: grid;
+      gap: 12px;
+      margin-top: 28px;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 800px) {
+      .pyc-mvp-home .pnv-how-track { grid-template-columns: repeat(4, 1fr); }
+    }
+    .pyc-mvp-home .pnv-how-step {
+      border-radius: 18px;
+      padding: 20px 16px;
+      background: var(--card);
+      border: 1px solid var(--line);
+    }
+    .pyc-mvp-home .pnv-how-step__n {
+      display: inline-grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 0.8rem;
+      background: rgba(255,207,74,0.18);
+      color: var(--amber);
+      margin-bottom: 12px;
+    }
+    .pyc-mvp-home .pnv-how-step h3 {
+      margin: 0 0 8px;
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .pyc-mvp-home .pnv-how-step p {
+      margin: 0;
+      font-size: 0.85rem;
+      color: var(--mute);
+      line-height: 1.45;
+    }
+    .pyc-mvp-home .pnv-audience {
+      padding: clamp(40px, 7vw, 64px) 0;
+      border-top: 1px solid var(--line);
+    }
+    .pyc-mvp-home .pnv-audience-pills {
+      display: grid;
+      gap: 12px;
+      margin-top: 22px;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 520px) {
+      .pyc-mvp-home .pnv-audience-pills { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (min-width: 900px) {
+      .pyc-mvp-home .pnv-audience-pills { grid-template-columns: repeat(3, 1fr); }
+    }
+    .pyc-mvp-home .pnv-audience-pill {
+      padding: 14px 18px;
+      border-radius: 14px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--soft);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--line);
+      text-align: center;
+      line-height: 1.35;
+      min-height: 3.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .pyc-mvp-home .pnv-marquee {
+      overflow: hidden;
+      border-block: 1px solid var(--line);
+      padding: 16px 0;
+      background: rgba(0,0,0,0.2);
+    }
+    .pyc-mvp-home .pnv-marquee__inner {
+      display: flex;
+      gap: 40px;
+      width: max-content;
+      animation: pnv-marq 22s linear infinite;
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: clamp(1.35rem, 3vw, 2rem);
+      letter-spacing: -0.04em;
+      color: rgba(255,255,255,0.1);
+      text-transform: lowercase;
+    }
+    .pyc-mvp-home .pnv-marquee__inner span { white-space: nowrap; }
+    @keyframes pnv-marq {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    .pyc-mvp-home .pnv-faq {
+      padding: clamp(64px, 10vw, 108px) 0;
+    }
+    .pyc-mvp-home .pnv-faq .container {
+      max-width: min(calc(100% - 48px), 680px);
+      margin-inline: auto;
+    }
+    .pyc-mvp-home .pnv-faq .pnv-k {
+      margin-bottom: 18px;
+    }
+    .pyc-mvp-home .pnv-faq .pnv-h2 {
+      margin-bottom: clamp(40px, 5.5vw, 56px);
+      max-width: 100%;
+    }
+    /* legacy kicker alias for rail */
+    .pyc-mvp-home .mvp-kicker {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 14px;
+    }
+    .pyc-mvp-home .mvp-faq {
+      max-width: 100%;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .pyc-mvp-home .mvp-faq details {
+      border-radius: 13px;
+      border: 1px solid rgba(255,255,255,0.055);
+      background: rgba(255,255,255,0.018);
+      margin-bottom: 0;
+      overflow: hidden;
+      transition: border-color 0.18s ease, background 0.18s ease;
+    }
+    .pyc-mvp-home .mvp-faq details:hover {
+      border-color: rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.028);
+    }
+    .pyc-mvp-home .mvp-faq details[open] {
+      border-color: rgba(255,255,255,0.09);
+      background: rgba(255,255,255,0.032);
+    }
+    .pyc-mvp-home .mvp-faq summary {
+      cursor: pointer;
+      list-style: none;
+      padding: 18px 22px 18px 24px;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.96rem;
+      letter-spacing: -0.022em;
+      color: var(--text);
+      line-height: 1.3;
+      outline: none;
+    }
+    .pyc-mvp-home .mvp-faq summary:focus-visible {
+      box-shadow: inset 0 0 0 2px rgba(255,207,74,0.35);
+      border-radius: 12px;
+    }
+    .pyc-mvp-home .mvp-faq summary::-webkit-details-marker { display: none; }
+    .pyc-mvp-home .mvp-faq details[open] summary {
+      border-bottom: 1px solid rgba(255,255,255,0.045);
+      padding-bottom: 15px;
+      margin-bottom: 0;
+    }
+    .pyc-mvp-home .mvp-faq p {
+      margin: 0;
+      padding: 4px 24px 22px 24px;
+      font-family: var(--font-sans);
+      font-weight: 400;
+      color: var(--mute);
+      font-size: 0.9rem;
+      line-height: 1.68;
+      letter-spacing: 0.01em;
+    }
+
+    /* CTA rail */
+    .pyc-mvp-home .rail {
+      position: relative;
+      padding: 0 0 clamp(80px, 14vw, 140px);
+      overflow: visible;
+    }
+    .pyc-mvp-home .rail-fx {
+      position: absolute;
+      inset: -24px -4% 16px;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .pyc-mvp-home .rail-fx__ring {
+      position: absolute;
+      width: min(48vw, 380px);
+      height: min(48vw, 380px);
+      border-radius: 50%;
+      right: -8%;
+      top: 50%;
+      transform: translateY(-50%);
+      background: radial-gradient(circle, rgba(255,207,74,0.12) 0%, transparent 62%);
+      filter: blur(20px);
+      animation: pyc-rail-pulse 11s ease-in-out infinite;
+    }
+    .pyc-mvp-home .rail-fx__streak {
+      position: absolute;
+      width: 120%;
+      height: 55%;
+      left: -10%;
+      bottom: -5%;
+      background: linear-gradient(
+        95deg,
+        transparent 50%,
+        rgba(212,255,74,0.12) 62%,
+        rgba(232,163,23,0.15) 68%,
+        transparent 78%
+      );
+      transform: rotate(-6deg);
+      animation: pyc-rail-streak 14s ease-in-out infinite;
+    }
+    @keyframes pyc-rail-pulse {
+      0%, 100% { opacity: 0.38; transform: translateY(-50%) scale(1); }
+      12% { opacity: 0.55; transform: translateY(-50%) scale(1.04); }
+      24% { opacity: 0.4; transform: translateY(-50%) scale(1); }
+      50% { opacity: 0.42; transform: translateY(-50%) scale(1); }
+      62% { opacity: 0.62; transform: translateY(-50%) scale(1.06); }
+      76% { opacity: 0.4; transform: translateY(-50%) scale(1); }
+    }
+    @keyframes pyc-rail-streak {
+      0%, 28% { opacity: 0.2; transform: rotate(-6deg) translateX(-8%); }
+      48% { opacity: 0.62; transform: rotate(-6deg) translateX(2%); }
+      62% { opacity: 0.28; transform: rotate(-6deg) translateX(10%); }
+      100% { opacity: 0.2; transform: rotate(-6deg) translateX(-8%); }
+    }
+    .pyc-mvp-home .rail .container { position: relative; z-index: 1; }
+    .pyc-mvp-home .rail-inner {
+      position: relative;
+      z-index: 1;
+      border-radius: 32px;
+      padding: clamp(36px, 7vw, 64px);
+      background:
+        linear-gradient(135deg, rgba(232,163,23,0.18), transparent 45%),
+        linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+      border: 1px solid rgba(255,255,255,0.12);
+      display: grid;
+      gap: 28px;
+      align-items: center;
+      overflow: hidden;
+    }
+    .pyc-mvp-home .rail-inner::before {
+      content: "";
+      position: absolute;
+      inset: -40%;
+      background: conic-gradient(
+        from 210deg at 70% 40%,
+        transparent 0deg,
+        rgba(255,207,74,0.06) 38deg,
+        transparent 70deg,
+        rgba(37,211,102,0.05) 120deg,
+        transparent 200deg,
+        rgba(232,163,23,0.07) 280deg,
+        transparent 360deg
+      );
+      animation: pyc-rail-conic 48s linear infinite;
+      pointer-events: none;
+    }
+    .pyc-mvp-home .rail-inner > * {
+      position: relative;
+      z-index: 1;
+    }
+    @keyframes pyc-rail-conic {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(1turn); }
+    }
+    @media (min-width: 900px) {
+      .pyc-mvp-home .rail-inner {
+        grid-template-columns: 1fr auto;
+        gap: 48px;
+      }
+    }
+    .pyc-mvp-home .rail-inner h2 {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: clamp(1.85rem, 3.5vw, 3rem);
+      font-weight: 800;
+      letter-spacing: -0.05em;
+      line-height: 1.05;
+    }
+    .pyc-mvp-home .rail-inner > div p {
+      margin: 14px 0 0;
+      color: var(--mute);
+      font-size: 1rem;
+      max-width: 40ch;
+    }
+    .pyc-mvp-home .mvp-lead-form {
+      width: 100%;
+      max-width: 540px;
+      justify-self: end;
+    }
+    .pyc-mvp-home .mvp-field-grid {
+      display: grid;
+      gap: 18px 20px;
+      margin-bottom: 20px;
+      align-items: start;
+    }
+    @media (min-width: 560px) {
+      .pyc-mvp-home .mvp-field-grid--2 {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    .pyc-mvp-home .mvp-field-span-2 {
+      grid-column: 1 / -1;
+    }
+    @media (min-width: 720px) {
+      .pyc-mvp-home .mvp-field-grid--3 {
+        grid-template-columns: 1fr 1fr 1fr;
+      }
+    }
+    .pyc-mvp-home .mvp-field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 0;
+    }
+    .pyc-mvp-home .mvp-field-head {
+      min-height: 2.5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      gap: 2px;
+    }
+    .pyc-mvp-home .mvp-field-head > span:first-of-type {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--soft);
+      line-height: 1.2;
+    }
+    .pyc-mvp-home .mvp-field .mvp-field-hint {
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: var(--mute);
+      line-height: 1.25;
+      min-height: 1.15rem;
+    }
+    .pyc-mvp-home .mvp-field input {
+      width: 100%;
+      min-height: 46px;
+      box-sizing: border-box;
+      padding: 11px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(0, 0, 0, 0.35);
+      color: var(--text);
+      font: inherit;
+      font-size: 0.95rem;
+    }
+    .pyc-mvp-home .mvp-field input::placeholder {
+      color: var(--mute);
+      opacity: 0.85;
+    }
+    .pyc-mvp-home .mvp-field input:focus {
+      outline: none;
+      border-color: rgba(255, 207, 74, 0.45);
+      box-shadow: 0 0 0 3px rgba(232, 163, 23, 0.15);
+    }
+    .pyc-mvp-home .mvp-lead-submit {
+      width: 100%;
+      justify-content: center;
+      margin-top: 4px;
+    }
+    .pyc-mvp-home .yc-form-status {
+      margin: 14px 0 0;
+      font-size: 0.92rem;
+      line-height: 1.45;
+    }
+    .pyc-mvp-home .yc-form-status--ok {
+      color: #8fdf9a;
+    }
+    .pyc-mvp-home .yc-form-status--err {
+      color: #ffb08a;
+    }
+    .pyc-mvp-home .yc-form-error-detail {
+      margin: 8px 0 0;
+      font-size: 0.88rem;
+      color: var(--mute);
+    }
+    .pyc-mvp-home .yc-form-error-detail a {
+      color: var(--amber);
+      text-decoration: underline;
+    }
+
+    .pyc-mvp-home footer {
+      padding: 36px 0 48px;
+      color: var(--mute);
+      font-size: 0.88rem;
+    }
+    .pyc-mvp-home .footer-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      padding-top: 28px;
+      border-top: 1px solid var(--line);
+    }
+    .pyc-mvp-home .footer-row strong {
+      font-family: var(--font-display);
+      color: var(--soft);
+      font-weight: 700;
+    }
+
+    /* =====================================================================
+       Mobile-only polish (max-width: 899px). Desktop (900px+) unchanged.
+       ===================================================================== */
+    @media (max-width: 899px) {
+      body.pyc-mvp-home--body {
+        overflow-x: clip;
+      }
+      .pyc-mvp-home {
+        overflow-x: clip;
+        max-width: 100%;
+      }
+      .pyc-mvp-home .container {
+        width: min(
+          calc(100% - clamp(24px, 5vw, 32px) - env(safe-area-inset-left) - env(safe-area-inset-right)),
+          var(--max)
+        );
+      }
+      .pyc-mvp-home .canvas__blob {
+        filter: blur(64px);
+      }
+      .pyc-mvp-home .canvas__spark {
+        filter: blur(40px);
+        opacity: 0.36;
+      }
+      .pyc-mvp-home .canvas__grid {
+        opacity: 0.32;
+      }
+
+      .pyc-mvp-home .nav-wrap {
+        padding-left: max(0px, env(safe-area-inset-left));
+        padding-right: max(0px, env(safe-area-inset-right));
+      }
+      .pyc-mvp-home nav {
+        min-height: 64px;
+        gap: 10px 12px;
+        align-items: center;
+      }
+      .pyc-mvp-home .nav-start {
+        flex: 1 1 auto;
+        min-width: 0;
+        gap: 10px;
+      }
+      .pyc-mvp-home .brand {
+        font-size: 1.05rem;
+        gap: 10px;
+        min-width: 0;
+      }
+      .pyc-mvp-home .brand > span:last-child {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .pyc-mvp-home .brand-mark {
+        width: 34px;
+        height: 34px;
+        border-radius: 11px;
+      }
+      .pyc-mvp-home .nav-meta {
+        gap: 6px 10px;
+        flex-shrink: 0;
+      }
+      .pyc-mvp-home .nav-cta {
+        min-height: 48px;
+        padding: 0 16px;
+        font-size: 0.86rem;
+        -webkit-tap-highlight-color: rgba(255, 255, 255, 0.12);
+      }
+      .pyc-mvp-home .nav-lang-switch {
+        padding: 2px 4px;
+        flex-shrink: 0;
+      }
+      .pyc-mvp-home .nav-lang-pill {
+        padding: 6px 10px;
+        font-size: 0.64rem;
+        min-width: 44px;
+        min-height: 44px;
+      }
+      @media (max-width: 520px) {
+        .pyc-mvp-home nav {
+          flex-wrap: wrap;
+          row-gap: 10px;
+        }
+        .pyc-mvp-home .nav-meta {
+          flex: 1 1 100%;
+          justify-content: flex-end;
+        }
+      }
+      @media (max-width: 360px) {
+        .pyc-mvp-home .brand {
+          font-size: 0.98rem;
+          gap: 8px;
+        }
+        .pyc-mvp-home .nav-start {
+          gap: 8px;
+        }
+      }
+
+      .pyc-mvp-home .hero {
+        padding: clamp(32px, 9vw, 48px) 0 clamp(36px, 10vw, 60px);
+      }
+      .pyc-mvp-home .hero-layout {
+        gap: clamp(24px, 6vw, 36px);
+      }
+      .pyc-mvp-home .hero-tag {
+        margin-bottom: 20px;
+        font-size: 0.68rem;
+        padding: 7px 12px 7px 9px;
+      }
+      .pyc-mvp-home .hero h1 {
+        font-size: clamp(1.95rem, 6.5vw, 2.65rem);
+        line-height: 1.07;
+        max-width: min(22ch, 100%);
+        text-wrap: balance;
+        overflow-wrap: anywhere;
+        hyphens: auto;
+      }
+      .pyc-mvp-home .hero-sub {
+        margin-top: clamp(20px, 4vw, 28px);
+        max-width: 100%;
+        font-size: clamp(0.94rem, 3.6vw, 1.05rem);
+        line-height: 1.52;
+      }
+      .pyc-mvp-home .hero-support {
+        margin-top: 14px;
+        max-width: 100%;
+        font-size: 0.88rem;
+        line-height: 1.5;
+      }
+      .pyc-mvp-home .hero-proofs {
+        margin-top: clamp(24px, 5vw, 32px);
+        gap: 8px;
+      }
+      .pyc-mvp-home .hero-proofs li {
+        font-size: 0.74rem;
+        padding: 7px 12px;
+      }
+      .pyc-mvp-home .hero-actions {
+        margin-top: clamp(24px, 5vw, 32px);
+        flex-direction: column;
+        align-items: stretch;
+        gap: 11px;
+      }
+      .pyc-mvp-home .hero-actions .btn-primary,
+      .pyc-mvp-home .hero-actions .btn-ghost {
+        width: 100%;
+        justify-content: center;
+        min-height: 50px;
+      }
+      .pyc-mvp-home .hero-actions .btn-primary {
+        font-size: 0.95rem;
+        order: -1;
+      }
+      .pyc-mvp-home .hero-product {
+        width: 100%;
+        max-width: 100%;
+        justify-content: center;
+      }
+      .pyc-mvp-home .stage {
+        min-height: 0;
+        width: 100%;
+        padding-top: 6px;
+        padding-bottom: clamp(10px, 3vw, 20px);
+      }
+      .pyc-mvp-home .hero-device {
+        /* 100% del track del hero (ya con padding del container); evita desbordes por 100vw + scrollbar */
+        width: min(336px, 100%);
+        max-width: 100%;
+        max-height: min(82vh, 700px);
+        max-height: min(82dvh, 700px);
+        aspect-ratio: 393 / 920;
+        filter:
+          drop-shadow(0 26px 52px rgba(0, 0, 0, 0.5))
+          drop-shadow(0 6px 16px rgba(0, 0, 0, 0.28));
+      }
+      .pyc-mvp-home .hero-feed {
+        touch-action: pan-y;
+        overscroll-behavior: contain;
+      }
+      @media (orientation: landscape) and (max-height: 520px) {
+        .pyc-mvp-home .hero-device {
+          max-height: min(88vh, 420px);
+          max-height: min(88dvh, 420px);
+        }
+      }
+      .pyc-mvp-home .hero-fx__sheen {
+        opacity: 0.75;
+      }
+
+      .pyc-mvp-home .pnv-k {
+        margin-bottom: 10px;
+        font-size: 0.68rem;
+      }
+      .pyc-mvp-home .pnv-h2 {
+        font-size: clamp(1.52rem, 5.4vw, 2.05rem);
+        max-width: 100%;
+        line-height: 1.1;
+        text-wrap: balance;
+        overflow-wrap: anywhere;
+      }
+      .pyc-mvp-home .pnv-h2--compact {
+        font-size: clamp(1.38rem, 4.8vw, 1.85rem);
+        max-width: 100%;
+      }
+      .pyc-mvp-home .pnv-lede,
+      .pyc-mvp-home .pnv-lede--narrow {
+        margin-top: 12px;
+        font-size: 0.94rem;
+        line-height: 1.58;
+        max-width: 100%;
+      }
+      .pyc-mvp-home .pnv-section {
+        padding: clamp(38px, 10vw, 56px) 0;
+      }
+      .pyc-mvp-home .pnv-thesis {
+        padding: clamp(24px, 6vw, 36px) 0;
+      }
+      .pyc-mvp-home .pnv-thesis__head {
+        margin-bottom: 14px;
+      }
+      .pyc-mvp-home .pnv-thesis__row {
+        gap: 14px;
+      }
+      .pyc-mvp-home .pnv-thesis__col {
+        padding: 16px 15px;
+        border-radius: 15px;
+      }
+      .pyc-mvp-home .pnv-thesis__s {
+        font-size: clamp(0.92rem, 3.5vw, 1.02rem);
+      }
+      .pyc-mvp-home .pnv-strip {
+        padding: clamp(30px, 7vw, 44px) 0;
+      }
+      .pyc-mvp-home .pnv-strip-grid {
+        gap: 12px;
+      }
+      .pyc-mvp-home .pnv-icon-card {
+        padding: 18px 16px;
+        border-radius: 18px;
+      }
+      .pyc-mvp-home .pnv-icon-card__t {
+        font-size: 1.04rem;
+      }
+      .pyc-mvp-home .pnv-icon-card__b {
+        font-size: 0.86rem;
+        line-height: 1.48;
+      }
+      .pyc-mvp-home .pnv-split {
+        gap: 26px;
+        margin-bottom: 0;
+      }
+      .pyc-mvp-home .pnv-problem .pnv-h2 {
+        font-size: clamp(1.48rem, 5vw, 2rem);
+        max-width: 100%;
+      }
+      .pyc-mvp-home .pnv-prob-viz {
+        border-radius: 18px;
+        min-height: min(272px, 58vw);
+      }
+      .pyc-mvp-home .pnv-problem .pnv-cards-3 {
+        margin-top: clamp(32px, 6vw, 44px);
+        gap: 12px;
+      }
+      .pyc-mvp-home .pnv-problem .pnv-mini-card {
+        min-height: 0;
+        padding: 18px 16px;
+      }
+      .pyc-mvp-home .pnv-problem .pnv-mini-card h3 {
+        font-size: 0.98rem;
+      }
+      .pyc-mvp-home .pnv-problem .pnv-mini-card p {
+        font-size: 0.86rem;
+      }
+      .pyc-mvp-home .pnv-flow {
+        margin-top: 26px;
+        gap: 12px;
+      }
+      .pyc-mvp-home .pnv-flow__step {
+        padding: 16px 15px;
+        border-radius: 16px;
+      }
+      .pyc-mvp-home .pnv-flow__t {
+        font-size: 0.98rem;
+      }
+      .pyc-mvp-home .pnv-flow__b {
+        font-size: 0.84rem;
+      }
+      .pyc-mvp-home .pnv-delivery-kicker {
+        margin-top: 20px;
+      }
+      .pyc-mvp-home .pnv-delivery-row {
+        gap: 11px;
+        margin-top: 12px;
+      }
+      .pyc-mvp-home .pnv-delivery-chip {
+        padding: 15px 15px;
+      }
+      .pyc-mvp-home .pnv-delivery-chip__t {
+        font-size: 0.92rem;
+      }
+      .pyc-mvp-home .pnv-delivery-chip__b {
+        font-size: 0.8rem;
+        line-height: 1.48;
+      }
+      .pyc-mvp-home .pnv-mini-card {
+        padding: 17px 16px;
+      }
+      .pyc-mvp-home .pnv-mini-card h3 {
+        font-size: 1rem;
+      }
+      .pyc-mvp-home .pnv-mini-card p {
+        font-size: 0.86rem;
+      }
+      .pyc-mvp-home .pnv-mid-cta {
+        margin-top: 26px;
+      }
+      .pyc-mvp-home .pnv-mid-cta .btn-primary {
+        width: 100%;
+        max-width: 340px;
+      }
+      .pyc-mvp-home .pnv-wa-inner {
+        gap: 22px;
+      }
+      .pyc-mvp-home .pnv-wa-list li {
+        font-size: 0.9rem;
+        line-height: 1.46;
+        min-height: 0;
+        grid-template-columns: 22px 1fr;
+        column-gap: 12px;
+      }
+      .pyc-mvp-home .pnv-ladder {
+        margin-top: 24px;
+        gap: 11px;
+      }
+      .pyc-mvp-home .pnv-ladder__step {
+        min-height: 0;
+        padding: 18px 16px;
+        border-radius: 18px;
+      }
+      .pyc-mvp-home .pnv-ladder__title {
+        font-size: 1.05rem;
+      }
+      .pyc-mvp-home .pnv-ladder__b {
+        font-size: 0.85rem;
+      }
+      .pyc-mvp-home .pnv-replace-grid {
+        margin-top: 20px;
+        gap: 11px;
+      }
+      .pyc-mvp-home .pnv-replace-cell {
+        padding: 15px 16px;
+      }
+      .pyc-mvp-home .pnv-replace-cell__t {
+        font-size: 0.94rem;
+      }
+      .pyc-mvp-home .pnv-replace-cell__b {
+        font-size: 0.8rem;
+      }
+      .pyc-mvp-home .pnv-how-track {
+        margin-top: 24px;
+        gap: 11px;
+      }
+      .pyc-mvp-home .pnv-how-step {
+        padding: 17px 15px;
+      }
+      .pyc-mvp-home .pnv-audience {
+        padding: clamp(34px, 8vw, 48px) 0;
+      }
+      .pyc-mvp-home .pnv-audience-pills {
+        margin-top: 18px;
+        gap: 10px;
+      }
+      .pyc-mvp-home .pnv-audience-pill {
+        padding: 13px 15px;
+        font-size: 0.85rem;
+        min-height: 0;
+        border-radius: 13px;
+      }
+      .pyc-mvp-home .pnv-marquee {
+        padding: 14px 0;
+      }
+      .pyc-mvp-home .pnv-marquee__inner {
+        gap: 26px;
+        font-size: clamp(1.05rem, 4vw, 1.42rem);
+        animation-duration: 28s;
+      }
+      .pyc-mvp-home .pnv-faq {
+        padding: clamp(40px, 11vw, 64px) 0;
+      }
+      .pyc-mvp-home .pnv-faq .container {
+        width: min(calc(100% - clamp(24px, 5vw, 32px) - env(safe-area-inset-left) - env(safe-area-inset-right)), 680px);
+      }
+      .pyc-mvp-home .pnv-faq .pnv-h2 {
+        margin-bottom: clamp(24px, 5vw, 36px);
+      }
+      .pyc-mvp-home .mvp-faq {
+        gap: 11px;
+      }
+      .pyc-mvp-home .mvp-faq summary {
+        display: flex;
+        align-items: center;
+        padding: 15px 17px 15px 18px;
+        font-size: 0.91rem;
+        line-height: 1.32;
+        min-height: 48px;
+        -webkit-tap-highlight-color: rgba(255, 207, 74, 0.1);
+      }
+      .pyc-mvp-home .mvp-faq details[open] summary {
+        padding-bottom: 12px;
+      }
+      .pyc-mvp-home .mvp-faq p {
+        padding: 2px 17px 18px 18px;
+        font-size: 0.87rem;
+        line-height: 1.65;
+      }
+
+      .pyc-mvp-home .rail {
+        padding: 0 0 clamp(56px, 14vw, 88px);
+      }
+      .pyc-mvp-home .rail-inner {
+        padding: 26px 18px;
+        border-radius: 22px;
+        gap: 22px;
+      }
+      .pyc-mvp-home .rail-inner h2 {
+        font-size: clamp(1.5rem, 5vw, 2.15rem);
+        line-height: 1.08;
+        text-wrap: balance;
+      }
+      .pyc-mvp-home .rail-inner > div p {
+        font-size: 0.93rem;
+        max-width: 100%;
+      }
+      .pyc-mvp-home .mvp-lead-form {
+        max-width: none;
+        justify-self: stretch;
+        width: 100%;
+      }
+      .pyc-mvp-home .mvp-field-grid {
+        gap: 14px 0;
+        margin-bottom: 16px;
+      }
+      .pyc-mvp-home .mvp-field-head {
+        min-height: 0;
+        gap: 1px;
+      }
+      .pyc-mvp-home .mvp-field-head > span:first-of-type {
+        font-size: 0.78rem;
+      }
+      .pyc-mvp-home .mvp-field .mvp-field-hint {
+        font-size: 0.68rem;
+        min-height: auto;
+      }
+      .pyc-mvp-home .mvp-field input {
+        min-height: 48px;
+        padding: 11px 13px;
+        font-size: 16px;
+      }
+      .pyc-mvp-home .mvp-kicker {
+        margin-bottom: 11px;
+      }
+
+      .pyc-mvp-home footer {
+        padding: 28px 0 max(36px, env(safe-area-inset-bottom, 0px));
+        font-size: 0.85rem;
+      }
+      .pyc-mvp-home .footer-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 18px;
+        padding-top: 22px;
+      }
+      .pyc-mvp-home .footer-row a {
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+        padding: 4px 0;
+        margin: 0;
+        -webkit-tap-highlight-color: rgba(255, 207, 74, 0.12);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .pyc-mvp-home .canvas__blob,
+      .pyc-mvp-home .canvas__spark,
+      .pyc-mvp-home .canvas__sweep,
+      .pyc-mvp-home .hero-device,
+      .pyc-mvp-home .pnv-marquee__inner,
+      .pyc-mvp-home .hero-fx__sheen,
+      .pyc-mvp-home .hero-fx__orb,
+      .pyc-mvp-home .rail-fx__ring,
+      .pyc-mvp-home .rail-fx__streak,
+      .pyc-mvp-home .rail-inner::before { animation: none; }
+      .pyc-mvp-home .hero-clip-preview__blur--demo,
+      .pyc-mvp-home .hero-clip-preview__grain--demo { animation: none; }
+      .pyc-mvp-home .hero-clip-preview__blur--demo { transform: scale(1.08); }
+      .pyc-mvp-home .hero-clip-preview__grain--demo { opacity: 0.12; }
+      .pyc-mvp-home .hero-voice-wave-inner {
+        animation: none !important;
+        transform: none !important;
+      }
+      .pyc-mvp-home .hero-msg--voice.hero-msg--live .hero-voice-play {
+        animation: none !important;
+      }
+      .pyc-mvp-home .hero-msg--clip.hero-msg--live .hero-clip-preview__placeholder {
+        animation: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+      }
+      .pyc-mvp-home .hero-msg--clip.hero-msg--live .hero-clip-preview__avatar {
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+      }
+      .pyc-mvp-home .hero-msg--clip.hero-msg--live .hero-clip-preview__play {
+        animation: none !important;
+        opacity: 0 !important;
+      }
+      .pyc-mvp-home .hero-msg--clip.hero-msg--live .hero-clip-preview__time {
+        animation: none !important;
+        opacity: 0.85 !important;
+      }
+      .pyc-mvp-home .hero-action-chips--live .hero-action-chip {
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+      }
+      .pyc-mvp-home .hero-clip-send-hint {
+        display: none !important;
+      }
+      .pyc-mvp-home .hero-msg--live .hero-msg__kicker,
+      .pyc-mvp-home .hero-msg--live .hero-msg__arrive,
+      .pyc-mvp-home .hero-msg--live.hero-msg--voice,
+      .pyc-mvp-home .hero-msg--live.hero-msg--clip {
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+        max-height: none !important;
+      }
+      .pyc-mvp-home .hero-msg__typing {
+        display: none !important;
+      }
+      .pyc-mvp-home .nav-cta:hover,
+      .pyc-mvp-home .btn-primary:hover,
+      .pyc-mvp-home .btn-ghost:hover { transform: none; }
+    }
+  </style>
+</head>
+<body class="pyc-mvp-home--body">
+  <div class="pyc-mvp-home">
+    <div class="canvas" aria-hidden="true">
+      <div class="canvas__blob canvas__blob--1"></div>
+      <div class="canvas__blob canvas__blob--2"></div>
+      <div class="canvas__blob canvas__blob--3"></div>
+      <div class="canvas__sweep" aria-hidden="true"></div>
+      <div class="canvas__sweep canvas__sweep--late" aria-hidden="true"></div>
+      <div class="canvas__grid"></div>
+      <div class="canvas__spark canvas__spark--1" aria-hidden="true"></div>
+      <div class="canvas__spark canvas__spark--2" aria-hidden="true"></div>
+      <div class="canvas__spark canvas__spark--3" aria-hidden="true"></div>
+    </div>
+
+    <div class="shell">
+      <div class="nav-wrap">
+        <div class="container">
+          <nav>
+            <div class="nav-start">
+              <a class="brand" href="#top" aria-label="{{ copy.nav_brand_aria }}">
+                <span class="brand-mark">
+                  <img src="{{ url_prefix }}/static/branding/pullso-isotipo.svg" alt="" width="22" height="22" decoding="async" />
+                </span>
+                <span>Pullso</span>
+              </a>
+              <div class="nav-lang-switch" role="group" aria-label="{{ copy.lang_toggle_aria }}">
+                {% if pullso_lang == 'es' %}
+                  <a class="nav-lang-pill nav-lang-pill--link" href="{{ url_path('/pullsomvp') }}">EN</a>
+                  <span class="nav-lang-sep" aria-hidden="true">/</span>
+                  <span class="nav-lang-pill nav-lang-pill--current" aria-current="page">ES</span>
+                {% else %}
+                  <span class="nav-lang-pill nav-lang-pill--current" aria-current="page">EN</span>
+                  <span class="nav-lang-sep" aria-hidden="true">/</span>
+                  <a class="nav-lang-pill nav-lang-pill--link" href="{{ url_path('/pullsomvp/es') }}">ES</a>
+                {% endif %}
+              </div>
+            </div>
+            <div class="nav-meta">
+              <div class="nav-anchor" aria-label="{{ copy.nav_sections_aria }}">
+                <a href="#problem">{{ copy.nav_problem }}</a>
+                <a href="#product">{{ copy.nav_product }}</a>
+                <a href="#whatsapp">{{ copy.nav_whatsapp }}</a>
+                <a href="#vision">{{ copy.nav_vision }}</a>
+                <a href="#faq">{{ copy.nav_faq }}</a>
+              </div>
+              <a class="nav-cta" href="#contact">{{ copy.nav_cta }}</a>
+            </div>
+          </nav>
+        </div>
+      </div>
+
+      <main id="top">
+        <h2 class="sr-only">{{ meta_description }}</h2>
+
+        <section class="hero" aria-label="{{ copy.hero_section_aria }}">
+          <div class="hero-fx" aria-hidden="true">
+            <div class="hero-fx__sheen"></div>
+            <div class="hero-fx__orb hero-fx__orb--1"></div>
+            <div class="hero-fx__orb hero-fx__orb--2"></div>
+          </div>
+          <div class="container hero-layout">
+            <div>
+              <div class="hero-tag"><i></i> {{ copy.hero_tag }}</div>
+              <h1 class="hero-h1">{{ copy.hero_h1 }}</h1>
+              <p class="hero-sub">{{ copy.hero_sub }}</p>
+              <p class="hero-support">{{ copy.hero_support }}</p>
+              <div class="pws-tech" aria-label="{{ copy.tech_aria }}">
+                <div class="pws-tech-inner">
+                  <span class="pws-tech-label">{{ copy.tech_label }}</span>
+                  <img class="pws-tech-logo--openai" src="{{ url_prefix }}/static/branding/openai-logo.svg" alt="OpenAI" width="72" height="19" loading="lazy" decoding="async" />
+                  <span class="pws-tech-meta-wrap">
+                    <img class="pws-tech-logo--meta" src="{{ url_prefix }}/static/branding/meta-logo.svg" alt="Meta" width="88" height="20" loading="lazy" decoding="async" />
+                  </span>
+                </div>
+              </div>
+              <div class="hero-actions">
+                <a class="btn-primary" href="#contact">{{ copy.hero_cta1 }}</a>
+                <a class="btn-ghost" href="#product">{{ copy.hero_cta2 }}</a>
+              </div>
+              <ul class="hero-proofs" aria-label="">
+                {% for line in copy.hero_proofs %}
+                <li>{{ line }}</li>
+                {% endfor %}
+              </ul>
+            </div>
+
+            <div class="stage">
+              <div class="hero-product">
+                <div class="hero-device" aria-label="{{ copy.device_aria }}">
+                  <div class="hero-phone-frame">
+                    <div class="hero-phone-inner">
+                      <div class="hero-phone-bar" aria-hidden="true"><span></span></div>
+                      <div class="hero-phone-content">
+                        <div class="hero-phone-status" aria-hidden="true">
+                          <span>9:41</span>
+                          <div class="hero-phone-status-icons">
+                            <svg width="14" height="10" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M1 7.5h1.5v2H1v-2Zm3-1.5h1.5v3.5H4V6Zm3-2h1.5V9.5H7V4Zm3-2.5h1.5V9.5h-1.5V1.5Z" fill="currentColor"/></svg>
+                            <svg width="14" height="10" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.05" stroke-linecap="round" stroke-linejoin="round"><path d="M1.15 6.95Q7 1.85 12.85 6.95"/><path d="M3.35 6.15Q7 2.65 10.65 6.15"/><path d="M5.45 5.45Q7 4.05 8.55 5.45"/></g><circle cx="7" cy="8.75" r="0.72" fill="currentColor"/></svg>
+                          </div>
+                        </div>
+                        <div class="hero-app-topbar">
+                          <div class="hero-app-avatar">
+                            <img src="{{ url_prefix }}/static/branding/pullso-isotipo.svg" alt="" width="19" height="19" decoding="async" />
+                          </div>
+                          <div class="hero-app-titles">
+                            <div class="hero-app-title-row">
+                              <span class="hero-app-title">{{ copy.hero_mock_chat_name }}</span>
+                              <span class="hero-app-badge">{{ copy.app_badge_live }}</span>
+                            </div>
+                            <div class="hero-app-sub">{{ copy.app_sub }}</div>
+                          </div>
+                        </div>
+                        <div class="hero-feed" id="hero-feed-mock">
+                          <article class="hero-msg hero-msg--text hero-msg--live">
+                            <div class="hero-msg__kicker">{{ copy.msg_kicker }}</div>
+                            <div class="hero-msg__typing" aria-hidden="true">
+                              <span></span><span></span><span></span>
+                            </div>
+                            <div class="hero-msg__arrive">
+                              <h3 class="hero-msg__title">{{ copy.msg_title }}</h3>
+                              <p class="hero-msg__body">{{ copy.msg_body }}</p>
+                              <div class="hero-msg__meta">
+                                <span>{{ copy.msg_meta }}</span>
+                                <span>09:42</span>
+                              </div>
+                            </div>
+                          </article>
+                          <article class="hero-msg hero-msg--voice hero-msg--live">
+                            <div class="hero-msg__kicker">{{ copy.voice_kicker }}</div>
+                            <div class="hero-voice-row">
+                              <div class="hero-voice-play" aria-hidden="true">
+                                <svg width="12" height="14" viewBox="0 0 12 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 1.5v11c0 1 1.1 1.6 2 .95l8.5-5.5c.75-.55.75-1.65 0-2.2L2 .3c-.9-.65-2 0-2 1.2Z" fill="#f5f1e8"/></svg>
+                              </div>
+                              <div class="hero-voice-wave" aria-hidden="true">
+                                <div class="hero-voice-wave-inner">
+                                  <svg viewBox="0 0 200 32" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+                                    <path d="M0 20c6-6 10 6 18-2s10-14 20-8 12 18 26 10 14-22 28-12 10 20 24 12 12-16 24-6 8 14 22 6 14-12 26-2 10 10 18 4" stroke="url(#pycWave2)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <defs>
+                                      <linearGradient id="pycWave2" x1="0" y1="0" x2="200" y2="0" gradientUnits="userSpaceOnUse">
+                                        <stop stop-color="#e8a317"/>
+                                        <stop offset="0.5" stop-color="#ffcf4a"/>
+                                        <stop offset="1" stop-color="#c87510"/>
+                                      </linearGradient>
+                                    </defs>
+                                  </svg>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="hero-msg__meta">
+                              <span>{{ copy.voice_meta }}</span>
+                              <span>24s</span>
+                            </div>
+                          </article>
+                          <article class="hero-msg hero-msg--clip hero-msg--live">
+                            <div class="hero-msg__kicker">{{ copy.clip_label }}</div>
+                            <div class="hero-clip-preview">
+                              <div class="hero-clip-preview__media" aria-hidden="true">
+                                <div class="hero-clip-preview__placeholder">
+                                  <div class="hero-clip-preview__blur hero-clip-preview__blur--demo"></div>
+                                  <div class="hero-clip-preview__grain hero-clip-preview__grain--demo"></div>
+                                  <div class="hero-clip-preview__shade"></div>
+                                </div>
+                                <div class="hero-clip-preview__avatar">
+                                  {% if hero_agent_video_src %}
+                                  <video
+                                    class="hero-clip-preview__video"
+                                    src="{{ hero_agent_video_src }}"
+                                    {% if hero_agent_video_poster_src %}poster="{{ hero_agent_video_poster_src }}"{% endif %}
+                                    muted
+                                    loop
+                                    playsinline
+                                    autoplay
+                                    preload="auto"
+                                    disablePictureInPicture
+                                  ></video>
+                                  <div class="hero-clip-preview__video-shade" aria-hidden="true"></div>
+                                  {% else %}
+                                  <div class="hero-clip-avatar hero-clip-avatar--photo" aria-hidden="true">
+                                    <img
+                                      class="hero-clip-avatar__img"
+                                      src="{{ url_prefix }}/static/branding/hero-clip-avatar.png"
+                                      alt=""
+                                      width="720"
+                                      height="1280"
+                                      loading="eager"
+                                      decoding="async"
+                                      fetchpriority="high"
+                                    />
+                                  </div>
+                                  {% endif %}
+                                </div>
+                              </div>
+                              <div class="hero-clip-preview__play" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M8 5.14v13.72c0 .87.94 1.42 1.7.98l10.88-6.86a1.14 1.14 0 000-1.96L9.7 4.16A1.14 1.14 0 008 5.14z"/></svg>
+                              </div>
+                              <span class="hero-clip-preview__time">{{ copy.clip_duration }}</span>
+                            </div>
+                            {% if copy.agent_send_hint %}
+                            <div class="hero-clip-send-hint" aria-hidden="true">
+                              <span class="hero-clip-send-label">{{ copy.agent_send_hint }}</span>
+                              <span class="hero-clip-send-dots"><span></span><span></span><span></span></span>
+                            </div>
+                            {% endif %}
+                            <p class="hero-clip-caption">{{ copy.clip_sub }}</p>
+                            <div class="hero-msg__meta">
+                              <span>{{ copy.clip_meta }}</span>
+                              <span>09:43</span>
+                            </div>
+                          </article>
+                          <div class="hero-action-chips hero-action-chips--live" aria-hidden="true">
+                            {% for chip in copy.hero_action_chips %}
+                            <span class="hero-action-chip">{{ chip.t }}</span>
+                            {% endfor %}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="pnv-thesis" id="thesis" aria-labelledby="thesis-heading">
+          <div class="container">
+            <p class="pnv-thesis__head" id="thesis-heading">{{ copy.thesis_kicker }}</p>
+            <div class="pnv-thesis__row">
+              <div class="pnv-thesis__col">
+                <span class="pnv-thesis__l">{{ copy.thesis_col1_l }}</span>
+                <span class="pnv-thesis__s">{{ copy.thesis_col1_s }}</span>
+              </div>
+              <span class="pnv-thesis__arr" aria-hidden="true">→</span>
+              <div class="pnv-thesis__col">
+                <span class="pnv-thesis__l">{{ copy.thesis_col2_l }}</span>
+                <span class="pnv-thesis__s">{{ copy.thesis_col2_s }}</span>
+              </div>
+              <span class="pnv-thesis__arr" aria-hidden="true">→</span>
+              <div class="pnv-thesis__col">
+                <span class="pnv-thesis__l">{{ copy.thesis_col3_l }}</span>
+                <span class="pnv-thesis__s">{{ copy.thesis_col3_s }}</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="pnv-strip" id="value" aria-labelledby="value-heading">
+          <div class="container">
+            <h2 class="sr-only" id="value-heading">{{ copy.strip_aria }}</h2>
+            <div class="pnv-strip-grid">
+              {% for item in copy.strip_items %}
+              <div class="pnv-icon-card">
+                <div class="pnv-icon-card__glyph" aria-hidden="true">{{ loop.index }}</div>
+                <h3 class="pnv-icon-card__t">{{ item.t }}</h3>
+                <p class="pnv-icon-card__b">{{ item.b }}</p>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </section>
+
+        <section class="pnv-section pnv-problem" id="problem" aria-labelledby="problem-heading">
+          <div class="container pnv-split">
+            <div class="pnv-split__copy">
+              <p class="pnv-k">{{ copy.problem_kicker }}</p>
+              <h2 class="pnv-h2" id="problem-heading">{{ copy.problem_h2 }}</h2>
+              <p class="pnv-lede">{{ copy.problem_lede }}</p>
+            </div>
+            <div class="pnv-split__viz">
+              <div class="pnv-prob-viz" role="img" aria-label="{{ copy.problem_viz_aria }}">
+                <ul class="pnv-prob-nodes">
+                  <li class="pnv-prob-node pnv-prob-node--pms">{{ copy.sys_sticker_pms }}</li>
+                  <li class="pnv-prob-node pnv-prob-node--cm">{{ copy.sys_sticker_cm }}</li>
+                  <li class="pnv-prob-node pnv-prob-node--pickup">{{ copy.sys_sticker_pickup }}</li>
+                  <li class="pnv-prob-node pnv-prob-node--rates">{{ copy.sys_sticker_rates }}</li>
+                  <li class="pnv-prob-node pnv-prob-node--sheet">{{ copy.sys_sticker_sheet }}</li>
+                  <li class="pnv-prob-node pnv-prob-node--ota">{{ copy.sys_sticker_ota }}</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="container">
+            <div class="pnv-cards-3">
+              {% for c in copy.problem_cards %}
+              <div class="pnv-mini-card">
+                <h3>{{ c.t }}</h3>
+                <p>{{ c.b }}</p>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </section>
+
+        <section class="pnv-section pnv-product" id="product" aria-labelledby="product-heading">
+          <div class="container">
+            <p class="pnv-k">{{ copy.product_kicker }}</p>
+            <h2 class="pnv-h2" id="product-heading">{{ copy.product_h2 }}</h2>
+            <p class="pnv-lede pnv-lede--narrow">{{ copy.product_lede }}</p>
+            <div class="pnv-flow" aria-label="{{ copy.product_flow_aria }}">
+              {% for step in copy.product_flow_steps %}
+              <div class="pnv-flow__step {% if loop.last %}pnv-flow__step--accent{% endif %}">
+                <span class="pnv-flow__n">{{ loop.index }}</span>
+                <h3 class="pnv-flow__t">{{ step.t }}</h3>
+                <p class="pnv-flow__b">{{ step.b }}</p>
+              </div>
+              {% endfor %}
+            </div>
+            <p class="pnv-k pnv-delivery-kicker">{{ copy.product_delivery_kicker }}</p>
+            <div class="pnv-delivery-row" role="group" aria-label="{{ copy.product_delivery_aria }}">
+              {% for item in copy.product_delivery_items %}
+              <div class="pnv-delivery-chip">
+                <span class="pnv-delivery-chip__t">{{ item.t }}</span>
+                <span class="pnv-delivery-chip__b">{{ item.b }}</span>
+              </div>
+              {% endfor %}
+            </div>
+            <div class="pnv-mid-cta">
+              <a class="btn-primary" href="#contact">{{ copy.hero_cta1 }}</a>
+            </div>
+          </div>
+        </section>
+
+        <section class="pnv-section pnv-wa" id="whatsapp" aria-labelledby="wa-heading">
+          <div class="container pnv-wa-inner">
+            <div>
+              <p class="pnv-k">{{ copy.wa_kicker }}</p>
+              <h2 class="pnv-h2" id="wa-heading">{{ copy.wa_h2 }}</h2>
+              <p class="pnv-lede pnv-lede--narrow">{{ copy.wa_lede }}</p>
+            </div>
+            <ul class="pnv-wa-list">
+              {% for b in copy.wa_bullets %}
+              <li><span class="pnv-wa-ico" aria-hidden="true">✓</span>{{ b }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </section>
+
+        <section class="pnv-section pnv-vision" id="vision" aria-labelledby="vision-heading">
+          <div class="container">
+            <p class="pnv-k">{{ copy.vision_kicker }}</p>
+            <h2 class="pnv-h2" id="vision-heading">{{ copy.vision_h2 }}</h2>
+            <p class="pnv-lede">{{ copy.vision_lede }}</p>
+            <ol class="pnv-ladder">
+              {% for rung in copy.vision_ladder %}
+              <li class="pnv-ladder__step">
+                <span class="pnv-ladder__stage">{{ rung.stage }}</span>
+                <span class="pnv-ladder__title">{{ rung.t }}</span>
+                <span class="pnv-ladder__b">{{ rung.b }}</span>
+              </li>
+              {% endfor %}
+            </ol>
+          </div>
+        </section>
+
+        <section class="pnv-section pnv-replace" id="replace" aria-labelledby="replace-heading">
+          <div class="container">
+            <p class="pnv-k">{{ copy.replace_kicker }}</p>
+            <h2 class="pnv-h2" id="replace-heading">{{ copy.replace_h2 }}</h2>
+            <p class="pnv-lede pnv-lede--narrow">{{ copy.replace_lede }}</p>
+            <div class="pnv-replace-grid">
+              {% for it in copy.replace_items %}
+              <div class="pnv-replace-cell">
+                <span class="pnv-replace-cell__t">{{ it.t }}</span>
+                <span class="pnv-replace-cell__b">{{ it.b }}</span>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </section>
+
+        <section class="pnv-section pnv-how" id="how" aria-labelledby="how-heading">
+          <div class="container">
+            <p class="pnv-k">{{ copy.how_kicker }}</p>
+            <h2 class="pnv-h2" id="how-heading">{{ copy.how_h2 }}</h2>
+            <div class="pnv-how-track">
+              {% for st in copy.how_steps %}
+              <div class="pnv-how-step">
+                <span class="pnv-how-step__n">{{ st.n }}</span>
+                <h3>{{ st.t }}</h3>
+                <p>{{ st.b }}</p>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </section>
+
+        <section class="pnv-audience" id="audience" aria-labelledby="audience-heading">
+          <div class="container">
+            <p class="pnv-k">{{ copy.audience_kicker }}</p>
+            <h2 class="pnv-h2 pnv-h2--compact" id="audience-heading">{{ copy.audience_h2 }}</h2>
+            <div class="pnv-audience-pills">
+              {% for a in copy.audience_cards %}
+              <span class="pnv-audience-pill">{{ a }}</span>
+              {% endfor %}
+            </div>
+          </div>
+        </section>
+
+        <div class="pnv-marquee" aria-hidden="true">
+          <div class="pnv-marquee__inner">
+            {% for _ in [1,2] %}{% for term in copy.marquee %}<span>{{ term }}</span>{% endfor %}{% endfor %}
+          </div>
+        </div>
+
+        <section class="pnv-faq" id="faq" aria-labelledby="faq-heading">
+          <div class="container">
+            <p class="pnv-k">{{ copy.faq_kicker }}</p>
+            <h2 class="pnv-h2" id="faq-heading">{{ copy.faq_h2 }}</h2>
+            <div class="mvp-faq">
+              {% for item in copy.faq_items %}
+              <details>
+                <summary>{{ item.q }}</summary>
+                <p>{{ item.a }}</p>
+              </details>
+              {% endfor %}
+            </div>
+          </div>
+        </section>
+
+        <section class="rail" id="contact">
+          <div class="rail-fx" aria-hidden="true">
+            <div class="rail-fx__ring"></div>
+            <div class="rail-fx__streak"></div>
+          </div>
+          <div class="container">
+            <div class="rail-inner">
+              <div>
+                <p class="mvp-kicker" style="color:rgba(255,207,74,0.95); margin-bottom:12px">{{ copy.rail_kicker }}</p>
+                <h2>{{ copy.rail_h2 }}</h2>
+                <p>
+                  {{ copy.rail_p }}
+                </p>
+              </div>
+              <form class="mvp-lead-form" id="mvp-lead-form" aria-label="{{ copy.form_aria }}">
+                <input type="hidden" name="lang" id="mvp-lead-lang" value="{{ pullso_lang }}" />
+                <div class="mvp-field-grid mvp-field-grid--2">
+                  <label class="mvp-field">
+                    <div class="mvp-field-head">
+                      <span>{{ copy.form_name_label }}</span>
+                      <span class="mvp-field-hint">&nbsp;</span>
+                    </div>
+                    <input name="full_name" type="text" autocomplete="name" required maxlength="200" />
+                  </label>
+                  <label class="mvp-field">
+                    <div class="mvp-field-head">
+                      <span>{{ copy.form_phone_label }}</span>
+                      <span class="mvp-field-hint">&nbsp;</span>
+                    </div>
+                    <input name="phone" type="tel" autocomplete="tel" inputmode="tel" required maxlength="40" />
+                  </label>
+                  <label class="mvp-field mvp-field-span-2">
+                    <div class="mvp-field-head">
+                      <span>{{ copy.form_email_label }}</span>
+                      <span class="mvp-field-hint">&nbsp;</span>
+                    </div>
+                    <input name="email" type="email" autocomplete="email" required maxlength="254" inputmode="email" />
+                  </label>
+                  <label class="mvp-field">
+                    <div class="mvp-field-head">
+                      <span>{{ copy.form_hotel_label }}</span>
+                      <span class="mvp-field-hint">&nbsp;</span>
+                    </div>
+                    <input name="hotel_name" type="text" autocomplete="organization" required maxlength="300" />
+                  </label>
+                  <label class="mvp-field">
+                    <div class="mvp-field-head">
+                      <span>{{ copy.form_url_label }}</span>
+                      <span class="mvp-field-hint">{{ copy.form_url_help }}</span>
+                    </div>
+                    <input name="hotel_url" type="text" inputmode="url" placeholder="https://" required maxlength="500" />
+                  </label>
+                </div>
+                <div class="mvp-field-grid mvp-field-grid--3">
+                  <label class="mvp-field">
+                    <div class="mvp-field-head">
+                      <span>{{ copy.form_pms_label }}</span>
+                      <span class="mvp-field-hint">{{ copy.form_optional_hint }}</span>
+                    </div>
+                    <input name="pms" type="text" autocomplete="off" maxlength="200" />
+                  </label>
+                  <label class="mvp-field">
+                    <div class="mvp-field-head">
+                      <span>{{ copy.form_cm_label }}</span>
+                      <span class="mvp-field-hint">{{ copy.form_optional_hint }}</span>
+                    </div>
+                    <input name="channel_manager" type="text" autocomplete="off" maxlength="200" />
+                  </label>
+                  <label class="mvp-field">
+                    <div class="mvp-field-head">
+                      <span>{{ copy.form_be_label }}</span>
+                      <span class="mvp-field-hint">{{ copy.form_optional_hint }}</span>
+                    </div>
+                    <input name="booking_engine" type="text" autocomplete="off" maxlength="200" />
+                  </label>
+                </div>
+                <button type="submit" class="btn-primary mvp-lead-submit">{{ copy.form_submit }}</button>
+                <p class="yc-form-status" id="yc-form-status" hidden role="status"></p>
+                <p class="yc-form-error-detail" id="yc-form-error-detail" hidden></p>
+              </form>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer>
+        <div class="container footer-row">
+          <div>
+            <strong>{{ copy.footer_strong_line }}</strong> {{ copy.footer_tag }}<br />
+            <span style="opacity:0.85">{{ copy.footer_sub }}</span>
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:16px; align-items:center">
+            <a href="#problem" style="color:var(--soft)">{{ copy.footer_problem }}</a>
+            <a href="#product" style="color:var(--soft)">{{ copy.footer_product }}</a>
+            <a href="#whatsapp" style="color:var(--soft)">{{ copy.footer_whatsapp }}</a>
+            <a href="#vision" style="color:var(--soft)">{{ copy.footer_vision }}</a>
+            <a href="#how" style="color:var(--soft)">{{ copy.footer_how }}</a>
+            <a href="#faq" style="color:var(--soft)">{{ copy.footer_faq }}</a>
+            <a href="#contact" style="color:var(--amber); font-weight:600">{{ copy.footer_demo }}</a>
+          </div>
+        </div>
+      </footer>
+    </div>
+  </div>
+  <script>
+  (function () {
+    var form = document.getElementById("mvp-lead-form");
+    if (!form) return;
+    var statusEl = document.getElementById("yc-form-status");
+    var errDetail = document.getElementById("yc-form-error-detail");
+    var submitBtn = form.querySelector(".mvp-lead-submit");
+    var url = {{ lead_post_url | tojson }};
+    var msgOk = {{ copy.form_success | tojson }};
+    var msgErr = {{ copy.form_error | tojson }};
+    var msgErrContact = {{ copy.form_error_contact | tojson }};
+    var sending = {{ copy.form_sending | tojson }};
+    var contactEmail = {{ contact_email | tojson }};
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      statusEl.hidden = true;
+      errDetail.hidden = true;
+      statusEl.className = "yc-form-status";
+      errDetail.textContent = "";
+      var langEl = document.getElementById("mvp-lead-lang");
+      var body = {
+        full_name: (form.full_name.value || "").trim().slice(0, 200),
+        phone: (form.phone.value || "").trim().slice(0, 40),
+        email: (form.email.value || "").trim().toLowerCase().slice(0, 254),
+        hotel_name: (form.hotel_name.value || "").trim().slice(0, 300),
+        hotel_url: (form.hotel_url.value || "").trim().slice(0, 500),
+        pms: (form.pms.value || "").trim().slice(0, 200),
+        channel_manager: (form.channel_manager.value || "").trim().slice(0, 200),
+        booking_engine: (form.booking_engine.value || "").trim().slice(0, 200),
+        lang: (langEl && langEl.value) ? langEl.value : "en",
+      };
+      submitBtn.disabled = true;
+      var prevText = submitBtn.textContent;
+      submitBtn.textContent = sending;
+      fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(body),
+      })
+        .then(function (r) {
+          return r.json().then(function (data) {
+            return { ok: r.ok, data: data };
+          });
+        })
+        .then(function (ref) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = prevText;
+          if (ref.ok && ref.data && ref.data.ok) {
+            statusEl.textContent = msgOk;
+            statusEl.className = "yc-form-status yc-form-status--ok";
+            statusEl.hidden = false;
+            form.reset();
+            return;
+          }
+          statusEl.textContent = msgErr;
+          statusEl.className = "yc-form-status yc-form-status--err";
+          statusEl.hidden = false;
+          errDetail.innerHTML =
+            msgErrContact +
+            ' <a href="mailto:' +
+            contactEmail.replace(/[<>&"]/g, "") +
+            '">' +
+            contactEmail.replace(/[<>&"]/g, "") +
+            "</a>";
+          errDetail.hidden = false;
+        })
+        .catch(function () {
+          submitBtn.disabled = false;
+          submitBtn.textContent = prevText;
+          statusEl.textContent = msgErr;
+          statusEl.className = "yc-form-status yc-form-status--err";
+          statusEl.hidden = false;
+          errDetail.innerHTML =
+            msgErrContact +
+            ' <a href="mailto:' +
+            contactEmail.replace(/[<>&"]/g, "") +
+            '">' +
+            contactEmail.replace(/[<>&"]/g, "") +
+            "</a>";
+          errDetail.hidden = false;
+        });
+    });
+  })();
+  </script>
+  <script>
+  (function () {
+    var root = document.querySelector(".pyc-mvp-home");
+    if (!root) return;
+    var viz = root.querySelector(".pnv-prob-viz");
+    var arena = viz && viz.querySelector(".pnv-prob-nodes");
+    var chipEls = arena && arena.querySelectorAll(".pnv-prob-node");
+    if (!arena || !chipEls || !chipEls.length) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    var REST = 0.94;
+    var COOLDOWN_MS = 280;
+    var SPEED_MIN = 78;
+    var SPEED_MAX = 138;
+    var SPEED_FLOOR = 54;
+    var SPEED_CAP = 178;
+    var chips = [];
+    var pairCooldown = Object.create(null);
+    var lastT = performance.now();
+
+    function cellRadius(el) {
+      var w = el.offsetWidth;
+      var h = el.offsetHeight;
+      return Math.max(w, h) * 0.38;
+    }
+
+    function measure() {
+      var W = arena.clientWidth;
+      var H = arena.clientHeight;
+      for (var i = 0; i < chips.length; i++) {
+        var c = chips[i];
+        c.w = c.el.offsetWidth;
+        c.h = c.el.offsetHeight;
+        c.r = cellRadius(c.el);
+        c.x = Math.max(c.r, Math.min(W - c.r, c.x));
+        c.y = Math.max(c.r, Math.min(H - c.r, c.y));
+      }
+    }
+
+    function init() {
+      var ar = arena.getBoundingClientRect();
+      for (var i = 0; i < chipEls.length; i++) {
+        var el = chipEls[i];
+        var r = el.getBoundingClientRect();
+        var cx = r.left + r.width * 0.5 - ar.left;
+        var cy = r.top + r.height * 0.5 - ar.top;
+        var ang = Math.random() * Math.PI * 2;
+        var sp = SPEED_MIN + Math.random() * (SPEED_MAX - SPEED_MIN);
+        chips.push({ el: el, x: cx, y: cy, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp });
+      }
+      arena.classList.add("pnv-prob-nodes--live");
+      measure();
+    }
+
+    function spawnRipple(px, py) {
+      var sp = document.createElement("span");
+      sp.className = "pnv-prob-ripple";
+      sp.setAttribute("aria-hidden", "true");
+      sp.style.left = px + "px";
+      sp.style.top = py + "px";
+      arena.appendChild(sp);
+      window.setTimeout(function () {
+        if (sp.parentNode) sp.parentNode.removeChild(sp);
+      }, 580);
+    }
+
+    function collidePair(i, j, now) {
+      var a = chips[i];
+      var b = chips[j];
+      var dx = b.x - a.x;
+      var dy = b.y - a.y;
+      var dist = Math.sqrt(dx * dx + dy * dy) || 1e-6;
+      var minD = a.r + b.r;
+      if (dist >= minD) return;
+      var nx = dx / dist;
+      var ny = dy / dist;
+      var overlap = minD - dist;
+      a.x -= nx * overlap * 0.52;
+      b.x += nx * overlap * 0.52;
+      a.y -= ny * overlap * 0.52;
+      b.y += ny * overlap * 0.52;
+      var rvx = b.vx - a.vx;
+      var rvy = b.vy - a.vy;
+      var vn = rvx * nx + rvy * ny;
+      if (vn < 0) {
+        var impulse = -(1 + 0.88) * vn * 0.5;
+        a.vx -= impulse * nx;
+        a.vy -= impulse * ny;
+        b.vx += impulse * nx;
+        b.vy += impulse * ny;
+      }
+      var key = i < j ? i + "," + j : j + "," + i;
+      if (now - (pairCooldown[key] || 0) > COOLDOWN_MS) {
+        pairCooldown[key] = now;
+        spawnRipple((a.x + b.x) * 0.5, (a.y + b.y) * 0.5);
+      }
+    }
+
+    function frame(now) {
+      var dt = Math.min(0.034, (now - lastT) / 1000);
+      lastT = now;
+      var W = arena.clientWidth;
+      var H = arena.clientHeight;
+      if (W > 32 && H > 32) {
+        for (var i = 0; i < chips.length; i++) {
+          var c = chips[i];
+          c.x += c.vx * dt;
+          c.y += c.vy * dt;
+          if (c.x - c.r < 0) {
+            c.x = c.r;
+            c.vx = Math.abs(c.vx) * REST;
+          } else if (c.x + c.r > W) {
+            c.x = W - c.r;
+            c.vx = -Math.abs(c.vx) * REST;
+          }
+          if (c.y - c.r < 0) {
+            c.y = c.r;
+            c.vy = Math.abs(c.vy) * REST;
+          } else if (c.y + c.r > H) {
+            c.y = H - c.r;
+            c.vy = -Math.abs(c.vy) * REST;
+          }
+          var spd = Math.sqrt(c.vx * c.vx + c.vy * c.vy);
+          if (spd < SPEED_FLOOR && spd > 0.001) {
+            var boost = SPEED_MIN / spd;
+            if (boost > 1.35) boost = 1.35;
+            c.vx *= boost;
+            c.vy *= boost;
+          } else if (spd > SPEED_CAP) {
+            var cut = SPEED_CAP / spd;
+            c.vx *= cut;
+            c.vy *= cut;
+          }
+        }
+        var pass;
+        for (pass = 0; pass < 2; pass++) {
+          for (var i = 0; i < chips.length; i++) {
+            for (var j = i + 1; j < chips.length; j++) {
+              collidePair(i, j, now);
+            }
+          }
+        }
+        for (var k = 0; k < chips.length; k++) {
+          var ch = chips[k];
+          ch.el.style.transform =
+            "translate(" + (ch.x - ch.w * 0.5) + "px," + (ch.y - ch.h * 0.5) + "px)";
+        }
+      }
+      requestAnimationFrame(frame);
+    }
+
+    init();
+    if (window.ResizeObserver) {
+      new ResizeObserver(measure).observe(arena);
+    } else {
+      window.addEventListener("resize", measure);
+    }
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "visible") lastT = performance.now();
+    });
+    requestAnimationFrame(frame);
+  })();
+  </script>
+  <script>
+  (function () {
+    var root = document.querySelector(".pyc-mvp-home");
+    if (!root) return;
+    var feed = root.querySelector(".hero-feed");
+    if (!feed) return;
+
+    function bindAgentVideo(container) {
+      var v = container.querySelector(".hero-clip-preview__video");
+      if (!v) return;
+      var frame = v.closest(".hero-clip-preview");
+      v.defaultMuted = true;
+      v.muted = true;
+      v.setAttribute("muted", "");
+      v.setAttribute("playsinline", "");
+      v.setAttribute("webkit-playsinline", "");
+      function markPlaying() {
+        if (frame) frame.classList.add("hero-clip-preview--playing");
+      }
+      function tryPlay() {
+        var p = v.play();
+        if (p && typeof p.catch === "function") {
+          p.catch(function () {});
+        }
+      }
+      v.addEventListener("playing", markPlaying);
+      v.addEventListener("canplay", function onCap() {
+        v.removeEventListener("canplay", onCap);
+        tryPlay();
+      });
+      try {
+        v.load();
+      } catch (e) {}
+      if (v.readyState >= 2) markPlaying();
+      tryPlay();
+      if (window.IntersectionObserver) {
+        var obs = new IntersectionObserver(
+          function (entries) {
+            for (var i = 0; i < entries.length; i++) {
+              if (entries[i].isIntersecting) tryPlay();
+            }
+          },
+          { root: null, threshold: 0.2 }
+        );
+        obs.observe(v);
+      }
+    }
+
+    function resetFeedScroll(f) {
+      if (!f || !f.isConnected) return;
+      f.scrollTop = 0;
+    }
+
+    var reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    bindAgentVideo(feed);
+    resetFeedScroll(feed);
+
+    if (reducedMotion) return;
+
+    /* Último chip ~4.06s; pausa larga antes de repetir (min. 15s ciclo total) */
+    var CYCLE_MS = 15000;
+    var timer = null;
+
+    function replay() {
+      var parent = feed.parentNode;
+      if (!parent) return;
+      var fresh = feed.cloneNode(true);
+      parent.replaceChild(fresh, feed);
+      feed = fresh;
+      bindAgentVideo(feed);
+      resetFeedScroll(feed);
+    }
+
+    function scheduleNext() {
+      if (timer) window.clearTimeout(timer);
+      timer = window.setTimeout(function tick() {
+        if (document.visibilityState !== "visible") {
+          timer = window.setTimeout(tick, 400);
+          return;
+        }
+        replay();
+        scheduleNext();
+      }, CYCLE_MS);
+    }
+
+    scheduleNext();
+  })();
+  </script>
+</body>
+</html>

@@ -621,3 +621,73 @@ def send_pullso_whatsapp_waitlist_email(
     except Exception as exc:
         _log.warning("Falló envío correo waitlist Pullso Brief: %s", exc, exc_info=True)
         return False
+
+
+def send_pullso_mvp_lead_email(
+    *,
+    to_email: str,
+    full_name: str,
+    phone: str,
+    lead_email: str,
+    hotel_name: str,
+    hotel_url: str,
+    pms: str,
+    channel_manager: str,
+    booking_engine: str,
+    lang: str,
+) -> bool:
+    """Aviso interno por lead desde landing Pullso MVP (/pullsomvp)."""
+    if (
+        not config.SMTP_HOST
+        or not config.SMTP_USER
+        or not config.SMTP_PASSWORD
+    ):
+        return False
+    subject = "Pullso MVP landing: nuevo lead"
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = config.EMAIL_FROM
+    msg["To"] = to_email.strip()
+    le = (lead_email or "").strip()
+    if le:
+        msg["Reply-To"] = le
+
+    def _dash(s: str) -> str:
+        t = (s or "").strip()
+        return t if t else "—"
+
+    lines = [
+        "Origen: Pullso MVP /pullsomvp/lead",
+        f"Idioma formulario: {lang}",
+        f"Nombre: {full_name}",
+        f"Teléfono: {phone}",
+        f"Correo: {_dash(le)}",
+        f"Hotel: {hotel_name}",
+        f"Enlace hotel / OTA: {_dash(hotel_url)}",
+        f"PMS: {_dash(pms)}",
+        f"Channel manager: {_dash(channel_manager)}",
+        f"Motor de reservas: {_dash(booking_engine)}",
+    ]
+    text = "\n".join(lines)
+    html = "<br>".join(
+        [
+            "<strong>Origen:</strong> Pullso MVP /pullsomvp/lead",
+            f"<br><strong>Idioma formulario:</strong> {lang}",
+            f"<br><strong>Nombre:</strong> {full_name}",
+            f"<br><strong>Teléfono:</strong> {phone}",
+            f"<br><strong>Correo:</strong> {_dash(le)}",
+            f"<br><strong>Hotel:</strong> {hotel_name}",
+            f"<br><strong>Enlace hotel / OTA:</strong> {_dash(hotel_url)}",
+            f"<br><strong>PMS:</strong> {_dash(pms)}",
+            f"<br><strong>Channel manager:</strong> {_dash(channel_manager)}",
+            f"<br><strong>Motor de reservas:</strong> {_dash(booking_engine)}",
+        ]
+    )
+    msg.attach(MIMEText(text, "plain", "utf-8"))
+    msg.attach(MIMEText(html, "html", "utf-8"))
+    try:
+        _sendmail([to_email.strip()], msg.as_string())
+        return True
+    except Exception as exc:
+        _log.warning("Falló envío correo lead Pullso YC: %s", exc, exc_info=True)
+        return False

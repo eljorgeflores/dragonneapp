@@ -198,3 +198,28 @@ def init_db():
             );
             """
         )
+        try:
+            conn.execute("ALTER TABLE pullso_yc_leads RENAME TO pullso_mvp_leads")
+        except sqlite3.OperationalError:
+            pass
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS pullso_mvp_leads (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                full_name TEXT NOT NULL,
+                phone TEXT NOT NULL,
+                email TEXT NOT NULL,
+                hotel_name TEXT NOT NULL,
+                hotel_url TEXT,
+                pms TEXT,
+                channel_manager TEXT,
+                booking_engine TEXT,
+                lang TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            );
+            """
+        )
+        try:
+            conn.execute("ALTER TABLE pullso_mvp_leads ADD COLUMN email TEXT")
+        except sqlite3.OperationalError:
+            pass

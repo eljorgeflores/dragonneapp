@@ -1,14 +1,16 @@
 """Marketing público: home, precios, SEO, mockup, docs HTML."""
+import os
 import re
 from datetime import datetime, timezone
+from urllib.parse import urlparse
 
 from fastapi import APIRouter, Query, Request, Response
 from fastapi.openapi.docs import get_redoc_html
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from auth_session import get_current_user
-from config import APP_NAME, APP_URL, url_path
+from config import APP_NAME, APP_URL, URL_PREFIX, url_path
 from debuglog import _debug_log
 from marketing_context import marketing_page_context
 from routes.consulting import render_consulting_landing
@@ -24,10 +26,31 @@ from seo_helpers import (
     website_node,
 )
 from db import db
-from email_smtp import send_pullso_whatsapp_waitlist_email
+from email_smtp import send_pullso_mvp_lead_email, send_pullso_whatsapp_waitlist_email
 from templating import templates
 
+from routes.pullso_mvp_landing_i18n import pullso_mvp_landing_copy
+
 router = APIRouter(tags=["marketing"])
+
+
+def _resolve_hero_media_url(raw: str) -> str:
+    """Absolute http(s) or root-relative path with URL_PREFIX for subpath deploys."""
+    s = (raw or "").strip()
+    if not s:
+        return ""
+    if s.startswith(("http://", "https://")):
+        return s
+    if s.startswith("/"):
+        px = (URL_PREFIX or "").rstrip("/")
+        return f"{px}{s}" if px else s
+    return s
+
+
+def _pullso_mvp_hero_agent_video_src() -> str:
+    """Vídeo opcional del agente hablando (face-cam). Env: PULLSO_MVP_HERO_DEMO_VIDEO_URL (legacy: PULLSO_YC_*)."""
+    raw = (os.getenv("PULLSO_MVP_HERO_DEMO_VIDEO_URL") or os.getenv("PULLSO_YC_HERO_DEMO_VIDEO_URL") or "").strip()
+    return _resolve_hero_media_url(raw)
 
 
 class PullsoWaitlistPayload(BaseModel):
@@ -36,6 +59,54 @@ class PullsoWaitlistPayload(BaseModel):
     company: str = Field("", max_length=300)
     whatsapp: str = Field(..., min_length=5, max_length=40)
     note: str = Field("", max_length=2000)
+
+
+class PullsoMvpLeadPayload(BaseModel):
+    full_name: str = Field(..., min_length=1, max_length=200)
+    phone: str = Field(..., min_length=5, max_length=40)
+    email: str = Field(..., min_length=3, max_length=254)
+    hotel_name: str = Field(..., min_length=1, max_length=300)
+    hotel_url: str = Field(..., min_length=1, max_length=500)
+    pms: str = Field("", max_length=200)
+    channel_manager: str = Field("", max_length=200)
+    booking_engine: str = Field("", max_length=200)
+    lang: str = Field("en", max_length=12)
+
+    @field_validator("phone")
+    @classmethod
+    def _phone(cls, v: str) -> str:
+        s = re.sub(r"\s+", " ", (v or "").strip())
+        if len(s) < 5:
+            raise ValueError("invalid_phone")
+        return s[:40]
+
+    @field_validator("email")
+    @classmethod
+    def _email(cls, v: str) -> str:
+        s = (v or "").strip().lower()[:254]
+        if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", s):
+            raise ValueError("invalid_email")
+        return s
+
+    @field_validator("hotel_url")
+    @classmethod
+    def _hotel_url(cls, v: str) -> str:
+        raw = (v or "").strip()[:500]
+        if not raw:
+            raise ValueError("invalid_hotel_url")
+        candidate = raw if re.match(r"^https?://", raw, re.I) else f"https://{raw}"
+        parsed = urlparse(candidate)
+        if not parsed.netloc:
+            raise ValueError("invalid_hotel_url")
+        return candidate
+
+    @field_validator("lang")
+    @classmethod
+    def _lang(cls, v: str) -> str:
+        s = (v or "en").lower()[:12]
+        if s.startswith("es"):
+            return "es"
+        return "en"
 
 
 def _pullsobrief_i18n(locale: str) -> dict:
@@ -810,6 +881,71 @@ def pullsobrief_waitlist_submit(payload: PullsoWaitlistPayload):
     return JSONResponse({"ok": True})
 
 
+def _pullso_mvp_lead_submit(payload: PullsoMvpLeadPayload):
+    """Lead desde landing Pullso MVP: guardado SQLite y correo interno si SMTP está configurado."""
+    now = datetime.now(timezone.utc).isoformat()
+    full_name = payload.full_name.strip()[:200]
+    phone = payload.phone
+    email = payload.email.strip().lower()[:254]
+    hotel_name = payload.hotel_name.strip()[:300]
+    hotel_url = (payload.hotel_url or "").strip()[:500]
+    pms = (payload.pms or "").strip()[:200]
+    channel_manager = (payload.channel_manager or "").strip()[:200]
+    booking_engine = (payload.booking_engine or "").strip()[:200]
+    lang = payload.lang
+    with db() as conn:
+        conn.execute(
+            """INSERT INTO pullso_mvp_leads (
+                   full_name, phone, email, hotel_name, hotel_url, pms, channel_manager, booking_engine, lang, created_at
+               ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                full_name,
+                phone,
+                email,
+                hotel_name,
+                hotel_url or None,
+                pms or None,
+                channel_manager or None,
+                booking_engine or None,
+                lang,
+                now,
+            ),
+        )
+    try:
+        send_pullso_mvp_lead_email(
+            to_email=CONTACT_EMAIL_PUBLIC,
+            full_name=full_name,
+            phone=phone,
+            lead_email=email,
+            hotel_name=hotel_name,
+            hotel_url=hotel_url,
+            pms=pms,
+            channel_manager=channel_manager,
+            booking_engine=booking_engine,
+            lang=lang,
+        )
+    except Exception:
+        pass
+    return JSONResponse({"ok": True})
+
+
+@router.post("/pullsomvp/lead", include_in_schema=False)
+def pullso_mvp_lead_submit(payload: PullsoMvpLeadPayload):
+    return _pullso_mvp_lead_submit(payload)
+
+
+@router.post("/pullso-mvp/lead", include_in_schema=False)
+def pullso_mvp_lead_submit_slug_legacy(payload: PullsoMvpLeadPayload):
+    """Compatibilidad: slug intermedio /pullso-mvp."""
+    return _pullso_mvp_lead_submit(payload)
+
+
+@router.post("/pullso-yc-home-preview/lead", include_in_schema=False)
+def pullso_yc_home_preview_lead_legacy(payload: PullsoMvpLeadPayload):
+    """Compatibilidad: slug anterior YC home preview."""
+    return _pullso_mvp_lead_submit(payload)
+
+
 @router.get("/pullso/whatsapp", include_in_schema=False)
 def pullso_whatsapp_canonical_moved():
     """Slug anterior; no enlazado en el sitio. Redirige a la ruta acordada /pullsobrief."""
@@ -825,3 +961,113 @@ def pullso_whatsapp_legacy_demo_path():
 @router.get("/pullso-demo", include_in_schema=False)
 def pullso_demo_short_alias():
     return RedirectResponse(url_path("/pullsobrief"), status_code=302)
+
+
+def _pullso_mvp_home_preview_response(request: Request, *, lang: str):
+    """Landing comercial Pullso MVP (EN o ES-LATAM); ruta dedicada."""
+    copy = pullso_mvp_landing_copy(lang)
+    if lang == "es":
+        path = "/pullsomvp/es"
+        canonical = absolute_url(path)
+        meta_title = "Pullso · analista de revenue con IA para hoteles"
+        meta_description = (
+            "Analista de revenue con IA para hoteles. Lecturas claras y siguientes acciones en WhatsApp. Después, coordinación y contexto compartido."
+        )
+        html_lang = "es"
+        og_locale = "es_MX"
+        in_lang = "es-MX"
+        twitter_title = "Pullso · analista de revenue con IA para hoteles"
+    else:
+        path = "/pullsomvp"
+        canonical = absolute_url(path)
+        meta_title = "Pullso · AI revenue analyst for hotels"
+        meta_description = (
+            "AI revenue analyst for hotels. Clear reads and next steps in WhatsApp. Then coordination, shared context, and less repetitive work."
+        )
+        html_lang = "en"
+        og_locale = "en_US"
+        in_lang = "en"
+        twitter_title = "Pullso · AI revenue analyst for hotels"
+
+    _site = website_node()
+    _org = organization_node()
+    structured = {
+        "@context": "https://schema.org",
+        "@graph": [
+            _org,
+            _site,
+            {
+                "@type": "WebPage",
+                "@id": canonical + "#webpage",
+                "url": canonical,
+                "name": meta_title,
+                "description": meta_description,
+                "inLanguage": in_lang,
+                "isPartOf": {"@id": _site["@id"]},
+                "publisher": {"@id": _org["@id"]},
+            },
+        ],
+    }
+    seo = {
+        "meta_title": meta_title,
+        "meta_description": meta_description,
+        "canonical_url": canonical,
+        "robots_meta": "noindex, nofollow",
+        "og_title": meta_title,
+        "og_description": meta_description,
+        "og_locale": og_locale,
+        "twitter_title": twitter_title,
+        "twitter_description": meta_description,
+        "html_lang": html_lang,
+        "structured_data": structured,
+    }
+    _poster = (
+        (os.getenv("PULLSO_MVP_HERO_DEMO_VIDEO_POSTER_URL") or os.getenv("PULLSO_YC_HERO_DEMO_VIDEO_POSTER_URL") or "")
+        .strip()
+    )
+    return templates.TemplateResponse(
+        "pullso_mvp_home_preview.html",
+        {
+            "request": request,
+            **marketing_page_context(),
+            **seo,
+            "contact_email": CONTACT_EMAIL_PUBLIC,
+            "copy": copy,
+            "pullso_lang": lang,
+            "lead_post_url": url_path("/pullsomvp/lead"),
+            "hero_agent_video_src": _pullso_mvp_hero_agent_video_src(),
+            "hero_agent_video_poster_src": _resolve_hero_media_url(_poster),
+        },
+    )
+
+
+@router.get("/pullsomvp", response_class=HTMLResponse, include_in_schema=False)
+def pullso_mvp_home_preview(request: Request):
+    return _pullso_mvp_home_preview_response(request, lang="en")
+
+
+@router.get("/pullsomvp/es", response_class=HTMLResponse, include_in_schema=False)
+def pullso_mvp_home_preview_es(request: Request):
+    return _pullso_mvp_home_preview_response(request, lang="es")
+
+
+@router.get("/pullso-mvp", response_class=HTMLResponse, include_in_schema=False)
+def pullso_mvp_slug_redirect(request: Request):
+    """Slug intermedio; canonical /pullsomvp."""
+    return RedirectResponse(url_path("/pullsomvp"), status_code=301)
+
+
+@router.get("/pullso-mvp/es", response_class=HTMLResponse, include_in_schema=False)
+def pullso_mvp_slug_es_redirect(request: Request):
+    return RedirectResponse(url_path("/pullsomvp/es"), status_code=301)
+
+
+@router.get("/pullso-yc-home-preview", response_class=HTMLResponse, include_in_schema=False)
+def pullso_yc_home_preview_redirect(request: Request):
+    """Slug anterior; canonical /pullsomvp."""
+    return RedirectResponse(url_path("/pullsomvp"), status_code=301)
+
+
+@router.get("/pullso-yc-home-preview/es", response_class=HTMLResponse, include_in_schema=False)
+def pullso_yc_home_preview_es_redirect(request: Request):
+    return RedirectResponse(url_path("/pullsomvp/es"), status_code=301)
