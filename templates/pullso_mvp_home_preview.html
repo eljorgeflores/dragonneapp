@@ -354,6 +354,14 @@
       padding: clamp(48px, 8vw, 100px) 0 clamp(56px, 10vw, 120px);
       overflow: hidden;
     }
+    @media (min-width: 1024px) {
+      .pyc-mvp-home .hero {
+        padding: clamp(52px, 8.5vw, 108px) 0 clamp(60px, 10.5vw, 128px);
+      }
+      .pyc-mvp-home .hero-layout {
+        gap: 40px;
+      }
+    }
     .pyc-mvp-home .hero-fx {
       position: absolute;
       inset: -12% -8% -8%;
@@ -467,8 +475,8 @@
       color: transparent;
     }
     .pyc-mvp-home .hero-sub {
-      margin: clamp(28px, 3.2vw, 36px) 0 0;
-      max-width: 38ch;
+      margin: clamp(26px, 3vw, 34px) 0 0;
+      max-width: 40ch;
       font-size: clamp(1rem, 1.45vw, 1.12rem);
       color: var(--soft);
       font-weight: 500;
@@ -499,27 +507,28 @@
       border: 1px solid var(--line);
     }
 
-    /* Mismo patrón que /pullsobrief (.pws-tech): cápsula clara, logos OpenAI + Meta */
+    /* Partners: after CTAs so it supports sin competir */
     .pyc-mvp-home .pws-tech {
-      margin-top: clamp(22px, 2.8vw, 30px);
-      margin-bottom: 2px;
+      margin-top: clamp(18px, 2.4vw, 26px);
+      margin-bottom: 0;
       max-width: 100%;
+      opacity: 0.92;
     }
     .pyc-mvp-home .pws-tech-inner {
       display: inline-flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: 8px 14px;
-      padding: 9px 17px;
+      gap: 8px 12px;
+      padding: 8px 15px;
       border-radius: 14px;
-      background: linear-gradient(135deg, rgba(255,255,255,0.88), rgba(252,252,254,0.72));
+      background: linear-gradient(135deg, rgba(255,255,255,0.82), rgba(250,250,252,0.66));
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(38,42,50,0.08);
+      border: 1px solid rgba(38,42,50,0.07);
       box-shadow:
-        0 10px 36px rgba(18,22,30,0.07),
-        0 0 0 1px rgba(255,255,255,0.8) inset,
-        0 0 48px -28px rgba(246,169,5,0.14);
+        0 8px 28px rgba(18,22,30,0.06),
+        0 0 0 1px rgba(255,255,255,0.65) inset,
+        0 0 40px -30px rgba(246,169,5,0.12);
     }
     .pyc-mvp-home .pws-tech-label {
       font-size: 0.72rem;
@@ -1073,8 +1082,11 @@
       min-height: 0;
       border-radius: 14px;
       overflow: hidden;
-      border: 1px solid rgba(255,255,255,0.1);
-      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.35), 0 6px 18px rgba(0,0,0,0.35);
+      border: 1px solid rgba(255,255,255,0.09);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.05),
+        inset 0 0 0 1px rgba(0,0,0,0.28),
+        0 8px 26px rgba(0,0,0,0.42);
       background: #0a0e12;
     }
     .pyc-mvp-home .hero-clip-preview__media {
@@ -1433,55 +1445,6 @@
       .pyc-mvp-home .pnv-thesis__arr { display: block; align-self: center; }
     }
 
-    .pyc-mvp-home .pnv-strip {
-      padding: clamp(36px, 6vw, 56px) 0;
-      background: rgba(255,255,255,0.02);
-      border-block: 1px solid var(--line);
-    }
-    .pyc-mvp-home .pnv-strip-grid {
-      display: grid;
-      gap: 14px;
-      grid-template-columns: 1fr;
-    }
-    @media (min-width: 800px) {
-      .pyc-mvp-home .pnv-strip-grid { grid-template-columns: repeat(3, 1fr); }
-    }
-    .pyc-mvp-home .pnv-icon-card {
-      border-radius: 20px;
-      padding: 22px 20px;
-      background: var(--card);
-      border: 1px solid var(--line);
-      position: relative;
-      overflow: hidden;
-    }
-    .pyc-mvp-home .pnv-icon-card__glyph {
-      width: 36px;
-      height: 36px;
-      border-radius: 12px;
-      background: linear-gradient(145deg, rgba(255,207,74,0.2), rgba(232,163,23,0.08));
-      border: 1px solid rgba(255,207,74,0.25);
-      display: grid;
-      place-items: center;
-      font-family: var(--font-display);
-      font-weight: 800;
-      font-size: 0.95rem;
-      color: var(--amber);
-      margin-bottom: 14px;
-    }
-    .pyc-mvp-home .pnv-icon-card__t {
-      margin: 0;
-      font-family: var(--font-display);
-      font-size: 1.12rem;
-      font-weight: 800;
-      letter-spacing: -0.03em;
-      line-height: 1.15;
-    }
-    .pyc-mvp-home .pnv-icon-card__b {
-      margin: 8px 0 0;
-      font-size: 0.9rem;
-      color: var(--mute);
-      line-height: 1.45;
-    }
     .pyc-mvp-home .pnv-split {
       display: grid;
       gap: 32px;
@@ -1572,13 +1535,13 @@
       0% { transform: scale(0.42); opacity: 0.78; filter: blur(0); }
       100% { transform: scale(2.2); opacity: 0; filter: blur(5px); }
     }
-    /* Static fallbacks (no JS / reduced motion): dispersed, no hub */
-    .pyc-mvp-home .pnv-prob-node--pms { left: 7%; top: 14%; }
-    .pyc-mvp-home .pnv-prob-node--cm { left: 46%; top: 6%; }
-    .pyc-mvp-home .pnv-prob-node--pickup { right: 6%; top: 22%; }
-    .pyc-mvp-home .pnv-prob-node--rates { left: 12%; top: 52%; }
-    .pyc-mvp-home .pnv-prob-node--sheet { right: 14%; top: 48%; }
-    .pyc-mvp-home .pnv-prob-node--ota { left: 34%; bottom: 14%; }
+    /* Static fallbacks: señales desordenadas, sin “diagrama” de centro */
+    .pyc-mvp-home .pnv-prob-node--pms { left: 7%; top: 14%; transform: rotate(-3deg); }
+    .pyc-mvp-home .pnv-prob-node--cm { left: 46%; top: 6%; transform: rotate(2.2deg); }
+    .pyc-mvp-home .pnv-prob-node--pickup { right: 6%; top: 22%; transform: rotate(-1.4deg); }
+    .pyc-mvp-home .pnv-prob-node--rates { left: 12%; top: 52%; transform: rotate(2.8deg); }
+    .pyc-mvp-home .pnv-prob-node--sheet { right: 14%; top: 48%; transform: rotate(-2deg); }
+    .pyc-mvp-home .pnv-prob-node--ota { left: 34%; bottom: 14%; transform: rotate(1.1deg); }
     @media (max-width: 520px) {
       .pyc-mvp-home .pnv-prob-viz { min-height: min(288px, 62vw); }
       .pyc-mvp-home .pnv-prob-nodes { min-height: min(236px, 54vw); }
@@ -1621,8 +1584,11 @@
     @media (min-width: 720px) {
       .pyc-mvp-home .pnv-cards-3 { grid-template-columns: repeat(3, 1fr); }
     }
+    .pyc-mvp-home .pnv-product-lede {
+      margin-bottom: 6px;
+    }
     .pyc-mvp-home .pnv-delivery-kicker {
-      margin-top: clamp(26px, 4vw, 40px);
+      margin-top: clamp(30px, 4.2vw, 44px);
       margin-bottom: 0;
     }
     .pyc-mvp-home .pnv-delivery-row {
@@ -1681,71 +1647,6 @@
     .pyc-mvp-home .pnv-mini-card p {
       margin: 0;
       font-size: 0.9rem;
-      color: var(--mute);
-      line-height: 1.45;
-    }
-    .pyc-mvp-home .pnv-flow {
-      margin-top: 32px;
-      display: grid;
-      gap: 14px;
-      grid-template-columns: 1fr;
-    }
-    @media (min-width: 720px) {
-      .pyc-mvp-home .pnv-flow {
-        grid-template-columns: repeat(4, 1fr);
-        gap: 12px;
-        align-items: stretch;
-      }
-    }
-    .pyc-mvp-home .pnv-flow__step {
-      border-radius: 18px;
-      padding: 18px 16px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid var(--line);
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      min-height: 100%;
-      position: relative;
-    }
-    @media (min-width: 720px) {
-      .pyc-mvp-home .pnv-flow__step:not(:last-child)::after {
-        content: "→";
-        position: absolute;
-        right: -13px;
-        top: 50%;
-        transform: translateY(-50%);
-        font-weight: 800;
-        font-size: 1rem;
-        color: var(--amber);
-        opacity: 0.7;
-        z-index: 2;
-        pointer-events: none;
-      }
-    }
-    .pyc-mvp-home .pnv-flow__step--accent {
-      border-color: rgba(255,207,74,0.28);
-      background: linear-gradient(165deg, rgba(232,163,23,0.09), rgba(0,0,0,0.22));
-    }
-    .pyc-mvp-home .pnv-flow__n {
-      font-size: 0.65rem;
-      font-weight: 800;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--amber);
-    }
-    .pyc-mvp-home .pnv-flow__t {
-      margin: 0;
-      font-family: var(--font-display);
-      font-size: 1.02rem;
-      font-weight: 800;
-      letter-spacing: -0.03em;
-      line-height: 1.2;
-      color: var(--text);
-    }
-    .pyc-mvp-home .pnv-flow__b {
-      margin: 0;
-      font-size: 0.86rem;
       color: var(--mute);
       line-height: 1.45;
     }
@@ -1860,9 +1761,10 @@
     }
     .pyc-mvp-home .pnv-replace-grid {
       display: grid;
-      gap: 10px;
-      margin-top: 24px;
+      gap: 12px;
+      margin-top: 28px;
       grid-template-columns: 1fr;
+      align-items: stretch;
     }
     @media (min-width: 640px) {
       .pyc-mvp-home .pnv-replace-grid { grid-template-columns: repeat(2, 1fr); }
@@ -1872,12 +1774,14 @@
     }
     .pyc-mvp-home .pnv-replace-cell {
       border-radius: 16px;
-      padding: 16px 18px;
+      padding: 17px 18px;
+      min-height: 5.4rem;
       background: rgba(255,255,255,0.03);
       border: 1px solid var(--line);
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 7px;
+      justify-content: center;
     }
     .pyc-mvp-home .pnv-replace-cell__t {
       font-family: var(--font-display);
@@ -1986,17 +1890,17 @@
       100% { transform: translateX(-50%); }
     }
     .pyc-mvp-home .pnv-faq {
-      padding: clamp(64px, 10vw, 108px) 0;
+      padding: clamp(72px, 11vw, 120px) 0 clamp(80px, 12vw, 124px);
     }
     .pyc-mvp-home .pnv-faq .container {
-      max-width: min(calc(100% - 48px), 680px);
+      max-width: min(calc(100% - 48px), 720px);
       margin-inline: auto;
     }
     .pyc-mvp-home .pnv-faq .pnv-k {
-      margin-bottom: 18px;
+      margin-bottom: 14px;
     }
     .pyc-mvp-home .pnv-faq .pnv-h2 {
-      margin-bottom: clamp(40px, 5.5vw, 56px);
+      margin-bottom: clamp(36px, 4.8vw, 52px);
       max-width: 100%;
     }
     /* legacy kicker alias for rail */
@@ -2008,17 +1912,21 @@
       color: var(--amber);
       margin-bottom: 14px;
     }
+    .pyc-mvp-home .rail .mvp-kicker {
+      color: rgba(255,207,74,0.95);
+      margin-bottom: 12px;
+    }
     .pyc-mvp-home .mvp-faq {
       max-width: 100%;
       margin: 0;
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 12px;
     }
     .pyc-mvp-home .mvp-faq details {
-      border-radius: 13px;
-      border: 1px solid rgba(255,255,255,0.055);
-      background: rgba(255,255,255,0.018);
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.022);
       margin-bottom: 0;
       overflow: hidden;
       transition: border-color 0.18s ease, background 0.18s ease;
@@ -2034,13 +1942,13 @@
     .pyc-mvp-home .mvp-faq summary {
       cursor: pointer;
       list-style: none;
-      padding: 18px 22px 18px 24px;
+      padding: 19px 22px 19px 26px;
       font-family: var(--font-display);
       font-weight: 700;
-      font-size: 0.96rem;
-      letter-spacing: -0.022em;
+      font-size: 0.95rem;
+      letter-spacing: -0.024em;
       color: var(--text);
-      line-height: 1.3;
+      line-height: 1.34;
       outline: none;
     }
     .pyc-mvp-home .mvp-faq summary:focus-visible {
@@ -2049,19 +1957,19 @@
     }
     .pyc-mvp-home .mvp-faq summary::-webkit-details-marker { display: none; }
     .pyc-mvp-home .mvp-faq details[open] summary {
-      border-bottom: 1px solid rgba(255,255,255,0.045);
-      padding-bottom: 15px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      padding-bottom: 14px;
       margin-bottom: 0;
     }
     .pyc-mvp-home .mvp-faq p {
       margin: 0;
-      padding: 4px 24px 22px 24px;
+      padding: 2px 26px 22px 26px;
       font-family: var(--font-sans);
       font-weight: 400;
-      color: var(--mute);
-      font-size: 0.9rem;
-      line-height: 1.68;
-      letter-spacing: 0.01em;
+      color: rgba(197,202,211,0.92);
+      font-size: 0.905rem;
+      line-height: 1.64;
+      letter-spacing: 0.005em;
     }
 
     /* CTA rail */
@@ -2185,8 +2093,8 @@
     }
     .pyc-mvp-home .mvp-field-grid {
       display: grid;
-      gap: 18px 20px;
-      margin-bottom: 20px;
+      gap: 20px 22px;
+      margin-bottom: 22px;
       align-items: start;
     }
     @media (min-width: 560px) {
@@ -2248,6 +2156,51 @@
       outline: none;
       border-color: rgba(255, 207, 74, 0.45);
       box-shadow: 0 0 0 3px rgba(232, 163, 23, 0.15);
+    }
+    .pyc-mvp-home .mvp-phone-row {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: stretch;
+    }
+    @media (min-width: 560px) {
+      .pyc-mvp-home .mvp-phone-row {
+        flex-wrap: nowrap;
+      }
+    }
+    .pyc-mvp-home .mvp-phone-prefix {
+      flex: 0 0 auto;
+      width: auto;
+      min-width: 4.75rem;
+      max-width: 8.5rem;
+      min-height: 46px;
+      box-sizing: border-box;
+      padding: 10px 26px 10px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background-color: rgba(0, 0, 0, 0.35);
+      background-image: linear-gradient(45deg, transparent 50%, rgba(197,202,211,0.75) 50%),
+        linear-gradient(135deg, rgba(197,202,211,0.75) 50%, transparent 50%);
+      background-position: calc(100% - 14px) 50%, calc(100% - 9px) 50%;
+      background-size: 5px 5px, 5px 5px;
+      background-repeat: no-repeat;
+      color: var(--text);
+      font: inherit;
+      font-size: 0.86rem;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+    .pyc-mvp-home .mvp-phone-prefix:focus {
+      outline: none;
+      border-color: rgba(255, 207, 74, 0.45);
+      box-shadow: 0 0 0 3px rgba(232, 163, 23, 0.15);
+    }
+    .pyc-mvp-home .mvp-phone-local {
+      flex: 1 1 6rem;
+      min-width: 0;
     }
     .pyc-mvp-home .mvp-lead-submit {
       width: 100%;
@@ -2430,6 +2383,9 @@
         font-size: 0.74rem;
         padding: 7px 12px;
       }
+      .pyc-mvp-home .pws-tech {
+        margin-top: clamp(16px, 4.5vw, 24px);
+      }
       .pyc-mvp-home .hero-actions {
         margin-top: clamp(24px, 5vw, 32px);
         flex-direction: column;
@@ -2523,23 +2479,6 @@
       .pyc-mvp-home .pnv-thesis__s {
         font-size: clamp(0.92rem, 3.5vw, 1.02rem);
       }
-      .pyc-mvp-home .pnv-strip {
-        padding: clamp(30px, 7vw, 44px) 0;
-      }
-      .pyc-mvp-home .pnv-strip-grid {
-        gap: 12px;
-      }
-      .pyc-mvp-home .pnv-icon-card {
-        padding: 18px 16px;
-        border-radius: 18px;
-      }
-      .pyc-mvp-home .pnv-icon-card__t {
-        font-size: 1.04rem;
-      }
-      .pyc-mvp-home .pnv-icon-card__b {
-        font-size: 0.86rem;
-        line-height: 1.48;
-      }
       .pyc-mvp-home .pnv-split {
         gap: 26px;
         margin-bottom: 0;
@@ -2565,20 +2504,6 @@
       }
       .pyc-mvp-home .pnv-problem .pnv-mini-card p {
         font-size: 0.86rem;
-      }
-      .pyc-mvp-home .pnv-flow {
-        margin-top: 26px;
-        gap: 12px;
-      }
-      .pyc-mvp-home .pnv-flow__step {
-        padding: 16px 15px;
-        border-radius: 16px;
-      }
-      .pyc-mvp-home .pnv-flow__t {
-        font-size: 0.98rem;
-      }
-      .pyc-mvp-home .pnv-flow__b {
-        font-size: 0.84rem;
       }
       .pyc-mvp-home .pnv-delivery-kicker {
         margin-top: 20px;
@@ -2658,8 +2583,11 @@
       .pyc-mvp-home .pnv-how-step {
         padding: 17px 15px;
       }
+      .pyc-mvp-home .pnv-how {
+        padding-bottom: clamp(42px, 9.5vw, 58px);
+      }
       .pyc-mvp-home .pnv-audience {
-        padding: clamp(34px, 8vw, 48px) 0;
+        padding: clamp(38px, 8.5vw, 52px) 0;
       }
       .pyc-mvp-home .pnv-audience-pills {
         margin-top: 18px;
@@ -2907,15 +2835,6 @@
               <h1 class="hero-h1">{{ copy.hero_h1 }}</h1>
               <p class="hero-sub">{{ copy.hero_sub }}</p>
               <p class="hero-support">{{ copy.hero_support }}</p>
-              <div class="pws-tech" aria-label="{{ copy.tech_aria }}">
-                <div class="pws-tech-inner">
-                  <span class="pws-tech-label">{{ copy.tech_label }}</span>
-                  <img class="pws-tech-logo--openai" src="{{ url_prefix }}/static/branding/openai-logo.svg" alt="OpenAI" width="72" height="19" loading="lazy" decoding="async" />
-                  <span class="pws-tech-meta-wrap">
-                    <img class="pws-tech-logo--meta" src="{{ url_prefix }}/static/branding/meta-logo.svg" alt="Meta" width="88" height="20" loading="lazy" decoding="async" />
-                  </span>
-                </div>
-              </div>
               <div class="hero-actions">
                 <a class="btn-primary" href="#contact">{{ copy.hero_cta1 }}</a>
                 <a class="btn-ghost" href="#product">{{ copy.hero_cta2 }}</a>
@@ -2925,6 +2844,15 @@
                 <li>{{ line }}</li>
                 {% endfor %}
               </ul>
+              <div class="pws-tech" aria-label="{{ copy.tech_aria }}">
+                <div class="pws-tech-inner">
+                  <span class="pws-tech-label">{{ copy.tech_label }}</span>
+                  <img class="pws-tech-logo--openai" src="{{ url_prefix }}/static/branding/openai-logo.svg" alt="OpenAI" width="72" height="19" loading="lazy" decoding="async" />
+                  <span class="pws-tech-meta-wrap">
+                    <img class="pws-tech-logo--meta" src="{{ url_prefix }}/static/branding/meta-logo.svg" alt="Meta" width="88" height="20" loading="lazy" decoding="async" />
+                  </span>
+                </div>
+              </div>
             </div>
 
             <div class="stage">
@@ -2938,7 +2866,7 @@
                           <span>9:41</span>
                           <div class="hero-phone-status-icons">
                             <svg width="14" height="10" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M1 7.5h1.5v2H1v-2Zm3-1.5h1.5v3.5H4V6Zm3-2h1.5V9.5H7V4Zm3-2.5h1.5V9.5h-1.5V1.5Z" fill="currentColor"/></svg>
-                            <svg width="14" height="10" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.05" stroke-linecap="round" stroke-linejoin="round"><path d="M1.15 6.95Q7 1.85 12.85 6.95"/><path d="M3.35 6.15Q7 2.65 10.65 6.15"/><path d="M5.45 5.45Q7 4.05 8.55 5.45"/></g><circle cx="7" cy="8.75" r="0.72" fill="currentColor"/></svg>
+                            <svg width="14" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" preserveAspectRatio="xMidYMid meet"><g stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.859a10 10 0 0 1 14 0"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/></g><circle cx="12" cy="20" r="1.65" fill="currentColor" stroke="none"/></svg>
                           </div>
                         </div>
                         <div class="hero-app-topbar">
@@ -3087,21 +3015,6 @@
           </div>
         </section>
 
-        <section class="pnv-strip" id="value" aria-labelledby="value-heading">
-          <div class="container">
-            <h2 class="sr-only" id="value-heading">{{ copy.strip_aria }}</h2>
-            <div class="pnv-strip-grid">
-              {% for item in copy.strip_items %}
-              <div class="pnv-icon-card">
-                <div class="pnv-icon-card__glyph" aria-hidden="true">{{ loop.index }}</div>
-                <h3 class="pnv-icon-card__t">{{ item.t }}</h3>
-                <p class="pnv-icon-card__b">{{ item.b }}</p>
-              </div>
-              {% endfor %}
-            </div>
-          </div>
-        </section>
-
         <section class="pnv-section pnv-problem" id="problem" aria-labelledby="problem-heading">
           <div class="container pnv-split">
             <div class="pnv-split__copy">
@@ -3138,16 +3051,7 @@
           <div class="container">
             <p class="pnv-k">{{ copy.product_kicker }}</p>
             <h2 class="pnv-h2" id="product-heading">{{ copy.product_h2 }}</h2>
-            <p class="pnv-lede pnv-lede--narrow">{{ copy.product_lede }}</p>
-            <div class="pnv-flow" aria-label="{{ copy.product_flow_aria }}">
-              {% for step in copy.product_flow_steps %}
-              <div class="pnv-flow__step {% if loop.last %}pnv-flow__step--accent{% endif %}">
-                <span class="pnv-flow__n">{{ loop.index }}</span>
-                <h3 class="pnv-flow__t">{{ step.t }}</h3>
-                <p class="pnv-flow__b">{{ step.b }}</p>
-              </div>
-              {% endfor %}
-            </div>
+            <p class="pnv-lede pnv-lede--narrow pnv-product-lede">{{ copy.product_lede }}</p>
             <p class="pnv-k pnv-delivery-kicker">{{ copy.product_delivery_kicker }}</p>
             <div class="pnv-delivery-row" role="group" aria-label="{{ copy.product_delivery_aria }}">
               {% for item in copy.product_delivery_items %}
@@ -3268,7 +3172,7 @@
           <div class="container">
             <div class="rail-inner">
               <div>
-                <p class="mvp-kicker" style="color:rgba(255,207,74,0.95); margin-bottom:12px">{{ copy.rail_kicker }}</p>
+                <p class="mvp-kicker">{{ copy.rail_kicker }}</p>
                 <h2>{{ copy.rail_h2 }}</h2>
                 <p>
                   {{ copy.rail_p }}
@@ -3282,58 +3186,81 @@
                       <span>{{ copy.form_name_label }}</span>
                       <span class="mvp-field-hint">&nbsp;</span>
                     </div>
-                    <input name="full_name" type="text" autocomplete="name" required maxlength="200" />
+                    <input name="full_name" type="text" autocomplete="name" required maxlength="200" placeholder="{{ copy.form_ph_name }}" />
                   </label>
-                  <label class="mvp-field">
+                  <div class="mvp-field mvp-field--phone">
                     <div class="mvp-field-head">
-                      <span>{{ copy.form_phone_label }}</span>
-                      <span class="mvp-field-hint">&nbsp;</span>
+                      <span id="mvp-phone-label">{{ copy.form_phone_label }}</span>
+                      <span class="mvp-field-hint sr-only" id="mvp-phone-hint">{{ copy.form_phone_local_hint }}</span>
                     </div>
-                    <input name="phone" type="tel" autocomplete="tel" inputmode="tel" required maxlength="40" />
-                  </label>
+                    <div class="mvp-phone-row">
+                      <select
+                        id="mvp-phone-prefix"
+                        class="mvp-phone-prefix"
+                        aria-label="{{ copy.form_phone_prefix_aria }}"
+                      >
+                        {% for o in copy.phone_prefix_options %}
+                        <option value="{{ o.v }}" title="{{ o.l }}"{% if loop.first %} selected{% endif %}>{{ o.f }} {{ o.v }}</option>
+                        {% endfor %}
+                      </select>
+                      <input
+                        id="mvp-phone-local"
+                        class="mvp-phone-local"
+                        type="tel"
+                        autocomplete="tel-national"
+                        inputmode="tel"
+                        required
+                        maxlength="22"
+                        placeholder="{{ copy.form_ph_phone }}"
+                        title="{{ copy.form_phone_local_hint }}"
+                        aria-labelledby="mvp-phone-label"
+                        aria-describedby="mvp-phone-hint"
+                      />
+                    </div>
+                  </div>
                   <label class="mvp-field mvp-field-span-2">
                     <div class="mvp-field-head">
                       <span>{{ copy.form_email_label }}</span>
                       <span class="mvp-field-hint">&nbsp;</span>
                     </div>
-                    <input name="email" type="email" autocomplete="email" required maxlength="254" inputmode="email" />
+                    <input name="email" type="email" autocomplete="email" required maxlength="254" inputmode="email" placeholder="{{ copy.form_ph_email }}" />
                   </label>
                   <label class="mvp-field">
                     <div class="mvp-field-head">
                       <span>{{ copy.form_hotel_label }}</span>
                       <span class="mvp-field-hint">&nbsp;</span>
                     </div>
-                    <input name="hotel_name" type="text" autocomplete="organization" required maxlength="300" />
+                    <input name="hotel_name" type="text" autocomplete="organization" required maxlength="300" placeholder="{{ copy.form_ph_hotel }}" />
                   </label>
                   <label class="mvp-field">
                     <div class="mvp-field-head">
                       <span>{{ copy.form_url_label }}</span>
                       <span class="mvp-field-hint">{{ copy.form_url_help }}</span>
                     </div>
-                    <input name="hotel_url" type="text" inputmode="url" placeholder="https://" required maxlength="500" />
+                    <input name="hotel_url" type="text" inputmode="url" placeholder="{{ copy.form_ph_url }}" required maxlength="500" />
                   </label>
                 </div>
                 <div class="mvp-field-grid mvp-field-grid--3">
                   <label class="mvp-field">
                     <div class="mvp-field-head">
                       <span>{{ copy.form_pms_label }}</span>
-                      <span class="mvp-field-hint">{{ copy.form_optional_hint }}</span>
+                      <span class="mvp-field-hint">&nbsp;</span>
                     </div>
-                    <input name="pms" type="text" autocomplete="off" maxlength="200" />
+                    <input name="pms" type="text" autocomplete="off" maxlength="200" placeholder="{{ copy.form_ph_pms }}" />
                   </label>
                   <label class="mvp-field">
                     <div class="mvp-field-head">
                       <span>{{ copy.form_cm_label }}</span>
-                      <span class="mvp-field-hint">{{ copy.form_optional_hint }}</span>
+                      <span class="mvp-field-hint">&nbsp;</span>
                     </div>
-                    <input name="channel_manager" type="text" autocomplete="off" maxlength="200" />
+                    <input name="channel_manager" type="text" autocomplete="off" maxlength="200" placeholder="{{ copy.form_ph_cm }}" />
                   </label>
                   <label class="mvp-field">
                     <div class="mvp-field-head">
                       <span>{{ copy.form_be_label }}</span>
-                      <span class="mvp-field-hint">{{ copy.form_optional_hint }}</span>
+                      <span class="mvp-field-hint">&nbsp;</span>
                     </div>
-                    <input name="booking_engine" type="text" autocomplete="off" maxlength="200" />
+                    <input name="booking_engine" type="text" autocomplete="off" maxlength="200" placeholder="{{ copy.form_ph_be }}" />
                   </label>
                 </div>
                 <button type="submit" class="btn-primary mvp-lead-submit">{{ copy.form_submit }}</button>
@@ -3385,9 +3312,22 @@
       statusEl.className = "yc-form-status";
       errDetail.textContent = "";
       var langEl = document.getElementById("mvp-lead-lang");
+      var prefixEl = document.getElementById("mvp-phone-prefix");
+      var localEl = document.getElementById("mvp-phone-local");
+      var phoneCombined = "";
+      if (prefixEl || localEl) {
+        phoneCombined = (
+          ((prefixEl && prefixEl.value) || "") +
+          " " +
+          ((localEl && localEl.value) || "")
+        )
+          .replace(/\s+/g, " ")
+          .trim()
+          .slice(0, 40);
+      }
       var body = {
         full_name: (form.full_name.value || "").trim().slice(0, 200),
-        phone: (form.phone.value || "").trim().slice(0, 40),
+        phone: phoneCombined,
         email: (form.email.value || "").trim().toLowerCase().slice(0, 254),
         hotel_name: (form.hotel_name.value || "").trim().slice(0, 300),
         hotel_url: (form.hotel_url.value || "").trim().slice(0, 500),
@@ -3497,7 +3437,14 @@
         var cy = r.top + r.height * 0.5 - ar.top;
         var ang = Math.random() * Math.PI * 2;
         var sp = SPEED_MIN + Math.random() * (SPEED_MAX - SPEED_MIN);
-        chips.push({ el: el, x: cx, y: cy, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp });
+        chips.push({
+          el: el,
+          x: cx,
+          y: cy,
+          vx: Math.cos(ang) * sp,
+          vy: Math.sin(ang) * sp,
+          rot: (Math.random() * 5 - 2.5).toFixed(2),
+        });
       }
       arena.classList.add("pnv-prob-nodes--live");
       measure();
@@ -3594,7 +3541,13 @@
         for (var k = 0; k < chips.length; k++) {
           var ch = chips[k];
           ch.el.style.transform =
-            "translate(" + (ch.x - ch.w * 0.5) + "px," + (ch.y - ch.h * 0.5) + "px)";
+            "translate(" +
+            (ch.x - ch.w * 0.5) +
+            "px," +
+            (ch.y - ch.h * 0.5) +
+            "px) rotate(" +
+            ch.rot +
+            "deg)";
         }
       }
       requestAnimationFrame(frame);
