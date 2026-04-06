@@ -164,7 +164,7 @@
     <div class="ppc pp-nav">
       <input type="checkbox" id="pp-nav-toggle" class="pp-nav-toggle" />
       <div class="pp-brand pp-brand-group">
-        <a href="{{ url_prefix }}/verticals/hospitality#top" class="pp-brand-product">Pullso</a>
+        <a href="{{ url_path('/pullso') }}#top" class="pp-brand-product">Pullso</a>
         <a href="{{ url_prefix }}/" class="pp-brand-endorse" aria-label="Dragonné — sitio corporativo">by Dragonné</a>
       </div>
       <label for="pp-nav-toggle" class="pp-nav-toggle-btn" aria-label="Abrir menú"><span></span></label>
@@ -175,17 +175,17 @@
           <div class="pp-nav-sub" role="menu">
             <div class="pp-nav-sub-group" role="group" aria-label="Hospitalidad">
               <span class="pp-nav-sub-group-title">Hospitalidad</span>
-              <a href="{{ url_path('/consultoria/hospitality') }}" role="menuitem">Consultoría</a>
-              <a href="{{ url_prefix }}/verticals/hospitality" role="menuitem">Pullso · software hotelero</a>
+              <a href="{{ url_path('/hoteles') }}" role="menuitem">Hoteles</a>
+              <a href="{{ url_path('/pullso') }}" role="menuitem">Pullso · software hotelero</a>
             </div>
             <a href="{{ url_path('/consultoria/startups') }}" role="menuitem">Startups</a>
             <a href="{{ url_path('/consultoria/smbs') }}" role="menuitem">SMBs</a>
             <a href="{{ url_path('/consultoria/medios') }}" role="menuitem">Medios · posicionamiento</a>
           </div>
         </div>
-        <a href="{{ url_prefix }}/verticals/hospitality#producto">Producto</a>
-        <a href="{{ url_prefix }}/verticals/hospitality#como-funciona">Cómo funciona</a>
-        <a href="{{ url_prefix }}/verticals/hospitality#integraciones">Integraciones</a>
+        <a href="{{ url_path('/pullso') }}#producto">Producto</a>
+        <a href="{{ url_path('/pullso') }}#como-funciona">Cómo funciona</a>
+        <a href="{{ url_path('/pullso') }}#integraciones">Integraciones</a>
         <a href="{{ url_prefix }}/precios">Precios</a>
       </nav>
       <div class="pp-actions">
@@ -261,10 +261,10 @@
           <section aria-labelledby="footer-producto">
             <h3 id="footer-producto" class="pp-footer-head">Producto</h3>
             <ul>
-              <li><a href="{{ url_prefix }}/verticals/hospitality#producto">Qué ofrece</a></li>
-              <li><a href="{{ url_prefix }}/verticals/hospitality#como-funciona">Cómo funciona</a></li>
-              <li><a href="{{ url_prefix }}/verticals/hospitality#prueba">Probar gratis</a></li>
-              <li><a href="{{ url_prefix }}/verticals/hospitality#integraciones">Integraciones</a></li>
+              <li><a href="{{ url_path('/pullso') }}#producto">Qué ofrece</a></li>
+              <li><a href="{{ url_path('/pullso') }}#como-funciona">Cómo funciona</a></li>
+              <li><a href="{{ url_path('/pullso') }}#prueba">Probar gratis</a></li>
+              <li><a href="{{ url_path('/pullso') }}#integraciones">Integraciones</a></li>
               <li><a href="{{ url_prefix }}/precios">Precios</a></li>
             </ul>
           </section>

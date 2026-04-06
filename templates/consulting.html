@@ -24,8 +24,8 @@
           <div class="cp-nav-sub" role="menu">
             <div class="cp-nav-sub-group" role="group" aria-label="{{ t.vert_hosp }}">
               <span class="cp-nav-sub-group-title">{{ t.vert_hosp }}</span>
-              <a href="{{ url_path('/consultoria/hospitality') if lang == 'es' else url_path('/consulting/hospitality') }}" role="menuitem">{{ t.vert_hosp_tab_consulting }}</a>
-              <a href="{{ url_path('/verticals/hospitality') }}" role="menuitem">{{ t.nav_vertical_pullso }}</a>
+              <a href="{{ url_path('/hoteles') if lang == 'es' else url_path('/hotels') }}" role="menuitem">{{ t.vert_hosp_tab_consulting }}</a>
+              <a href="{{ url_path('/pullso') }}" role="menuitem">{{ t.nav_vertical_pullso }}</a>
             </div>
             <a href="{{ url_path('/consultoria/startups') if lang == 'es' else url_path('/consulting/startups') }}" role="menuitem">{{ t.vert_nav_startups }}</a>
             <a href="{{ url_path('/consultoria/smbs') if lang == 'es' else url_path('/consulting/smbs') }}" role="menuitem">{{ t.vert_nav_smbs }}</a>
@@ -50,8 +50,8 @@
     <div class="cp-nav-mobile">
       <span class="cp-nav-mobile-subtitle">{{ t.nav_verticals }}</span>
       <span class="cp-nav-mobile-subtitle">{{ t.vert_hosp }}</span>
-      <a class="cp-nav-mobile-sub" href="{{ url_path('/consultoria/hospitality') if lang == 'es' else url_path('/consulting/hospitality') }}">{{ t.vert_hosp_tab_consulting }}</a>
-      <a class="cp-nav-mobile-sub" href="{{ url_path('/verticals/hospitality') }}">{{ t.nav_vertical_pullso }}</a>
+      <a class="cp-nav-mobile-sub" href="{{ url_path('/hoteles') if lang == 'es' else url_path('/hotels') }}">{{ t.vert_hosp_tab_consulting }}</a>
+      <a class="cp-nav-mobile-sub" href="{{ url_path('/pullso') }}">{{ t.nav_vertical_pullso }}</a>
       <a href="{{ url_path('/consultoria/startups') if lang == 'es' else url_path('/consulting/startups') }}">{{ t.vert_nav_startups }}</a>
       <a href="{{ url_path('/consultoria/smbs') if lang == 'es' else url_path('/consulting/smbs') }}">{{ t.vert_nav_smbs }}</a>
       <a href="{{ url_path('/consultoria/medios') if lang == 'es' else url_path('/consulting/medios') }}">{{ t.vert_nav_media }}</a>
@@ -169,7 +169,7 @@
               <li>{{ t.vert_hosp_3 }}</li>
               <li>{{ t.vert_hosp_4 }}</li>
             </ul>
-            <p style="margin:18px 0 0;font-size:.88rem;"><a href="{{ url_path('/consultoria/hospitality') if lang == 'es' else url_path('/consulting/hospitality') }}" style="color:var(--accent-gold);font-weight:600;">{{ t.vert_land_link }} →</a></p>
+            <p style="margin:18px 0 0;font-size:.88rem;"><a href="{{ url_path('/hoteles') if lang == 'es' else url_path('/hotels') }}" style="color:var(--accent-gold);font-weight:600;">{{ t.vert_land_link }} →</a></p>
           </div>
           <div class="cp-vert">
             <h4>{{ t.vert_media }}</h4>

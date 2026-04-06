@@ -492,17 +492,17 @@ def _sitemap_entries():
         ("/", "weekly", "1.0"),
         ("/consultoria", "weekly", "0.95"),
         ("/consulting", "weekly", "0.95"),
-        ("/consultoria/hospitality", "weekly", "0.88"),
+        ("/hoteles", "weekly", "0.88"),
+        ("/hotels", "weekly", "0.88"),
         ("/consultoria/startups", "weekly", "0.88"),
         ("/consultoria/smbs", "weekly", "0.88"),
         ("/consultoria/medios", "weekly", "0.88"),
-        ("/consulting/hospitality", "weekly", "0.88"),
         ("/consulting/startups", "weekly", "0.88"),
         ("/consulting/smbs", "weekly", "0.88"),
         ("/consulting/medios", "weekly", "0.88"),
         ("/precios", "weekly", "0.85"),
         ("/mockup-analisis", "monthly", "0.75"),
-        ("/verticals/hospitality", "weekly", "0.85"),
+        ("/pullso", "weekly", "0.85"),
         ("/nosotros", "monthly", "0.6"),
         ("/faq", "monthly", "0.65"),
         ("/servicios", "monthly", "0.65"),
@@ -523,13 +523,13 @@ def home(request: Request, lang: str = Query("es", alias="lang")):
     return render_consulting_landing(request, lang="es", page="home")
 
 
-@router.get("/verticals/hospitality", response_class=HTMLResponse)
-def verticals_hospitality(request: Request):
+@router.get("/pullso", response_class=HTMLResponse)
+def pullso_public_page(request: Request):
     user = get_current_user(request)
     if user:
         return RedirectResponse(url_path("/app"), status_code=303)
     ctx = marketing_page_context()
-    canonical = absolute_url("/verticals/hospitality")
+    canonical = absolute_url("/pullso")
     structured = {
         "@context": "https://schema.org",
         "@graph": graph_pullso_vertical(canonical=canonical)
@@ -563,9 +563,14 @@ def verticals_hospitality(request: Request):
     return templates.TemplateResponse("marketing.html", {"request": request, **ctx, **seo})
 
 
+@router.get("/verticals/hospitality")
+def verticals_hospitality_legacy(request: Request):
+    return RedirectResponse(url_path("/pullso"), status_code=301)
+
+
 @router.get("/marketing", include_in_schema=False)
 def marketing_alias(request: Request):
-    return RedirectResponse(url_path("/verticals/hospitality"), status_code=302)
+    return RedirectResponse(url_path("/pullso"), status_code=302)
 
 
 @router.get("/precios", response_class=HTMLResponse)
@@ -680,11 +685,12 @@ DRAGONNÉ es consultoría estratégica (startups, SMBs, hospitalidad) y el produ
 - {u}{url_path("/")} — inicio (español)
 - {u}{url_path("/consultoria")} — consultoría (ES)
 - {u}{url_path("/consulting")} — consulting (EN)
-- {u}{url_path("/consultoria/hospitality")} — consultoría hospitalidad
+- {u}{url_path("/hoteles")} — consultoría hospitalidad (ES)
+- {u}{url_path("/hotels")} — hospitality consulting (EN)
 - {u}{url_path("/consultoria/startups")} — consultoría startups
 - {u}{url_path("/consultoria/smbs")} — consultoría SMBs
 - {u}{url_path("/consultoria/medios")} — posicionamiento en medios
-- {u}{url_path("/verticals/hospitality")} — Pullso (producto hotelero)
+- {u}{url_path("/pullso")} — Pullso (producto hotelero)
 - {u}{url_path("/precios")} — planes
 - {u}{url_path("/mockup-analisis")} — demo del panel
 - {u}{url_path("/nosotros")}, {u}{url_path("/faq")}, {u}{url_path("/servicios")}

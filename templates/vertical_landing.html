@@ -13,8 +13,8 @@
           <img src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" width="160" height="36" loading="eager" decoding="async" />
         </a>
         <div class="cp-lang">
-          <a href="{{ url_path('/consulting/' ~ vertical_slug) }}" hreflang="en" class="cp-lang-link {% if lang == 'en' %}is-active{% endif %}" aria-current="{% if lang == 'en' %}true{% else %}false{% endif %}">EN</a>
-          <a href="{{ url_path('/consultoria/' ~ vertical_slug) }}" hreflang="es" class="cp-lang-link {% if lang == 'es' %}is-active{% endif %}" aria-current="{% if lang == 'es' %}true{% else %}false{% endif %}">ES</a>
+          <a href="{{ url_path('/hotels') if vertical_slug == 'hospitality' else url_path('/consulting/' ~ vertical_slug) }}" hreflang="en" class="cp-lang-link {% if lang == 'en' %}is-active{% endif %}" aria-current="{% if lang == 'en' %}true{% else %}false{% endif %}">EN</a>
+          <a href="{{ url_path('/hoteles') if vertical_slug == 'hospitality' else url_path('/consultoria/' ~ vertical_slug) }}" hreflang="es" class="cp-lang-link {% if lang == 'es' %}is-active{% endif %}" aria-current="{% if lang == 'es' %}true{% else %}false{% endif %}">ES</a>
         </div>
       </div>
       <nav class="cp-nav-links" aria-label="{% if lang == 'en' %}Main navigation{% else %}Navegación principal{% endif %}">
@@ -23,8 +23,8 @@
           <div class="cp-nav-sub" role="menu">
             <div class="cp-nav-sub-group" role="group" aria-label="{{ t.vert_hosp }}">
               <span class="cp-nav-sub-group-title">{{ t.vert_hosp }}</span>
-              <a href="{{ url_path('/consultoria/hospitality') if lang == 'es' else url_path('/consulting/hospitality') }}" role="menuitem" {% if vertical_slug == 'hospitality' %}aria-current="page"{% endif %}>{{ t.vert_hosp_tab_consulting }}</a>
-              <a href="{{ url_path('/verticals/hospitality') }}" role="menuitem">{{ t.nav_vertical_pullso }}</a>
+              <a href="{{ url_path('/hoteles') if lang == 'es' else url_path('/hotels') }}" role="menuitem" {% if vertical_slug == 'hospitality' %}aria-current="page"{% endif %}>{{ t.vert_hosp_tab_consulting }}</a>
+              <a href="{{ url_path('/pullso') }}" role="menuitem">{{ t.nav_vertical_pullso }}</a>
             </div>
             <a href="{{ url_path('/consultoria/startups') if lang == 'es' else url_path('/consulting/startups') }}" role="menuitem" {% if vertical_slug == 'startups' %}aria-current="page"{% endif %}>{{ t.vert_nav_startups }}</a>
             <a href="{{ url_path('/consultoria/smbs') if lang == 'es' else url_path('/consulting/smbs') }}" role="menuitem" {% if vertical_slug == 'smbs' %}aria-current="page"{% endif %}>{{ t.vert_nav_smbs }}</a>
@@ -49,8 +49,8 @@
     <div class="cp-nav-mobile">
       <span class="cp-nav-mobile-subtitle">{{ t.nav_verticals }}</span>
       <span class="cp-nav-mobile-subtitle">{{ t.vert_hosp }}</span>
-      <a class="cp-nav-mobile-sub" href="{{ url_path('/consultoria/hospitality') if lang == 'es' else url_path('/consulting/hospitality') }}">{{ t.vert_hosp_tab_consulting }}</a>
-      <a class="cp-nav-mobile-sub" href="{{ url_path('/verticals/hospitality') }}">{{ t.nav_vertical_pullso }}</a>
+      <a class="cp-nav-mobile-sub" href="{{ url_path('/hoteles') if lang == 'es' else url_path('/hotels') }}">{{ t.vert_hosp_tab_consulting }}</a>
+      <a class="cp-nav-mobile-sub" href="{{ url_path('/pullso') }}">{{ t.nav_vertical_pullso }}</a>
       <a href="{{ url_path('/consultoria/startups') if lang == 'es' else url_path('/consulting/startups') }}">{{ t.vert_nav_startups }}</a>
       <a href="{{ url_path('/consultoria/smbs') if lang == 'es' else url_path('/consulting/smbs') }}">{{ t.vert_nav_smbs }}</a>
       <a href="{{ url_path('/consultoria/medios') if lang == 'es' else url_path('/consulting/medios') }}">{{ t.vert_nav_media }}</a>

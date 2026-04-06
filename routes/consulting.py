@@ -9,7 +9,7 @@ import re
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
 from config import BASE_DIR, url_path
 from db import db
@@ -158,8 +158,12 @@ def render_vertical_landing_page(request: Request, lang: str, slug: str):
     t = _DefaultT(raw_t) if raw_t else _DefaultT()
 
     consulting_home = url_path("/consultoria") if lang == "es" else url_path("/consulting")
-    path_es = f"/consultoria/{slug}"
-    path_en = f"/consulting/{slug}"
+    if slug == "hospitality":
+        path_es = "/hoteles"
+        path_en = "/hotels"
+    else:
+        path_es = f"/consultoria/{slug}"
+        path_en = f"/consulting/{slug}"
     canonical_url = absolute_url(path_es if lang == "es" else path_en)
     home_label = "Inicio" if lang == "es" else "Home"
     home_path = "/consultoria" if lang == "es" else "/consulting"
@@ -227,6 +231,26 @@ def consulting_es_page(request: Request):
 @router.get("/consulting", response_class=HTMLResponse)
 def consulting_en_page(request: Request):
     return render_consulting_landing(request, lang="en", page="consulting")
+
+
+@router.get("/hoteles", response_class=HTMLResponse)
+def consulting_vertical_hospitality_es(request: Request):
+    return render_vertical_landing_page(request, "es", "hospitality")
+
+
+@router.get("/hotels", response_class=HTMLResponse)
+def consulting_vertical_hospitality_en(request: Request):
+    return render_vertical_landing_page(request, "en", "hospitality")
+
+
+@router.get("/consultoria/hospitality")
+def consulting_vertical_hospitality_legacy_es():
+    return RedirectResponse(url_path("/hoteles"), status_code=301)
+
+
+@router.get("/consulting/hospitality")
+def consulting_vertical_hospitality_legacy_en():
+    return RedirectResponse(url_path("/hotels"), status_code=301)
 
 
 @router.get("/consultoria/{vertical_slug}", response_class=HTMLResponse)

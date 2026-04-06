@@ -1,4 +1,4 @@
-"""Copy y metadatos para landings de verticales DRAGONNÉ (/consultoria/..., /consulting/...)."""
+"""Copy y metadatos para landings de verticales DRAGONNÉ (p. ej. /hoteles, /hotels, /consultoria/...)."""
 
 from __future__ import annotations
 

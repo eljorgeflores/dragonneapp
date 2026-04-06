@@ -778,7 +778,7 @@
         <div class="pws-lang" aria-label="{{ pws.lang_switch_aria }}">
           {% if pws_lang == 'es' %}<span class="pws-lang-current" lang="es">ES</span>{% else %}<a href="{{ pws_url_es }}" lang="es">ES</a>{% endif %}<span class="pws-lang-sep" aria-hidden="true">·</span>{% if pws_lang == 'en' %}<span class="pws-lang-current" lang="en">EN</span>{% else %}<a href="{{ pws_url_en }}" lang="en">EN</a>{% endif %}
         </div>
-        <a class="pws-btn pws-btn-ghost" href="{{ url_prefix }}/verticals/hospitality">Back to Pullso</a>
+        <a class="pws-btn pws-btn-ghost" href="{{ url_path('/pullso') }}">Back to Pullso</a>
       </div>
     </div>
   </header>
@@ -1059,7 +1059,7 @@
           <h2>{{ pws.closing_h2 }}</h2>
           <p>{{ pws.closing_p }}</p>
           <div class="pws-cta-row">
-            <a class="pws-btn pws-btn-ghost" href="{{ url_prefix }}/verticals/hospitality" style="background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.28);color:#fff !important">Back to Pullso</a>
+            <a class="pws-btn pws-btn-ghost" href="{{ url_path('/pullso') }}" style="background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.28);color:#fff !important">Back to Pullso</a>
           </div>
           <p class="pws-closing-micro">{{ pws.closing_micro }}</p>
         </div>
@@ -1072,7 +1072,7 @@
           <img class="pws-footer-logo" src="{{ url_prefix }}/static/branding/pullso-logo.svg" alt="Pullso" width="132" height="28" loading="lazy" decoding="async" />
           <p class="pws-footer-tagline">{{ pws.footer_tagline }}</p>
         </div>
-        <p><a href="{{ url_prefix }}/verticals/hospitality">Back to Pullso</a></p>
+        <p><a href="{{ url_path('/pullso') }}">Back to Pullso</a></p>
       </div>
     </footer>
   </main>
