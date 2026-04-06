@@ -1,0 +1,674 @@
+{# Hospitality — layout refinado premium; copy desde vertical_landings_content #}
+<main id="main" class="vl-h">
+<style>
+  /* —— Hero: dos columnas + pieza conceptual —— */
+  main.vl-h .vl-h-hero-shell{position:relative;overflow:hidden}
+  main.vl-h .vl-h-hero-shell .cpc{width:min(1180px,calc(100% - 48px))}
+  main.vl-h .vl-h-hero-shell::before{
+    content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background-image:
+      linear-gradient(rgba(52,52,52,.019) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(52,52,52,.019) 1px,transparent 1px);
+    background-size:40px 40px;
+    mask-image:linear-gradient(90deg,#000 0%,rgba(0,0,0,.48) 36%,transparent 70%);
+  }
+  main.vl-h .vl-h-hero-shell::after{
+    content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background:radial-gradient(ellipse 72% 60% at 21% 32%,rgba(255,255,255,.66),transparent 56%);
+  }
+  .vl-h-hero-layout{
+    position:relative;z-index:1;
+    display:grid;gap:36px 44px;align-items:center;
+    padding:44px 0 40px;
+  }
+  @media (min-width:960px){
+    .vl-h-hero-layout{
+      grid-template-columns:minmax(300px,1fr) minmax(320px,min(46vw,480px));
+      padding:56px 0 52px;
+      gap:clamp(44px,5vw,68px);
+    }
+  }
+  .vl-h-hero-copy{text-align:left}
+  .vl-h-hero-copy .vl-h-eyebrow{
+    display:block;font-size:.62rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--muted);margin-bottom:12px
+  }
+  .vl-h-hero-copy h1{
+    margin:0 0 16px!important;max-width:22ch!important;width:100%;
+    font-size:clamp(1.95rem,3.5vw,3.05rem)!important;line-height:1.1!important;
+    letter-spacing:-.038em!important;font-weight:800!important;
+    background:linear-gradient(92deg,var(--accent-gold),var(--accent))!important;
+    -webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;
+  }
+  .vl-h-hero-copy .cp-hero-tagline{
+    margin:0 0 21px!important;max-width:min(54ch,100%)!important;font-size:1.05rem!important;line-height:1.58!important;
+    color:var(--muted)!important;font-weight:450!important;white-space:pre-line!important;
+  }
+  .vl-h-chips{
+    list-style:none;margin:0 0 25px;padding:0;display:flex;flex-wrap:wrap;gap:7px 8px;
+  }
+  .vl-h-chips li{
+    font-size:.665rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;
+    padding:7px 14px 6px;border-radius:999px;
+    border:1px solid rgba(52,52,52,.075);
+    background:linear-gradient(178deg,rgba(255,255,255,.96) 0%,rgba(248,249,252,.9) 100%);
+    color:#242424;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.92) inset,
+      0 5px 16px rgba(18,22,40,.055);
+  }
+  main.vl-h .vl-h-hero-shell .cp-hero-actions{justify-content:flex-start;margin:5px 0 0;gap:12px}
+  main.vl-h .vl-h-hero-shell .cp-hero-actions .cp-btn{min-height:46px}
+
+  /* Hero — pieza ligera: tres cards flotantes + outcome (refinado) */
+  .vl-h-hero-visual{
+    align-self:center;display:flex;flex-direction:column;justify-content:center;
+    padding:6px 0 0;border:none;background:none;box-shadow:none;border-radius:0;
+    width:100%;max-width:min(420px,100%);margin:0 auto
+  }
+  @media (min-width:960px){
+    .vl-h-hero-visual{
+      align-self:stretch;justify-content:center;
+      padding:clamp(22px,3.4vw,34px) 0 2px;max-width:none
+    }
+  }
+
+  .vl-h-hero-float{
+    display:flex;flex-direction:column;gap:14px;width:100%;padding:0 0 4px
+  }
+  @media (min-width:960px){.vl-h-hero-float{padding-left:6px;padding-right:4px}}
+
+  .vl-h-hero-pillar{
+    --vl-h-stagger:0;
+    position:relative;border-radius:13px;padding:14px 17px 13px;
+    background:rgba(255,255,255,.63);
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+    border:1px solid rgba(252,250,248,.9);
+    box-shadow:
+      0 0 0 1px rgba(52,52,52,.032) inset,
+      0 11px 34px rgba(18,22,40,.068),
+      0 1px 0 rgba(255,255,255,.97) inset;
+    transition:transform .24s ease,box-shadow .24s ease;
+    transform:translateX(var(--vl-h-stagger));
+  }
+  .vl-h-hero-pillar::before{
+    content:"";position:absolute;top:0;left:20px;right:20px;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(246,169,5,.34) 48%,transparent);
+    opacity:.75;border-radius:2px;pointer-events:none
+  }
+  .vl-h-hero-pillar::after{
+    content:"";position:absolute;left:0;top:11px;bottom:11px;width:2px;border-radius:0 2px 2px 0;
+    background:linear-gradient(180deg,rgba(246,169,5,.32),rgba(240,126,7,.1) 55%,transparent);
+    opacity:.55;pointer-events:none
+  }
+  @media (min-width:960px){
+    .vl-h-hero-pillar:nth-child(1){--vl-h-stagger:0}
+    .vl-h-hero-pillar:nth-child(2){--vl-h-stagger:16px}
+    .vl-h-hero-pillar:nth-child(3){--vl-h-stagger:8px}
+  }
+  .vl-h-hero-pillar:hover{
+    transform:translateX(var(--vl-h-stagger)) translateY(-3px);
+    box-shadow:
+      0 0 0 1px rgba(52,52,52,.038) inset,
+      0 17px 42px rgba(18,22,40,.088),
+      0 1px 0 rgba(255,255,255,.97) inset
+  }
+  .vl-h-hero-pillar h3{
+    margin:0 0 9px;padding-left:1px;font-size:.61rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:#161616
+  }
+  .vl-h-hero-pillar p{
+    margin:0 0 5px;padding-left:1px;font-size:.765rem;line-height:1.4;color:#5c6169;letter-spacing:-.012em
+  }
+  .vl-h-hero-pillar p:last-child{margin-bottom:0}
+
+  .vl-h-hero-outcome{
+    margin:20px 0 0;padding:0;display:flex;justify-content:center;
+    width:100%;
+  }
+  .vl-h-hero-outcome__pill{
+    margin:0;display:inline-flex;align-items:center;justify-content:center;flex-wrap:wrap;
+    gap:0;
+    padding:7px 15px 6px;
+    min-height:0;
+    border-radius:999px;
+    background:rgba(255,255,255,.66);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    border:1px solid rgba(52,52,52,.052);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.96) inset,
+      0 6px 20px rgba(18,22,40,.052);
+    font-size:.665rem;font-weight:700;letter-spacing:.042em;
+    color:#1a1a1a;line-height:1.22;
+  }
+  .vl-h-hero-outcome__pill > span:not(.vl-h-hero-out-div){
+    font-feature-settings:"kern" 1;
+    white-space:nowrap
+  }
+  .vl-h-hero-out-div{
+    width:1px;height:10px;margin:0 .58em;
+    background:linear-gradient(180deg,transparent,rgba(52,52,52,.12) 15%,rgba(240,126,7,.35) 50%,rgba(52,52,52,.1) 85%,transparent);
+    border-radius:1px;flex-shrink:0;align-self:center;opacity:.92
+  }
+
+  /* —— Secciones base —— */
+  .vl-h-band{border-top:1px solid var(--line)}
+  .vl-h-section{padding:36px 0}
+  @media (min-width:768px){.vl-h-section{padding:44px 0}}
+  .vl-h-section--muted{background:linear-gradient(180deg,#fafafa 0%,#f7f7f8 100%)}
+  .vl-h-section--line{background:#fff}
+
+  .vl-h-head{margin:0 0 20px}
+  .vl-h-head .cp-section-label{
+    font-size:.6rem;letter-spacing:.14em;margin:0 0 6px;color:var(--accent);font-weight:700
+  }
+  .vl-h-head .vl-h-section-title{
+    margin:0;font-size:clamp(1.18rem,1.9vw,1.55rem);font-weight:700;letter-spacing:-.032em;line-height:1.22;color:var(--dark)
+  }
+  .vl-h-lead{margin:12px 0 0;font-size:.93rem;line-height:1.58;color:var(--muted);max-width:52ch}
+  /* Statement box único: “Qué hacemos” + declaración de encaje (misma familia visual) */
+  .vl-h-editorial-intro{
+    margin:0 0 22px;
+    padding:18px 22px 18px 22px;
+    border-left:3px solid var(--accent-gold);
+    background:rgba(246,169,5,.06);
+    border-radius:0 10px 10px 0;
+    max-width:min(720px,100%);
+    box-sizing:border-box
+  }
+  .vl-h-editorial-intro p{
+    margin:0;
+    font-size:.93rem;
+    line-height:1.6;
+    font-weight:450;
+    letter-spacing:-.01em;
+    color:rgba(52,52,52,.78)
+  }
+  /* Matiz mínimo en encaje: un peldaño más de peso, sin cambiar tamaño ni color */
+  .vl-h-icp-statement.vl-h-editorial-intro p{font-weight:500}
+
+  /* Retos: split */
+  .vl-h-split{display:grid;gap:28px 40px;align-items:start}
+  @media (min-width:880px){
+    .vl-h-split{grid-template-columns:minmax(240px,340px) minmax(0,1fr)}
+  }
+  .vl-h-problems-grid{display:grid;gap:12px;grid-template-columns:1fr}
+  @media (min-width:640px){.vl-h-problems-grid{grid-template-columns:repeat(2,1fr);gap:14px}}
+  .vl-h-card--problem{
+    position:relative;padding:18px 18px 17px 18px;border-radius:12px;
+    border:1px solid rgba(52,52,52,.1);background:#fff;
+    box-shadow:0 4px 18px rgba(0,0,0,.04);
+    transition:box-shadow .2s,border-color .2s,transform .2s
+  }
+  .vl-h-card--problem::before{
+    content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:0 3px 3px 0;
+    background:linear-gradient(180deg,var(--accent-gold),var(--accent))
+  }
+  .vl-h-card--problem:hover{
+    border-color:rgba(240,126,7,.22);box-shadow:0 10px 32px rgba(240,126,7,.08);transform:translateY(-1px)
+  }
+  .vl-h-card--problem .vl-h-card-num{
+    font-size:.62rem;font-weight:800;letter-spacing:.12em;color:var(--accent);margin-bottom:8px
+  }
+  .vl-h-card--problem h3{font-size:1rem;font-weight:600;margin:0 0 8px;color:var(--dark);letter-spacing:-.02em;line-height:1.25}
+  .vl-h-card--problem p{margin:0;font-size:.86rem;color:var(--muted);line-height:1.52}
+
+  /* Qué hacemos: grid 2×2 — altura según contenido (sin stretch del lead) */
+  .vl-h-offer-head{margin-bottom:18px}
+  .vl-h-offer-head.vl-h-head--rail{padding-bottom:16px;border-bottom:1px solid rgba(52,52,52,.08)}
+  .vl-h-offer-support{
+    margin:10px 0 0;
+    font-size:.93rem;
+    line-height:1.58;
+    color:var(--muted);
+    max-width:58ch;
+    letter-spacing:-.01em
+  }
+  .vl-h-offer-grid{
+    display:grid;gap:13px;grid-template-columns:1fr;
+    align-items:start
+  }
+  @media (min-width:920px){
+    .vl-h-offer-grid{
+      grid-template-columns:1.08fr 1fr;grid-auto-rows:auto;gap:14px 15px
+    }
+  }
+  .vl-h-offer-card{
+    position:relative;border-radius:13px;border:1px solid rgba(52,52,52,.065);background:#fff;
+    padding:22px 22px 21px;min-height:0;align-self:start;height:auto;
+    transition:border-color .15s,box-shadow .15s
+  }
+  .vl-h-offer-card:hover{border-color:rgba(52,52,52,.12);box-shadow:0 10px 32px rgba(0,0,0,.045)}
+  .vl-h-offer-card--lead{
+    padding:24px 23px 22px;border:1px solid rgba(240,126,7,.15);
+    background:linear-gradient(165deg,#fff 0%,#fffcf7 100%);
+    box-shadow:0 12px 36px rgba(240,126,7,.075)
+  }
+  .vl-h-offer-top{
+    display:flex;align-items:flex-start;gap:15px;margin-bottom:14px
+  }
+  .vl-h-offer-icon-wrap{
+    flex-shrink:0;width:46px;height:46px;border-radius:11px;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(150deg,rgba(246,169,5,.11),rgba(240,126,7,.06));
+    border:1px solid rgba(240,126,7,.16);
+    box-shadow:0 2px 10px rgba(240,126,7,.07)
+  }
+  .vl-h-offer-card--lead .vl-h-offer-icon-wrap{
+    width:48px;height:48px;border-radius:12px
+  }
+  .vl-h-offer-icon{width:24px;height:24px;flex-shrink:0;color:var(--accent)}
+  .vl-h-offer-card h3{
+    font-size:.98rem;font-weight:600;margin:0;flex:1;min-width:0;color:var(--dark);
+    letter-spacing:-.02em;line-height:1.28;padding-top:3px
+  }
+  .vl-h-offer-card--lead h3{font-size:1.05rem;padding-top:4px}
+  .vl-h-offer-card p{margin:0;font-size:.875rem;color:var(--muted);line-height:1.55}
+
+  /* Alcance: 3 paneles */
+  .vl-h-stages-head{margin-bottom:20px}
+  @media (min-width:860px){
+    .vl-h-stages-head{display:grid;grid-template-columns:minmax(240px,360px) minmax(0,1fr);gap:20px 36px;align-items:end;
+      padding-bottom:18px;border-bottom:1px solid rgba(52,52,52,.1)}
+    .vl-h-stages-head .vl-h-lead{margin-top:0}
+  }
+  .vl-h-stages-row{display:grid;gap:13px;grid-template-columns:1fr}
+  @media (min-width:820px){.vl-h-stages-row{grid-template-columns:repeat(3,1fr);gap:14px}}
+  .vl-h-stage-panel{
+    position:relative;border-radius:14px;border:1px solid rgba(52,52,52,.12);
+    background:#fff;padding:20px 18px 19px;
+    box-shadow:0 6px 24px rgba(0,0,0,.045);
+    display:flex;flex-direction:column;min-height:100%;
+    transition:transform .2s,box-shadow .2s,border-color .2s
+  }
+  .vl-h-stage-panel:hover{
+    transform:translateY(-2px);border-color:rgba(240,126,7,.25);
+    box-shadow:0 14px 40px rgba(240,126,7,.1)
+  }
+  .vl-h-stage-panel h3{font-size:1.02rem;font-weight:700;margin:0 0 10px;color:var(--dark);letter-spacing:-.025em;line-height:1.2}
+  .vl-h-stage-outcome{
+    font-size:.8rem;font-weight:600;color:var(--dark);line-height:1.45;margin:0 0 12px;padding-bottom:12px;
+    border-bottom:1px solid rgba(52,52,52,.08)
+  }
+  .vl-h-stage-panel p{margin:0;font-size:.84rem;color:var(--muted);line-height:1.52;flex:1}
+
+  /* Metodología: pasos en fila; numeración dentro de cada card (sin recortes) */
+  .vl-h-process-wrap{
+    overflow-x:auto;overflow-y:visible;padding:10px 6px 10px 2px;
+    -webkit-overflow-scrolling:touch
+  }
+  .vl-h-process-track{
+    display:flex;flex-direction:column;gap:14px;
+  }
+  @media (min-width:900px){
+    .vl-h-process-track{
+      flex-direction:row;align-items:stretch;gap:0;
+      padding-top:4px
+    }
+  }
+  .vl-h-timeline-step{
+    position:relative;flex:1;min-width:0;
+  }
+  @media (min-width:900px){
+    .vl-h-timeline-step{padding-right:18px}
+    .vl-h-timeline-step:not(:last-child)::after{
+      content:"";position:absolute;right:4px;top:50%;transform:translateY(-58%);
+      width:calc(100% - 44px);height:2px;
+      background:linear-gradient(90deg,rgba(246,169,5,.55),rgba(240,126,7,.35));
+      pointer-events:none;z-index:0
+    }
+  }
+  .vl-h-timeline-card{
+    position:relative;z-index:1;
+    border-radius:12px;border:1px solid var(--line);background:#fff;
+    padding:16px 15px 15px;
+    border-top:2px solid rgba(246,169,5,.65);
+    height:100%;
+    box-sizing:border-box
+  }
+  .vl-h-timeline-card__head{
+    display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:0;
+    min-height:1.2em
+  }
+  .vl-h-timeline-dot{
+    flex-shrink:0;width:11px;height:11px;border-radius:50%;
+    background:linear-gradient(135deg,var(--accent-gold),var(--accent));
+    box-shadow:0 0 0 3px rgba(246,169,5,.22)
+  }
+  .vl-h-timeline-k{
+    font-size:.65rem;font-weight:800;letter-spacing:.12em;color:var(--accent);
+    line-height:1.2;padding-top:1px
+  }
+  .vl-h-timeline-card h4{font-size:.9rem;font-weight:600;margin:0 0 7px;color:var(--dark);letter-spacing:-.015em}
+  .vl-h-timeline-card p{margin:0;font-size:.825rem;color:var(--muted);line-height:1.5}
+
+  /* Impacto: banda oscura refinada */
+  .vl-h-results{
+    position:relative;overflow:hidden;
+    background:linear-gradient(165deg,#121214 0%,#1a1a1f 38%,#161920 100%);
+    color:#fff;padding:40px 0
+  }
+  @media (min-width:768px){.vl-h-results{padding:48px 0}}
+  .vl-h-results::before{
+    content:"";position:absolute;inset:0;pointer-events:none;opacity:.55;
+    background:
+      radial-gradient(ellipse 70% 50% at 92% 8%,rgba(246,169,5,.14),transparent 55%),
+      radial-gradient(ellipse 50% 40% at 8% 95%,rgba(240,126,7,.08),transparent 50%);
+  }
+  .vl-h-results::after{
+    content:"";position:absolute;inset:0;pointer-events:none;opacity:.04;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cpath d='M60 0H0v60' fill='none' stroke='%23fff' stroke-width='0.5'/%3E%3C/svg%3E");
+  }
+  .vl-h-results .cpc{position:relative;z-index:1}
+  .vl-h-results .vl-h-head{margin-bottom:22px;border-bottom:1px solid rgba(255,255,255,.12);padding-bottom:18px}
+  .vl-h-results .vl-h-head .cp-section-label{color:var(--accent-gold)}
+  .vl-h-results .vl-h-head .vl-h-section-title{color:#fff;font-size:clamp(1.22rem,2vw,1.58rem);line-height:1.2}
+  .vl-h-results-grid{display:grid;gap:12px;grid-template-columns:1fr}
+  @media (min-width:680px){.vl-h-results-grid{grid-template-columns:repeat(2,1fr);gap:14px}}
+  .vl-h-result-card{
+    position:relative;border-radius:12px;
+    border:1px solid rgba(255,255,255,.14);
+    background:rgba(255,255,255,.05);
+    backdrop-filter:blur(8px);
+    padding:19px 17px 17px;
+    transition:border-color .2s,box-shadow .2s,background .2s
+  }
+  .vl-h-result-card:hover{
+    border-color:rgba(246,169,5,.45);
+    background:rgba(255,255,255,.08);
+    box-shadow:0 0 32px rgba(246,169,5,.12)
+  }
+  .vl-h-result-card h3{font-size:1.02rem;font-weight:600;margin:0 0 10px;color:#fff;letter-spacing:-.02em;line-height:1.24}
+  .vl-h-result-card p{margin:0;font-size:.865rem;color:rgba(255,255,255,.82);line-height:1.52}
+
+  /* Perfil: matriz premium */
+  .vl-h-icp{background:linear-gradient(180deg,#fbfbfb 0%,#f5f5f6 100%);border-top:1px solid var(--line)}
+  .vl-h-icp-grid{display:grid;gap:12px;grid-template-columns:1fr}
+  @media (min-width:680px){.vl-h-icp-grid{grid-template-columns:repeat(2,1fr);gap:14px}}
+  .vl-h-icp-card{
+    border-radius:12px;border:1px solid rgba(52,52,52,.1);background:#fff;
+    padding:19px 18px 18px 20px;position:relative;
+    box-shadow:0 4px 20px rgba(0,0,0,.035);
+    transition:box-shadow .2s,border-color .2s
+  }
+  .vl-h-icp-card::before{
+    content:"";position:absolute;left:0;top:16px;bottom:16px;width:3px;border-radius:0 2px 2px 0;background:var(--dark);opacity:.85
+  }
+  .vl-h-icp-card:hover{border-color:rgba(52,52,52,.2);box-shadow:0 10px 36px rgba(0,0,0,.06)}
+  .vl-h-icp-card h3{font-size:.97rem;font-weight:600;margin:0 0 8px;color:var(--dark);letter-spacing:-.02em}
+  .vl-h-icp-card p{margin:0;font-size:.86rem;color:var(--muted);line-height:1.52}
+
+  /* FAQ + CTA — cierre refinado */
+  .vl-h-faq-cta{
+    background:#f4f5f6;border-top:1px solid var(--line);
+    padding:32px 0 52px
+  }
+  @media (min-width:768px){.vl-h-faq-cta{padding:36px 0 60px}}
+  .vl-h-faq-cta-grid{display:grid;gap:26px}
+  @media (min-width:920px){
+    .vl-h-faq-cta-grid{grid-template-columns:1.05fr minmax(300px,.95fr);gap:32px;align-items:start}
+  }
+  .vl-h-faq-head{margin:0 0 11px}
+  .vl-h-faq-head .vl-h-section-title{margin:0;font-size:clamp(1.08rem,1.7vw,1.32rem);font-weight:700;color:var(--dark)}
+  .vl-h-faq details{
+    border:1px solid rgba(52,52,52,.088);border-radius:8px;margin-bottom:4px;padding:0 12px;background:#fff
+  }
+  .vl-h-faq summary{cursor:pointer;padding:9px 0;font-weight:600;font-size:.84rem;list-style:none;color:var(--dark)}
+  .vl-h-faq summary::-webkit-details-marker{display:none}
+  .vl-h-faq details[open] summary{border-bottom:1px solid var(--line);margin-bottom:5px}
+  .vl-h-faq .vl-h-faq-a{font-size:.82rem;color:var(--muted);line-height:1.48;margin:0 0 7px}
+
+  .vl-h-cta-box{
+    border-radius:14px;
+    border:1px solid rgba(52,52,52,.096);
+    border-top:1px solid rgba(52,52,52,.06);
+    background:linear-gradient(165deg,#fff 0%,#f9fafb 100%);
+    padding:28px 26px 28px;
+    box-shadow:0 14px 42px rgba(0,0,0,.055),0 0 0 1px rgba(255,255,255,.92) inset;
+    position:relative;
+    overflow:visible
+  }
+  .vl-h-cta-box h2{
+    font-size:clamp(1.05rem,1.65vw,1.28rem);font-weight:700;margin:0 0 14px;
+    letter-spacing:-.028em;line-height:1.26;color:var(--dark);padding-right:2px
+  }
+  .vl-h-cta-box > p{margin:0 0 26px;font-size:.9rem;line-height:1.56;color:var(--muted);max-width:52ch}
+  .vl-h-cta-box .cp-cta-buttons{
+    display:flex;justify-content:flex-start;align-items:center;margin:0;gap:12px;flex-wrap:wrap
+  }
+  .vl-h-cta-box .cp-btn{
+    min-height:46px;padding:0 22px;font-size:.92rem
+  }
+  .vl-h-cta-box .cp-btn-outline{
+    min-height:46px;padding:0 21px
+  }
+</style>
+
+  <section class="cp-hero-wrap vl-h-hero-shell" id="top">
+    <div class="cpc vl-h-hero-layout">
+      <div class="vl-h-hero-copy">
+        <p class="vl-h-eyebrow">{{ v.eyebrow }}</p>
+        <h1>{{ v.hero_title }}</h1>
+        <p class="cp-hero-tagline">{{ v.hero_sub }}</p>
+        <ul class="vl-h-chips" aria-label="{% if lang == 'en' %}Highlights{% else %}Destacados{% endif %}">
+          {% for h in v.highlights %}<li>{{ h }}</li>{% endfor %}
+        </ul>
+        <div class="cp-hero-actions">
+          <a class="cp-btn cp-btn-primary" href="{{ calendar_url }}" target="_blank" rel="noopener noreferrer">{{ v.cta_primary_label }}</a>
+          <a class="cp-btn cp-btn-outline" href="{{ lead_anchor }}">{{ v.cta_secondary_label }}</a>
+        </div>
+      </div>
+      <div class="vl-h-hero-visual">
+        <div class="vl-h-hero-float" role="region" aria-label="{% if lang == 'en' %}Commercial, operations, and technology{% else %}Comercial, operación y tecnología{% endif %}">
+          {% if lang == 'en' %}
+          <article class="vl-h-hero-pillar">
+            <h3>Commercial</h3>
+            <p>Channel mix with margin discipline.</p>
+            <p>Revenue and inventory anchored to the P&amp;L.</p>
+          </article>
+          <article class="vl-h-hero-pillar">
+            <h3>Operations</h3>
+            <p>Shared rhythm across the property.</p>
+            <p>Processes the team actually runs.</p>
+          </article>
+          <article class="vl-h-hero-pillar">
+            <h3>Technology</h3>
+            <p>Tools adopted in daily operations.</p>
+            <p>Insight you can act on—not noise.</p>
+          </article>
+          {% else %}
+          <article class="vl-h-hero-pillar">
+            <h3>Comercial</h3>
+            <p>Mix y canales con criterio de margen.</p>
+            <p>Ingresos e inventario anclados al P&amp;L.</p>
+          </article>
+          <article class="vl-h-hero-pillar">
+            <h3>Operación</h3>
+            <p>Ritmo compartido en la propiedad.</p>
+            <p>Procesos que el equipo sí ejecuta.</p>
+          </article>
+          <article class="vl-h-hero-pillar">
+            <h3>Tecnología</h3>
+            <p>Herramientas vividas en la operación diaria.</p>
+            <p>Datos para decidir, no para llenar reportes.</p>
+          </article>
+          {% endif %}
+        </div>
+        <div class="vl-h-hero-outcome">
+          <p class="vl-h-hero-outcome__pill">
+            {% if lang == 'en' %}
+            <span>More margin</span><span class="vl-h-hero-out-div" aria-hidden="true"></span><span>more control</span><span class="vl-h-hero-out-div" aria-hidden="true"></span><span>better decisions</span>
+            {% else %}
+            <span>Más margen</span><span class="vl-h-hero-out-div" aria-hidden="true"></span><span>Más control</span><span class="vl-h-hero-out-div" aria-hidden="true"></span><span>Mejor decisión</span>
+            {% endif %}
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="vl-h-band vl-h-section vl-h-section--muted" id="retos">
+    <div class="cpc vl-h-split">
+      <header class="vl-h-head">
+        <p class="cp-section-label">{{ v.sec_problems_label }}</p>
+        <h2 class="vl-h-section-title">{{ v.sec_problems_title }}</h2>
+        <p class="vl-h-lead">{{ v.sec_problems_lead }}</p>
+      </header>
+      <div class="vl-h-problems-grid">
+        {% for p in v.problems %}
+        <article class="vl-h-card--problem">
+          <div class="vl-h-card-num">{% if loop.index < 10 %}0{% endif %}{{ loop.index }}</div>
+          <h3>{{ p.title }}</h3>
+          <p>{{ p.body }}</p>
+        </article>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="vl-h-band vl-h-section vl-h-section--line" id="que-hacemos">
+    <div class="cpc">
+      <header class="vl-h-head vl-h-offer-head vl-h-head--rail">
+        <p class="cp-section-label">{{ v.sec_offer_label }}</p>
+        <h2 class="vl-h-section-title">{{ v.sec_offer_title }}</h2>
+        {% if v.sec_offer_support %}
+        <p class="vl-h-offer-support">{{ v.sec_offer_support }}</p>
+        {% endif %}
+      </header>
+      <div class="vl-h-editorial-intro"><p>{{ v.sec_offer_lead }}</p></div>
+      <div class="vl-h-offer-grid">
+        {% for o in v.offers %}
+        <article class="vl-h-offer-card {% if loop.first %}vl-h-offer-card--lead{% endif %}">
+          <div class="vl-h-offer-top">
+            <span class="vl-h-offer-icon-wrap" aria-hidden="true">
+            {% if loop.index == 1 %}
+            <svg class="vl-h-offer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V5"/><path d="M4 9h4v10H4"/><path d="M10 7h4v12h-4"/><path d="M16 15h4v4h-4"/></svg>
+            {% elif loop.index == 2 %}
+            <svg class="vl-h-offer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4v6c0 5-3.5 9.5-8 10-4.5-.5-8-5-8-10V7l8-4z"/></svg>
+            {% elif loop.index == 3 %}
+            <svg class="vl-h-offer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="5" width="14" height="10" rx="2"/><path d="M9 19h6"/></svg>
+            {% else %}
+            <svg class="vl-h-offer-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3"/><path d="M6 20v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg>
+            {% endif %}
+            </span>
+            <h3>{{ o.title }}</h3>
+          </div>
+          <p>{{ o.body }}</p>
+        </article>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="vl-h-band vl-h-section vl-h-section--muted" id="etapas">
+    <div class="cpc">
+      <header class="vl-h-head vl-h-stages-head">
+        <div>
+          <p class="cp-section-label">{{ v.sec_stages_label }}</p>
+          <h2 class="vl-h-section-title">{{ v.sec_stages_title }}</h2>
+        </div>
+        <p class="vl-h-lead">{{ v.sec_stages_lead }}</p>
+      </header>
+      <div class="vl-h-stages-row">
+        {% set stage_outcomes = v.stage_outcomes|default([]) %}
+        {% for st in v.stages %}
+        <article class="vl-h-stage-panel">
+          <h3>{{ st.title }}</h3>
+          {% if stage_outcomes|length > loop.index0 %}
+          <p class="vl-h-stage-outcome">{{ stage_outcomes[loop.index0] }}</p>
+          {% endif %}
+          <p>{{ st.body }}</p>
+        </article>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="vl-h-band vl-h-section vl-h-section--line" id="proceso">
+    <div class="cpc">
+      <header class="vl-h-head vl-h-head--rail" style="margin-bottom:22px;padding-bottom:16px;border-bottom:1px solid rgba(52,52,52,.08)">
+        <p class="cp-section-label">{{ v.sec_process_label }}</p>
+        <h2 class="vl-h-section-title">{{ v.sec_process_title }}</h2>
+      </header>
+      <div class="vl-h-process-wrap">
+        <div class="vl-h-process-track">
+          {% for step in v.process %}
+          <div class="vl-h-timeline-step">
+            <div class="vl-h-timeline-card">
+              <div class="vl-h-timeline-card__head">
+                <span class="vl-h-timeline-dot" aria-hidden="true"></span>
+                <span class="vl-h-timeline-k">{% if loop.index < 10 %}0{% endif %}{{ loop.index }}</span>
+              </div>
+              <h4>{{ step.title }}</h4>
+              <p>{{ step.body }}</p>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="vl-h-band vl-h-results" id="impacto">
+    <div class="cpc">
+      <header class="vl-h-head vl-h-head--single">
+        <p class="cp-section-label">{{ v.sec_results_label }}</p>
+        <h2 class="vl-h-section-title">{{ v.sec_results_title }}</h2>
+      </header>
+      <div class="vl-h-results-grid">
+        {% for r in v.results %}
+        <article class="vl-h-result-card">
+          <h3>{{ r.title }}</h3>
+          <p>{{ r.body }}</p>
+        </article>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="vl-h-band vl-h-section vl-h-icp" id="perfil">
+    <div class="cpc">
+      <header class="vl-h-head" style="margin-bottom:14px">
+        <p class="cp-section-label">{{ v.sec_icp_label }}</p>
+        <h2 class="vl-h-section-title">{{ v.sec_icp_title }}</h2>
+      </header>
+      {% if v.icp_microlead %}
+      <div class="vl-h-editorial-intro vl-h-icp-statement"><p>{{ v.icp_microlead }}</p></div>
+      {% endif %}
+      <div class="vl-h-icp-grid">
+        {% for card in v.icp_cards %}
+        <article class="vl-h-icp-card">
+          <h3>{{ card.title }}</h3>
+          <p>{{ card.body }}</p>
+        </article>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="vl-h-faq-cta" id="faq">
+    <div class="cpc vl-h-faq-cta-grid">
+      <div>
+        <header class="vl-h-faq-head">
+          <h2 class="vl-h-section-title">{{ v.faq_title }}</h2>
+        </header>
+        <div class="vl-h-faq">
+          {% for item in v.faq %}
+          <details>
+            <summary>{{ item.q }}</summary>
+            <p class="vl-h-faq-a">{{ item.a }}</p>
+          </details>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="vl-h-cta-box" id="cta-final">
+        <h2>{{ v.final_cta_title }}</h2>
+        <p>{{ v.final_cta_lead }}</p>
+        <div class="cp-cta-buttons">
+          <a class="cp-btn cp-btn-primary" href="{{ calendar_url }}" target="_blank" rel="noopener noreferrer">{{ v.get('final_cta_btn_primary', t.cta_book_demo) }}</a>
+          <a class="cp-btn cp-btn-outline" href="{{ lead_anchor }}">{{ v.get('final_cta_btn_secondary', t.cta_apply) }}</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>

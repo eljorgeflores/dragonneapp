@@ -8,14 +8,16 @@ import importlib.util
 import re
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Form, Request
+from fastapi import APIRouter, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 
 from config import BASE_DIR, url_path
 from db import db
 from email_smtp import send_consulting_lead_email
-from seo_helpers import absolute_url, graph_consulting_lang, graph_homepage
+from marketing_context import marketing_page_context
+from seo_helpers import absolute_url, breadcrumb_list_node, graph_consulting_lang, graph_homepage, organization_node
 from templating import templates
+from vertical_landings_content import VERTICAL_SLUGS, calendar_url, get_vertical_landing_copy
 
 router = APIRouter(tags=["consulting_parent"])
 
@@ -144,6 +146,79 @@ def render_consulting_landing(
     )
 
 
+def render_vertical_landing_page(request: Request, lang: str, slug: str):
+    """Landing de vertical DRAGONNÉ (consultoría): /consultoria/{slug} y /consulting/{slug}."""
+    if lang not in ("es", "en"):
+        lang = "es"
+    if slug not in VERTICAL_SLUGS:
+        raise HTTPException(status_code=404)
+    v = get_vertical_landing_copy(slug, lang)
+    trans = _consulting_translations()
+    raw_t = trans.get(lang) or trans.get("es")
+    t = _DefaultT(raw_t) if raw_t else _DefaultT()
+
+    consulting_home = url_path("/consultoria") if lang == "es" else url_path("/consulting")
+    path_es = f"/consultoria/{slug}"
+    path_en = f"/consulting/{slug}"
+    canonical_url = absolute_url(path_es if lang == "es" else path_en)
+    home_label = "Inicio" if lang == "es" else "Home"
+    home_path = "/consultoria" if lang == "es" else "/consulting"
+    structured = {
+        "@context": "https://schema.org",
+        "@graph": [
+            organization_node(),
+            breadcrumb_list_node([
+                (home_label, absolute_url(home_path)),
+                (v["breadcrumb_name"], canonical_url),
+            ]),
+        ],
+    }
+    hreflang_alternates = [
+        {"hreflang": "es", "href": absolute_url(path_es)},
+        {"hreflang": "en", "href": absolute_url(path_en)},
+        {"hreflang": "x-default", "href": absolute_url(path_es)},
+    ]
+    ctx = marketing_page_context()
+    meta_title = v["meta_title"]
+    meta_description = v["meta_description"]
+    og_locale = "es_MX" if lang == "es" else "en_US"
+    og_locale_alternate = "en_US" if lang == "es" else "es_MX"
+    html_lang = "es-MX" if lang == "es" else "en"
+    return templates.TemplateResponse(
+        "vertical_landing.html",
+        {
+            "request": request,
+            **ctx,
+            "lang": lang,
+            "t": t,
+            "v": v,
+            "vertical_slug": slug,
+            "consulting_home": consulting_home,
+            "lead_anchor": f"{consulting_home}#lead-form",
+            "calendar_url": calendar_url(),
+            "meta_title": meta_title,
+            "meta_description": meta_description,
+            "meta_keywords": (
+                "Dragonné, consultoría estratégica, hospitalidad, startups, SMBs, medios, posicionamiento"
+                if lang == "es"
+                else "Dragonné, strategy consulting, hospitality, startups, SMBs, media positioning"
+            ),
+            "canonical_url": canonical_url,
+            "robots_meta": "index, follow",
+            "og_title": meta_title,
+            "og_description": meta_description,
+            "og_image_alt": f"{v['breadcrumb_name']} — DRAGONNÉ",
+            "og_locale": og_locale,
+            "og_locale_alternate": og_locale_alternate,
+            "twitter_title": meta_title,
+            "twitter_description": meta_description,
+            "html_lang": html_lang,
+            "hreflang_alternates": hreflang_alternates,
+            "structured_data": structured,
+        },
+    )
+
+
 @router.get("/consultoria", response_class=HTMLResponse)
 def consulting_es_page(request: Request):
     return render_consulting_landing(request, lang="es", page="consultoria")
@@ -152,6 +227,16 @@ def consulting_es_page(request: Request):
 @router.get("/consulting", response_class=HTMLResponse)
 def consulting_en_page(request: Request):
     return render_consulting_landing(request, lang="en", page="consulting")
+
+
+@router.get("/consultoria/{vertical_slug}", response_class=HTMLResponse)
+def consulting_vertical_es(request: Request, vertical_slug: str):
+    return render_vertical_landing_page(request, "es", vertical_slug)
+
+
+@router.get("/consulting/{vertical_slug}", response_class=HTMLResponse)
+def consulting_vertical_en(request: Request, vertical_slug: str):
+    return render_vertical_landing_page(request, "en", vertical_slug)
 
 
 @router.post("/consultoria/lead", name="consulting_lead_submit")

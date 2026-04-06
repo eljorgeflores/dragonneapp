@@ -413,6 +413,11 @@
   .pp-nav-sub a,.pp-nav-sub .pp-nav-soon{display:block;padding:9px 14px;font-size:.88rem;font-weight:500}
   .pp-nav-sub a{color:var(--text)}
   .pp-nav-sub .pp-nav-soon{color:#9ca3af;cursor:default}
+  .pp-nav-sub-group{padding:4px 0 8px;margin-bottom:4px;border-bottom:1px solid rgba(15,23,32,.06)}
+  .pp-nav-sub > .pp-nav-sub-group:first-child{padding-top:0}
+  .pp-nav-sub > .pp-nav-sub-group:last-child{border-bottom:0;margin-bottom:0;padding-bottom:0}
+  .pp-nav-sub-group-title{display:block;padding:8px 14px 5px;font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#9ca3af}
+  .pp-nav-sub-group a{padding:8px 14px 8px 22px}
   @media (min-width:761px){
     .pp-nav-item{width:auto}
     .pp-nav-item::after{
@@ -455,10 +460,14 @@
         <div class="pp-nav-item">
           <button type="button" class="pp-nav-sub-btn">Verticales</button>
           <div class="pp-nav-sub" role="menu">
-            <a href="{{ url_prefix }}/verticals/hospitality" role="menuitem">Hospitalidad</a>
-            <span class="pp-nav-soon" role="menuitem" aria-disabled="true">Startups — Próximamente</span>
-            <span class="pp-nav-soon" role="menuitem" aria-disabled="true">SMBs — Próximamente</span>
-            <span class="pp-nav-soon" role="menuitem" aria-disabled="true">Medios / PR — Próximamente</span>
+            <div class="pp-nav-sub-group" role="group" aria-label="Hospitalidad">
+              <span class="pp-nav-sub-group-title">Hospitalidad</span>
+              <a href="{{ url_path('/consultoria/hospitality') }}" role="menuitem">Consultoría</a>
+              <a href="{{ url_prefix }}/verticals/hospitality" role="menuitem">Pullso · software hotelero</a>
+            </div>
+            <a href="{{ url_path('/consultoria/startups') }}" role="menuitem">Startups</a>
+            <a href="{{ url_path('/consultoria/smbs') }}" role="menuitem">SMBs</a>
+            <a href="{{ url_path('/consultoria/medios') }}" role="menuitem">Medios · posicionamiento</a>
           </div>
         </div>
         <a href="#producto">Producto</a>

@@ -492,6 +492,14 @@ def _sitemap_entries():
         ("/", "weekly", "1.0"),
         ("/consultoria", "weekly", "0.95"),
         ("/consulting", "weekly", "0.95"),
+        ("/consultoria/hospitality", "weekly", "0.88"),
+        ("/consultoria/startups", "weekly", "0.88"),
+        ("/consultoria/smbs", "weekly", "0.88"),
+        ("/consultoria/medios", "weekly", "0.88"),
+        ("/consulting/hospitality", "weekly", "0.88"),
+        ("/consulting/startups", "weekly", "0.88"),
+        ("/consulting/smbs", "weekly", "0.88"),
+        ("/consulting/medios", "weekly", "0.88"),
         ("/precios", "weekly", "0.85"),
         ("/mockup-analisis", "monthly", "0.75"),
         ("/verticals/hospitality", "weekly", "0.85"),
@@ -672,7 +680,11 @@ DRAGONNÉ es consultoría estratégica (startups, SMBs, hospitalidad) y el produ
 - {u}{url_path("/")} — inicio (español)
 - {u}{url_path("/consultoria")} — consultoría (ES)
 - {u}{url_path("/consulting")} — consulting (EN)
-- {u}{url_path("/verticals/hospitality")} — Pullso hospitalidad
+- {u}{url_path("/consultoria/hospitality")} — consultoría hospitalidad
+- {u}{url_path("/consultoria/startups")} — consultoría startups
+- {u}{url_path("/consultoria/smbs")} — consultoría SMBs
+- {u}{url_path("/consultoria/medios")} — posicionamiento en medios
+- {u}{url_path("/verticals/hospitality")} — Pullso (producto hotelero)
 - {u}{url_path("/precios")} — planes
 - {u}{url_path("/mockup-analisis")} — demo del panel
 - {u}{url_path("/nosotros")}, {u}{url_path("/faq")}, {u}{url_path("/servicios")}
@@ -777,7 +789,10 @@ def faq_page(request: Request):
             "name": "¿DRAGONNÉ solo trabaja con hoteles?",
             "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "La consultoría también cubre startups, SMBs y medios; Pullso está focalizado en hotelería.",
+                "text": (
+                    "La consultoría cubre startups, SMBs, hospitalidad y posicionamiento en medios para marcas y ejecutivos; "
+                    "Pullso es el producto SaaS focalizado en lectura de reportes hoteleros."
+                ),
             },
         },
         {
