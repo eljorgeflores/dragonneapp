@@ -1,4 +1,24 @@
 const appShell = document.getElementById('appShell');
+
+/** Prefijo de montaje (URL_PREFIX) cuando la app no está en la raíz del dominio. */
+function appUrlPath(path) {
+  const attr = document.body && document.body.getAttribute('data-url-prefix');
+  const raw = attr != null ? String(attr).trim() : '';
+  const base = raw.replace(/\/$/, '');
+  const p = (path || '').startsWith('/') ? path : `/${path}`;
+  return base ? `${base}${p}` : p;
+}
+
+function followAppRedirect(href) {
+  if (!href || typeof href !== 'string') return;
+  const h = href.trim();
+  if (/^https?:\/\//i.test(h)) {
+    window.location.href = h;
+    return;
+  }
+  window.location.href = appUrlPath(h.startsWith('/') ? h : `/${h}`);
+}
+
 const fileInput = document.getElementById('files');
 const fileList = document.getElementById('fileList');
 const fileLimitHint = document.getElementById('fileLimitHint');
@@ -488,7 +508,7 @@ function appendToHistory(item) {
 
 async function ensureShareUrl(analysisId) {
   if (currentShareUrl) return currentShareUrl;
-  const res = await fetch(`/analysis/${analysisId}/share`, { method: 'POST', headers: { Accept: 'application/json' } });
+  const res = await fetch(appUrlPath(`/analysis/${analysisId}/share`), { method: 'POST', headers: { Accept: 'application/json' } });
   const data = await res.json().catch(() => ({}));
   if (res.ok && data.ok && data.share_url) {
     currentShareUrl = data.share_url;
@@ -540,7 +560,7 @@ if (form) {
     if (tableroRight) tableroRight.innerHTML = '';
     if (paywallEl) paywallEl.classList.add('hidden');
     try {
-      const res = await fetch('/analyze', { method: 'POST', body: new FormData(form) });
+      const res = await fetch(appUrlPath('/analyze'), { method: 'POST', body: new FormData(form) });
       let data = {};
       try {
         data = await res.json();
@@ -549,7 +569,7 @@ if (form) {
       }
       if (!res.ok || !data.ok) {
         if (data.redirect) {
-          window.location.href = data.redirect;
+          followAppRedirect(data.redirect);
           return;
         }
         hideAnalysisLoading();
@@ -611,7 +631,7 @@ async function openCheckout(cycle, planTier) {
   const body = new FormData();
   body.append('billing_cycle', cycle || 'monthly');
   body.append('plan_tier', planTier || 'pro');
-  const res = await fetch('/billing/create-checkout-session', { method: 'POST', body });
+  const res = await fetch(appUrlPath('/billing/create-checkout-session'), { method: 'POST', body });
   const data = await res.json();
   if (!res.ok || !data.ok) throw new Error(data.detail || data.error || 'No se pudo abrir Stripe Checkout.');
   window.location.href = data.url;
@@ -636,7 +656,7 @@ if (portalBtn) {
     portalBtn.disabled = true;
     portalBtn.textContent = 'Abriendo…';
     try {
-      const res = await fetch('/billing/create-portal-session', { method: 'POST' });
+      const res = await fetch(appUrlPath('/billing/create-portal-session'), { method: 'POST' });
       const data = await res.json();
       if (!res.ok || !data.ok) throw new Error(data.detail || 'No se pudo abrir el portal de Stripe.');
       window.location.href = data.url;
@@ -669,7 +689,7 @@ document.querySelector('.history-card')?.addEventListener('click', async (e) => 
   if (!item) return;
   const id = item.dataset.analysisId;
   markHistorySelection(id);
-  const res = await fetch(`/analysis/${id}`);
+  const res = await fetch(appUrlPath(`/analysis/${id}`));
   let data = {};
   try {
     data = await res.json();
@@ -694,7 +714,7 @@ document.querySelector('.history-card')?.addEventListener('click', async (e) => 
 if (downloadPdfBtn) {
   downloadPdfBtn.addEventListener('click', () => {
     if (!currentAnalysisId) return;
-    window.location.href = `/analysis/${currentAnalysisId}/pdf`;
+    window.location.href = appUrlPath(`/analysis/${currentAnalysisId}/pdf`);
   });
 }
 
@@ -752,7 +772,7 @@ if (serverEmailShareBtn) {
     const fd = new FormData();
     fd.append('to_email', addr.trim());
     try {
-      const res = await fetch(`/analysis/${currentAnalysisId}/share-email`, { method: 'POST', body: fd });
+      const res = await fetch(appUrlPath(`/analysis/${currentAnalysisId}/share-email`), { method: 'POST', body: fd });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.ok) {
         if (shareFeedback) {

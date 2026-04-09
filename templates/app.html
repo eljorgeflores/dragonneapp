@@ -34,7 +34,7 @@
         </div>
       </div>
       {% if can_upload %}
-      <form id="analyzeForm" class="analyze-form" data-max-files="{{ max_files_per_analysis }}">
+      <form id="analyzeForm" class="analyze-form" method="post" action="#" enctype="multipart/form-data" data-max-files="{{ max_files_per_analysis }}">
         <div class="upload-coach" role="region" aria-label="Guía para subir reportes">
           <p class="upload-coach-title">Cómo preparar una buena corrida</p>
           <ul class="upload-coach-list">
