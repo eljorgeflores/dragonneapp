@@ -1160,6 +1160,42 @@ input:focus, textarea:focus {
 .field-hint { margin: 4px 0 10px; }
 .upload-error-tip { margin-top: 10px !important; line-height: 1.45; }
 
+/* Panel de límites de plan (402) en el tablero: lectura clara sin duplicar consejos contradictorios */
+.page-app .upload-limit-panel {
+  border-radius: 16px;
+  border: 1px solid rgba(183, 121, 31, 0.2);
+  background: linear-gradient(165deg, rgba(255, 253, 248, 0.98) 0%, rgba(252, 246, 235, 0.92) 100%);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.85) inset;
+  padding: 18px 22px 16px;
+  max-width: 52rem;
+  margin: 0 auto;
+}
+.page-app .upload-limit-panel__text {
+  margin: 0;
+  color: #5c4010;
+  font-size: 0.94rem;
+  line-height: 1.62;
+  letter-spacing: -0.01em;
+}
+.page-app .upload-limit-panel__tips {
+  margin: 14px 0 0;
+  padding: 14px 0 2px 1.2rem;
+  border-top: 1px solid rgba(183, 121, 31, 0.14);
+  color: #6b5340;
+  font-size: 0.84rem;
+  line-height: 1.52;
+}
+.page-app .upload-limit-panel__tips li {
+  margin-bottom: 10px;
+}
+.page-app .upload-limit-panel__tips li:last-child {
+  margin-bottom: 4px;
+}
+.page-app .upload-limit-panel__tips strong {
+  color: #4a3628;
+  font-weight: 700;
+}
+
 .results-actions-share { flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
 .share-feedback { margin: 8px 0 0; text-align: right; max-width: 520px; margin-left: auto; }
 

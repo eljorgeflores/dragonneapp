@@ -179,6 +179,48 @@ function htmlEscape(value) {
   return String(value ?? '').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 }
 
+/**
+ * Error 402 en el tablero: texto del servidor + consejos según el tipo de límite.
+ * No usar "archivo(s)" genérico en la condición: el mensaje de fechas del backend
+ * habla de "archivos" al tranquilizar y eso disparaba por error el tip de plan Gratis.
+ */
+function buildPlanLimitErrorHtml(rawError) {
+  const err = rawError || 'No se completó la lectura por un límite de tu plan.';
+  const errLower = err.toLowerCase();
+  const tips = [];
+
+  if (errLower.includes('en plan gratis va un solo archivo')) {
+    tips.push(
+      'En <strong>plan Gratis</strong> solo analizamos <strong>un archivo</strong> por envío. Quita el resto con ✕ y vuelve a generar la lectura.'
+    );
+  } else if (errLower.includes('plan pro admite hasta') && errLower.includes('archivos por corrida')) {
+    tips.push(
+      'Ajusta la selección hasta el tope de archivos de <strong>Pro</strong>, o sube el resto en otra corrida.'
+    );
+  } else if (errLower.includes('pro+ admite hasta') && errLower.includes('archivos por corrida')) {
+    tips.push(
+      'En <strong>Pro+</strong> hay un máximo de archivos por envío: divide la carga en dos envíos si necesitas todas las fuentes.'
+    );
+  }
+
+  if (
+    errLower.includes('rango de fechas muy amplio') ||
+    errLower.includes('columna de fecha equivocada') ||
+    errLower.includes('formatos mezclados')
+  ) {
+    tips.push(
+      'Si el mensaje te sorprende, revisa en Excel o en el PMS que la columna de fechas sea la correcta y sin celdas con años o formatos raros.'
+    );
+  }
+
+  let html = `<div class="upload-limit-panel" role="alert"><p class="upload-limit-panel__text">${htmlEscape(err)}</p>`;
+  if (tips.length) {
+    html += `<ul class="upload-limit-panel__tips">${tips.map((t) => `<li>${t}</li>`).join('')}</ul>`;
+  }
+  html += '</div>';
+  return html;
+}
+
 function formatDisplayDate(raw) {
   if (!raw) return '';
   const s = String(raw).replace('T', ' ').trim();
@@ -635,25 +677,14 @@ if (form) {
         currentAnalysisId = null;
         if (downloadPdfBtn) downloadPdfBtn.disabled = true;
         setShareControlsEnabled(false);
-        let errBody = htmlEscape(data.error || 'No se completó la lectura. Revisa el mensaje o inténtalo más tarde.');
+        let rawErr = data.error || 'No se completó la lectura. Revisa el mensaje o inténtalo más tarde.';
         if (res.status === 401) {
-          errBody = htmlEscape('Sesión vencida o no válida. Inicia sesión de nuevo y repite la carga.');
+          rawErr = 'Sesión vencida o no válida. Inicia sesión de nuevo y repite la carga.';
         }
-        const errLower = (data.error || '').toLowerCase();
-        if (res.status === 402 && (errLower.includes('archivo') || errLower.includes('archivos'))) {
-          errBody += `<p class="upload-error-tip muted small">En <strong>plan gratis</strong> va <strong>un solo archivo</strong> por corrida. Deja solo el export que quieras analizar (✕ junto al nombre) y vuelve a enviar.</p>`;
+        if (tableroCenter) {
+          tableroCenter.innerHTML =
+            res.status === 402 ? buildPlanLimitErrorHtml(rawErr) : `<div class="alert error"><p>${htmlEscape(rawErr)}</p></div>`;
         }
-        if (
-          res.status === 402 &&
-          (errLower.includes('rango de fechas') ||
-            errLower.includes('ventana total') ||
-            errLower.includes('días por análisis') ||
-            errLower.includes('dias por analisis'))
-        ) {
-          errBody +=
-            '<p class="upload-error-tip muted small">Tu export supera el máximo de días que permite tu plan en <strong>una sola lectura</strong>. Acorta fechas en el PMS, quita un archivo de la mezcla o haz dos envíos; nada se corrompe en tu equipo.</p>';
-        }
-        if (tableroCenter) tableroCenter.innerHTML = `<div class="alert error">${errBody}</div>`;
         resultsCard?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         return;
       }

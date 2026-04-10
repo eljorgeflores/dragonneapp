@@ -1099,13 +1099,25 @@ def _date_span_explanation(summary: Dict[str, Any], max_allowed: int, plan_label
     od = int(summary.get("overall_days_covered") or 0)
     md = int(summary.get("max_days_covered") or 0)
     peak = max(od, md)
-    return (
+    head = (
         "No generamos la lectura: el rango de fechas de tus datos supera lo que incluye tu plan. "
-        f"En {plan_label} el tope es de {max_allowed} días por análisis; "
-        f"en esta carga detectamos una ventana total de unos {od} día(s) y hasta {md} día(s) en la fuente más larga "
-        f"(referencia interna: {peak} días). "
-        "Tus archivos no se dañan: dejamos de interpretarlos antes de gastar el análisis. "
-        "Puedes acortar el export en el PMS, partir los archivos en varias corridas o subir de plan."
+        f"En {plan_label} el tope es de {max_allowed} días por análisis. "
+    )
+    absurd_threshold = max(max_allowed * 5, 730)
+    if peak > absurd_threshold:
+        return (
+            head
+            + "En esta carga el sistema calculó un rango de fechas muy amplio; suele deberse a una columna de fecha equivocada, "
+            "formatos mezclados o valores atípicos en el export (no es usual en operación hotelera normal). "
+            "El archivo que subiste no se modifica en el servidor. Revisa la columna de fechas en el PMS o en Excel, acota el export "
+            "a las fechas que quieres leer o divide la carga en varios envíos; también puedes valorar ampliar plan si necesitas más días por lectura."
+        )
+    return (
+        head
+        + f"En esta carga detectamos una ventana de unos {od} día(s) en conjunto y hasta {md} día(s) en la serie más larga "
+        f"(referencia: {peak} días). "
+        "Tu export no se altera: detenemos la interpretación antes de consumir el análisis. "
+        "Puedes acortar fechas en el PMS, enviar menos archivos en una sola corrida o subir de plan si aplica."
     )
 
 
