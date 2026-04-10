@@ -66,7 +66,7 @@ def billing_success(request: Request):
             "user": user,
             **noindex_page_seo(
                 "/billing/success",
-                "Pago exitoso — DRAGONNÉ",
+                "Pago exitoso — Pullso",
                 "Confirmación de checkout (no indexar).",
             ),
         },

@@ -50,6 +50,9 @@ elif _env_local.exists():
         pass
 
 APP_NAME = "DRAGONNÉ"
+
+# Versión publicada de Términos + Privacidad (incrementar al cambiar los textos legales).
+LEGAL_DOCS_VERSION = (os.getenv("LEGAL_DOCS_VERSION") or "2026-04-10").strip()
 _db_override = (os.getenv("DATABASE_PATH") or os.getenv("DB_PATH") or "").strip()
 DB_PATH = (
     Path(_db_override).expanduser()
@@ -62,6 +65,9 @@ UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 ALLOWED_UPLOAD_EXTENSIONS = {".csv", ".xlsx", ".xls", ".xlsm"}
 MAX_UPLOAD_BYTES_PER_FILE = int(os.getenv("MAX_UPLOAD_MB", "50")) * 1024 * 1024
+# Excel (.xls/.xlsx): cuántas hojas por archivo se envían al análisis. 0 = todas las pestañas.
+_excel_sheets_raw = int(os.getenv("EXCEL_MAX_SHEETS_PER_FILE", "1") or "0")
+EXCEL_MAX_SHEETS_PER_FILE = 0 if _excel_sheets_raw < 1 else _excel_sheets_raw
 
 # Límites de producto (planes)
 FREE_MAX_DAYS = 30
@@ -73,11 +79,15 @@ ANNUAL_PRICE = 49
 PREMIUM_MONTHLY_PRICE = 49
 PRO_90_MAX_DAYS = 90
 PRO_90_MAX_FILES = 5
-PRO_90_MAX_ANALYSES = 10
+# Máximo de lecturas guardadas a la vez (plan Pro).
+PRO_90_MAX_ANALYSES = 4
+# Lecturas nuevas por mes calendario UTC (anti abuso; no se revierte al borrar un análisis).
+PRO_90_REPORTS_PER_MONTH = 4
 PRO_180_MAX_DAYS = 180
 PRO_180_MAX_FILES = 5
 PRO_180_MAX_ANALYSES = 10
 PRO_PLUS_MAX_ANALYSES = 10
+PRO_PLUS_REPORTS_PER_MONTH = 10
 
 DEFAULT_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")

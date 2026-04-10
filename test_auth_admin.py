@@ -88,7 +88,7 @@ def test_forgot_password_sends_via_resend_when_stub_succeeds(monkeypatch):
     password = "password123"
     client.post(
         "/signup",
-        data={"email": email, "password": password, "password_confirm": password},
+        data={"email": email, "password": password, "password_confirm": password, "accept_legal": "1"},
         follow_redirects=True,
     )
     r = client.post("/forgot-password", data={"email": email})
@@ -135,7 +135,7 @@ def test_signup_creates_user_and_redirects_to_onboarding():
     password = "password123"
     r = client.post(
         "/signup",
-        data={"email": email, "password": password, "password_confirm": password},
+        data={"email": email, "password": password, "password_confirm": password, "accept_legal": "1"},
         follow_redirects=False,
     )
     assert r.status_code == 303
@@ -165,11 +165,21 @@ def test_signup_password_mismatch():
     assert "no coinciden" in (r.text or "")
 
 
+def test_signup_requires_accept_legal():
+    email = _unique_email()
+    r = client.post(
+        "/signup",
+        data={"email": email, "password": "password123", "password_confirm": "password123"},
+    )
+    assert r.status_code == 400
+    assert "Términos" in (r.text or "") and "Privacidad" in (r.text or "")
+
+
 def test_signup_duplicate_email():
     email = _unique_email()
     password = "password123"
-    client.post("/signup", data={"email": email, "password": password, "password_confirm": password})
-    r = client.post("/signup", data={"email": email, "password": password, "password_confirm": password})
+    client.post("/signup", data={"email": email, "password": password, "password_confirm": password, "accept_legal": "1"})
+    r = client.post("/signup", data={"email": email, "password": password, "password_confirm": password, "accept_legal": "1"})
     assert r.status_code == 400
     assert "ya está registrado" in (r.text or "")
 
@@ -180,7 +190,7 @@ def test_signup_duplicate_email():
 def test_login_normal_user_redirects_to_app():
     email = _unique_email()
     password = "password123"
-    client.post("/signup", data={"email": email, "password": password, "password_confirm": password})
+    client.post("/signup", data={"email": email, "password": password, "password_confirm": password, "accept_legal": "1"})
     # Completar onboarding para que no redirija a /onboarding al ir a /app
     onboarding = {
         "hotel_name": "Hotel Test",
@@ -200,7 +210,7 @@ def test_login_normal_user_redirects_to_app():
 def test_login_admin_user_redirects_to_admin():
     email = _unique_email()
     password = "password123"
-    client.post("/signup", data={"email": email, "password": password, "password_confirm": password})
+    client.post("/signup", data={"email": email, "password": password, "password_confirm": password, "accept_legal": "1"})
     with db() as conn:
         conn.execute("UPDATE users SET is_admin = 1 WHERE email = ?", (email,))
     client.post("/logout")
@@ -213,7 +223,7 @@ def test_login_admin_user_redirects_to_admin():
 def test_login_wrong_password():
     email = _unique_email()
     password = "password123"
-    client.post("/signup", data={"email": email, "password": password, "password_confirm": password})
+    client.post("/signup", data={"email": email, "password": password, "password_confirm": password, "accept_legal": "1"})
     client.post("/logout")
 
     r = client.post("/login", data={"email": email, "password": "wrongpassword"})
@@ -228,7 +238,7 @@ def test_forgot_password_and_reset_flow():
     """Solicitar reset, obtener token (desde HTML o DB) y cambiar contraseña."""
     email = _unique_email()
     password = "password123"
-    client.post("/signup", data={"email": email, "password": password, "password_confirm": password})
+    client.post("/signup", data={"email": email, "password": password, "password_confirm": password, "accept_legal": "1"})
     client.post("/logout")
 
     r = client.post("/forgot-password", data={"email": email})
@@ -277,7 +287,7 @@ def test_forgot_password_link_host_matches_app_url_not_testserver():
     password = "password123"
     client.post(
         "/signup",
-        data={"email": email, "password": password, "password_confirm": password},
+        data={"email": email, "password": password, "password_confirm": password, "accept_legal": "1"},
         follow_redirects=True,
     )
     r = client.post("/forgot-password", data={"email": email})
@@ -296,7 +306,7 @@ def test_forgot_password_finds_legacy_email_trim_case():
     password = "password123"
     client.post(
         "/signup",
-        data={"email": email, "password": password, "password_confirm": password},
+        data={"email": email, "password": password, "password_confirm": password, "accept_legal": "1"},
     )
     with db() as conn:
         conn.execute(
@@ -336,7 +346,7 @@ def test_reset_password_invalid_token():
 def test_reset_password_expired_token_rejected():
     email = _unique_email()
     password = "password123"
-    client.post("/signup", data={"email": email, "password": password, "password_confirm": password})
+    client.post("/signup", data={"email": email, "password": password, "password_confirm": password, "accept_legal": "1"})
     client.post("/logout")
     client.post("/forgot-password", data={"email": email})
     with db() as conn:
@@ -377,14 +387,14 @@ def test_admin_user_detail_get_renders_html():
     password = "password123"
     client.post(
         "/signup",
-        data={"email": email_target, "password": password, "password_confirm": password},
+        data={"email": email_target, "password": password, "password_confirm": password, "accept_legal": "1"},
     )
     with db() as conn:
         uid_target = conn.execute("SELECT id FROM users WHERE email = ?", (email_target,)).fetchone()["id"]
     client.post("/logout")
     client.post(
         "/signup",
-        data={"email": email_admin, "password": password, "password_confirm": password},
+        data={"email": email_admin, "password": password, "password_confirm": password, "accept_legal": "1"},
     )
     with db() as conn:
         conn.execute("UPDATE users SET is_admin = 1 WHERE email = ?", (email_admin,))
@@ -401,12 +411,12 @@ def test_delete_user_removes_password_resets():
     password = "password123"
     client.post(
         "/signup",
-        data={"email": email_target, "password": password, "password_confirm": password},
+        data={"email": email_target, "password": password, "password_confirm": password, "accept_legal": "1"},
     )
     client.post("/logout")
     client.post(
         "/signup",
-        data={"email": email_admin, "password": password, "password_confirm": password},
+        data={"email": email_admin, "password": password, "password_confirm": password, "accept_legal": "1"},
     )
     with db() as conn:
         conn.execute("UPDATE users SET is_admin = 1 WHERE email = ?", (email_admin,))
@@ -436,14 +446,14 @@ def test_admin_send_password_reset_without_smtp_redirects():
     password = "password123"
     client.post(
         "/signup",
-        data={"email": email_other, "password": password, "password_confirm": password},
+        data={"email": email_other, "password": password, "password_confirm": password, "accept_legal": "1"},
     )
     with db() as conn:
         uid_other = conn.execute("SELECT id FROM users WHERE email = ?", (email_other,)).fetchone()["id"]
     client.post("/logout")
     client.post(
         "/signup",
-        data={"email": email_admin, "password": password, "password_confirm": password},
+        data={"email": email_admin, "password": password, "password_confirm": password, "accept_legal": "1"},
     )
     with db() as conn:
         conn.execute("UPDATE users SET is_admin = 1 WHERE email = ?", (email_admin,))
@@ -465,14 +475,14 @@ def test_admin_send_password_reset_succeeds_with_resend_only(monkeypatch):
     password = "password123"
     client.post(
         "/signup",
-        data={"email": email_other, "password": password, "password_confirm": password},
+        data={"email": email_other, "password": password, "password_confirm": password, "accept_legal": "1"},
     )
     with db() as conn:
         uid_other = conn.execute("SELECT id FROM users WHERE email = ?", (email_other,)).fetchone()["id"]
     client.post("/logout")
     client.post(
         "/signup",
-        data={"email": email_admin, "password": password, "password_confirm": password},
+        data={"email": email_admin, "password": password, "password_confirm": password, "accept_legal": "1"},
     )
     with db() as conn:
         conn.execute("UPDATE users SET is_admin = 1 WHERE email = ?", (email_admin,))
@@ -490,14 +500,14 @@ def test_admin_send_password_reset_requires_admin():
     password = "password123"
     client.post(
         "/signup",
-        data={"email": email_other, "password": password, "password_confirm": password},
+        data={"email": email_other, "password": password, "password_confirm": password, "accept_legal": "1"},
     )
     with db() as conn:
         uid_other = conn.execute("SELECT id FROM users WHERE email = ?", (email_other,)).fetchone()["id"]
     client.post("/logout")
     client.post(
         "/signup",
-        data={"email": email_user, "password": password, "password_confirm": password},
+        data={"email": email_user, "password": password, "password_confirm": password, "accept_legal": "1"},
     )
     onboarding = {
         "hotel_name": "Hotel",
@@ -525,7 +535,7 @@ def test_admin_requires_admin_role():
     """Usuario normal no puede entrar a /admin."""
     email = _unique_email()
     password = "password123"
-    client.post("/signup", data={"email": email, "password": password, "password_confirm": password})
+    client.post("/signup", data={"email": email, "password": password, "password_confirm": password, "accept_legal": "1"})
     onboarding = {
         "hotel_name": "Hotel",
         "contact_name": "Tester",
@@ -542,7 +552,7 @@ def test_admin_requires_admin_role():
 def test_admin_home_ok_when_admin():
     email = _unique_email()
     password = "password123"
-    client.post("/signup", data={"email": email, "password": password, "password_confirm": password})
+    client.post("/signup", data={"email": email, "password": password, "password_confirm": password, "accept_legal": "1"})
     with db() as conn:
         conn.execute("UPDATE users SET is_admin = 1 WHERE email = ?", (email,))
     client.post("/login", data={"email": email, "password": password})
@@ -556,7 +566,7 @@ def test_admin_home_ok_when_admin():
 def test_admin_admins_page():
     email = _unique_email()
     password = "password123"
-    client.post("/signup", data={"email": email, "password": password, "password_confirm": password})
+    client.post("/signup", data={"email": email, "password": password, "password_confirm": password, "accept_legal": "1"})
     with db() as conn:
         conn.execute("UPDATE users SET is_admin = 1 WHERE email = ?", (email,))
     client.post("/login", data={"email": email, "password": password})
@@ -569,7 +579,7 @@ def test_admin_admins_page():
 def test_admin_api_page():
     email = _unique_email()
     password = "password123"
-    client.post("/signup", data={"email": email, "password": password, "password_confirm": password})
+    client.post("/signup", data={"email": email, "password": password, "password_confirm": password, "accept_legal": "1"})
     with db() as conn:
         conn.execute("UPDATE users SET is_admin = 1 WHERE email = ?", (email,))
     client.post("/login", data={"email": email, "password": password})
@@ -585,7 +595,7 @@ def test_admin_api_page():
 def test_logout_clears_session():
     email = _unique_email()
     password = "password123"
-    client.post("/signup", data={"email": email, "password": password, "password_confirm": password})
+    client.post("/signup", data={"email": email, "password": password, "password_confirm": password, "accept_legal": "1"})
     r_before = client.get("/app", follow_redirects=False)
     assert r_before.status_code in (200, 303)
 

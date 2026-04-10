@@ -201,7 +201,7 @@
         <div class="pp-section-hero">
           <h1 class="pp-section-title">Empieza gratis. Escala cuando tu hotel lo necesite.</h1>
           <div class="pp-section-lead">
-            <p>Prueba Pullso sin costo con un primer análisis. Cuando te haga sentido leer más periodos o más reportes, pasa a Pro sin cambiar de flujo.</p>
+            <p>Plan gratis: hasta {{ free_max_analyses }} análisis guardados, {{ free_reports_per_month }} lectura nueva por mes (UTC) y exportes de hasta {{ free_max_days }} días. Pro y Pro+ añaden más rango y archivos por corrida, con tope de guardados y de lecturas nuevas por mes (el cupo mensual se cuenta aunque borres una lectura).</p>
           </div>
         </div>
         <div class="pp-box">
@@ -210,9 +210,9 @@
               <div class="pp-price-name">Gratis</div>
               <div class="pp-price-main">USD 0<span>/siempre</span></div>
               <ul class="pp-price-list">
-                <li><strong>1 reporte mensual</strong> de hasta {{ free_max_days }} días</li>
-                <li><strong>3 reportes guardados</strong> para comparar</li>
-                <li><strong>Soporte por email</strong> en horario laboral</li>
+                <li><strong>{{ free_reports_per_month }} lectura nueva por mes</strong> (UTC), hasta {{ free_max_days }} días por análisis</li>
+                <li><strong>{{ free_max_files }} archivo por corrida</strong></li>
+                <li><strong>Hasta {{ free_max_analyses }} análisis guardados</strong></li>
               </ul>
               <div class="pp-price-cta">
                 <a class="pp-btn pp-btn-light" href="{{ url_prefix }}/signup">Empezar gratis</a>
@@ -223,24 +223,26 @@
               <div class="pp-price-name">Pro</div>
               <div class="pp-price-main">USD {{ monthly_price }}<span>/mes</span></div>
               <ul class="pp-price-list">
-                <li><strong>5 reportes</strong> de máximo {{ pro_90_max_days }} días cada uno</li>
-                <li><strong>10 reportes guardados</strong> para comparar</li>
-                <li><strong>Soporte prioritario por email</strong></li>
+                <li><strong>Hasta {{ pro_90_max_days }} días</strong> por análisis</li>
+                <li><strong>Hasta {{ pro_90_max_files }} archivos</strong> por corrida</li>
+                <li><strong>Hasta {{ pro_90_max_analyses }} análisis guardados</strong> a la vez</li>
+                <li><strong>Hasta {{ pro_90_reports_per_month }} lecturas nuevas por mes</strong> (UTC); el cupo mensual no se restablece borrando una lectura</li>
               </ul>
               <div class="pp-price-cta">
                 <a class="pp-btn pp-btn-dark" href="{{ url_prefix }}/signup">Pro {{ monthly_price }} USD/mes</a>
               </div>
             </div>
             <div class="pp-price-card">
-              <div class="pp-price-name">Pro +</div>
+              <div class="pp-price-name">Pro+</div>
               <div class="pp-price-main">USD {{ premium_monthly_price }}<span>/mes</span></div>
               <ul class="pp-price-list">
-                <li><strong>5 reportes</strong> de máximo {{ pro_180_max_days }} días cada uno</li>
-                <li><strong>10 reportes guardados</strong> para comparar</li>
-                <li><strong>Account manager asignado</strong></li>
+                <li><strong>Hasta {{ pro_180_max_days }} días</strong> por análisis</li>
+                <li><strong>Hasta {{ pro_180_max_files }} archivos</strong> por corrida</li>
+                <li><strong>Hasta {{ pro_plus_max_analyses }} análisis guardados</strong> a la vez</li>
+                <li><strong>Hasta {{ pro_plus_reports_per_month }} lecturas nuevas por mes</strong> (UTC); el cupo mensual no se restablece borrando una lectura</li>
               </ul>
               <div class="pp-price-cta">
-                <a class="pp-btn pp-btn-light" href="{{ url_prefix }}/signup">Pro {{ premium_monthly_price }} USD/mes</a>
+                <a class="pp-btn pp-btn-light" href="{{ url_prefix }}/signup">Pro+ {{ premium_monthly_price }} USD/mes</a>
               </div>
             </div>
           </div>
@@ -281,6 +283,8 @@
               <li><a href="{{ url_prefix }}/api">Documentación API</a></li>
               <li><a href="{{ url_prefix }}/mockup-analisis">Ver ejemplo de análisis</a></li>
               <li><a href="{{ url_prefix }}/sitemap.xml">Mapa del sitio</a></li>
+              <li><a href="{{ url_path('/terminos') }}">Términos y condiciones</a></li>
+              <li><a href="{{ url_path('/privacidad') }}">Privacidad</a></li>
             </ul>
           </section>
         </nav>

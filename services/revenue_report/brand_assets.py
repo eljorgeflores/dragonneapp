@@ -14,7 +14,7 @@ LOGO_FOR_LIGHT_BG = REVENUE_BRAND_DIR / "logo-for-light-bg.png"  # wordmark oscu
 ISOTIPO = REVENUE_BRAND_DIR / "isotipo.png"
 
 # Fallback: wordmark actual del sitio (oscuro sobre claro aproximado)
-_FALLBACK_WORDMARK = BASE_DIR / "static" / "branding" / "dragonne-wordmark.png"
+_FALLBACK_WORDMARK = BASE_DIR / "static" / "branding" / "pullso-logo.png"
 
 
 def resolve_logo_cover() -> Path:

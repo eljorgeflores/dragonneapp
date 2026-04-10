@@ -72,7 +72,7 @@ def main() -> int:
     r = s.post(
         f"{BASE}/analyze",
         files={"files": ("smoke.csv", csv_body.encode("utf-8"), "text/csv")},
-        data={"business_context": ""},
+        data={"business_context": "Smoke manual: priorizar directo y revisar mix de canales."},
         timeout=180,
     )
     j = r.json() if r.headers.get("content-type", "").startswith("application/json") else {}

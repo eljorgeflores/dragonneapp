@@ -194,10 +194,10 @@ Si el enlace anterior no abre en tu correo (algunos programas cortan la direcci�
         alt_html = f"""<p>Si el enlace anterior no funciona (algunos correos cortan la dirección), copia y pega esto en el navegador:</p>
 <p><a href="{reset_link_fallback}">Abrir restablecimiento (enlace alternativo)</a></p>
 <p class="muted" style="font-size:0.85em;word-break:break-all;">{reset_link_fallback}</p>"""
-    subject = "Recuperar contraseña — DRAGONNÉ"
+    subject = "Recuperar contraseña — Pullso"
     text = f"""Hola,
 
-Alguien pidió restablecer la contraseña de tu cuenta en DRAGONNÉ.
+Alguien pidió restablecer la contraseña de tu cuenta en Pullso.
 
 Haz clic en el siguiente enlace para elegir una nueva contraseña (válido {ttl_es}):
 
@@ -206,14 +206,14 @@ Haz clic en el siguiente enlace para elegir una nueva contraseña (válido {ttl_
 Si no pediste esto, ignora este correo.
 
 —
-DRAGONNÉ
+Pullso
 """
     html = f"""<p>Hola,</p>
-<p>Alguien pidió restablecer la contraseña de tu cuenta en DRAGONNÉ.</p>
+<p>Alguien pidió restablecer la contraseña de tu cuenta en Pullso.</p>
 <p><a href="{reset_link}">Haz clic aquí para elegir una nueva contraseña</a> (válido {ttl_es}).</p>
 {alt_html}
 <p>Si no pediste esto, ignora este correo.</p>
-<p>—<br>DRAGONNÉ</p>"""
+<p>—<br>Pullso</p>"""
 
     _rp = config.resend_sender_plausible()
     resend_key = bool(config.RESEND_API_KEY)
@@ -352,24 +352,24 @@ Si el enlace anterior no abre en tu correo, copia y pega esta dirección en el n
         alt_html = f"""<p>Si el enlace anterior no funciona, copia y pega esto en el navegador:</p>
 <p><a href="{magic_link_fallback}">Abrir acceso (enlace alternativo)</a></p>
 <p class="muted" style="font-size:0.85em;word-break:break-all;">{magic_link_fallback}</p>"""
-    subject = "Tu enlace para entrar — DRAGONNÉ"
+    subject = "Tu enlace para entrar — Pullso"
     text = f"""Hola,
 
-Usa este enlace para entrar a tu cuenta en DRAGONNÉ (válido {ttl_label}):
+Usa este enlace para entrar a tu cuenta en Pullso (válido {ttl_label}):
 
 {magic_link}
 {alt_plain}
 Si no pediste este acceso, ignora este correo.
 
 —
-DRAGONNÉ
+Pullso
 """
     html = f"""<p>Hola,</p>
-<p>Usa este enlace para entrar a tu cuenta en <strong>DRAGONNÉ</strong> (válido {ttl_label}).</p>
+<p>Usa este enlace para entrar a tu cuenta en <strong>Pullso</strong> (válido {ttl_label}).</p>
 <p><a href="{magic_link}">Entrar ahora</a></p>
 {alt_html}
 <p>Si no pediste este acceso, ignora este correo.</p>
-<p>—<br>DRAGONNÉ</p>"""
+<p>—<br>Pullso</p>"""
 
     _rp = config.resend_sender_plausible()
     resend_key = bool(config.RESEND_API_KEY)
@@ -473,27 +473,27 @@ def send_analysis_share_link_email(to_email: str, share_url: str, hotel_label: s
         or not config.SMTP_PASSWORD
     ):
         return False
-    subject = f"Informe compartido — {hotel_label} — DRAGONNÉ"
+    subject = f"Informe compartido — {hotel_label} — Pullso"
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
     msg["From"] = config.EMAIL_FROM
     msg["To"] = to_email.strip()
     text = f"""Hola,
 
-Te comparten un informe de análisis hotelero generado con DRAGONNÉ (vista de solo lectura):
+Te comparten un informe de análisis hotelero generado con Pullso (vista de solo lectura):
 
 {share_url}
 
 Cualquiera con este enlace puede ver el contenido del informe. Si no esperabas este correo, ignóralo.
 
 —
-DRAGONNÉ
+Pullso
 """
     html = f"""<p>Hola,</p>
-<p>Te comparten un informe de análisis hotelero generado con <strong>DRAGONNÉ</strong> (solo lectura).</p>
+<p>Te comparten un informe de análisis hotelero generado con <strong>Pullso</strong> (solo lectura).</p>
 <p><a href="{share_url}">Abrir informe compartido</a></p>
 <p class="muted">Cualquiera con este enlace puede ver el contenido. Si no esperabas este correo, ignóralo.</p>
-<p>—<br>DRAGONNÉ</p>"""
+<p>—<br>Pullso</p>"""
     msg.attach(MIMEText(text, "plain", "utf-8"))
     msg.attach(MIMEText(html, "html", "utf-8"))
     try:

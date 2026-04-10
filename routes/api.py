@@ -14,6 +14,9 @@ from plan_entitlements import get_effective_plan, get_paid_plan, plan_for_openai
 from services.analysis_core import (
     call_openai,
     enforce_plan,
+    release_reserved_generation_row,
+    require_business_context,
+    reserve_monthly_generation_or_raise,
     save_analysis,
     summarize_reports,
     user_row_as_dict,
@@ -52,16 +55,21 @@ async def api_analyze(
 ):
     """
     Sube uno o más reportes (CSV/Excel) y devuelve el análisis en JSON.
-    Mismo límite de plan que en la web (días, archivos, número de análisis).
+    `business_context` es obligatorio (texto significativo, mismo mínimo que en el panel web).
+    Mismo límite de plan que en la web (días, archivos, guardados y cupo mensual de generaciones).
 
     Respuesta: `plan` y `billing_plan` = `users.plan`; `effective_plan` = plan aplicado al análisis.
     """
     user = user_row_as_dict(user)
     if not files:
         raise HTTPException(status_code=400, detail="Carga al menos un archivo CSV o Excel.")
+    reserved_run_log_id = None
     try:
+        combined_business_context = require_business_context(business_context)
         summary = summarize_reports(files)
         enforce_plan(user, summary)
+        effective = get_effective_plan(user)
+        reserved_run_log_id = reserve_monthly_generation_or_raise(user["id"], effective)
         hotel_context = {
             "hotel_nombre": user["hotel_name"],
             "hotel_tamano": user["hotel_size"] or "",
@@ -77,13 +85,14 @@ async def api_analyze(
             "hotel_expedia_url": user.get("hotel_expedia_url") or "",
             "hotel_booking_url": user.get("hotel_booking_url") or "",
         }
-        combined_business_context = business_context or ""
-        effective = get_effective_plan(user)
         plan_for_model = plan_for_openai_model(effective)
         analysis = call_openai(summary, combined_business_context, hotel_context, plan_for_model)
         nrep = summary["reports_detected"]
         title = f"Lectura comercial · {nrep} fuente{'s' if nrep != 1 else ''} · {datetime.now().strftime('%d/%m/%Y %H:%M')}"
-        analysis_id, share_token = save_analysis(user["id"], title, effective, summary, analysis, files)
+        analysis_id, share_token = save_analysis(
+            user["id"], title, effective, summary, analysis, files, reserved_run_log_id=reserved_run_log_id
+        )
+        reserved_run_log_id = None
         billing = get_paid_plan(user)
         return {
             "ok": True,
@@ -97,10 +106,16 @@ async def api_analyze(
             "share_url": f"{public_share_base_url()}/s/{share_token}",
         }
     except HTTPException:
+        if reserved_run_log_id is not None:
+            release_reserved_generation_row(reserved_run_log_id, user["id"])
         raise
     except ValueError as e:
+        if reserved_run_log_id is not None:
+            release_reserved_generation_row(reserved_run_log_id, user["id"])
         raise HTTPException(status_code=400, detail=str(e))
     except Exception:
+        if reserved_run_log_id is not None:
+            release_reserved_generation_row(reserved_run_log_id, user["id"])
         raise HTTPException(status_code=500, detail="No se pudo completar el análisis. Intenta más tarde.")
 
 

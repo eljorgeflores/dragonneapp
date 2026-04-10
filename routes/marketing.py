@@ -506,6 +506,8 @@ def _sitemap_entries():
         ("/nosotros", "monthly", "0.6"),
         ("/faq", "monthly", "0.65"),
         ("/servicios", "monthly", "0.65"),
+        ("/terminos", "monthly", "0.35"),
+        ("/privacidad", "monthly", "0.35"),
     ]
 
 

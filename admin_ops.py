@@ -29,6 +29,7 @@ def delete_user_and_related(conn, user_id: int) -> bool:
     rows = conn.execute("SELECT id FROM analyses WHERE user_id = ?", (user_id,)).fetchall()
     for r in rows:
         _delete_uploaded_files_for_analysis(conn, r["id"])
+    conn.execute("DELETE FROM analysis_run_log WHERE user_id = ?", (user_id,))
     conn.execute("DELETE FROM analyses WHERE user_id = ?", (user_id,))
     conn.execute("DELETE FROM user_sessions WHERE user_id = ?", (user_id,))
     conn.execute("DELETE FROM password_resets WHERE user_id = ?", (user_id,))

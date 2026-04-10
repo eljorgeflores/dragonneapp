@@ -1,10 +1,10 @@
 {% extends 'base.html' %}
 {% block body %}
 {% set is_local_dev = app_url and ('127.0.0.1' in app_url or 'localhost' in app_url) %}
-<div class="auth-shell">
+<div class="auth-shell auth-shell--stacked">
   <div class="auth-card light-card narrow">
     <div class="brand brand-center">
-      <a href="{{ url_path('/consultoria') }}" class="logo-link" aria-label="Volver al inicio"><img class="brand-logo" src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" /></a>
+      <a href="{{ url_path('/') }}" class="logo-link" aria-label="Pullso — Inicio"><img class="brand-logo auth-pullso-logo" src="{{ url_prefix }}/static/branding/pullso-logo.svg" alt="Pullso" width="120" height="30" decoding="async" /></a>
     </div>
     <h1>Crea tu cuenta</h1>
     <p class="muted center">Empieza en segundos. Luego te pediremos los datos de tu hotel.</p>
@@ -22,9 +22,14 @@
       <input type="password" name="password" minlength="8" required placeholder="Mínimo 8 caracteres" />
       <label>Confirmar contraseña</label>
       <input type="password" name="password_confirm" minlength="8" required placeholder="Repite tu contraseña" />
+      <div class="auth-legal-row">
+        <input type="checkbox" name="accept_legal" id="accept-legal" value="1" required aria-required="true" />
+        <label for="accept-legal">He leído y acepto los <a href="{{ url_path('/terminos') }}" target="_blank" rel="noopener">Términos y condiciones</a> y la <a href="{{ url_path('/privacidad') }}" target="_blank" rel="noopener">Política de privacidad</a> (versión {{ legal_docs_version }}).</label>
+      </div>
       <button class="btn btn-primary full" type="submit">Crear cuenta</button>
     </form>
     <p class="muted center">¿Ya tienes cuenta? <a href="{{ url_path('/login') }}">Inicia sesión</a></p>
   </div>
+  {% include 'partials/legal_footer_links.html' %}
 </div>
 {% endblock %}

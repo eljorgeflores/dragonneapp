@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}Política de privacidad — Pullso{% endblock %}
+{% block body_class %}page-legal{% endblock %}
+{% block body %}
+<main class="legal-doc" id="top">
+  <p class="legal-doc-back"><a href="{{ url_path('/pullso') }}">← Pullso</a></p>
+  <h1>Política de privacidad</h1>
+  <p class="legal-updated">Versión {{ legal_docs_version }} · Vigente a partir del 10 de abril de 2026 · Responsable del tratamiento: operación del producto <strong>Pullso</strong> en el marco de <strong>Dragonné</strong>.</p>
+
+  <h2>1. Finalidad de este documento</h2>
+  <p>Explica qué datos personales podemos recabar, con qué fines, durante cuánto tiempo y qué derechos tiene el titular, conforme a la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (México) y buenas prácticas de transparencia.</p>
+  <p>El uso del Servicio implica que ha leído esta Política de privacidad junto con los <a href="{{ terms_url }}">Términos y condiciones</a>.</p>
+
+  <h2>2. Datos que podemos tratar</h2>
+  <ul>
+    <li><strong>Datos de cuenta:</strong> correo electrónico, contraseña (almacenada de forma cifrada o con hash), nombre de contacto, datos del hotel que nos proporcione en el perfil (nombre comercial, categoría, ubicación, PMS, enlaces públicos, etc.).</li>
+    <li><strong>Datos de uso y técnicos:</strong> registros de sesión, dirección IP, identificadores de dispositivo o navegador cuando sea necesario para seguridad, auditoría o prevención de abuso.</li>
+    <li><strong>Contenido que usted carga:</strong> archivos de reportes (CSV, Excel u otros formatos admitidos) y texto libre que envíe para orientar el análisis. Estos archivos pueden contener datos personales de terceros (huéspedes agregados, reservas, etc.) según lo que incluya su exportación.</li>
+    <li><strong>Resultados del Servicio:</strong> lecturas generadas, metadatos asociados (fechas, número de archivos, planes vigentes en el momento del análisis).</li>
+    <li><strong>Facturación:</strong> si contrata un plan de pago, datos de facturación y tokens de pago tratados por el proveedor de pagos (no almacenamos el número completo de tarjeta en nuestros servidores como regla general).</li>
+  </ul>
+
+  <h2>3. Finalidades del tratamiento</h2>
+  <ul>
+    <li>Prestar el Servicio: autenticación, perfil, generación de lecturas, límites por plan, historial y enlaces de compartición autorizados.</li>
+    <li>Seguridad: detección de fraude, abuso, intentos de elusión de cupos o ataques a la plataforma.</li>
+    <li>Cumplimiento legal y defensa de derechos.</li>
+    <li>Mejora del producto de forma agregada o anonimizada cuando sea posible.</li>
+    <li>Comunicaciones operativas (recuperación de acceso, avisos del servicio) y, con su consentimiento cuando corresponda, comunicaciones comerciales.</li>
+  </ul>
+
+  <h2>4. Base jurídica y consentimiento</h2>
+  <p>El tratamiento se basa en la relación contractual (uso del Servicio), el consentimiento cuando así se requiera (por ejemplo, al registrarse y aceptar estos documentos), el interés legítimo en la seguridad del servicio y el cumplimiento de obligaciones legales.</p>
+
+  <h2>5. Encargados y transferencias</h2>
+  <p>Podemos utilizar proveedores que traten datos en nuestro nombre, entre otros:</p>
+  <ul>
+    <li><strong>Procesamiento de IA / nube:</strong> proveedores de modelos de lenguaje o infraestructura (por ejemplo, OpenAI u otros) para analizar el contenido que usted envía, bajo acuerdos de tratamiento acordes a su política.</li>
+    <li><strong>Pasarela de pagos:</strong> por ejemplo Stripe, para suscripciones y facturación.</li>
+    <li><strong>Correo y alojamiento:</strong> envío de correos transaccionales y servidores donde reside la aplicación y la base de datos.</li>
+  </ul>
+  <p>Algunos proveedores pueden estar en el extranjero. En esos casos aplicamos las salvaguardas que correspondan según la normativa vigente y los contratos con dichos proveedores.</p>
+
+  <h2>6. Conservación</h2>
+  <p>Conservamos los datos el tiempo necesario para cumplir las finalidades descritas y obligaciones legales. Los análisis guardados en su cuenta permanecen hasta que usted los elimine (si la función está disponible) o hasta que cancelemos la cuenta. Los registros de uso para cupos y seguridad pueden conservarse aunque elimine un análisis concreto, según lo descrito en los Términos.</p>
+
+  <h2>7. Derechos del titular (ARCO y otros)</h2>
+  <p>Usted puede solicitar acceso, rectificación, cancelación u oposición al tratamiento de sus datos personales, así como revocar consentimientos otorgados, en los supuestos previstos por la ley. Para ejercerlos, escriba al contacto indicado al final, identificando su cuenta (correo registrado) y el derecho que desea ejercer.</p>
+  <p>Responderemos en los plazos legales. Podremos conservar ciertos datos cuando exista obligación legal o interés legítimo documentado (por ejemplo, en caso de disputa o abuso).</p>
+
+  <h2>8. Cookies y tecnologías similares</h2>
+  <p>La aplicación web puede usar cookies o almacenamiento de sesión necesarios para mantener su inicio de sesión y preferencias. Puede configurar su navegador para limitar cookies; algunas funciones podrían dejar de estar disponibles.</p>
+
+  <h2>9. Menores de edad</h2>
+  <p>El Servicio no está dirigido a menores de edad. No debe registrarse si no tiene capacidad legal para contratar en su jurisdicción.</p>
+
+  <h2>10. Cambios a esta política</h2>
+  <p>Publicaremos la versión actualizada con su fecha de vigencia. Si el cambio es sustancial, podremos notificarle por correo o mediante un aviso en el Servicio. El registro de la versión aceptada en el alta de cuenta ayuda a acreditar el consentimiento aplicable.</p>
+
+  <h2>11. Contacto</h2>
+  <p>Para preguntas de privacidad o ejercicio de derechos, utilice el correo de contacto o soporte publicado en el sitio o en la aplicación.</p>
+
+  <p class="legal-footer-links"><a href="{{ terms_url }}">Términos y condiciones</a> · <a href="{{ url_path('/signup') }}">Crear cuenta</a></p>
+</main>
+{% endblock %}

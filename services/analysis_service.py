@@ -13,6 +13,9 @@ from plan_entitlements import get_effective_plan, get_paid_plan, plan_for_openai
 from services.analysis_core import (
     call_openai,
     enforce_plan,
+    release_reserved_generation_row,
+    require_business_context,
+    reserve_monthly_generation_or_raise,
     save_analysis,
     summarize_reports,
     user_row_as_dict,
@@ -30,10 +33,14 @@ async def run_web_analyze(request: Request, business_context: str, files: List[U
     if not files:
         _dbg("services.analysis_service", "early_return", {"reason": "no_files"}, "H_A")
         return JSONResponse({"ok": False, "error": "Sube al menos un reporte."}, status_code=400)
+    reserved_run_log_id = None
     try:
+        combined_business_context = require_business_context(business_context)
         summary = summarize_reports(files)
         _dbg("services.analysis_service", "after_summarize", {"reports_detected": summary.get("reports_detected"), "total_files": summary.get("total_files")}, "H_B")
         enforce_plan(user, summary)
+        effective = get_effective_plan(user)
+        reserved_run_log_id = reserve_monthly_generation_or_raise(user["id"], effective)
         hotel_context = {
             "hotel_nombre": user["hotel_name"],
             "hotel_tamano": user["hotel_size"] or "",
@@ -49,14 +56,15 @@ async def run_web_analyze(request: Request, business_context: str, files: List[U
             "hotel_expedia_url": user.get("hotel_expedia_url") or "",
             "hotel_booking_url": user.get("hotel_booking_url") or "",
         }
-        combined_business_context = business_context or ""
-        effective = get_effective_plan(user)
         plan_for_model = plan_for_openai_model(effective)
         _dbg("services.analysis_service", "before_call_openai", {}, "H_D")
         analysis = call_openai(summary, combined_business_context, hotel_context, plan_for_model)
         n = summary["reports_detected"]
         title = f"Lectura comercial · {n} fuente{'s' if n != 1 else ''} · {datetime.now().strftime('%d/%m/%Y %H:%M')}"
-        analysis_id, share_token = save_analysis(user["id"], title, effective, summary, analysis, files)
+        analysis_id, share_token = save_analysis(
+            user["id"], title, effective, summary, analysis, files, reserved_run_log_id=reserved_run_log_id
+        )
+        reserved_run_log_id = None
         created_at = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")[:19].replace("T", " ")
         share_url = f"{public_share_base_url()}/s/{share_token}"
         _debug_log("services.analysis_service", "POST /analyze success", {"analysis_id": analysis_id}, "H4")
@@ -75,12 +83,18 @@ async def run_web_analyze(request: Request, business_context: str, files: List[U
             "share_url": share_url,
         })
     except HTTPException as e:
+        if reserved_run_log_id is not None:
+            release_reserved_generation_row(reserved_run_log_id, user["id"])
         _dbg("services.analysis_service", "http_exception", {"detail": e.detail, "status_code": e.status_code}, "H_C")
         return JSONResponse({"ok": False, "error": e.detail}, status_code=e.status_code)
     except ValueError as e:
+        if reserved_run_log_id is not None:
+            release_reserved_generation_row(reserved_run_log_id, user["id"])
         _dbg("services.analysis_service", "value_error", {"message": str(e)}, "H_B")
         return JSONResponse({"ok": False, "error": str(e)}, status_code=400)
     except Exception as e:
+        if reserved_run_log_id is not None:
+            release_reserved_generation_row(reserved_run_log_id, user["id"])
         import traceback
         traceback.print_exc()
         _debug_log("services.analysis_service", "POST /analyze exception", {"error": str(e)}, "H4")

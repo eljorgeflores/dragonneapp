@@ -84,19 +84,19 @@ def _pdf_build_analysis_pdf(
         return y
 
     # ---------- Encabezado con branding ----------
-    logo_path = BASE_DIR / "static" / "branding" / "dragonne-wordmark.png"
+    logo_path = BASE_DIR / "static" / "branding" / "pullso-logo.png"
     if logo_path.exists():
         try:
-            c.drawImage(str(logo_path), _PDF_MARGIN, height - 52, width=120, height=28)
+            c.drawImage(str(logo_path), _PDF_MARGIN, height - 52, width=120, height=30)
         except Exception:
             c.setFillColor(_PDF_BRAND_ACCENT)
             c.setFont("Helvetica-Bold", 20)
-            c.drawString(_PDF_MARGIN, height - 48, "DRAGONNÉ")
+            c.drawString(_PDF_MARGIN, height - 48, "Pullso")
             c.setFillColor(_PDF_BRAND_TEXT)
     else:
         c.setFillColor(_PDF_BRAND_ACCENT)
         c.setFont("Helvetica-Bold", 20)
-        c.drawString(_PDF_MARGIN, height - 48, "DRAGONNÉ")
+        c.drawString(_PDF_MARGIN, height - 48, "Pullso")
         c.setFillColor(_PDF_BRAND_TEXT)
     c.setFont("Helvetica", 11)
     c.drawString(_PDF_MARGIN, height - 68, "Análisis de revenue hotelero")
@@ -339,7 +339,7 @@ def streaming_pdf_response_for_owned_analysis(user: sqlite3.Row, analysis_id: in
     safe_hotel = re.sub(r"[^\w\s-]", "", (user_dict.get("hotel_name") or "informe"))
     safe_hotel = re.sub(r"[-\s]+", "-", safe_hotel).strip()[:40] or "informe"
     report_date = (row["created_at"] or "")[:10]
-    filename = f"dragonne-revenue-{safe_hotel}-{report_date}.pdf"
+    filename = f"pullso-lectura-{safe_hotel}-{report_date}.pdf"
     return StreamingResponse(
         buffer,
         media_type="application/pdf",

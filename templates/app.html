@@ -1,14 +1,14 @@
 {% extends 'base.html' %}
-{% block title %}DRAGONNÉ — Panel{% endblock %}
-{% block body_class %}page-app{% endblock %}
+{% block title %}Pullso — Nueva lectura{% endblock %}
+{% block body_class %}page-app page-app-dashboard{% endblock %}
 {% block body %}
 {% set _user_label = user.contact_name or user.email or 'Usuario' %}
 {% set _user_initial = (_user_label[0] if _user_label else '?')|upper %}
 <div class="app-shell" id="appShell" data-app-url="{{ app_url or '' }}" data-max-files="{{ max_files_per_analysis }}" data-plan="{{ effective_plan }}">
   <header class="app-topbar">
     <div class="app-topbar-inner">
-      <a href="{{ url_path('/app') }}" class="brand-link app-brand-link" aria-label="DRAGONNÉ — Inicio del panel">
-        <img class="brand-logo" src="{{ url_prefix }}/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" />
+      <a href="{{ url_path('/app') }}" class="brand-link app-brand-link" aria-label="Pullso — Nueva lectura">
+        <img class="brand-logo app-pullso-logo" src="{{ url_prefix }}/static/branding/pullso-logo.svg" alt="Pullso" width="120" height="30" decoding="async" />
       </a>
       <div class="app-context">
         <div class="app-context-track muted">
@@ -34,20 +34,20 @@
   </header>
 
   <div class="app-content">
-  <section class="dashboard-welcome dashboard-welcome--compact" aria-label="Resumen del panel">
+  <section class="dashboard-welcome dashboard-welcome--compact" aria-label="Inicio del panel Pullso">
     <div class="dashboard-welcome-top">
-      <h1 class="dashboard-page-title">Panel</h1>
-      <p class="dashboard-welcome-lead muted">Lectura comercial a partir de CSV o Excel.</p>
+      <h1 class="dashboard-page-title">Nueva lectura comercial</h1>
+      <p class="dashboard-welcome-lead muted">Sube tu export, escribe qué quieres entender y genera la lectura. Todo en un solo vistazo abajo.</p>
     </div>
     <div class="dashboard-plan-strip" role="status">
       <span class="dashboard-plan-strip-pill pill {% if effective_plan == 'pro' %}pill-pro{% endif %}{% if effective_plan == 'pro_plus' %} pill-pro-plus{% endif %}">{{ plan_label }}</span>
       {% if effective_plan == 'pro_plus' %}
-      <span class="dashboard-plan-fact">{{ pro_plus_max_files }} archivos · hasta 180 días</span>
+      <span class="dashboard-plan-fact">{{ pro_plus_max_files }} archivos · hasta {{ pro_180_max_days }} días</span>
       {% elif effective_plan == 'pro' %}
-      <span class="dashboard-plan-fact">{{ pro_max_files }} archivos · hasta 90 días</span>
+      <span class="dashboard-plan-fact">{{ pro_max_files }} archivos · hasta {{ pro_90_max_days }} días</span>
       {% else %}
       <span class="dashboard-plan-fact">{{ free_max_days }} días</span>
-      <span class="dashboard-plan-fact">1 archivo / corrida</span>
+      <span class="dashboard-plan-fact">{{ free_max_files }} archivo{% if free_max_files != 1 %}s{% endif %} / corrida</span>
       <span class="dashboard-plan-fact">{{ free_max_analyses }} guardadas</span>
       {% endif %}
       <a href="{{ url_path('/app/account') }}" class="dashboard-plan-link">Planes y facturación</a>
@@ -57,53 +57,51 @@
   <main class="dashboard-grid">
     <section class="upload-card light-card">
       <div class="section-head section-head--minimal">
-        <h2 class="upload-card-title">Nueva lectura</h2>
+        <h2 class="upload-card-title">Archivos y mensaje</h2>
       </div>
       {% if can_upload %}
-      <form id="analyzeForm" class="analyze-form analyze-form--split" method="post" action="{{ url_prefix }}/analyze" enctype="multipart/form-data" data-max-files="{{ max_files_per_analysis }}">
-        <div class="upload-form-primary">
-        <details class="panel-details upload-coach-details">
-          <summary class="panel-details-summary">Consejos para la carga</summary>
-          <div class="upload-coach" role="region" aria-label="Guía para subir reportes">
-            <ul class="upload-coach-list upload-coach-list--tight">
-              <li><strong>Formato:</strong> CSV o Excel desde PMS, channel o motor.</li>
-              <li><strong>Mejor señal:</strong> fechas, canal/fuente e ingresos o ADR.</li>
-              {% if effective_plan == 'free' %}
-              <li class="upload-coach-highlight"><strong>Gratis:</strong> un archivo por corrida. ¿Varias fuentes? <a href="{{ url_path('/app/account') }}">Amplía plan</a>.</li>
-              {% else %}
-              <li><strong>Tu plan:</strong> hasta {{ max_files_per_analysis }} archivos en una corrida.</li>
-              {% endif %}
-              <li>Quita archivos con ✕ antes de enviar o vuelve a elegir sin recargar.</li>
-            </ul>
-          </div>
-        </details>
-
-        <label class="upload-files-label" for="files">Archivos</label>
+      <form id="analyzeForm" class="analyze-form analyze-form--chat" method="post" action="{{ url_prefix }}/analyze" enctype="multipart/form-data" data-max-files="{{ max_files_per_analysis }}">
+        <div class="upload-block">
         <p id="fileSelectionSummary" class="field-hint muted small file-selection-summary" role="status" aria-live="polite"></p>
-        <div class="dropzone light dropzone--hero" id="dropzone">
+        <div class="dropzone light dropzone--hero dropzone--compact" id="dropzone">
           <div class="dropzone-hitbox">
-            <input id="files" name="files" type="file" {% if max_files_per_analysis > 1 %}multiple{% endif %} accept=".csv,.xlsx,.xls,.xlsm" />
+            <input id="files" name="files" type="file" {% if max_files_per_analysis > 1 %}multiple{% endif %} accept=".csv,.xlsx,.xls,.xlsm" aria-label="{% if max_files_per_analysis > 1 %}Seleccionar exports CSV o Excel, hasta {{ max_files_per_analysis }} archivos{% else %}Seleccionar export CSV o Excel{% endif %}" />
             <div class="dropzone-prompt">
               <span class="dropzone-icon" aria-hidden="true">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none"><path d="M12 5v10M8 9l4-4 4 4M5 19h14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 5v10M8 9l4-4 4 4M5 19h14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </span>
-              <strong>{% if max_files_per_analysis > 1 %}Suelta los exports aquí{% else %}Suelta tu export aquí{% endif %}</strong>
-              <p class="dropzone-prompt-hint">o haz clic para elegir · CSV / Excel{% if max_files_per_analysis > 1 %} · máx. {{ max_files_per_analysis }}{% endif %}</p>
+              <div class="dropzone-prompt-text">
+                <strong>{% if max_files_per_analysis > 1 %}Suelta los exports aquí{% else %}Suelta tu export aquí{% endif %}</strong>
+                <p class="dropzone-prompt-hint">o haz clic para elegir · CSV / Excel{% if max_files_per_analysis > 1 %} · máx. {{ max_files_per_analysis }}{% endif %}</p>
+              </div>
             </div>
           </div>
           <div id="fileList" class="file-list" aria-label="Archivos seleccionados"></div>
         </div>
         <p id="fileLimitHint" class="field-hint muted small hidden" role="status"></p>
-
-        <p id="analyzeFormStatus" class="analyze-form-status hidden" role="status" aria-live="polite"></p>
-        <div class="button-row upload-form-actions">
-          <button class="btn btn-primary" type="submit" id="analyzeSubmitBtn">Generar lectura</button>
-        </div>
         </div>
 
-        <div class="upload-form-secondary">
-          <label for="business_context">Contexto <span class="label-optional">opcional</span></label>
-          <textarea id="business_context" name="business_context" rows="5" placeholder="Ej.: priorizar directo en fin de semana, OTA en temporada alta…"></textarea>
+        <div class="chat-composer-tray" aria-label="Instrucciones para la lectura">
+          <div class="chat-composer-head">
+            <span class="chat-composer-avatar" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 10h8M8 14h5M6 4h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <div class="chat-composer-head-text">
+              <p class="chat-composer-kicker">Tu mensaje para Pullso</p>
+              <label for="business_context" class="chat-composer-label">¿Qué quieres entender o decidir con esta lectura? <span class="label-required">obligatorio</span></label>
+            </div>
+          </div>
+          <div class="chat-composer-row">
+            <div class="chat-composer-input-shell">
+              <textarea id="business_context" name="business_context" class="chat-composer-field" rows="4" required minlength="{{ min_business_context_len }}" aria-required="true" data-min-context="{{ min_business_context_len }}" placeholder="Escribe como si le explicaras a un revenue manager qué necesitas: prioridades, dudas, temporada o hipótesis…"></textarea>
+            </div>
+            <button class="btn btn-primary chat-composer-submit" type="submit" id="analyzeSubmitBtn" aria-label="Generar lectura con los archivos y este mensaje">
+              <span class="chat-composer-submit-text">Generar lectura</span>
+              <svg class="chat-composer-submit-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+          <p class="chat-composer-hint muted small">Pullso usa tu mensaje junto con los datos del archivo para orientar la lectura.</p>
+          <p id="analyzeFormStatus" class="analyze-form-status hidden" role="status" aria-live="polite"></p>
         </div>
       </form>
       {% else %}
@@ -128,6 +126,34 @@
 
     <div class="dashboard-rail">
     <aside class="side-panel light-card side-panel--compact">
+      <details class="panel-details upload-coach-details side-panel-details">
+        <summary class="panel-details-summary">Consejos para la carga</summary>
+        <div class="side-panel-details-body">
+          <div class="upload-coach" role="region" aria-label="Guía para subir reportes">
+            <ul class="upload-coach-list upload-coach-list--tight">
+              <li><strong>Formato:</strong> CSV o Excel desde PMS, channel o motor.</li>
+              <li><strong>Mejor señal:</strong> fechas, canal/fuente e ingresos o ADR.</li>
+              <li><strong>Excel (varias pestañas):</strong>
+                {% if excel_max_sheets_per_file > 0 %}
+                solo procesamos las <strong>primeras {{ excel_max_sheets_per_file }}</strong> hoja(s) de cada archivo; el resto queda fuera de esta corrida (no rompemos tu libro: solo acotamos la lectura).
+                {% else %}
+                leemos <strong>todas</strong> las pestañas de cada libro en esta corrida.
+                {% endif %}
+              </li>
+              <li><strong>Rango de fechas:</strong> tu plan permite hasta <strong>{{ plan_days_limit }} días</strong> por análisis (gratis {{ free_max_days }}, Pro {{ pro_90_max_days }}, Pro+ {{ pro_180_max_days }}). Si el export supera ese rango, <strong>no generamos la lectura</strong> y te decimos el motivo; tus archivos no se alteran.</li>
+              {% if effective_plan == 'free' %}
+              <li class="upload-coach-highlight"><strong>Gratis:</strong> un archivo por corrida. ¿Varias fuentes? <a href="{{ url_path('/app/account') }}">Amplía plan</a>.</li>
+              {% else %}
+              <li><strong>Tu plan:</strong> hasta {{ max_files_per_analysis }} archivos en una corrida.</li>
+              {% endif %}
+              <li>Quita archivos con ✕ antes de enviar o vuelve a elegir sin recargar.</li>
+            </ul>
+          </div>
+        </div>
+      </details>
+    </aside>
+
+    <aside class="side-panel light-card side-panel--compact">
       <details class="panel-details side-panel-details">
         <summary class="panel-details-summary">Qué obtienes y tiempos</summary>
         <div class="side-panel-details-body">
@@ -139,7 +165,7 @@
           <h3 class="side-panel-mini-h">Después de generar</h3>
           <ul class="clean-list clean-list--compact clean-list--icons">
             <li>Suele tardar <strong>1–3 min</strong></li>
-            <li>PDF, enlace y correo{% if smtp_configured %} · envío desde DRAGONNÉ{% endif %}</li>
+            <li>PDF, enlace y correo{% if smtp_configured %} · envío desde Pullso{% endif %}</li>
           </ul>
           <p class="side-panel-foot muted small">Sin fechas/canales en el export, la lectura será más breve; el tablero indica qué sumar después.</p>
         </div>
@@ -228,6 +254,7 @@
       <div>
         <h2 class="results-section-title">Tablero de la lectura</h2>
         <p class="muted" id="resultMeta"></p>
+        <div id="uploadNoticesPanel" class="upload-notices-panel hidden" role="status" aria-live="polite"></div>
       </div>
       <div class="results-actions results-actions-share">
         <span id="planBadge" class="pill"></span>
@@ -248,7 +275,7 @@
     <div id="paywall" class="upgrade-banner hidden"></div>
     <div class="results-tablero" id="resultsLayout">
       <div id="resultsLoading" class="results-loading hidden" aria-live="polite">
-        <img src="/static/branding/dragonne-wordmark.png" alt="" class="results-loading-logo" width="140" height="32" />
+        <img src="{{ url_prefix }}/static/branding/pullso-logo.svg" alt="" class="results-loading-logo results-loading-logo--pullso" width="120" height="30" decoding="async" />
         <p class="results-loading-phase" id="resultsLoadingPhase">Leyendo el export…</p>
         <p class="muted small results-loading-hint">Suele llevar 1–3 minutos. Mantén esta pestaña abierta.</p>
       </div>
@@ -263,5 +290,7 @@
   </section>
 
   </div>
+  {% set footer_legal_class = 'app-legal-footer' %}
+  {% include 'partials/legal_footer_links.html' %}
 </div>
 {% endblock %}

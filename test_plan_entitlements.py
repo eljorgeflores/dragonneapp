@@ -55,7 +55,7 @@ def _iso_utc_past() -> str:
 def _signup(email: str, password: str = "password123") -> None:
     client.post(
         "/signup",
-        data={"email": email, "password": password, "password_confirm": password},
+        data={"email": email, "password": password, "password_confirm": password, "accept_legal": "1"},
         follow_redirects=True,
     )
 
@@ -479,7 +479,11 @@ def test_post_analyze_response_includes_plan_billing_plan_effective_plan(monkeyp
     files = {
         "files": ("one.csv", io.BytesIO(csv_content.encode("utf-8")), "text/csv"),
     }
-    r = client.post("/analyze", data={"business_context": ""}, files=files)
+    r = client.post(
+        "/analyze",
+        data={"business_context": "Contexto de prueba para orientar la lectura automatizada."},
+        files=files,
+    )
     assert r.status_code == 200, r.text
     data = r.json()
     assert data.get("ok") is True

@@ -27,7 +27,7 @@ def _unique_email():
 def _signup_and_onboard(email: str, password: str):
     client.post(
         "/signup",
-        data={"email": email, "password": password, "password_confirm": password},
+        data={"email": email, "password": password, "password_confirm": password, "accept_legal": "1"},
         follow_redirects=True,
     )
     client.post(
@@ -114,7 +114,7 @@ def test_request_magic_link_existing_user_sends_email(monkeypatch):
     password = "password123"
     client.post(
         "/signup",
-        data={"email": email, "password": password, "password_confirm": password},
+        data={"email": email, "password": password, "password_confirm": password, "accept_legal": "1"},
         follow_redirects=True,
     )
     client.post("/logout", follow_redirects=True)
@@ -219,7 +219,7 @@ def test_delete_user_removes_login_tokens():
     password = "password123"
     client.post(
         "/signup",
-        data={"email": email_target, "password": password, "password_confirm": password},
+        data={"email": email_target, "password": password, "password_confirm": password, "accept_legal": "1"},
     )
     with db() as conn:
         uid_target = conn.execute("SELECT id FROM users WHERE email = ?", (email_target,)).fetchone()["id"]
@@ -233,7 +233,7 @@ def test_delete_user_removes_login_tokens():
     client.post("/logout")
     client.post(
         "/signup",
-        data={"email": email_admin, "password": password, "password_confirm": password},
+        data={"email": email_admin, "password": password, "password_confirm": password, "accept_legal": "1"},
     )
     with db() as conn:
         conn.execute("UPDATE users SET is_admin = 1 WHERE email = ?", (email_admin,))

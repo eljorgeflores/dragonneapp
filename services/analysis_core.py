@@ -19,7 +19,9 @@ from fastapi import HTTPException, UploadFile
 from config import (
     ADMIN_EMAILS,
     ALLOWED_UPLOAD_EXTENSIONS,
+    DB_PATH,
     DEFAULT_MODEL,
+    EXCEL_MAX_SHEETS_PER_FILE,
     FREE_MAX_ANALYSES,
     FREE_MAX_DAYS,
     FREE_MAX_FILES_PER_ANALYSIS,
@@ -32,12 +34,28 @@ from config import (
     PRO_90_MAX_ANALYSES,
     PRO_90_MAX_DAYS,
     PRO_90_MAX_FILES,
+    PRO_90_REPORTS_PER_MONTH,
     PRO_PLUS_MAX_ANALYSES,
+    PRO_PLUS_REPORTS_PER_MONTH,
     UPLOAD_DIR,
 )
 from db import db
 from plan_entitlements import get_effective_plan
 from time_utils import now_iso
+
+MIN_BUSINESS_CONTEXT_LEN = 15
+
+
+def require_business_context(business_context: Optional[str]) -> str:
+    """Contexto de negocio obligatorio para orientar la lectura (web y API)."""
+    s = (business_context or "").strip()
+    if len(s) < MIN_BUSINESS_CONTEXT_LEN:
+        raise ValueError(
+            "El contexto es obligatorio: indica qué quieres entender o priorizar con esta lectura "
+            f"(al menos {MIN_BUSINESS_CONTEXT_LEN} caracteres)."
+        )
+    return s
+
 
 DATE_ALIASES = [
     "stay_date", "date", "business_date", "checkin", "check_in", "arrival", "arrival_date",
@@ -46,18 +64,18 @@ DATE_ALIASES = [
 ]
 REVENUE_ALIASES = [
     "net_room_revenue", "room_revenue", "revenue", "revenue_net", "net_revenue", "total_revenue",
-    "room_rev", "amount", "booking_value", "room_amount", "total_amount",
+    "room_rev", "amount", "booking_value", "room_amount", "total_amount", "subtotal", "total",
     "ingresos", "ingreso", "ingreso_total", "revenue_total",
 ]
 GROSS_ALIASES = ["gross_revenue", "gross_amount", "gross_booking_value", "sell_amount"]
 COMM_ALIASES = ["commission", "commission_amount", "ota_commission", "channel_commission"]
 PAYMENT_ALIASES = ["payment_cost", "card_fee", "payment_fee", "processing_fee"]
-ROOM_NIGHTS_ALIASES = ["room_nights", "nights", "night_count", "roomnights"]
+ROOM_NIGHTS_ALIASES = ["room_nights", "nights", "night_count", "roomnights", "noches", "vendidas"]
 RESERVATION_ID_ALIASES = ["reservation_id", "booking_id", "confirmation", "conf_no", "res_id"]
 CHANNEL_ALIASES = ["channel", "source", "booking_channel", "channel_name", "ota", "segmento_canal", "canal"]
 STATUS_ALIASES = ["status", "reservation_status", "booking_status", "estatus"]
 ROOMS_ALIASES = ["rooms", "room_count", "habitaciones"]
-ADR_ALIASES = ["adr", "average_daily_rate", "tarifa_promedio"]
+ADR_ALIASES = ["adr", "average_daily_rate", "tarifa_promedio", "adr_usd"]
 TAX_ALIASES = ["tax", "taxes", "vat", "impuestos"]
 
 
@@ -148,11 +166,18 @@ def normalize_col(col: Any) -> str:
 
 
 def maybe_to_datetime(series: pd.Series) -> Optional[pd.Series]:
+    if series is None or len(series) == 0:
+        return None
     try:
-        converted = pd.to_datetime(series, errors="coerce")
-        success_ratio = converted.notna().mean() if len(converted) else 0
+        converted = _series_try_datetime(series)
+        success_ratio = converted.notna().mean()
         if success_ratio >= 0.45:
             return converted
+        if series.dtype == object:
+            fixed = series.map(_string_spanish_month_to_ascii)
+            converted2 = pd.to_datetime(fixed, errors="coerce", dayfirst=True)
+            if converted2.notna().mean() >= 0.45:
+                return converted2
     except Exception:
         return None
     return None
@@ -175,6 +200,202 @@ def _has_date_header(columns: Any) -> bool:
     return any("fecha" in c or "date" in c or "día" in c or "dia" in c for c in lower)
 
 
+# Meses abreviados en español (exports tipo 09/Abr/2026)
+_SPANISH_MONTH_ABBR = (
+    ("ene", "Jan"),
+    ("feb", "Feb"),
+    ("mar", "Mar"),
+    ("abr", "Apr"),
+    ("may", "May"),
+    ("jun", "Jun"),
+    ("jul", "Jul"),
+    ("ago", "Aug"),
+    ("sep", "Sep"),
+    ("set", "Sep"),
+    ("oct", "Oct"),
+    ("nov", "Nov"),
+    ("dic", "Dec"),
+)
+
+MES_ES_A_NUM = {
+    "enero": 1,
+    "febrero": 2,
+    "marzo": 3,
+    "abril": 4,
+    "mayo": 5,
+    "junio": 6,
+    "julio": 7,
+    "agosto": 8,
+    "septiembre": 9,
+    "setiembre": 9,
+    "octubre": 10,
+    "noviembre": 11,
+    "diciembre": 12,
+}
+
+
+def _string_spanish_month_to_ascii(val: Any) -> Any:
+    if not isinstance(val, str):
+        return val
+    s = val.strip()
+    if not s or s.lower() == "nan":
+        return val
+    out = s
+    for es, en in _SPANISH_MONTH_ABBR:
+        out = re.sub(rf"/{es}\b", f"/{en}", out, flags=re.IGNORECASE)
+        out = re.sub(rf"-{es}\b", f"-{en}", out, flags=re.IGNORECASE)
+        out = re.sub(rf"\b{es}\.", f"{en}.", out, flags=re.IGNORECASE)
+    return out
+
+
+def _series_try_datetime(series: pd.Series) -> pd.Series:
+    return pd.to_datetime(series, errors="coerce")
+
+
+def _datelike_ratio(values: Any) -> float:
+    """Ratio de celdas no nulas que pandas interpreta como fecha (muestra hasta 24 celdas)."""
+    if values is None:
+        return 0.0
+    if hasattr(values, "iloc"):
+        seq = [values.iloc[j] for j in range(min(len(values), 24))]
+    else:
+        seq = list(values)[:24]
+    non_null = [v for v in seq if pd.notna(v)]
+    if not non_null:
+        return 0.0
+    ok = 0
+    for v in non_null:
+        dt = pd.to_datetime(v, errors="coerce")
+        if pd.isna(dt) and isinstance(v, str):
+            dt = pd.to_datetime(_string_spanish_month_to_ascii(v), errors="coerce", dayfirst=True)
+        if pd.notna(dt):
+            ok += 1
+    return ok / len(non_null)
+
+
+def _wide_dates_metrics_to_long(mat: pd.DataFrame, header_row: int) -> Optional[pd.DataFrame]:
+    """Primera columna = métrica; demás columnas = fechas (resumen producción por día)."""
+    hdr = mat.iloc[header_row]
+    date_idx: List[Tuple[int, pd.Timestamp]] = []
+    for j in range(1, mat.shape[1]):
+        v = hdr.iloc[j]
+        if pd.isna(v):
+            continue
+        dt = pd.to_datetime(v, errors="coerce")
+        if pd.isna(dt) and isinstance(v, str):
+            dt = pd.to_datetime(_string_spanish_month_to_ascii(v), errors="coerce", dayfirst=True)
+        if pd.notna(dt):
+            date_idx.append((j, pd.Timestamp(dt).normalize()))
+    if len(date_idx) < 3:
+        return None
+    records: List[Dict[str, Any]] = []
+    for r in range(header_row + 1, len(mat)):
+        label = mat.iloc[r, 0]
+        if pd.isna(label):
+            continue
+        mname = str(label).strip()
+        for j, dt in date_idx:
+            val = mat.iloc[r, j]
+            records.append({"fecha": dt, "metrica": mname, "valor": val})
+    if not records:
+        return None
+    long_df = pd.DataFrame(records)
+    wide = long_df.pivot_table(index="fecha", columns="metrica", values="valor", aggfunc="first")
+    wide = wide.reset_index()
+    wide.columns = [normalize_col(str(c)) for c in wide.columns]
+    return wide
+
+
+def _ocupacion_mes_to_tidy(mat: pd.DataFrame, header_row: int) -> Optional[pd.DataFrame]:
+    """Bloques 'YYYY - YYYY' + ADR + Revenue y filas por nombre de mes."""
+    hdr = mat.iloc[header_row]
+    groups: List[Tuple[int, int]] = []
+    j = 0
+    while j < len(hdr):
+        v = hdr.iloc[j]
+        if pd.isna(v):
+            j += 1
+            continue
+        m = re.match(r"(\d{4})\s*-\s*\1", str(v).strip())
+        if m:
+            year = int(m.group(1))
+            groups.append((year, j))
+            j += 3
+            continue
+        j += 1
+    if not groups:
+        return None
+    records: List[Dict[str, Any]] = []
+    for r in range(header_row + 1, len(mat)):
+        if mat.iloc[r].notna().sum() < 2:
+            continue
+        mes_cell = mat.iloc[r, 0]
+        if pd.isna(mes_cell):
+            continue
+        mi = MES_ES_A_NUM.get(str(mes_cell).strip().lower())
+        if not mi:
+            continue
+        for year, start_col in groups:
+            if start_col + 2 >= mat.shape[1]:
+                continue
+            occ = mat.iloc[r, start_col]
+            adr = mat.iloc[r, start_col + 1]
+            rev = mat.iloc[r, start_col + 2]
+            fecha = pd.Timestamp(year=year, month=mi, day=1)
+            records.append(
+                {
+                    "fecha": fecha,
+                    "ocupacion_pct": occ,
+                    "adr": adr,
+                    "ingreso": rev,
+                }
+            )
+    if not records:
+        return None
+    return pd.DataFrame(records)
+
+
+def _normalize_excel_matrix(mat: pd.DataFrame) -> Optional[pd.DataFrame]:
+    """
+    Detecta layouts típicos de PMS (.xls) con títulos/impresión antes de la tabla real.
+    Devuelve un DataFrame tabular o None si no aplica.
+    """
+    if mat is None or mat.empty:
+        return None
+    mat = mat.copy()
+    nscan = min(25, len(mat))
+    for i in range(nscan):
+        row = mat.iloc[i]
+        if len(row) == 0:
+            continue
+        s0 = str(row.iloc[0]).strip().lower() if pd.notna(row.iloc[0]) else ""
+        joined = " ".join(str(row.iloc[j]).lower() for j in range(min(len(row), 20)) if pd.notna(row.iloc[j]))
+
+        if s0 == "canal" and len(row) > 1:
+            h1 = str(row.iloc[1]).strip().lower() if pd.notna(row.iloc[1]) else ""
+            if "llegada" in h1 or h1 == "arrivals":
+                data = mat.iloc[i + 1 :].copy()
+                hdr_cells = [str(x).strip() if pd.notna(x) else f"col_{k}" for k, x in enumerate(row)]
+                data.columns = hdr_cells[: data.shape[1]]
+                data = data.dropna(how="all").reset_index(drop=True)
+                if len(data) > 0:
+                    return data
+
+        if "canal de venta" in s0:
+            rest = row.iloc[1 : min(40, len(row))]
+            if _datelike_ratio(rest) >= 0.5:
+                wide = _wide_dates_metrics_to_long(mat, i)
+                if wide is not None and len(wide) > 0:
+                    return wide
+
+        if "adr usd" in joined and "revenue usd" in joined:
+            tidy = _ocupacion_mes_to_tidy(mat, i)
+            if tidy is not None and len(tidy) > 0:
+                return tidy
+
+    return None
+
+
 def _excel_to_dataframes_openpyxl(raw: bytes, filename: str, read_only: bool = True) -> List[Tuple[str, pd.DataFrame]]:
     """Fallback: leer Excel con openpyxl directo (soporta formatos que pandas ExcelFile a veces rechaza)."""
     from openpyxl import load_workbook
@@ -185,6 +406,11 @@ def _excel_to_dataframes_openpyxl(raw: bytes, filename: str, read_only: bool = T
             ws = wb[sheet_name]
             rows = list(ws.iter_rows(values_only=True))
             if rows:
+                mat = pd.DataFrame(rows)
+                norm = _normalize_excel_matrix(mat)
+                if norm is not None and len(norm) > 0:
+                    result.append((f"{filename}::{sheet_name}", norm))
+                    continue
                 header = [str(c) if c is not None else "" for c in rows[0]]
                 data = rows[1:]
                 df = pd.DataFrame(data, columns=header)
@@ -198,7 +424,45 @@ def _excel_to_dataframes_openpyxl(raw: bytes, filename: str, read_only: bool = T
     return result
 
 
-def parse_file(upload: UploadFile) -> List[Tuple[str, pd.DataFrame]]:
+def _apply_excel_sheet_cap(
+    filename: str, sheets: List[Tuple[str, pd.DataFrame]]
+) -> Tuple[List[Tuple[str, pd.DataFrame]], List[Dict[str, Any]]]:
+    """Acota cuántas hojas de un mismo libro Excel entran al análisis (transparencia operativa)."""
+    cap = EXCEL_MAX_SHEETS_PER_FILE
+    info: List[Dict[str, Any]] = []
+    if cap <= 0 and len(sheets) > 1:
+        info.append(
+            {
+                "kind": "excel_multi_sheet_note",
+                "filename": filename,
+                "sheets_in_file": len(sheets),
+                "message": (
+                    f"«{filename}» tiene {len(sheets)} pestañas; con la configuración actual "
+                    "todas se leyeron y entran en el cruce del análisis."
+                ),
+            }
+        )
+    if cap <= 0 or len(sheets) <= cap:
+        return sheets, info
+    trimmed = sheets[:cap]
+    omitted = len(sheets) - cap
+    notice = {
+        "kind": "excel_sheets_limited",
+        "filename": filename,
+        "sheets_read": cap,
+        "sheets_in_file": len(sheets),
+        "sheets_omitted": omitted,
+        "message": (
+            f"«{filename}» tiene {len(sheets)} pestañas; solo analizamos las primeras {cap} en esta corrida "
+            f"({omitted} omitida(s)). No alteramos tu archivo: acotamos qué hojas entran al modelo. "
+            "Para el resto, exporta otra pestaña como archivo aparte o haz otra lectura."
+        ),
+    }
+    return trimmed, info + [notice]
+
+
+def parse_file_with_notices(upload: UploadFile) -> Tuple[List[Tuple[str, pd.DataFrame]], List[Dict[str, Any]]]:
+    notices: List[Dict[str, Any]] = []
     ext = os.path.splitext(upload.filename or "")[1].lower()
     if ext not in ALLOWED_UPLOAD_EXTENSIONS:
         raise ValueError(f"Formato no permitido. Solo: {', '.join(sorted(ALLOWED_UPLOAD_EXTENSIONS))}")
@@ -230,20 +494,22 @@ def parse_file(upload: UploadFile) -> List[Tuple[str, pd.DataFrame]]:
                         break
                 except Exception:
                     continue
-        return [(upload.filename or "reporte.csv", df)]
+        return [(upload.filename or "reporte.csv", df)], notices
     if ext == ".xls":
         # Excel 97-2003: xlrd a veces marca como "corruptos" archivos válidos de PMS; ignorar esa comprobación
+        _xls_kw = {"engine": "xlrd", "engine_kwargs": {"ignore_workbook_corruption": True}}
         try:
-            excel = pd.ExcelFile(
-                io.BytesIO(raw),
-                engine="xlrd",
-                engine_kwargs={"ignore_workbook_corruption": True},
-            )
+            excel = pd.ExcelFile(io.BytesIO(raw), **_xls_kw)
             result = []
             for sheet in excel.sheet_names:
+                mat = pd.read_excel(io.BytesIO(raw), sheet_name=sheet, header=None, **_xls_kw)
+                norm = _normalize_excel_matrix(mat)
+                if norm is not None and len(norm) > 0:
+                    result.append((f"{upload.filename}::{sheet}", norm))
+                    continue
                 df = excel.parse(sheet)
                 if not _has_date_header(df.columns) and len(df) >= 4:
-                    for header_row in range(1, 6):
+                    for header_row in range(1, 15):
                         try:
                             df2 = excel.parse(sheet, header=header_row)
                             if len(df2.columns) >= 2 and _has_date_header(df2.columns):
@@ -252,7 +518,9 @@ def parse_file(upload: UploadFile) -> List[Tuple[str, pd.DataFrame]]:
                         except Exception:
                             continue
                 result.append((f"{upload.filename}::{sheet}", df))
-            return result
+            result, cap_notes = _apply_excel_sheet_cap(upload.filename or "archivo.xls", result)
+            notices.extend(cap_notes)
+            return result, notices
         except Exception as e:
             raise ValueError(
                 "No pudimos leer este archivo Excel 97-2003 (.xls). "
@@ -264,9 +532,14 @@ def parse_file(upload: UploadFile) -> List[Tuple[str, pd.DataFrame]]:
             excel = pd.ExcelFile(io.BytesIO(raw))
             result = []
             for sheet in excel.sheet_names:
+                mat = pd.read_excel(io.BytesIO(raw), sheet_name=sheet, header=None)
+                norm = _normalize_excel_matrix(mat)
+                if norm is not None and len(norm) > 0:
+                    result.append((f"{upload.filename}::{sheet}", norm))
+                    continue
                 df = excel.parse(sheet)
                 if not _has_date_header(df.columns) and len(df) >= 4:
-                    for header_row in range(1, 6):
+                    for header_row in range(1, 15):
                         try:
                             df2 = excel.parse(sheet, header=header_row)
                             if len(df2.columns) >= 2 and _has_date_header(df2.columns):
@@ -275,14 +548,22 @@ def parse_file(upload: UploadFile) -> List[Tuple[str, pd.DataFrame]]:
                         except Exception:
                             continue
                 result.append((f"{upload.filename}::{sheet}", df))
-            return result
+            result, cap_notes = _apply_excel_sheet_cap(upload.filename or "archivo.xlsx", result)
+            notices.extend(cap_notes)
+            return result, notices
         except Exception as e:
             err = str(e).strip().lower()
             # Si falla por “corruption” o formato raro, intentar con openpyxl en modo read_only (otra ruta de lectura)
             if "corruption" in err or "workbook" in err or "seen[" in err or "bad zip" in err or "invalid" in err:
                 for use_read_only in (True, False):
                     try:
-                        return _excel_to_dataframes_openpyxl(raw, upload.filename or "reporte.xlsx", read_only=use_read_only)
+                        sheets = _excel_to_dataframes_openpyxl(
+                            raw, upload.filename or "reporte.xlsx", read_only=use_read_only
+                        )
+                        capped, cap_notes = _apply_excel_sheet_cap(
+                            upload.filename or "archivo.xlsx", sheets
+                        )
+                        return capped, cap_notes
                     except Exception:
                         continue
                 raise ValueError(
@@ -291,6 +572,11 @@ def parse_file(upload: UploadFile) -> List[Tuple[str, pd.DataFrame]]:
                 ) from e
             raise
     raise ValueError(f"Formato no soportado: {ext}")
+
+
+def parse_file(upload: UploadFile) -> List[Tuple[str, pd.DataFrame]]:
+    sheets, _ = parse_file_with_notices(upload)
+    return sheets
 
 
 def infer_sheet(sheet_name: str, df: pd.DataFrame) -> Dict[str, Any]:
@@ -336,9 +622,15 @@ def infer_sheet(sheet_name: str, df: pd.DataFrame) -> Dict[str, Any]:
     stay_col = next((c for c in date_candidates if any(x in c for x in ["stay", "business_date", "occupancy"])), None) or checkin_col
     booking_col = next((c for c in date_candidates if any(x in c for x in ["booking", "created", "reservation_date"])), None)
 
+    date_col_set = set(date_candidates)
     for col in norm_cols:
+        if col in date_col_set:
+            continue
+        s = work[col]
+        if pd.api.types.is_datetime64_any_dtype(s):
+            continue
         try:
-            converted = pd.to_numeric(work[col], errors="coerce")
+            converted = pd.to_numeric(s, errors="coerce")
             if converted.notna().mean() >= 0.5:
                 work[col] = converted
         except Exception:
@@ -438,7 +730,12 @@ def infer_sheet(sheet_name: str, df: pd.DataFrame) -> Dict[str, Any]:
         max_date_norm = None
 
     days_covered = 0
-    if min_date_norm is not None and max_date_norm is not None:
+    if (
+        min_date_norm is not None
+        and max_date_norm is not None
+        and pd.notna(min_date_norm)
+        and pd.notna(max_date_norm)
+    ):
         try:
             delta = max_date_norm - min_date_norm
             days_covered = int(getattr(delta, "days", delta)) + 1
@@ -460,8 +757,12 @@ def infer_sheet(sheet_name: str, df: pd.DataFrame) -> Dict[str, Any]:
         "metrics": metrics,
         "days_covered": days_covered,
         "date_range": {
-            "start": min_date_norm.isoformat() if min_date_norm is not None else None,
-            "end": max_date_norm.isoformat() if max_date_norm is not None else None,
+            "start": min_date_norm.isoformat()
+            if min_date_norm is not None and not pd.isna(min_date_norm)
+            else None,
+            "end": max_date_norm.isoformat()
+            if max_date_norm is not None and not pd.isna(max_date_norm)
+            else None,
         },
         "sample_columns": norm_cols[:30],
     }
@@ -472,8 +773,10 @@ def summarize_reports(files: List[UploadFile]) -> Dict[str, Any]:
     max_days = 0
     all_starts = []
     all_ends = []
+    upload_notices: List[Dict[str, Any]] = []
     for upload in files:
-        sheets = parse_file(upload)
+        sheets, notices = parse_file_with_notices(upload)
+        upload_notices.extend(notices)
         for sheet_name, df in sheets:
             summary = infer_sheet(sheet_name, df)
             report_summaries.append(summary)
@@ -502,6 +805,7 @@ def summarize_reports(files: List[UploadFile]) -> Dict[str, Any]:
         "max_days_covered": max_days,
         "overall_days_covered": overall_days,
         "report_summaries": report_summaries,
+        "upload_notices": upload_notices,
     }
 
 
@@ -626,7 +930,7 @@ def analyses_count(user_id: int) -> int:
 
 
 def analyses_this_month(user_id: int) -> int:
-    """Análisis creados en el mes actual (UTC) para el usuario."""
+    """Análisis aún presentes en BD creados en el mes actual (UTC). Preferir generations_this_month para cupos."""
     now = datetime.now(timezone.utc)
     start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0).isoformat()[:19]
     with db() as conn:
@@ -635,6 +939,87 @@ def analyses_this_month(user_id: int) -> int:
             (user_id, start_of_month),
         ).fetchone()
         return int(row["c"])
+
+
+def generations_this_month(user_id: int) -> int:
+    """Lecturas completadas en el mes UTC según registro append-only (no baja si se borra el análisis)."""
+    now = datetime.now(timezone.utc)
+    start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0).isoformat()
+    with db() as conn:
+        row = conn.execute(
+            "SELECT COUNT(*) AS c FROM analysis_run_log WHERE user_id = ? AND created_at >= ?",
+            (user_id, start_of_month),
+        ).fetchone()
+        return int(row["c"])
+
+
+def _monthly_generation_limit_for_plan(plan: str) -> int:
+    if plan == "free":
+        return FREE_REPORTS_PER_MONTH
+    if plan == "pro":
+        return PRO_90_REPORTS_PER_MONTH
+    if plan == "pro_plus":
+        return PRO_PLUS_REPORTS_PER_MONTH
+    return FREE_REPORTS_PER_MONTH
+
+
+def reserve_monthly_generation_or_raise(user_id: int, plan: str) -> int:
+    """
+    Reserva atómicamente un cupo mensual antes de llamar al modelo (evita carreras entre peticiones paralelas).
+    Devuelve el id de fila en analysis_run_log (analysis_id NULL hasta guardar). Lanza 402 si el mes está lleno.
+    """
+    lim = _monthly_generation_limit_for_plan(plan)
+    now = datetime.now(timezone.utc)
+    start_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0).isoformat()
+    created = now_iso()
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    try:
+        conn.execute("BEGIN IMMEDIATE")
+        row = conn.execute(
+            "SELECT COUNT(*) AS c FROM analysis_run_log WHERE user_id = ? AND created_at >= ?",
+            (user_id, start_of_month),
+        ).fetchone()
+        if int(row["c"]) >= lim:
+            conn.rollback()
+            if plan == "free":
+                detail = "Ya usaste tu reporte gratuito de este mes. Pásate a Pro para seguir subiendo."
+            elif plan == "pro":
+                detail = (
+                    f"Has alcanzado el límite de lecturas de este mes en Pro ({PRO_90_REPORTS_PER_MONTH}). "
+                    "Renueva el cupo el próximo mes natural (UTC) o sube a Pro+."
+                )
+            else:
+                detail = (
+                    f"Has alcanzado el límite de lecturas de este mes en Pro+ ({PRO_PLUS_REPORTS_PER_MONTH}). "
+                    "El cupo se renueva el próximo mes natural (UTC). Contáctanos si necesitas más capacidad."
+                )
+            raise HTTPException(status_code=402, detail=detail)
+        cur = conn.execute(
+            "INSERT INTO analysis_run_log (user_id, analysis_id, created_at) VALUES (?, NULL, ?)",
+            (user_id, created),
+        )
+        rid = int(cur.lastrowid)
+        conn.commit()
+        return rid
+    except HTTPException:
+        raise
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def release_reserved_generation_row(reserved_log_id: int, user_id: int) -> None:
+    """Libera una reserva si falló el modelo o el guardado antes de completar el análisis."""
+    if not reserved_log_id:
+        return
+    with db() as conn:
+        conn.execute(
+            "DELETE FROM analysis_run_log WHERE id = ? AND user_id = ? AND analysis_id IS NULL",
+            (reserved_log_id, user_id),
+        )
 
 
 def upload_eligibility(user: sqlite3.Row) -> Dict[str, Any]:
@@ -647,9 +1032,9 @@ def upload_eligibility(user: sqlite3.Row) -> Dict[str, Any]:
     contact_email = next(iter(ADMIN_EMAILS), None) if ADMIN_EMAILS else None
 
     if plan == "free":
-        month_count = analyses_this_month(uid)
+        month_gens = generations_this_month(uid)
         total_count = analyses_count(uid)
-        if month_count >= FREE_REPORTS_PER_MONTH:
+        if month_gens >= FREE_REPORTS_PER_MONTH:
             return {
                 "can_upload": False,
                 "limit_reason": "Ya usaste tu reporte gratuito de este mes.",
@@ -668,6 +1053,14 @@ def upload_eligibility(user: sqlite3.Row) -> Dict[str, Any]:
         return {"can_upload": True, "limit_reason": None, "invite_upgrade": False, "invite_contact": False, "contact_email": contact_email}
 
     if plan == "pro":
+        if generations_this_month(uid) >= PRO_90_REPORTS_PER_MONTH:
+            return {
+                "can_upload": False,
+                "limit_reason": f"Has alcanzado el límite de lecturas de este mes en Pro ({PRO_90_REPORTS_PER_MONTH}).",
+                "invite_upgrade": True,
+                "invite_contact": True,
+                "contact_email": contact_email,
+            }
         total_count = analyses_count(uid)
         if total_count >= PRO_90_MAX_ANALYSES:
             return {
@@ -680,6 +1073,14 @@ def upload_eligibility(user: sqlite3.Row) -> Dict[str, Any]:
         return {"can_upload": True, "limit_reason": None, "invite_upgrade": False, "invite_contact": False, "contact_email": contact_email}
 
     if plan == "pro_plus":
+        if generations_this_month(uid) >= PRO_PLUS_REPORTS_PER_MONTH:
+            return {
+                "can_upload": False,
+                "limit_reason": f"Has alcanzado el límite de lecturas de este mes en Pro+ ({PRO_PLUS_REPORTS_PER_MONTH}).",
+                "invite_upgrade": False,
+                "invite_contact": True,
+                "contact_email": contact_email,
+            }
         total_count = analyses_count(uid)
         if total_count >= PRO_PLUS_MAX_ANALYSES:
             return {
@@ -694,41 +1095,90 @@ def upload_eligibility(user: sqlite3.Row) -> Dict[str, Any]:
     return {"can_upload": True, "limit_reason": None, "invite_upgrade": False, "invite_contact": False, "contact_email": contact_email}
 
 
+def _date_span_explanation(summary: Dict[str, Any], max_allowed: int, plan_label: str) -> str:
+    od = int(summary.get("overall_days_covered") or 0)
+    md = int(summary.get("max_days_covered") or 0)
+    peak = max(od, md)
+    return (
+        "No generamos la lectura: el rango de fechas de tus datos supera lo que incluye tu plan. "
+        f"En {plan_label} el tope es de {max_allowed} días por análisis; "
+        f"en esta carga detectamos una ventana total de unos {od} día(s) y hasta {md} día(s) en la fuente más larga "
+        f"(referencia interna: {peak} días). "
+        "Tus archivos no se dañan: dejamos de interpretarlos antes de gastar el análisis. "
+        "Puedes acortar el export en el PMS, partir los archivos en varias corridas o subir de plan."
+    )
+
+
 def enforce_plan(user: sqlite3.Row, summary: Dict[str, Any]):
     uid = user["id"]
     plan = get_effective_plan(user)
 
     if plan == "free":
         if summary["total_files"] > FREE_MAX_FILES_PER_ANALYSIS:
-            raise HTTPException(status_code=402, detail=f"El plan gratis permite hasta {FREE_MAX_FILES_PER_ANALYSIS} archivos por análisis.")
+            raise HTTPException(
+                status_code=402,
+                detail=(
+                    "No generamos la lectura: en plan gratis va un solo archivo por corrida. "
+                    "Quita los demás con ✕ o amplía plan; el sistema no modifica tus exports."
+                ),
+            )
         if summary["overall_days_covered"] > FREE_MAX_DAYS or summary["max_days_covered"] > FREE_MAX_DAYS:
-            raise HTTPException(status_code=402, detail=f"El plan gratis permite interpretar hasta {FREE_MAX_DAYS} días de histórico o futuro por análisis.")
-        if analyses_this_month(uid) >= FREE_REPORTS_PER_MONTH:
-            raise HTTPException(status_code=402, detail="Ya usaste tu reporte gratuito de este mes. Pásate a Pro para seguir subiendo.")
+            raise HTTPException(
+                status_code=402,
+                detail=_date_span_explanation(summary, FREE_MAX_DAYS, "plan gratis"),
+            )
         if analyses_count(uid) >= FREE_MAX_ANALYSES:
             raise HTTPException(status_code=402, detail=f"Ya tienes {FREE_MAX_ANALYSES} análisis guardados (límite del plan gratis). Pásate a Pro para guardar más.")
         return
 
     if plan == "pro":
         if summary["total_files"] > PRO_90_MAX_FILES:
-            raise HTTPException(status_code=402, detail=f"El plan Pro permite hasta {PRO_90_MAX_FILES} archivos por análisis.")
+            raise HTTPException(
+                status_code=402,
+                detail=(
+                    f"No generamos la lectura: el plan Pro admite hasta {PRO_90_MAX_FILES} archivos por corrida. "
+                    "Reduce la carga o súbelo en otra sesión; tus archivos no se alteran."
+                ),
+            )
         if summary["overall_days_covered"] > PRO_90_MAX_DAYS or summary["max_days_covered"] > PRO_90_MAX_DAYS:
-            raise HTTPException(status_code=402, detail=f"El plan Pro permite hasta {PRO_90_MAX_DAYS} días por análisis. Sube a Pro+ para 180 días.")
+            raise HTTPException(
+                status_code=402,
+                detail=_date_span_explanation(summary, PRO_90_MAX_DAYS, "plan Pro")
+                + " Pro+ permite hasta 180 días.",
+            )
         if analyses_count(uid) >= PRO_90_MAX_ANALYSES:
             raise HTTPException(status_code=402, detail="Has llegado al límite de análisis guardados de Pro. Sube a Pro+ o contáctanos.")
         return
 
     if plan == "pro_plus":
         if summary["total_files"] > PRO_180_MAX_FILES:
-            raise HTTPException(status_code=402, detail=f"El plan Pro+ permite hasta {PRO_180_MAX_FILES} archivos por análisis.")
+            raise HTTPException(
+                status_code=402,
+                detail=(
+                    f"No generamos la lectura: Pro+ admite hasta {PRO_180_MAX_FILES} archivos por corrida. "
+                    "Parte la carga en dos envíos si necesitas más fuentes."
+                ),
+            )
         if summary["overall_days_covered"] > PRO_180_MAX_DAYS or summary["max_days_covered"] > PRO_180_MAX_DAYS:
-            raise HTTPException(status_code=402, detail=f"El plan Pro+ permite hasta {PRO_180_MAX_DAYS} días por análisis.")
+            raise HTTPException(
+                status_code=402,
+                detail=_date_span_explanation(summary, PRO_180_MAX_DAYS, "Pro+")
+                + " Contáctanos si necesitas ventanas más largas.",
+            )
         if analyses_count(uid) >= PRO_PLUS_MAX_ANALYSES:
             raise HTTPException(status_code=402, detail="Has llegado al límite de análisis de tu plan. Contáctanos para ampliar tu capacidad.")
         return
 
 
-def save_analysis(user_id: int, title: str, plan: str, summary: Dict[str, Any], analysis: Dict[str, Any], files: List[UploadFile]) -> Tuple[int, str]:
+def save_analysis(
+    user_id: int,
+    title: str,
+    plan: str,
+    summary: Dict[str, Any],
+    analysis: Dict[str, Any],
+    files: List[UploadFile],
+    reserved_run_log_id: Optional[int] = None,
+) -> Tuple[int, str]:
     created_at = now_iso()
     share_token = secrets.token_urlsafe(24)
     with db() as conn:
@@ -764,6 +1214,22 @@ def save_analysis(user_id: int, title: str, plan: str, summary: Dict[str, Any], 
             conn.execute(
                 "INSERT INTO uploaded_files (analysis_id, original_name, stored_path, created_at) VALUES (?, ?, ?, ?)",
                 (analysis_id, upload.filename or safe_name, str(file_path), created_at),
+            )
+        if reserved_run_log_id:
+            cur = conn.execute(
+                """
+                UPDATE analysis_run_log
+                SET analysis_id = ?, created_at = ?
+                WHERE id = ? AND user_id = ? AND analysis_id IS NULL
+                """,
+                (analysis_id, created_at, reserved_run_log_id, user_id),
+            )
+            if cur.rowcount != 1:
+                raise ValueError("No se pudo enlazar la reserva de cupo mensual con el análisis guardado.")
+        else:
+            conn.execute(
+                "INSERT INTO analysis_run_log (user_id, analysis_id, created_at) VALUES (?, ?, ?)",
+                (user_id, analysis_id, created_at),
             )
         return analysis_id, share_token
 

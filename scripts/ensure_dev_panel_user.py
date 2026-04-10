@@ -23,6 +23,7 @@ sys.path.insert(0, str(ROOT))
 os.chdir(ROOT)
 
 from auth_session import password_hash  # noqa: E402
+from config import LEGAL_DOCS_VERSION  # noqa: E402
 from db import db  # noqa: E402
 from time_utils import now_iso  # noqa: E402
 
@@ -56,10 +57,11 @@ def main() -> int:
                 """
                 INSERT INTO users (
                     hotel_name, hotel_size, hotel_category, hotel_location,
-                    contact_name, email, password_hash, plan, created_at, updated_at
-                ) VALUES (?, NULL, NULL, NULL, ?, ?, ?, 'free', ?, ?)
+                    contact_name, email, password_hash, plan, created_at, updated_at,
+                    legal_accepted_at, legal_docs_version
+                ) VALUES (?, NULL, NULL, NULL, ?, ?, ?, 'free', ?, ?, ?, ?)
                 """,
-                ("Hotel demo local", "Usuario panel", email, ph, now, now),
+                ("Hotel demo local", "Usuario panel", email, ph, now, now, now, LEGAL_DOCS_VERSION),
             )
             print(f"Creado usuario id={cur.lastrowid} email={email}")
 

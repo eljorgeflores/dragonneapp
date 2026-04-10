@@ -121,6 +121,11 @@ def init_db():
             conn.execute("ALTER TABLE users ADD COLUMN manual_plan_updated_by INTEGER")
         except sqlite3.OperationalError:
             pass
+        for legal_col in ("legal_accepted_at", "legal_docs_version"):
+            try:
+                conn.execute(f"ALTER TABLE users ADD COLUMN {legal_col} TEXT")
+            except sqlite3.OperationalError:
+                pass
 
         try:
             conn.execute("ALTER TABLE analyses ADD COLUMN share_token TEXT")
@@ -223,3 +228,24 @@ def init_db():
             conn.execute("ALTER TABLE pullso_mvp_leads ADD COLUMN email TEXT")
         except sqlite3.OperationalError:
             pass
+
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS analysis_run_log (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                analysis_id INTEGER UNIQUE,
+                created_at TEXT NOT NULL,
+                FOREIGN KEY(user_id) REFERENCES users(id)
+            );
+            """
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_analysis_run_log_user_created ON analysis_run_log(user_id, created_at)"
+        )
+        conn.execute(
+            """
+            INSERT OR IGNORE INTO analysis_run_log (user_id, analysis_id, created_at)
+            SELECT user_id, id, created_at FROM analyses
+            """
+        )

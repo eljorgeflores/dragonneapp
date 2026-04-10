@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
-{% block title %}Administradores — Admin — DRAGONNÉ{% endblock %}
+{% block title %}Administradores — Admin — Pullso{% endblock %}
 {% block body_class %}page-admin{% endblock %}
 {% block body %}
 <div class="app-shell admin-panel">
   <header class="app-topbar">
     <div class="app-topbar-inner">
-      <a href="/admin" class="brand-link">
-        <img class="brand-logo" src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" />
+      <a href="{{ url_path('/admin') }}" class="brand-link app-brand-link" aria-label="Pullso — Administración">
+        <img class="brand-logo app-pullso-logo" src="{{ url_prefix }}/static/branding/pullso-logo.svg" alt="Pullso" width="120" height="30" decoding="async" />
       </a>
       <div class="app-context muted">Administradores · {{ current_user['email'] }}</div>
       <div class="top-actions">

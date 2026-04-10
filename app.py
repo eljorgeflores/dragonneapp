@@ -13,14 +13,21 @@ from config import (
     BASE_DIR,
     DB_PATH,
     URL_PREFIX,
+    EXCEL_MAX_SHEETS_PER_FILE,
     FREE_MAX_ANALYSES,
     FREE_MAX_DAYS,
     FREE_MAX_FILES_PER_ANALYSIS,
     MONTHLY_PRICE,
     OPENAI_API_KEY,
     PREMIUM_MONTHLY_PRICE,
+    PRO_180_MAX_DAYS,
     PRO_180_MAX_FILES,
+    PRO_90_MAX_ANALYSES,
+    PRO_90_MAX_DAYS,
     PRO_90_MAX_FILES,
+    PRO_90_REPORTS_PER_MONTH,
+    PRO_PLUS_MAX_ANALYSES,
+    PRO_PLUS_REPORTS_PER_MONTH,
     RESEND_API_KEY,
     SECRET_KEY,
     SMTP_ENVELOPE_FROM,
@@ -84,13 +91,47 @@ from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.exception_handlers import http_exception_handler as default_http_exception_handler
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from plan_entitlements import get_effective_plan, get_paid_plan, manual_access_notice_for_account
+from plan_entitlements import _get, get_effective_plan, get_paid_plan, manual_access_notice_for_account
 from plans import max_upload_files_for_plan, plan_label
-from services.analysis_core import upload_eligibility
+from services.analysis_core import MIN_BUSINESS_CONTEXT_LEN, upload_eligibility
 from starlette.middleware.sessions import SessionMiddleware
 from seo_helpers import noindex_page_seo
 from templating import templates
 from time_utils import now_iso
+
+# Campos de contexto hotelero que enriquecen lecturas (excluye correo y plan).
+_PROFILE_ENRICHMENT_FIELDS = (
+    "hotel_name",
+    "contact_name",
+    "hotel_size",
+    "hotel_category",
+    "hotel_stars",
+    "hotel_location",
+    "hotel_location_context",
+    "hotel_pms",
+    "hotel_channel_manager",
+    "hotel_booking_engine",
+    "hotel_tech_other",
+    "hotel_google_business_url",
+    "hotel_expedia_url",
+    "hotel_booking_url",
+)
+
+
+def _profile_enrichment_counts(user) -> tuple[int, int]:
+    total = len(_PROFILE_ENRICHMENT_FIELDS)
+    filled = 0
+    for key in _PROFILE_ENRICHMENT_FIELDS:
+        val = _get(user, key)
+        if key == "hotel_stars":
+            try:
+                if int(val) > 0:
+                    filled += 1
+            except (TypeError, ValueError):
+                pass
+        elif val is not None and str(val).strip():
+            filled += 1
+    return filled, total
 
 
 def _sqlite_startup_audit(log: logging.Logger) -> None:
@@ -263,9 +304,10 @@ def account_page(request: Request):
     user = require_user(request)
     if onboarding_pending(user):
         return RedirectResponse(url_path("/onboarding"), status_code=303)
-    _seo = noindex_page_seo("/app/account", "Mi cuenta — DRAGONNÉ", "Área privada del panel Pullso.")
+    _seo = noindex_page_seo("/app/account", "Mi cuenta — Pullso", "Área privada del panel Pullso.")
     eff = get_effective_plan(user)
     paid = get_paid_plan(user)
+    profile_filled, profile_total = _profile_enrichment_counts(user)
     return templates.TemplateResponse("account.html", {
         "request": request,
         "user": user,
@@ -277,7 +319,17 @@ def account_page(request: Request):
         "manual_access_notice": manual_access_notice_for_account(user),
         "monthly_price": MONTHLY_PRICE,
         "premium_monthly_price": PREMIUM_MONTHLY_PRICE,
+        "pro_90_max_days": PRO_90_MAX_DAYS,
+        "pro_90_max_files": PRO_90_MAX_FILES,
+        "pro_90_max_analyses": PRO_90_MAX_ANALYSES,
+        "pro_90_reports_per_month": PRO_90_REPORTS_PER_MONTH,
+        "pro_180_max_days": PRO_180_MAX_DAYS,
+        "pro_180_max_files": PRO_180_MAX_FILES,
+        "pro_plus_max_analyses": PRO_PLUS_MAX_ANALYSES,
+        "pro_plus_reports_per_month": PRO_PLUS_REPORTS_PER_MONTH,
         "stripe_publishable_key": STRIPE_PUBLISHABLE_KEY,
+        "profile_filled": profile_filled,
+        "profile_total": profile_total,
         **_seo,
     })
 
@@ -317,7 +369,10 @@ def dashboard(request: Request):
         })
     eligibility = upload_eligibility(user)
     eff = get_effective_plan(user)
-    _seo = noindex_page_seo("/app", "Panel Pullso — DRAGONNÉ", "Área autenticada (no indexar).")
+    plan_days_limit = (
+        FREE_MAX_DAYS if eff == "free" else PRO_90_MAX_DAYS if eff == "pro" else PRO_180_MAX_DAYS
+    )
+    _seo = noindex_page_seo("/app", "Nueva lectura — Pullso", "Área autenticada (no indexar).")
     return templates.TemplateResponse("app.html", {
         "request": request,
         "user": user,
@@ -326,9 +381,13 @@ def dashboard(request: Request):
         "analyses": formatted,
         "plan_label": plan_label(eff),
         "max_files_per_analysis": max_upload_files_for_plan(eff),
+        "excel_max_sheets_per_file": EXCEL_MAX_SHEETS_PER_FILE,
+        "plan_days_limit": plan_days_limit,
         "pro_max_files": PRO_90_MAX_FILES,
         "pro_plus_max_files": PRO_180_MAX_FILES,
         "free_max_days": FREE_MAX_DAYS,
+        "pro_90_max_days": PRO_90_MAX_DAYS,
+        "pro_180_max_days": PRO_180_MAX_DAYS,
         "free_max_files": FREE_MAX_FILES_PER_ANALYSIS,
         "free_max_analyses": FREE_MAX_ANALYSES,
         "monthly_price": MONTHLY_PRICE,
@@ -341,6 +400,7 @@ def dashboard(request: Request):
         "invite_contact": eligibility["invite_contact"],
         "contact_email": eligibility["contact_email"],
         "smtp_configured": bool(SMTP_HOST and SMTP_USER and SMTP_PASSWORD),
+        "min_business_context_len": MIN_BUSINESS_CONTEXT_LEN,
         **_seo,
     })
 
@@ -351,12 +411,14 @@ from routes.api import router as api_v1_router
 from routes.auth import router as auth_router
 from routes.billing import router as billing_router
 from routes.consulting import router as consulting_router
+from routes.legal import router as legal_router
 from routes.marketing import router as marketing_router
 from routes.revenue_report_preview import router as revenue_report_preview_router
 
 app.include_router(api_v1_router)
 app.include_router(billing_router)
 app.include_router(marketing_router)
+app.include_router(legal_router)
 app.include_router(auth_router)
 app.include_router(consulting_router)
 app.include_router(admin_router)

@@ -26,6 +26,7 @@ from auth_session import (
 )
 import config
 from config import (
+    LEGAL_DOCS_VERSION,
     MAGIC_LINK_TTL_MINUTES,
     PASSWORD_RESET_TOKEN_TTL_HOURS,
     magic_link_consume_public_path,
@@ -45,11 +46,15 @@ _log = logging.getLogger(__name__)
 
 router = APIRouter(tags=["auth"])
 
-_LOGIN_SEO = noindex_page_seo("/login", "Entrar — DRAGONNÉ", "Inicio de sesión al panel Pullso (no indexar).")
-_SIGNUP_SEO = noindex_page_seo("/signup", "Crear cuenta — DRAGONNÉ", "Registro de usuario (no indexar).")
-_ONBOARDING_SEO = noindex_page_seo("/onboarding", "Completar perfil — DRAGONNÉ", "Formulario post-registro (no indexar).")
-_FORGOT_SEO = noindex_page_seo("/forgot-password", "Recuperar contraseña — DRAGONNÉ", "Recuperación de acceso (no indexar).")
-_RESET_SEO = noindex_page_seo("/reset-password", "Nueva contraseña — DRAGONNÉ", "Restablecer contraseña (no indexar).")
+_LOGIN_SEO = noindex_page_seo("/login", "Entrar — Pullso", "Inicio de sesión al panel Pullso (no indexar).")
+_SIGNUP_SEO = noindex_page_seo("/signup", "Crear cuenta — Pullso", "Registro de usuario (no indexar).")
+_ONBOARDING_SEO = noindex_page_seo("/onboarding", "Completar perfil — Pullso", "Formulario post-registro (no indexar).")
+
+
+def _signup_template_ctx(request: Request, *, error: str | None = None) -> dict:
+    return {"request": request, "error": error, "legal_docs_version": LEGAL_DOCS_VERSION, **_SIGNUP_SEO}
+_FORGOT_SEO = noindex_page_seo("/forgot-password", "Recuperar contraseña — Pullso", "Recuperación de acceso (no indexar).")
+_RESET_SEO = noindex_page_seo("/reset-password", "Nueva contraseña — Pullso", "Restablecer contraseña (no indexar).")
 
 # Coincide correos guardados con espacios o mayúsculas heredadas
 _SQL_USER_BY_EMAIL_NORM = "SELECT * FROM users WHERE LOWER(TRIM(email)) = ?"
@@ -99,7 +104,7 @@ def _login_template_ctx(
 def signup_page(request: Request):
     if get_current_user(request):
         return RedirectResponse(url_path("/app"), status_code=303)
-    return templates.TemplateResponse("signup.html", {"request": request, "error": None, **_SIGNUP_SEO})
+    return templates.TemplateResponse("signup.html", _signup_template_ctx(request))
 
 
 @router.post("/signup")
@@ -108,23 +113,40 @@ def signup(
     email: str = Form(...),
     password: str = Form(...),
     password_confirm: str = Form(""),
+    accept_legal: str = Form(""),
 ):
     email = email.strip().lower()
     if len(password) < 8:
         return templates.TemplateResponse(
-            "signup.html", {"request": request, "error": "La contraseña debe tener al menos 8 caracteres.", **_SIGNUP_SEO}, status_code=400
+            "signup.html",
+            _signup_template_ctx(request, error="La contraseña debe tener al menos 8 caracteres."),
+            status_code=400,
         )
     if password != password_confirm:
         return templates.TemplateResponse(
-            "signup.html", {"request": request, "error": "Las contraseñas no coinciden.", **_SIGNUP_SEO}, status_code=400
+            "signup.html",
+            _signup_template_ctx(request, error="Las contraseñas no coinciden."),
+            status_code=400,
         )
+    if accept_legal != "1":
+        return templates.TemplateResponse(
+            "signup.html",
+            _signup_template_ctx(
+                request,
+                error="Debes aceptar los Términos y condiciones y la Política de privacidad para crear una cuenta.",
+            ),
+            status_code=400,
+        )
+    accepted_at = now_iso()
     with db() as conn:
         exists = conn.execute(
             "SELECT id FROM users WHERE LOWER(TRIM(email)) = ?", (email,)
         ).fetchone()
         if exists:
             return templates.TemplateResponse(
-                "signup.html", {"request": request, "error": "Ese correo ya está registrado.", **_SIGNUP_SEO}, status_code=400
+                "signup.html",
+                _signup_template_ctx(request, error="Ese correo ya está registrado."),
+                status_code=400,
             )
         cur = conn.execute(
             """
@@ -138,10 +160,12 @@ def signup(
                 password_hash,
                 plan,
                 created_at,
-                updated_at
-            ) VALUES ('', NULL, NULL, NULL, '', ?, ?, 'free', ?, ?)
+                updated_at,
+                legal_accepted_at,
+                legal_docs_version
+            ) VALUES ('', NULL, NULL, NULL, '', ?, ?, 'free', ?, ?, ?, ?)
             """,
-            (email, password_hash(password), now_iso(), now_iso()),
+            (email, password_hash(password), accepted_at, accepted_at, accepted_at, LEGAL_DOCS_VERSION),
         )
         request.session["user_id"] = cur.lastrowid
     return RedirectResponse(url_path("/onboarding"), status_code=303)

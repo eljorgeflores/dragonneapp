@@ -23,6 +23,7 @@ def run_flow():
         "hotel_location": "Querétaro, México",
     }
     signup_data["password_confirm"] = signup_data["password"]
+    signup_data["accept_legal"] = "1"
     r = client.post("/signup", data=signup_data)
     assert r.status_code in (200, 303, 307), f"Error en signup: {r.status_code} {r.text}"
 

@@ -48,7 +48,7 @@ def _logo_path_dark_bg() -> str | None:
     p = BASE_DIR / "static" / "branding" / "revenue-report" / "logo-for-dark-bg.png"
     if p.is_file():
         return str(p)
-    p2 = BASE_DIR / "static" / "branding" / "dragonne-wordmark.png"
+    p2 = BASE_DIR / "static" / "branding" / "pullso-logo.png"
     return str(p2) if p2.is_file() else None
 
 
@@ -56,7 +56,7 @@ def _logo_path_light() -> str | None:
     lp = BASE_DIR / "static" / "branding" / "revenue-report" / "logo-for-light-bg.png"
     if lp.is_file():
         return str(lp)
-    p2 = BASE_DIR / "static" / "branding" / "dragonne-wordmark.png"
+    p2 = BASE_DIR / "static" / "branding" / "pullso-logo.png"
     return str(p2) if p2.is_file() else None
 
 
@@ -152,11 +152,11 @@ def build_revenue_pdf_bytes(report: Dict[str, Any]) -> bytes:
             except Exception:
                 canvas.setFillColor(ACCENT)
                 canvas.setFont("Helvetica-Bold", 22)
-                canvas.drawString(lx, PAGE_H - 32 * mm, "DRAGONNÉ")
+                canvas.drawString(lx, PAGE_H - 32 * mm, "Pullso")
         else:
             canvas.setFillColor(ACCENT)
             canvas.setFont("Helvetica-Bold", 22)
-            canvas.drawString(lx, PAGE_H - 32 * mm, "DRAGONNÉ")
+            canvas.drawString(lx, PAGE_H - 32 * mm, "Pullso")
 
         canvas.setFillColor(colors.HexColor("#8a8580"))
         canvas.setFont("Helvetica-Bold", 7)
@@ -199,7 +199,7 @@ def build_revenue_pdf_bytes(report: Dict[str, Any]) -> bytes:
         canvas.drawRightString(PAGE_W - MARGIN, y_rail - 22, "ELABORACIÓN")
         canvas.setFont("Helvetica", 9)
         canvas.setFillColor(colors.HexColor("#d6d2cc"))
-        canvas.drawRightString(PAGE_W - MARGIN, y_rail - 34, (cov.get("prepared_by") or "Dragonné")[:28])
+        canvas.drawRightString(PAGE_W - MARGIN, y_rail - 34, (cov.get("prepared_by") or "Pullso")[:28])
 
         canvas.restoreState()
 
@@ -213,11 +213,11 @@ def build_revenue_pdf_bytes(report: Dict[str, Any]) -> bytes:
             except Exception:
                 canvas.setFillColor(ACCENT)
                 canvas.setFont("Helvetica-Bold", 10)
-                canvas.drawString(MARGIN, y_top - 10, "DRAGONNÉ")
+                canvas.drawString(MARGIN, y_top - 10, "Pullso")
         else:
             canvas.setFillColor(ACCENT)
             canvas.setFont("Helvetica-Bold", 10)
-            canvas.drawString(MARGIN, y_top - 10, "DRAGONNÉ")
+            canvas.drawString(MARGIN, y_top - 10, "Pullso")
         canvas.setStrokeColor(RULE_HAIR)
         canvas.setLineWidth(0.5)
         canvas.line(MARGIN, y_top - 18, PAGE_W - MARGIN, y_top - 18)
@@ -228,7 +228,7 @@ def build_revenue_pdf_bytes(report: Dict[str, Any]) -> bytes:
         canvas.drawRightString(PAGE_W - MARGIN, y_top - 12, str(cov.get("report_date") or ""))
         canvas.setFont("Helvetica", 7.5)
         canvas.setFillColor(MUTED)
-        canvas.drawString(MARGIN, MARGIN - 6, f"Dragonné · {cov.get('hotel_name', '')}")
+        canvas.drawString(MARGIN, MARGIN - 6, f"Pullso · {cov.get('hotel_name', '')}")
         canvas.drawRightString(PAGE_W - MARGIN, MARGIN - 6, f"Pág. {canvas.getPageNumber()}")
         canvas.restoreState()
 

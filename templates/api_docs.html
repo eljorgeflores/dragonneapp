@@ -3,7 +3,7 @@
 <div class="marketing-shell" style="max-width: 720px; margin: 0 auto; padding: 48px 24px;">
   <h1 style="font-size: 1.75rem; font-weight: 700; margin: 0 0 12px;">Documentación API</h1>
   <p class="muted" style="margin: 0 0 24px; line-height: 1.6;">
-    La API de DRAGONNÉ te permite ejecutar análisis de reportes, listar resultados y descargar PDFs de forma programática.
+    La API de Pullso te permite ejecutar análisis de reportes, listar resultados y descargar PDFs de forma programática.
   </p>
   <p style="margin: 0 0 24px; line-height: 1.6;">
     Autenticación por <strong>API key</strong>: envía el header <code style="background: rgba(0,0,0,.06); padding: 2px 8px; border-radius: 4px;">X-API-Key: tu_key</code> o <code style="background: rgba(0,0,0,.06); padding: 2px 8px; border-radius: 4px;">Authorization: Bearer tu_key</code> en cada petición.
@@ -19,5 +19,6 @@
   <p class="muted" style="margin: 28px 0 0; font-size: 0.875rem;">
     El esquema OpenAPI está disponible en <a href="{{ url_path('/openapi.json') }}">/openapi.json</a>.
   </p>
+  {% include 'partials/legal_footer_links.html' %}
 </div>
 {% endblock %}

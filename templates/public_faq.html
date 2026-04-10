@@ -30,7 +30,16 @@
         </p>
       </div>
     </section>
+    <section style="margin-bottom: 1.75rem;" itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
+      <h2 style="font-size: 1.15rem; margin: 0 0 0.5rem;" itemprop="name">¿Dónde están los términos legales?</h2>
+      <div itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+        <p itemprop="text" style="margin: 0; line-height: 1.65;">
+          Los <a href="{{ url_path('/terminos') }}">Términos y condiciones</a> y la <a href="{{ url_path('/privacidad') }}">Política de privacidad</a> se aceptan al crear cuenta y están siempre accesibles desde el pie de las páginas de la app.
+        </p>
+      </div>
+    </section>
     <p style="margin-top: 2rem;"><a href="{{ url_path('/consultoria') }}">ES</a> · <a href="{{ url_path('/consulting') }}">EN</a></p>
+    {% include 'partials/legal_footer_links.html' %}
   </article>
 </main>
 {% endblock %}

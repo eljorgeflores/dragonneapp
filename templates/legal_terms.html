@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block title %}Términos y condiciones — Pullso{% endblock %}
+{% block body_class %}page-legal{% endblock %}
+{% block body %}
+<main class="legal-doc" id="top">
+  <p class="legal-doc-back"><a href="{{ url_path('/pullso') }}">← Pullso</a></p>
+  <h1>Términos y condiciones de uso</h1>
+  <p class="legal-updated">Versión {{ legal_docs_version }} · Vigente a partir del 10 de abril de 2026 · Producto: <strong>Pullso</strong> (software de análisis de reportes hoteleros), operado en el marco de <strong>Dragonné</strong>.</p>
+
+  <h2>1. Identificación y aceptación</h2>
+  <p>El acceso y uso de Pullso (en adelante, el “<strong>Servicio</strong>”) implica que usted (en adelante, el “<strong>Usuario</strong>” o la “<strong>Cuenta</strong>”) ha leído y acepta estos Términos y condiciones. Si no está de acuerdo, no debe registrarse ni utilizar el Servicio.</p>
+  <p>Al crear una cuenta, el Usuario declara que la información proporcionada es veraz y que tiene capacidad legal para obligarse. La aceptación queda registrada en nuestros sistemas junto con la versión de documentos legales vigente en ese momento.</p>
+  <p>Estos Términos se complementan con la <a href="{{ privacy_url }}">Política de privacidad</a>, que forma parte integrante del acuerdo.</p>
+
+  <h2>2. Descripción del Servicio</h2>
+  <p>Pullso permite cargar archivos de reportes hoteleros (por ejemplo, exportaciones en formatos admitidos desde PMS, channel manager u otras fuentes), procesarlos y obtener una lectura comercial automatizada (texto, métricas y recomendaciones orientativas). El Servicio puede incluir límites según el plan contratado (por ejemplo: número de archivos por corrida, rango de fechas, número de lecturas guardadas y cupos mensuales de generación).</p>
+  <p>El resultado es de carácter <strong>informativo y de apoyo a la decisión</strong>. No sustituye asesoría profesional, auditoría, contabilidad, cumplimiento legal ni decisiones operativas o de precios del hotel. El Usuario es responsable de verificar la información y de cómo utiliza las conclusiones.</p>
+
+  <h2>3. Registro, cuenta y seguridad</h2>
+  <ul>
+    <li>Debe mantener la confidencialidad de su contraseña y notificar de inmediato cualquier uso no autorizado.</li>
+    <li>No está permitido compartir credenciales con terceros para eludir límites de plan o cupos.</li>
+    <li>Podemos exigir verificación adicional o actualización de datos cuando sea razonable para seguridad, facturación o cumplimiento.</li>
+  </ul>
+
+  <h2>4. Uso aceptable y conductas prohibidas</h2>
+  <p>El Usuario se compromete a utilizar el Servicio de buena fe y conforme a la ley aplicable. Queda <strong>expresamente prohibido</strong>, sin limitarse a:</p>
+  <ul>
+    <li><strong>Eludir o intentar eludir</strong> límites técnicos o comerciales (incluidos cupos mensuales, límites de archivos o de análisis guardados), por ejemplo mediante borrado sistemático de registros, creación de cuentas múltiples coordinadas, automatización abusiva de peticiones o cualquier técnica equivalente.</li>
+    <li>Usar el Servicio para procesar datos que no esté legitimado a tratar o que violen derechos de terceros.</li>
+    <li>Introducir malware, realizar ataques (denegación de servicio, fuzzing agresivo, etc.) o vulnerar la integridad de sistemas, APIs o cuentas ajenas.</li>
+    <li>Revender, redistribuir o exponer el Servicio o sus resultados de forma que compita con el modelo comercial de Pullso sin autorización escrita.</li>
+    <li>Utilizar el Servicio de manera que consuma recursos de forma desproporcionada o que perjudique a otros usuarios o a la operación de la plataforma.</li>
+  </ul>
+  <p>Los límites de uso (incluidos los cupos de generación de lecturas y el registro persistente de uso) forman parte del Servicio y están diseñados para un uso razonable. Cualquier intento de <strong>manipularlos</strong> puede considerarse incumplimiento grave de estos Términos.</p>
+
+  <h2>5. Suspensión, cancelación de cuenta y terminación por mal uso</h2>
+  <p>Dragonné / Pullso se reserva el derecho de, sin perjuicio de otras acciones legales o contractuales:</p>
+  <ul>
+    <li><strong>Suspender temporalmente</strong> el acceso a la Cuenta o a funciones del Servicio cuando existan indicios razonables de incumplimiento de estos Términos, de fraude, de abuso de la plataforma o de riesgo para la seguridad.</li>
+    <li><strong>Cancelar o dar de baja la Cuenta de forma definitiva</strong> si se confirma mal uso, fraude, elusión de límites, uso que genere costes o riesgos desproporcionados (incluido el gasto indebido de recursos de procesamiento o modelos de IA), o incumplimiento reiterado.</li>
+    <li>En casos graves, <strong>no se reembolsarán</strong> importes ya devengados cuando la terminación sea imputable al Usuario por mal uso, salvo que la ley aplicable disponga lo contrario.</li>
+  </ul>
+  <p>Podremos notificar la medida al correo asociado a la Cuenta cuando sea posible, sin perjuicio de que en situaciones urgentes (seguridad, fraude) actuemos de inmediato.</p>
+
+  <h2>6. Planes, pagos y facturación</h2>
+  <p>Los planes gratuitos y de pago, precios y condiciones se informan en el sitio o en la aplicación. Los pagos recurrentes pueden gestionarse a través de un proveedor de pagos externo (por ejemplo, Stripe). El Usuario autoriza el cargo conforme al método de pago indicado.</p>
+  <p>La cancelación de una suscripción de pago se rige por lo indicado en el portal de facturación y por las políticas del proveedor de pagos, sin perjuicio de lo previsto en estos Términos respecto a mal uso.</p>
+
+  <h2>7. Propiedad intelectual y licencia de uso</h2>
+  <p>El software, diseño, marcas y contenidos propios de Pullso / Dragonné están protegidos. No se concede más licencia que la necesaria para usar el Servicio conforme a estos Términos.</p>
+  <p>Los archivos y datos que el Usuario carga siguen siendo de su titularidad o responsabilidad; el Usuario otorga una licencia limitada para procesarlos con el fin de prestar el Servicio, según se detalla en la <a href="{{ privacy_url }}">Política de privacidad</a>.</p>
+
+  <h2>8. Disponibilidad y cambios</h2>
+  <p>El Servicio se ofrece según disponibilidad. Podemos modificar funcionalidades, límites o precios con aviso razonable cuando sea posible. Los cambios sustanciales en estos Términos se publicarán actualizando la versión y la fecha de vigencia; el uso continuado tras la notificación puede implicar aceptación, salvo disposición legal en contrario.</p>
+
+  <h2>9. Limitación de responsabilidad</h2>
+  <p>En la medida permitida por la ley aplicable, el Servicio se proporciona “tal cual” y “según disponibilidad”. No garantizamos resultados específicos de ingresos, ocupación ni decisiones comerciales. No seremos responsables por daños indirectos, lucro cesante o pérdida de datos salvo en casos de dolo o culpa grave según la ley.</p>
+
+  <h2>10. Ley aplicable y jurisdicción</h2>
+  <p>Salvo norma imperativa en contrario, las controversias se someterán a las leyes aplicables en los Estados Unidos Mexicanos y a los tribunales competentes de la Ciudad de México, renunciando a cualquier otro fuero que pudiera corresponder.</p>
+
+  <h2>11. Contacto</h2>
+  <p>Para consultas sobre estos Términos puede escribir al correo de soporte o contacto publicado en el sitio web o en la aplicación.</p>
+
+  <p class="legal-footer-links"><a href="{{ privacy_url }}">Política de privacidad</a> · <a href="{{ url_path('/signup') }}">Crear cuenta</a></p>
+</main>
+{% endblock %}

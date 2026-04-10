@@ -1,10 +1,10 @@
 {% extends 'base.html' %}
 {% block body %}
 {% set is_local_dev = app_url and ('127.0.0.1' in app_url or 'localhost' in app_url) %}
-<div class="auth-shell">
+<div class="auth-shell auth-shell--stacked">
   <div class="auth-card light-card narrow">
     <div class="brand brand-center">
-      <a href="{{ url_path('/') }}" class="logo-link" aria-label="Volver al inicio"><img class="brand-logo" src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" /></a>
+      <a href="{{ url_path('/') }}" class="logo-link" aria-label="Pullso — Inicio"><img class="brand-logo auth-pullso-logo" src="{{ url_prefix }}/static/branding/pullso-logo.svg" alt="Pullso" width="120" height="30" decoding="async" /></a>
     </div>
     <h1>Bienvenido de vuelta</h1>
     <p class="muted center">Entra con un enlace en tu correo o con contraseña.</p>
@@ -56,6 +56,7 @@
 
     <p class="muted center">¿No tienes cuenta? <a href="{{ url_prefix }}/signup">Créala aquí</a></p>
   </div>
+  {% include 'partials/legal_footer_links.html' %}
 </div>
 <script>
 (function () {

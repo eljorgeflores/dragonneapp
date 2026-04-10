@@ -25,6 +25,7 @@ const fileSelectionSummary = document.getElementById('fileSelectionSummary');
 const fileLimitHint = document.getElementById('fileLimitHint');
 const dropzone = document.getElementById('dropzone');
 const form = document.getElementById('analyzeForm');
+const businessContextInput = document.getElementById('business_context');
 const resultsCard = document.getElementById('resultsCard');
 const resultsLayout = document.getElementById('resultsLayout');
 const resultsLoading = document.getElementById('resultsLoading');
@@ -36,6 +37,7 @@ const tableroRight = document.getElementById('tableroRight');
 const paywallEl = document.getElementById('paywall');
 const planBadge = document.getElementById('planBadge');
 const resultMeta = document.getElementById('resultMeta');
+const uploadNoticesPanel = document.getElementById('uploadNoticesPanel');
 const analyzeFormStatus = document.getElementById('analyzeFormStatus');
 const resultHero = document.getElementById('resultHero');
 const downloadPdfBtn = document.getElementById('downloadPdfBtn');
@@ -335,6 +337,21 @@ function renderSummary(summary, plan) {
     const md = summary.max_days_covered || 0;
     resultMeta.textContent = `Cruce de ${summary.reports_detected} fuente(s) en ${summary.total_files} archivo(s). Ventana total aproximada: ${od} día(s); la fuente individual más larga cubre hasta ${md} día(s).`;
   }
+  if (uploadNoticesPanel) {
+    const notes = Array.isArray(summary.upload_notices) ? summary.upload_notices : [];
+    if (notes.length) {
+      uploadNoticesPanel.classList.remove('hidden');
+      uploadNoticesPanel.innerHTML = notes
+        .map(n => {
+          const msg = (n && n.message) || '';
+          return msg ? `<div class="alert info small">${htmlEscape(msg)}</div>` : '';
+        })
+        .join('');
+    } else {
+      uploadNoticesPanel.classList.add('hidden');
+      uploadNoticesPanel.innerHTML = '';
+    }
+  }
   if (planBadge) {
     planBadge.textContent = plan === 'pro_plus' ? 'Pro+' : plan === 'pro' ? 'PRO' : 'GRATIS';
   }
@@ -565,6 +582,18 @@ if (form) {
       showFileHint('Añade archivos desde «Elegir archivos» o arrastrándolos a la zona de carga.');
       return;
     }
+    const ctxMinRaw = businessContextInput && businessContextInput.dataset && businessContextInput.dataset.minContext;
+    const ctxMin = ctxMinRaw != null && ctxMinRaw !== '' ? Number.parseInt(String(ctxMinRaw), 10) : 15;
+    const ctxMinSafe = Number.isFinite(ctxMin) && ctxMin > 0 ? ctxMin : 15;
+    const ctxVal = businessContextInput && businessContextInput.value ? businessContextInput.value.trim() : '';
+    if (ctxVal.length < ctxMinSafe) {
+      if (analyzeFormStatus) {
+        analyzeFormStatus.textContent = `El contexto es obligatorio: indica qué quieres entender o priorizar (mínimo ${ctxMinSafe} caracteres).`;
+        analyzeFormStatus.classList.remove('hidden');
+      }
+      businessContextInput?.focus();
+      return;
+    }
     if (analyzeFormStatus) {
       analyzeFormStatus.textContent = '';
       analyzeFormStatus.classList.add('hidden');
@@ -584,6 +613,10 @@ if (form) {
     if (tableroCenter) tableroCenter.innerHTML = '';
     if (tableroRight) tableroRight.innerHTML = '';
     if (paywallEl) paywallEl.classList.add('hidden');
+    if (uploadNoticesPanel) {
+      uploadNoticesPanel.classList.add('hidden');
+      uploadNoticesPanel.innerHTML = '';
+    }
     try {
       const res = await fetch(appUrlPath('/analyze'), { method: 'POST', body: new FormData(form) });
       let data = {};
@@ -609,6 +642,16 @@ if (form) {
         const errLower = (data.error || '').toLowerCase();
         if (res.status === 402 && (errLower.includes('archivo') || errLower.includes('archivos'))) {
           errBody += `<p class="upload-error-tip muted small">En <strong>plan gratis</strong> va <strong>un solo archivo</strong> por corrida. Deja solo el export que quieras analizar (✕ junto al nombre) y vuelve a enviar.</p>`;
+        }
+        if (
+          res.status === 402 &&
+          (errLower.includes('rango de fechas') ||
+            errLower.includes('ventana total') ||
+            errLower.includes('días por análisis') ||
+            errLower.includes('dias por analisis'))
+        ) {
+          errBody +=
+            '<p class="upload-error-tip muted small">Tu export supera el máximo de días que permite tu plan en <strong>una sola lectura</strong>. Acorta fechas en el PMS, quita un archivo de la mezcla o haz dos envíos; nada se corrompe en tu equipo.</p>';
         }
         if (tableroCenter) tableroCenter.innerHTML = `<div class="alert error">${errBody}</div>`;
         resultsCard?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -780,9 +823,9 @@ if (emailShareBtn) {
       return;
     }
     currentShareUrl = url;
-    const subject = encodeURIComponent('DRAGONNÉ — lectura comercial (enlace de solo lectura)');
+    const subject = encodeURIComponent('Pullso — lectura comercial (enlace de solo lectura)');
     const body = encodeURIComponent(
-      `Te comparto la lectura generada con DRAGONNÉ:\n\n${url}\n\nQuien tenga el enlace puede ver el tablero sin iniciar sesión.`
+      `Te comparto la lectura generada con Pullso:\n\n${url}\n\nQuien tenga el enlace puede ver el tablero sin iniciar sesión.`
     );
     window.location.href = `mailto:?subject=${subject}&body=${body}`;
   });
@@ -792,7 +835,7 @@ if (serverEmailShareBtn) {
   serverEmailShareBtn.addEventListener('click', async () => {
     if (!currentAnalysisId) return;
     shareFeedback?.classList.add('hidden');
-    const addr = window.prompt('Correo del destinatario (DRAGONNÉ enviará el enlace público):');
+    const addr = window.prompt('Correo del destinatario (Pullso enviará el enlace público):');
     if (!addr || !addr.trim()) return;
     const fd = new FormData();
     fd.append('to_email', addr.trim());

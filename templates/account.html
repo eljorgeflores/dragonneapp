@@ -1,14 +1,14 @@
 {% extends 'base.html' %}
-{% block title %}Mi cuenta — DRAGONNÉ{% endblock %}
-{% block body_class %}page-app{% endblock %}
+{% block title %}Mi cuenta | Pullso{% endblock %}
+{% block body_class %}page-app page-app-account{% endblock %}
 {% block body %}
 {% set _user_label = user.contact_name or user.email or 'Usuario' %}
 {% set _user_initial = (_user_label[0] if _user_label else '?')|upper %}
 <div class="app-shell">
   <header class="app-topbar">
     <div class="app-topbar-inner">
-      <a href="{{ url_path('/app') }}" class="brand-link app-brand-link" aria-label="DRAGONNÉ — Panel">
-        <img class="brand-logo" src="{{ url_prefix }}/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" />
+      <a href="{{ url_path('/app') }}" class="brand-link app-brand-link" aria-label="Pullso — Nueva lectura">
+        <img class="brand-logo app-pullso-logo" src="{{ url_prefix }}/static/branding/pullso-logo.svg" alt="Pullso" width="120" height="30" decoding="async" />
       </a>
       <div class="app-context">
         <div class="app-context-track muted">
@@ -25,7 +25,7 @@
           <svg class="app-user-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </a>
         <div class="top-actions">
-          <a href="{{ url_path('/app') }}" class="btn btn-secondary btn-sm btn-ghost-app">Panel</a>
+          <a href="{{ url_path('/app') }}" class="btn btn-secondary btn-sm btn-ghost-app">Inicio</a>
           {% if is_admin %}<a href="{{ url_path('/admin') }}" class="btn btn-secondary btn-sm btn-ghost-app">Admin</a>{% endif %}
           <form method="post" action="{{ url_path('/logout') }}" class="logout-form"><button class="btn btn-secondary btn-sm btn-ghost-app" type="submit">Salir</button></form>
         </div>
@@ -33,56 +33,102 @@
     </div>
   </header>
 
-  <div class="app-content">
-    <section class="dashboard-welcome account-page-intro">
-      <h1 class="dashboard-page-title">Mi cuenta</h1>
-      <p class="dashboard-page-desc muted">Datos de tu perfil, edición y suscripción.</p>
-    </section>
-
+  <div class="app-content account-page">
     {% if manual_access_notice %}
-    <p class="account-notice muted small" role="status">{{ manual_access_notice.body }} {{ manual_access_notice.detail }}</p>
+    <p class="account-notice account-page-alert muted small" role="status">{{ manual_access_notice.body }} {{ manual_access_notice.detail }}</p>
     {% endif %}
 
-    <section class="account-section light-card account-section--profile">
-      <h2 class="account-section-title">Tu perfil</h2>
-      <dl class="account-dl">
-        <dt>Hotel</dt>
-        <dd>{{ user.hotel_name or '—' }}</dd>
-        <dt>Contacto</dt>
-        <dd>{{ user.contact_name or '—' }}</dd>
-        <dt>Correo</dt>
-        <dd>{{ user.email }}</dd>
-        <dt>Tamaño</dt>
-        <dd>{{ user.hotel_size or '—' }}</dd>
-        <dt>Categoría</dt>
-        <dd>{{ user.hotel_category or '—' }}</dd>
-        <dt>Estrellas</dt>
-        <dd>{% if user.hotel_stars %}{{ user.hotel_stars }} estrella(s){% else %}—{% endif %}</dd>
-        <dt>Ubicación</dt>
-        <dd>{{ user.hotel_location or '—' }}</dd>
-        <dt>Ubicación en el destino</dt>
-        <dd>{{ user.hotel_location_context or '—' }}</dd>
-        <dt>PMS</dt>
-        <dd>{{ user.hotel_pms or '—' }}</dd>
-        <dt>Channel manager</dt>
-        <dd>{{ user.hotel_channel_manager or '—' }}</dd>
-        <dt>Booking engine</dt>
-        <dd>{{ user.hotel_booking_engine or '—' }}</dd>
-        <dt>Otras tecnologías</dt>
-        <dd>{{ user.hotel_tech_other or '—' }}</dd>
-        <dt>Google My Business</dt>
-        <dd>{% if user.hotel_google_business_url %}<a href="{{ user.hotel_google_business_url }}" target="_blank" rel="noopener">Ver perfil</a>{% else %}—{% endif %}</dd>
-        <dt>Expedia</dt>
-        <dd>{% if user.hotel_expedia_url %}<a href="{{ user.hotel_expedia_url }}" target="_blank" rel="noopener">Ver listado</a>{% else %}—{% endif %}</dd>
-        <dt>Booking.com</dt>
-        <dd>{% if user.hotel_booking_url %}<a href="{{ user.hotel_booking_url }}" target="_blank" rel="noopener">Ver listado</a>{% else %}—{% endif %}</dd>
-        <dt>Plan actual</dt>
-        <dd><span class="pill {% if effective_plan == 'pro' %}pill-pro{% endif %}{% if effective_plan == 'pro_plus' %} pill-pro-plus{% endif %}">Plan {{ plan_label }}</span></dd>
-      </dl>
-      <p><a href="{{ url_path('/onboarding') }}" class="btn btn-secondary btn-sm btn-ghost-app">Editar datos del hotel</a></p>
-    </section>
+    <header class="account-page-head">
+      <div class="account-page-head-text">
+        <p class="account-page-eyebrow">Configuración</p>
+        <h1 class="dashboard-page-title">Mi cuenta</h1>
+        <p class="dashboard-page-desc muted">Perfil del hotel, facturación y planes en un solo lugar.</p>
+      </div>
+      <div class="account-page-head-aside">
+        <span class="pill account-page-head-plan {% if effective_plan == 'pro' %}pill-pro{% endif %}{% if effective_plan == 'pro_plus' %} pill-pro-plus{% endif %}">Plan {{ plan_label }}</span>
+        <a href="{{ url_path('/onboarding') }}" class="btn btn-secondary btn-sm btn-ghost-app">Editar perfil</a>
+      </div>
+    </header>
 
-    <section class="account-section light-card">
+    {% set profile_missing = profile_total - profile_filled %}
+    {% set profile_pct = ((100 * profile_filled / profile_total) | round(0)) | int if profile_total > 0 else 100 %}
+    <div class="account-page-grid">
+    <aside class="account-page-col account-page-col--aside" aria-label="Perfil y completitud">
+    <section class="account-section light-card account-section--profile">
+      <details class="account-profile-collapsible">
+        <summary class="account-profile-collapsible-summary">
+          <span class="account-profile-collapsible-chevron" aria-hidden="true"></span>
+          <div class="account-profile-collapsible-intro">
+            <h2 class="account-section-title account-profile-collapsible-title">Tu perfil</h2>
+            <p class="muted small account-profile-collapsible-hint">Despliega para ver todos los datos guardados.</p>
+          </div>
+          <div class="account-profile-completion" role="group" aria-label="Completitud del perfil para lecturas">
+            <div class="account-profile-completion-top">
+              <span class="account-profile-completion-pct">{{ profile_pct }}% listo</span>
+              {% if profile_missing > 0 %}
+              <span class="account-profile-completion-missing">Faltan <strong>{{ profile_missing }}</strong> dato{% if profile_missing != 1 %}s{% endif %} · completar el contexto ayuda a afinar tus reportes.</span>
+              {% else %}
+              <span class="account-profile-completion-missing account-profile-completion-missing--ok">Contexto completo para sacar el máximo partido a tus lecturas.</span>
+              {% endif %}
+            </div>
+            <div
+              class="account-profile-completion-bar"
+              role="progressbar"
+              aria-valuenow="{{ profile_filled }}"
+              aria-valuemin="0"
+              aria-valuemax="{{ profile_total }}"
+              aria-valuetext="{% if profile_missing > 0 %}{{ profile_pct }} por ciento, {{ profile_missing }} campo{% if profile_missing != 1 %}s{% endif %} pendiente{% if profile_missing != 1 %}s{% endif %}{% else %}Perfil al cien por ciento{% endif %}"
+            >
+              <div class="account-profile-completion-fill" style="width: {{ profile_pct }}%;"></div>
+            </div>
+            <p class="account-profile-completion-actions">
+              <a href="{{ url_path('/onboarding') }}" class="btn btn-secondary btn-sm btn-ghost-app">Editar datos del hotel</a>
+            </p>
+          </div>
+        </summary>
+        <div class="account-profile-collapsible-body">
+          <dl class="account-dl">
+            <dt>Hotel</dt>
+            <dd>{{ user.hotel_name or '—' }}</dd>
+            <dt>Contacto</dt>
+            <dd>{{ user.contact_name or '—' }}</dd>
+            <dt>Correo</dt>
+            <dd>{{ user.email }}</dd>
+            <dt>Tamaño</dt>
+            <dd>{{ user.hotel_size or '—' }}</dd>
+            <dt>Categoría</dt>
+            <dd>{{ user.hotel_category or '—' }}</dd>
+            <dt>Estrellas</dt>
+            <dd>{% if user.hotel_stars %}{{ user.hotel_stars }} estrella(s){% else %}—{% endif %}</dd>
+            <dt>Ubicación</dt>
+            <dd>{{ user.hotel_location or '—' }}</dd>
+            <dt>Ubicación en el destino</dt>
+            <dd>{{ user.hotel_location_context or '—' }}</dd>
+            <dt>PMS</dt>
+            <dd>{{ user.hotel_pms or '—' }}</dd>
+            <dt>Channel manager</dt>
+            <dd>{{ user.hotel_channel_manager or '—' }}</dd>
+            <dt>Booking engine</dt>
+            <dd>{{ user.hotel_booking_engine or '—' }}</dd>
+            <dt>Otras tecnologías</dt>
+            <dd>{{ user.hotel_tech_other or '—' }}</dd>
+            <dt>Google My Business</dt>
+            <dd>{% if user.hotel_google_business_url %}<a href="{{ user.hotel_google_business_url }}" target="_blank" rel="noopener">Ver perfil</a>{% else %}—{% endif %}</dd>
+            <dt>Expedia</dt>
+            <dd>{% if user.hotel_expedia_url %}<a href="{{ user.hotel_expedia_url }}" target="_blank" rel="noopener">Ver listado</a>{% else %}—{% endif %}</dd>
+            <dt>Booking.com</dt>
+            <dd>{% if user.hotel_booking_url %}<a href="{{ user.hotel_booking_url }}" target="_blank" rel="noopener">Ver listado</a>{% else %}—{% endif %}</dd>
+            <dt>Plan actual</dt>
+            <dd><span class="pill {% if effective_plan == 'pro' %}pill-pro{% endif %}{% if effective_plan == 'pro_plus' %} pill-pro-plus{% endif %}">Plan {{ plan_label }}</span></dd>
+          </dl>
+          <p class="account-profile-body-actions"><a href="{{ url_path('/onboarding') }}" class="btn btn-secondary btn-sm btn-ghost-app">Editar datos del hotel</a></p>
+        </div>
+      </details>
+    </section>
+    </aside>
+
+    <div class="account-page-col account-page-col--main" aria-label="Facturación y planes">
+    <section class="account-section light-card account-section--billing">
       <h2 class="account-section-title">Facturación y planes</h2>
 
       <div class="account-subscription-summary">
@@ -101,54 +147,75 @@
         {% else %}
         <p class="account-billing-locked-lead muted small account-billing-lead">Facturas, datos de pago y historial de cobros se gestionan en un <strong>portal seguro</strong> con nuestro proveedor de pagos. Con <strong>plan gratuito</strong> no hay suscripción ni cargos, así que ese acceso todavía no está activo.</p>
         <div class="account-billing-portal-actions account-billing-portal-actions--locked">
-          <span class="account-billing-locked-chip" role="status">Portal de facturación · no disponible aún</span>
-          <details class="account-billing-help-details">
-            <summary class="account-billing-help-summary" aria-label="Más información sobre facturación y el plan gratuito"><span class="account-billing-help-q" aria-hidden="true">?</span></summary>
-            <div class="account-billing-help-body small">
+          <span class="account-billing-locked-chip" role="status">Portal de facturación aún no disponible</span>
+          <div class="account-billing-help-wrap">
+            <button type="button" class="account-billing-help-trigger" aria-describedby="accountBillingHelpTip" aria-label="Más información sobre facturación y el plan gratuito" title="Tras contratar un plan con tarjeta, podrás usar el portal aquí para facturas y método de pago.">
+              <span class="account-billing-help-q" aria-hidden="true">?</span>
+            </button>
+            <div id="accountBillingHelpTip" class="account-billing-help-body small" role="tooltip">
               Al contratar un plan de pago más abajo y completar el alta con tarjeta, creamos tu cuenta de cliente y podrás <strong>abrir el portal desde esta misma sección</strong> para descargar facturas, cambiar método de pago o revisar la suscripción.
             </div>
-          </details>
+          </div>
         </div>
         {% endif %}
         <p class="muted small account-billing-footnote">Pagos procesados de forma segura por un proveedor certificado PCI.</p>
       </div>
 
-      <h3 class="account-subtitle">Elegir plan</h3>
-      <p class="muted small account-plans-lead">Selecciona el plan que quieres. Al confirmar, añadirás tu método de pago y tu suscripción empezará de inmediato.</p>
-      <div class="account-plans">
-        <div class="account-plan-card {% if effective_plan == 'pro' %}account-plan-current{% endif %}">
-          <div class="account-plan-name">Pro</div>
-          <div class="account-plan-price">{{ monthly_price }} USD <span>/mes</span></div>
-          <ul class="account-plan-benefits clean-list muted">
-            <li>Hasta 90 días por reporte</li>
-            <li>Más archivos y análisis guardados</li>
-            <li>Comparación de tendencias en el tiempo</li>
-          </ul>
-          {% if paid_plan == 'free' %}
-          <button type="button" class="btn btn-primary full account-upgrade-btn" data-billing-cycle="monthly" data-plan-tier="pro">Confirmar Pro — {{ monthly_price }} USD/mes</button>
-          {% elif paid_plan == 'pro' %}
-          <span class="pill pill-pro">Tu plan actual</span>
-          {% else %}
-          <button type="button" class="btn btn-secondary full account-upgrade-btn btn-ghost-app" data-billing-cycle="monthly" data-plan-tier="pro">Cambiar a Pro</button>
-          {% endif %}
+      <details class="account-plans-collapsible">
+        <summary class="account-plans-collapsible-summary">
+          <span class="account-plans-collapsible-belt" aria-hidden="true"></span>
+          <div class="account-plans-collapsible-summary-row">
+            <span class="account-plans-collapsible-chevron" aria-hidden="true"></span>
+            <div class="account-plans-collapsible-head">
+              <span class="account-plans-collapsible-title">Elegir plan</span>
+              <p class="muted small account-plans-collapsible-hint">Despliega para ver precios y pasar al pago seguro.</p>
+            </div>
+          </div>
+        </summary>
+        <div class="account-plans-collapsible-body">
+          <p class="muted small account-plans-lead">Elige Pro o Pro+. En el siguiente paso añades tarjeta; la suscripción queda activa al completar el pago.</p>
+          <div class="account-plans">
+            <div class="account-plan-card {% if effective_plan == 'pro' %}account-plan-current{% endif %}">
+              <div class="account-plan-name">Pro</div>
+              <div class="account-plan-price">{{ monthly_price }} USD <span>/mes</span></div>
+              <ul class="account-plan-benefits clean-list muted">
+                <li>Hasta {{ pro_90_max_days }} días por análisis</li>
+                <li>Hasta {{ pro_90_max_files }} archivos por corrida</li>
+                <li>Hasta {{ pro_90_max_analyses }} análisis guardados a la vez</li>
+                <li>Hasta {{ pro_90_reports_per_month }} lecturas nuevas por mes (UTC); el cupo mensual no se restablece borrando una lectura</li>
+              </ul>
+              {% if paid_plan == 'free' %}
+              <button type="button" class="btn btn-secondary full account-upgrade-btn" data-billing-cycle="monthly" data-plan-tier="pro" aria-label="Continuar al pago del plan Pro, {{ monthly_price }} USD al mes">Conocer más</button>
+              {% elif paid_plan == 'pro' %}
+              <span class="pill pill-pro">Tu plan actual</span>
+              {% else %}
+              <button type="button" class="btn btn-secondary full account-upgrade-btn btn-ghost-app" data-billing-cycle="monthly" data-plan-tier="pro" aria-label="Cambiar al plan Pro, {{ monthly_price }} USD al mes">Conocer más</button>
+              {% endif %}
+            </div>
+            <div class="account-plan-card {% if effective_plan == 'pro_plus' %}account-plan-current{% endif %}">
+              <div class="account-plan-name">Pro+</div>
+              <div class="account-plan-price">{{ premium_monthly_price }} USD <span>/mes</span></div>
+              <ul class="account-plan-benefits clean-list muted">
+                <li>Hasta {{ pro_180_max_days }} días por análisis</li>
+                <li>Hasta {{ pro_180_max_files }} archivos por corrida</li>
+                <li>Hasta {{ pro_plus_max_analyses }} análisis guardados a la vez</li>
+                <li>Hasta {{ pro_plus_reports_per_month }} lecturas nuevas por mes (UTC); el cupo mensual no se restablece borrando una lectura</li>
+              </ul>
+              {% if paid_plan == 'pro_plus' %}
+              <span class="pill pill-pro-plus">Tu plan actual</span>
+              {% else %}
+              <button type="button" class="btn btn-primary full account-upgrade-btn" data-billing-cycle="monthly" data-plan-tier="pro_plus" aria-label="Continuar al pago del plan Pro plus, {{ premium_monthly_price }} USD al mes">Conocer más</button>
+              {% endif %}
+            </div>
+          </div>
         </div>
-        <div class="account-plan-card {% if effective_plan == 'pro_plus' %}account-plan-current{% endif %}">
-          <div class="account-plan-name">Pro+</div>
-          <div class="account-plan-price">{{ premium_monthly_price }} USD <span>/mes</span></div>
-          <ul class="account-plan-benefits clean-list muted">
-            <li>Máximo rango: 180 días</li>
-            <li>Máxima capacidad de análisis guardados</li>
-            <li>Prioridad en nuevas funciones</li>
-          </ul>
-          {% if paid_plan == 'pro_plus' %}
-          <span class="pill pill-pro-plus">Tu plan actual</span>
-          {% else %}
-          <button type="button" class="btn btn-primary full account-upgrade-btn" data-billing-cycle="monthly" data-plan-tier="pro_plus">Confirmar Pro+ — {{ premium_monthly_price }} USD/mes</button>
-          {% endif %}
-        </div>
-      </div>
+      </details>
     </section>
+    </div>
+    </div>
   </div>
+  {% set footer_legal_class = 'app-legal-footer' %}
+  {% include 'partials/legal_footer_links.html' %}
 </div>
 <script>
 (function() {

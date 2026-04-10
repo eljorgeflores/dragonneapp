@@ -4,7 +4,7 @@
 {% block body %}
 <main class="share-public-wrap">
   <header class="share-public-header">
-    <a href="{{ url_path('/consultoria') }}" class="share-public-brand"><img src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" width="120" height="28" loading="eager" decoding="async" /></a>
+    <a href="{{ url_path('/') }}" class="share-public-brand"><img src="{{ url_prefix }}/static/branding/pullso-logo.svg" alt="Pullso" width="120" height="30" loading="eager" decoding="async" /></a>
     <p class="muted small share-public-meta">{{ created_at }} · Vista de solo lectura</p>
   </header>
   <h1 class="share-public-title">{{ page_title }}</h1>
@@ -76,7 +76,7 @@
   {% endif %}
 
   <footer class="share-public-footer muted small">
-    Generado con DRAGONNÉ. <a href="{{ url_path('/signup') }}">Crear cuenta</a> para análisis propios.
+    Generado con Pullso. <a href="{{ url_path('/signup') }}">Crear cuenta</a> para análisis propios.
   </footer>
 </main>
 {% endblock %}

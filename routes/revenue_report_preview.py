@@ -38,5 +38,5 @@ def revenue_report_mock_pdf():
     return Response(
         content=pdf,
         media_type="application/pdf",
-        headers={"Content-Disposition": 'inline; filename="dragonne-revenue-mock.pdf"'},
+        headers={"Content-Disposition": 'inline; filename="pullso-revenue-mock.pdf"'},
     )
