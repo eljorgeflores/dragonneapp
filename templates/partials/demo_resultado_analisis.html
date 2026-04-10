@@ -3,18 +3,19 @@
 <section class="results-card light-card results-card-tablero" style="margin-top:0;">
   <div class="section-head">
     <div>
-      <h2>Resultado del análisis</h2>
+      <h2 class="results-section-title">Tablero de la lectura</h2>
       <p class="muted">2 reporte(s) detectado(s) · 3 archivo(s) subidos · 90 días cubiertos</p>
     </div>
-    <div class="results-actions">
-      <span class="pill">Pro+</span>
-      <button class="btn btn-secondary btn-sm" disabled>Descargar PDF</button>
+    <div class="results-actions results-actions-share">
+      <span class="pill pill-pro-plus">Pro+</span>
+      <button type="button" class="btn btn-secondary btn-sm" disabled title="PDF con el mismo tablero">Descargar PDF</button>
+      <button type="button" class="btn btn-secondary btn-sm" disabled title="Enlace de solo lectura al tablero">Copiar enlace</button>
     </div>
   </div>
   <div class="tablero-toggle-bar" aria-label="Cambiar sección del tablero para móviles">
-    <button type="button" class="tablero-toggle is-active" data-target="center">Resumen</button>
-    <button type="button" class="tablero-toggle" data-target="left">Canales y riesgos</button>
-    <button type="button" class="tablero-toggle" data-target="right">Acciones</button>
+    <button type="button" class="tablero-toggle is-active" data-target="center">Lectura</button>
+    <button type="button" class="tablero-toggle" data-target="left">Distribución</button>
+    <button type="button" class="tablero-toggle" data-target="right">Pasos</button>
   </div>
   <div class="results-tablero" data-tablero-columns data-active="center">
     <div class="tablero-kpis">

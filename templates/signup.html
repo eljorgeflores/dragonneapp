@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% block body %}
+{% set is_local_dev = app_url and ('127.0.0.1' in app_url or 'localhost' in app_url) %}
 <div class="auth-shell">
   <div class="auth-card light-card narrow">
     <div class="brand brand-center">
@@ -7,6 +8,12 @@
     </div>
     <h1>Crea tu cuenta</h1>
     <p class="muted center">Empieza en segundos. Luego te pediremos los datos de tu hotel.</p>
+    {% if is_local_dev %}
+    <div class="alert info" role="status">
+      <strong>Local.</strong> Aquí registras un usuario solo en tu copia de la base de datos. Para una cuenta de prueba rápida puedes usar
+      <code style="font-size:0.82rem;">python3 scripts/ensure_dev_panel_user.py</code>
+    </div>
+    {% endif %}
     {% if error %}<div class="alert error">{{ error }}</div>{% endif %}
     <form method="post" class="auth-form">
       <label>Correo</label>
@@ -17,7 +24,7 @@
       <input type="password" name="password_confirm" minlength="8" required placeholder="Repite tu contraseña" />
       <button class="btn btn-primary full" type="submit">Crear cuenta</button>
     </form>
-    <p class="muted center">¿Ya tienes cuenta? <a href="/login">Inicia sesión</a></p>
+    <p class="muted center">¿Ya tienes cuenta? <a href="{{ url_path('/login') }}">Inicia sesión</a></p>
   </div>
 </div>
 {% endblock %}

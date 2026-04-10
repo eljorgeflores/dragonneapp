@@ -30,11 +30,22 @@ def _normalize_api_secret(val: str) -> str:
 
 
 _env_file = BASE_DIR / ".env"
+_env_local = BASE_DIR / ".env.local"
 if _env_file.exists():
     try:
         from dotenv import load_dotenv
 
         load_dotenv(_env_file)
+        # Overrides solo en tu máquina (gitignored): p. ej. APP_URL=http://127.0.0.1:8000 + sesión en HTTP.
+        if _env_local.exists():
+            load_dotenv(_env_local, override=True)
+    except ImportError:
+        pass
+elif _env_local.exists():
+    try:
+        from dotenv import load_dotenv
+
+        load_dotenv(_env_local)
     except ImportError:
         pass
 

@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% block body %}
+{% set is_local_dev = app_url and ('127.0.0.1' in app_url or 'localhost' in app_url) %}
 <div class="auth-shell">
   <div class="auth-card light-card narrow">
     <div class="brand brand-center">
@@ -7,6 +8,14 @@
     </div>
     <h1>Bienvenido de vuelta</h1>
     <p class="muted center">Entra con un enlace en tu correo o con contraseña.</p>
+    {% if is_local_dev %}
+    <div class="alert info" role="status">
+      <strong>Entorno local.</strong> Esta base de datos (SQLite del repo) no es la de producción: tu correo y contraseña reales no suelen existir aquí.
+      Crea una cuenta en <a href="{{ url_path('/signup') }}">registro</a> o ejecuta en terminal:
+      <code style="display:block;margin-top:8px;font-size:0.82rem;word-break:break-all;">python3 scripts/ensure_dev_panel_user.py</code>
+      Te dará un correo y clave listos para probar el panel.
+    </div>
+    {% endif %}
     {% if magic_link_error %}<div class="alert error">{{ magic_link_error }}</div>{% endif %}
     {% if error %}<div class="alert error">{{ error }}</div>{% endif %}
     {% if magic_link_info %}
@@ -26,10 +35,10 @@
     </form>
 
     <p class="muted center" style="margin-top:1rem">
-      <a href="#" id="link-show-password" aria-expanded="false" aria-controls="panel-password-login">Entrar con contraseña</a>
+      <a href="#" id="link-show-password" aria-expanded="{{ 'true' if is_local_dev else 'false' }}" aria-controls="panel-password-login">Entrar con contraseña</a>
     </p>
 
-    <div id="panel-password-login" class="password-login-panel" hidden>
+    <div id="panel-password-login" class="password-login-panel" {% if not is_local_dev %}hidden{% endif %}>
       <hr style="border:0;border-top:1px solid var(--line);margin:1.25rem 0" />
       <p class="muted center lede small" style="max-width:none;margin-bottom:0.75rem">Acceso con la contraseña de tu cuenta</p>
       <form method="post" action="{{ url_prefix }}/login" class="auth-form">

@@ -1,26 +1,46 @@
 {% extends 'base.html' %}
 {% block title %}Mi cuenta — DRAGONNÉ{% endblock %}
+{% block body_class %}page-app{% endblock %}
 {% block body %}
+{% set _user_label = user.contact_name or user.email or 'Usuario' %}
+{% set _user_initial = (_user_label[0] if _user_label else '?')|upper %}
 <div class="app-shell">
   <header class="app-topbar">
     <div class="app-topbar-inner">
-      <a href="/app" class="brand-link">
-        <img class="brand-logo" src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" />
+      <a href="{{ url_path('/app') }}" class="brand-link app-brand-link" aria-label="DRAGONNÉ — Panel">
+        <img class="brand-logo" src="{{ url_prefix }}/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" />
       </a>
-      <div class="app-context muted">Mi cuenta</div>
-      <div class="top-actions">
-        <a href="/app" class="btn btn-secondary btn-sm">Volver al panel</a>
-        <form method="post" action="/logout" class="logout-form"><button class="btn btn-secondary btn-sm" type="submit">Salir</button></form>
+      <div class="app-context">
+        <div class="app-context-track muted">
+          <span class="app-context-part app-context-part--page">Mi cuenta</span>
+          {% if user.hotel_name %}<span class="app-context-part">{{ user.hotel_name }}</span>{% endif %}
+          {% if user.hotel_category %}<span class="app-context-part">{{ user.hotel_category }}</span>{% endif %}
+        </div>
+        <span class="plan-badge-inline pill app-plan-pill {% if effective_plan == 'pro' %}pill-pro{% endif %}{% if effective_plan == 'pro_plus' %} pill-pro-plus{% endif %}">{{ plan_label }}</span>
+      </div>
+      <div class="app-topbar-right">
+        <a href="{{ url_path('/app/account') }}" class="app-user-chip app-user-chip--active" aria-label="Mi cuenta" aria-current="page">
+          <span class="app-user-avatar" aria-hidden="true">{{ _user_initial }}</span>
+          <span class="app-user-name">{{ _user_label }}</span>
+          <svg class="app-user-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+        <div class="top-actions">
+          <a href="{{ url_path('/app') }}" class="btn btn-secondary btn-sm btn-ghost-app">Panel</a>
+          {% if is_admin %}<a href="{{ url_path('/admin') }}" class="btn btn-secondary btn-sm btn-ghost-app">Admin</a>{% endif %}
+          <form method="post" action="{{ url_path('/logout') }}" class="logout-form"><button class="btn btn-secondary btn-sm btn-ghost-app" type="submit">Salir</button></form>
+        </div>
       </div>
     </div>
   </header>
 
   <div class="app-content">
-    <h1 class="dashboard-page-title">Mi cuenta</h1>
-    <p class="dashboard-page-desc muted">Datos de tu perfil, edición y suscripción.</p>
+    <section class="dashboard-welcome account-page-intro">
+      <h1 class="dashboard-page-title">Mi cuenta</h1>
+      <p class="dashboard-page-desc muted">Datos de tu perfil, edición y suscripción.</p>
+    </section>
 
     {% if manual_access_notice %}
-    <p class="muted small" style="margin:0 0 16px; padding:10px 12px; background:rgba(0,0,0,0.04); border-radius:8px;">{{ manual_access_notice.body }} {{ manual_access_notice.detail }}</p>
+    <p class="account-notice muted small" role="status">{{ manual_access_notice.body }} {{ manual_access_notice.detail }}</p>
     {% endif %}
 
     <section class="account-section light-card account-section--profile">
@@ -59,7 +79,7 @@
         <dt>Plan actual</dt>
         <dd><span class="pill {% if effective_plan == 'pro' %}pill-pro{% endif %}{% if effective_plan == 'pro_plus' %} pill-pro-plus{% endif %}">Plan {{ plan_label }}</span></dd>
       </dl>
-      <p><a href="/onboarding" class="btn btn-secondary btn-sm">Editar datos del hotel</a></p>
+      <p><a href="{{ url_path('/onboarding') }}" class="btn btn-secondary btn-sm btn-ghost-app">Editar datos del hotel</a></p>
     </section>
 
     <section class="account-section light-card">
@@ -69,18 +89,18 @@
         <h3 class="account-subtitle">Tu suscripción</h3>
         <dl class="account-dl account-dl--compact">
           <dt>Plan actual</dt>
-          <dd><span class="pill {% if effective_plan == 'pro' %}pill-pro{% endif %}{% if effective_plan == 'pro_plus' %}pill-pro-plus{% endif %}">Plan {{ plan_label }}</span></dd>
+          <dd><span class="pill {% if effective_plan == 'pro' %}pill-pro{% endif %}{% if effective_plan == 'pro_plus' %} pill-pro-plus{% endif %}">Plan {{ plan_label }}</span></dd>
           <dt>Estado</dt>
           <dd>{% if paid_plan == 'free' %}Sin suscripción activa{% else %}Activo · Facturación mensual{% endif %}</dd>
         </dl>
         {% if user.stripe_customer_id %}
-        <p class="muted small" style="margin-top:12px">Actualiza tu método de pago, descarga facturas o revisa tu suscripción cuando lo necesites.</p>
-        <div class="account-billing-portal-actions" style="margin-top:12px">
-          <button type="button" class="btn btn-secondary btn-sm" id="openPortalBtnAccount">Ver facturas y método de pago</button>
+        <p class="muted small account-billing-lead">Actualiza tu método de pago, descarga facturas o revisa tu suscripción cuando lo necesites.</p>
+        <div class="account-billing-portal-actions">
+          <button type="button" class="btn btn-secondary btn-sm btn-ghost-app" id="openPortalBtnAccount">Ver facturas y método de pago</button>
         </div>
         {% else %}
-        <p class="account-billing-locked-lead muted small" style="margin-top:12px">Facturas, datos de pago y historial de cobros se gestionan en un <strong>portal seguro</strong> con nuestro proveedor de pagos. Con <strong>plan gratuito</strong> no hay suscripción ni cargos, así que ese acceso todavía no está activo.</p>
-        <div class="account-billing-portal-actions account-billing-portal-actions--locked" style="margin-top:12px">
+        <p class="account-billing-locked-lead muted small account-billing-lead">Facturas, datos de pago y historial de cobros se gestionan en un <strong>portal seguro</strong> con nuestro proveedor de pagos. Con <strong>plan gratuito</strong> no hay suscripción ni cargos, así que ese acceso todavía no está activo.</p>
+        <div class="account-billing-portal-actions account-billing-portal-actions--locked">
           <span class="account-billing-locked-chip" role="status">Portal de facturación · no disponible aún</span>
           <details class="account-billing-help-details">
             <summary class="account-billing-help-summary" aria-label="Más información sobre facturación y el plan gratuito"><span class="account-billing-help-q" aria-hidden="true">?</span></summary>
@@ -90,11 +110,11 @@
           </details>
         </div>
         {% endif %}
-        <p class="muted small" style="margin-top:8px; font-size:0.8rem">Pagos procesados de forma segura por un proveedor certificado PCI.</p>
+        <p class="muted small account-billing-footnote">Pagos procesados de forma segura por un proveedor certificado PCI.</p>
       </div>
 
       <h3 class="account-subtitle">Elegir plan</h3>
-      <p class="muted small" style="margin-bottom:14px">Selecciona el plan que quieres. Al confirmar, añadirás tu método de pago y tu suscripción empezará de inmediato.</p>
+      <p class="muted small account-plans-lead">Selecciona el plan que quieres. Al confirmar, añadirás tu método de pago y tu suscripción empezará de inmediato.</p>
       <div class="account-plans">
         <div class="account-plan-card {% if effective_plan == 'pro' %}account-plan-current{% endif %}">
           <div class="account-plan-name">Pro</div>
@@ -109,7 +129,7 @@
           {% elif paid_plan == 'pro' %}
           <span class="pill pill-pro">Tu plan actual</span>
           {% else %}
-          <button type="button" class="btn btn-secondary full account-upgrade-btn" data-billing-cycle="monthly" data-plan-tier="pro">Cambiar a Pro</button>
+          <button type="button" class="btn btn-secondary full account-upgrade-btn btn-ghost-app" data-billing-cycle="monthly" data-plan-tier="pro">Cambiar a Pro</button>
           {% endif %}
         </div>
         <div class="account-plan-card {% if effective_plan == 'pro_plus' %}account-plan-current{% endif %}">
@@ -132,13 +152,20 @@
 </div>
 <script>
 (function() {
+  function appUrlPath(path) {
+    var attr = document.body && document.body.getAttribute('data-url-prefix');
+    var raw = attr != null ? String(attr).trim() : '';
+    var base = raw.replace(/\/$/, '');
+    var p = (path || '').charAt(0) === '/' ? path : '/' + path;
+    return base ? base + p : p;
+  }
   var portalBtn = document.getElementById('openPortalBtnAccount');
   if (portalBtn) {
     portalBtn.addEventListener('click', function() {
       var btn = portalBtn;
       btn.disabled = true;
       btn.textContent = 'Abriendo…';
-      fetch('/billing/create-portal-session', { method: 'POST' })
+      fetch(appUrlPath('/billing/create-portal-session'), { method: 'POST' })
         .then(function(r) { return r.json(); })
         .then(function(d) {
           if (d.ok && d.url) window.location.href = d.url;
@@ -154,7 +181,7 @@
       var body = new FormData();
       body.append('billing_cycle', cycle);
       body.append('plan_tier', tier);
-      fetch('/billing/create-checkout-session', { method: 'POST', body: body })
+      fetch(appUrlPath('/billing/create-checkout-session'), { method: 'POST', body: body })
         .then(function(r) { return r.json(); })
         .then(function(d) {
           if (d.ok && d.url) window.location.href = d.url;

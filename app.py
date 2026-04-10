@@ -173,6 +173,21 @@ async def lifespan(app: FastAPI):
             "DragonApp startup: password_reset_delivery=False — definir SMTP completo "
             "(+ alias EMAIL_*/MAIL_*) o RESEND_API_KEY para enviar correo de recuperación."
         )
+    _au = (APP_URL or "").strip().lower()
+    _sess_insecure = os.getenv("SESSION_INSECURE_COOKIES", "").strip().lower() in ("1", "true", "yes")
+    _cookie_secure = _au.startswith("https://") and not _sess_insecure
+    log.info(
+        "DragonApp startup: session_cookie_https_only=%s (APP_URL=%s SESSION_INSECURE_COOKIES=%s)",
+        _cookie_secure,
+        (APP_URL or "")[:48] + ("…" if len(APP_URL or "") > 48 else ""),
+        "1" if _sess_insecure else "0",
+    )
+    if _cookie_secure:
+        log.warning(
+            "DragonApp startup: la cookie de sesión usa flag Secure. Si entras por http://127.0.0.1 "
+            "o http://localhost, el navegador no guardará la sesión tras el login. Solución local: "
+            "añade SESSION_INSECURE_COOKIES=1 al .env o pon APP_URL=http://127.0.0.1:8000 (puerto que uses)."
+        )
     if (os.getenv("RENDER_SERVICE_ID") or "").strip() or (
         os.getenv("RENDER_EXTERNAL_HOSTNAME") or ""
     ).strip():
@@ -258,6 +273,7 @@ def account_page(request: Request):
         "paid_plan": paid,
         "plan_label": plan_label(eff),
         "paid_plan_label": plan_label(paid),
+        "is_admin": is_admin_user(user),
         "manual_access_notice": manual_access_notice_for_account(user),
         "monthly_price": MONTHLY_PRICE,
         "premium_monthly_price": PREMIUM_MONTHLY_PRICE,

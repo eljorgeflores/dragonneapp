@@ -1,66 +1,94 @@
 {% extends 'base.html' %}
 {% block title %}DRAGONNÉ — Panel{% endblock %}
+{% block body_class %}page-app{% endblock %}
 {% block body %}
+{% set _user_label = user.contact_name or user.email or 'Usuario' %}
+{% set _user_initial = (_user_label[0] if _user_label else '?')|upper %}
 <div class="app-shell" id="appShell" data-app-url="{{ app_url or '' }}" data-max-files="{{ max_files_per_analysis }}" data-plan="{{ effective_plan }}">
   <header class="app-topbar">
     <div class="app-topbar-inner">
-      <a href="/app" class="brand-link">
-        <img class="brand-logo" src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" />
+      <a href="{{ url_path('/app') }}" class="brand-link app-brand-link" aria-label="DRAGONNÉ — Inicio del panel">
+        <img class="brand-logo" src="{{ url_prefix }}/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" />
       </a>
-      <div class="app-context muted">
-        {{ user['hotel_name'] }}{% if user['hotel_category'] %} · {{ user['hotel_category'] }}{% endif %}{% if user['hotel_size'] %} · {{ user['hotel_size'] }}{% endif %}{% if user['hotel_location'] %} · {{ user['hotel_location'] }}{% endif %}
-        <span class="plan-badge-inline pill {% if effective_plan == 'pro' %}pill-pro{% endif %}{% if effective_plan == 'pro_plus' %} pill-pro-plus{% endif %}">Plan {{ plan_label }}</span>
+      <div class="app-context">
+        <div class="app-context-track muted">
+          {% if user.hotel_name %}<span class="app-context-part">{{ user.hotel_name }}</span>{% endif %}
+          {% if user.hotel_category %}<span class="app-context-part">{{ user.hotel_category }}</span>{% endif %}
+          {% if user.hotel_size %}<span class="app-context-part">{{ user.hotel_size }}</span>{% endif %}
+          {% if user.hotel_location %}<span class="app-context-part">{{ user.hotel_location }}</span>{% endif %}
+        </div>
+        <span class="plan-badge-inline pill app-plan-pill {% if effective_plan == 'pro' %}pill-pro{% endif %}{% if effective_plan == 'pro_plus' %} pill-pro-plus{% endif %}">{{ plan_label }}</span>
       </div>
-      <div class="top-actions">
-        {% if is_admin %}<a href="/admin" class="btn btn-secondary btn-sm">Admin</a>{% endif %}
-        <a href="/app/account" class="btn btn-secondary btn-sm">Mi cuenta</a>
-        <form method="post" action="/logout" class="logout-form"><button class="btn btn-secondary btn-sm" type="submit">Salir</button></form>
+      <div class="app-topbar-right">
+        <a href="{{ url_path('/app/account') }}" class="app-user-chip" aria-label="Ir a mi cuenta">
+          <span class="app-user-avatar" aria-hidden="true">{{ _user_initial }}</span>
+          <span class="app-user-name">{{ _user_label }}</span>
+          <svg class="app-user-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+        <div class="top-actions">
+          {% if is_admin %}<a href="{{ url_path('/admin') }}" class="btn btn-secondary btn-sm btn-ghost-app">Admin</a>{% endif %}
+          <form method="post" action="{{ url_path('/logout') }}" class="logout-form"><button class="btn btn-secondary btn-sm btn-ghost-app" type="submit">Salir</button></form>
+        </div>
       </div>
     </div>
   </header>
 
   <div class="app-content">
-  <section class="dashboard-welcome">
-    <h1 class="dashboard-page-title">Panel</h1>
-    <p class="dashboard-page-desc muted">Carga exports de tu PMS o channel manager y obtén una lectura comercial en minutos. Plan {{ plan_label }}: {% if effective_plan == 'pro_plus' %}hasta {{ pro_plus_max_files }} archivos por corrida y hasta 180 días de contexto.{% elif effective_plan == 'pro' %}hasta {{ pro_max_files }} archivos por corrida y hasta 90 días.{% else %}hasta {{ free_max_days }} días de datos, <strong>un archivo</strong> por corrida y {{ free_max_analyses }} lecturas guardadas.{% endif %}</p>
+  <section class="dashboard-welcome dashboard-welcome--compact" aria-label="Resumen del panel">
+    <div class="dashboard-welcome-top">
+      <h1 class="dashboard-page-title">Panel</h1>
+      <p class="dashboard-welcome-lead muted">Lectura comercial a partir de CSV o Excel.</p>
+    </div>
+    <div class="dashboard-plan-strip" role="status">
+      <span class="dashboard-plan-strip-pill pill {% if effective_plan == 'pro' %}pill-pro{% endif %}{% if effective_plan == 'pro_plus' %} pill-pro-plus{% endif %}">{{ plan_label }}</span>
+      {% if effective_plan == 'pro_plus' %}
+      <span class="dashboard-plan-fact">{{ pro_plus_max_files }} archivos · hasta 180 días</span>
+      {% elif effective_plan == 'pro' %}
+      <span class="dashboard-plan-fact">{{ pro_max_files }} archivos · hasta 90 días</span>
+      {% else %}
+      <span class="dashboard-plan-fact">{{ free_max_days }} días</span>
+      <span class="dashboard-plan-fact">1 archivo / corrida</span>
+      <span class="dashboard-plan-fact">{{ free_max_analyses }} guardadas</span>
+      {% endif %}
+      <a href="{{ url_path('/app/account') }}" class="dashboard-plan-link">Planes y facturación</a>
+    </div>
   </section>
 
   <main class="dashboard-grid">
     <section class="upload-card light-card">
-      <div class="section-head">
-        <div>
-          <h2>Nueva lectura</h2>
-          <p class="muted">Pensado para dirección, comercial y revenue: lenguaje claro, sin relleno.</p>
-        </div>
+      <div class="section-head section-head--minimal">
+        <h2 class="upload-card-title">Nueva lectura</h2>
       </div>
       {% if can_upload %}
-      <form id="analyzeForm" class="analyze-form" method="post" action="{{ url_prefix }}/analyze" enctype="multipart/form-data" data-max-files="{{ max_files_per_analysis }}">
-        <div class="upload-coach" role="region" aria-label="Guía para subir reportes">
-          <p class="upload-coach-title">Cómo preparar una buena corrida</p>
-          <ul class="upload-coach-list">
-            <li><strong>Qué subir:</strong> archivos <strong>CSV o Excel</strong> exportados desde PMS, channel manager o motor: producción por canal, historial de habitaciones, pickup, forecast con fechas, etc.</li>
-            <li><strong>Qué ayuda más:</strong> columnas con <strong>fechas</strong> (estancia, negocio o reserva), <strong>canal o fuente</strong>, e <strong>ingresos o tarifa (ADR)</strong>. Más señal en el archivo, lectura más precisa.</li>
-            {% if effective_plan == 'free' %}
-            <li class="upload-coach-highlight"><strong>Plan gratis:</strong> <strong>un archivo</strong> por corrida. Si cruzas varias fuentes, usa el export más completo o <a href="/app/account">amplía tu plan</a>.</li>
-            {% else %}
-            <li><strong>Tu plan:</strong> hasta <strong>{{ max_files_per_analysis }} archivos</strong> en una corrida para cruzar, por ejemplo, producción y forecast.</li>
-            {% endif %}
-            <li><strong>Ajustes:</strong> puedes <strong>quitar archivos</strong> con ✕ antes de enviar, o volver a elegir sin recargar la página.</li>
-          </ul>
-        </div>
+      <form id="analyzeForm" class="analyze-form analyze-form--split" method="post" action="{{ url_prefix }}/analyze" enctype="multipart/form-data" data-max-files="{{ max_files_per_analysis }}">
+        <div class="upload-form-primary">
+        <details class="panel-details upload-coach-details">
+          <summary class="panel-details-summary">Consejos para la carga</summary>
+          <div class="upload-coach" role="region" aria-label="Guía para subir reportes">
+            <ul class="upload-coach-list upload-coach-list--tight">
+              <li><strong>Formato:</strong> CSV o Excel desde PMS, channel o motor.</li>
+              <li><strong>Mejor señal:</strong> fechas, canal/fuente e ingresos o ADR.</li>
+              {% if effective_plan == 'free' %}
+              <li class="upload-coach-highlight"><strong>Gratis:</strong> un archivo por corrida. ¿Varias fuentes? <a href="{{ url_path('/app/account') }}">Amplía plan</a>.</li>
+              {% else %}
+              <li><strong>Tu plan:</strong> hasta {{ max_files_per_analysis }} archivos en una corrida.</li>
+              {% endif %}
+              <li>Quita archivos con ✕ antes de enviar o vuelve a elegir sin recargar.</li>
+            </ul>
+          </div>
+        </details>
 
-        <label>Contexto del negocio (opcional)</label>
-        <p class="field-hint muted small">Objetivo, temporada o foco (directo, fines de semana, corporativo…). Así la lectura se alinea con lo que te importa ahora.</p>
-        <textarea name="business_context" rows="4" placeholder="Ej.: Subir participación del canal directo en fines de semana; reducir dependencia de una OTA en temporada alta; probar estancia mínima de 2 noches en puente."></textarea>
-
-        <label>Archivos a cargar</label>
+        <label class="upload-files-label" for="files">Archivos</label>
         <p id="fileSelectionSummary" class="field-hint muted small file-selection-summary" role="status" aria-live="polite"></p>
-        <div class="dropzone light" id="dropzone">
+        <div class="dropzone light dropzone--hero" id="dropzone">
           <div class="dropzone-hitbox">
             <input id="files" name="files" type="file" {% if max_files_per_analysis > 1 %}multiple{% endif %} accept=".csv,.xlsx,.xls,.xlsm" />
             <div class="dropzone-prompt">
-              <strong>{% if max_files_per_analysis > 1 %}Arrastra aquí los exports (máx. {{ max_files_per_analysis }}){% else %}Arrastra aquí tu export{% endif %}</strong>
-              <p>Plan gratis: un archivo por corrida. Pro / Pro+: varios en la misma carga.</p>
+              <span class="dropzone-icon" aria-hidden="true">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none"><path d="M12 5v10M8 9l4-4 4 4M5 19h14" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              <strong>{% if max_files_per_analysis > 1 %}Suelta los exports aquí{% else %}Suelta tu export aquí{% endif %}</strong>
+              <p class="dropzone-prompt-hint">o haz clic para elegir · CSV / Excel{% if max_files_per_analysis > 1 %} · máx. {{ max_files_per_analysis }}{% endif %}</p>
             </div>
           </div>
           <div id="fileList" class="file-list" aria-label="Archivos seleccionados"></div>
@@ -68,8 +96,14 @@
         <p id="fileLimitHint" class="field-hint muted small hidden" role="status"></p>
 
         <p id="analyzeFormStatus" class="analyze-form-status hidden" role="status" aria-live="polite"></p>
-        <div class="button-row">
+        <div class="button-row upload-form-actions">
           <button class="btn btn-primary" type="submit" id="analyzeSubmitBtn">Generar lectura</button>
+        </div>
+        </div>
+
+        <div class="upload-form-secondary">
+          <label for="business_context">Contexto <span class="label-optional">opcional</span></label>
+          <textarea id="business_context" name="business_context" rows="5" placeholder="Ej.: priorizar directo en fin de semana, OTA en temporada alta…"></textarea>
         </div>
       </form>
       {% else %}
@@ -92,34 +126,69 @@
       {% endif %}
     </section>
 
-    <aside class="side-panel light-card">
-      <h3>Qué incluye la lectura</h3>
-      <ul class="clean-list">
-        <li>Resumen ejecutivo para dirección</li>
-        <li>Métricas del export con interpretación</li>
-        <li>Hallazgos que concentran ingreso o riesgo</li>
-        <li>Oportunidades y puntos de atención en distribución</li>
-        <li>Próximos pasos concretos (a validar con tu equipo)</li>
-      </ul>
-      <h3>Tiempos y calidad</h3>
-      <ul class="clean-list">
-        <li>La corrida suele tardar <strong>1–3 minutos</strong> según tamaño del archivo.</li>
-        <li>Si el export viene sin fechas, canales o ingresos, la lectura será más acotada: te indicamos qué conviene sumar en la siguiente carga.</li>
-        <li>Puedes <strong>descargar PDF</strong>, <strong>copiar enlace</strong>, <strong>abrir tu correo</strong> con el texto armado{% if smtp_configured %} o <strong>enviar el enlace desde DRAGONNÉ</strong> si hay SMTP en el servidor{% endif %}.</li>
-      </ul>
-      <h3>Qué viene después</h3>
-      <ul class="clean-list">
-        <li>Más histórico y comparación entre periodos</li>
-        <li>Mejor lectura de canal directo vs metasearch</li>
-      </ul>
+    <div class="dashboard-rail">
+    <aside class="side-panel light-card side-panel--compact">
+      <details class="panel-details side-panel-details">
+        <summary class="panel-details-summary">Qué obtienes y tiempos</summary>
+        <div class="side-panel-details-body">
+          <h3 class="side-panel-mini-h">Incluye</h3>
+          <ul class="clean-list clean-list--compact clean-list--icons">
+            <li>Resumen ejecutivo y métricas interpretadas</li>
+            <li>Hallazgos de ingreso/riesgo y próximos pasos</li>
+          </ul>
+          <h3 class="side-panel-mini-h">Después de generar</h3>
+          <ul class="clean-list clean-list--compact clean-list--icons">
+            <li>Suele tardar <strong>1–3 min</strong></li>
+            <li>PDF, enlace y correo{% if smtp_configured %} · envío desde DRAGONNÉ{% endif %}</li>
+          </ul>
+          <p class="side-panel-foot muted small">Sin fechas/canales en el export, la lectura será más breve; el tablero indica qué sumar después.</p>
+        </div>
+      </details>
     </aside>
+
+    <section class="history-card light-card history-card--rail">
+    <div class="section-head section-head--minimal">
+      <h2>Historial</h2>
+    </div>
+    {% if analyses %}
+    <div class="history-table">
+      <div class="history-header history-header--extended">
+        <span>Fecha</span>
+        <span>Referencia</span>
+        <span>Arch.</span>
+        <span>Días</span>
+        <span>Fuentes</span>
+      </div>
+      <div class="history-grid" id="historyGrid">
+        {% for item in analyses %}
+        {% set re = item.resumen_ejecutivo or '' %}
+        <button type="button" class="history-item" data-analysis-id="{{ item.id }}">
+          <span class="history-col history-col-date">{{ item.created_at }}</span>
+          <span class="history-col history-col-title">
+            <span class="history-title-main">{{ item.title }}</span>
+            {% if re %}
+            <span class="history-title-sub">{{ re[:120] }}{% if re|length > 120 %}…{% endif %}</span>
+            {% endif %}
+          </span>
+          <span class="history-col history-col-files">{{ item.file_count }}</span>
+          <span class="history-col history-col-days">{{ item.days_covered }}</span>
+          <span class="history-col history-col-reports">{{ item.reports_detected }}</span>
+        </button>
+        {% endfor %}
+      </div>
+    </div>
+    {% else %}
+    <div class="empty-state" id="historyEmpty">Aún no hay lecturas guardadas. Carga un export y genera la primera.</div>
+    {% endif %}
+    </section>
+    </div>
   </main>
 
   <section class="integrations-card light-card integrations-card--locked" aria-label="Conectar DRAGONNÉ a tu stack tecnológico">
     <div class="section-head">
       <div>
         <h2>Conectar PMS / Channel</h2>
-        <p class="muted">Conecta DRAGONNÉ a tu stack tecnológico para leer tu operación en tiempo real y dejar de subir archivos a mano.</p>
+        <p class="muted integrations-card-lead">Sincronización en tiempo real — próximamente.</p>
       </div>
       <div class="integrations-lock-pill">
         <span class="integrations-lock-dot"></span>
@@ -193,44 +262,6 @@
     </div>
   </section>
 
-  <section class="history-card light-card">
-    <div class="section-head">
-      <div>
-        <h2>Historial</h2>
-        <p class="muted">Lecturas guardadas; el subtítulo es un extracto del resumen ejecutivo.</p>
-      </div>
-    </div>
-    {% if analyses %}
-    <div class="history-table">
-      <div class="history-header history-header--extended">
-        <span>Fecha</span>
-        <span>Referencia</span>
-        <span>Arch.</span>
-        <span>Días</span>
-        <span>Fuentes</span>
-      </div>
-      <div class="history-grid" id="historyGrid">
-        {% for item in analyses %}
-        {% set re = item.resumen_ejecutivo or '' %}
-        <button type="button" class="history-item" data-analysis-id="{{ item.id }}">
-          <span class="history-col history-col-date">{{ item.created_at }}</span>
-          <span class="history-col history-col-title">
-            <span class="history-title-main">{{ item.title }}</span>
-            {% if re %}
-            <span class="history-title-sub">{{ re[:120] }}{% if re|length > 120 %}…{% endif %}</span>
-            {% endif %}
-          </span>
-          <span class="history-col history-col-files">{{ item.file_count }}</span>
-          <span class="history-col history-col-days">{{ item.days_covered }}</span>
-          <span class="history-col history-col-reports">{{ item.reports_detected }}</span>
-        </button>
-        {% endfor %}
-      </div>
-    </div>
-    {% else %}
-    <div class="empty-state" id="historyEmpty">Aún no hay lecturas guardadas. Carga un export y genera la primera.</div>
-    {% endif %}
-  </section>
   </div>
 </div>
 {% endblock %}
