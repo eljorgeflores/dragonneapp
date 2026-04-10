@@ -21,6 +21,7 @@ function followAppRedirect(href) {
 
 const fileInput = document.getElementById('files');
 const fileList = document.getElementById('fileList');
+const fileSelectionSummary = document.getElementById('fileSelectionSummary');
 const fileLimitHint = document.getElementById('fileLimitHint');
 const dropzone = document.getElementById('dropzone');
 const form = document.getElementById('analyzeForm');
@@ -79,6 +80,16 @@ function setInputFiles(fileArray) {
   renderFiles();
 }
 
+function syncFileSelectionChrome() {
+  if (!fileInput) return;
+  const n = fileInput.files.length;
+  if (dropzone) dropzone.classList.toggle('has-files', n > 0);
+  if (fileSelectionSummary) {
+    fileSelectionSummary.textContent =
+      n === 0 ? '' : n === 1 ? '1 archivo seleccionado.' : `${n} archivos seleccionados.`;
+  }
+}
+
 function renderFiles() {
   if (!fileInput || !fileList) return;
   if (analyzeFormStatus && fileInput.files.length) {
@@ -106,34 +117,47 @@ function renderFiles() {
     chip.appendChild(rm);
     fileList.appendChild(chip);
   });
+  syncFileSelectionChrome();
+  requestAnimationFrame(() => syncFileSelectionChrome());
 }
 
 if (dropzone) {
-  ['dragenter', 'dragover'].forEach(ev => dropzone.addEventListener(ev, e => {
+  const onDragOver = e => {
     e.preventDefault();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
     dropzone.classList.add('dragover');
-  }));
+  };
+  dropzone.addEventListener('dragenter', onDragOver, true);
+  dropzone.addEventListener('dragover', onDragOver, true);
   dropzone.addEventListener('dragleave', e => {
-    e.preventDefault();
+    const next = e.relatedTarget;
+    if (next && dropzone.contains(next)) return;
     dropzone.classList.remove('dragover');
   });
-  dropzone.addEventListener('drop', e => {
-    e.preventDefault();
-    dropzone.classList.remove('dragover');
-    const dtFiles = e.dataTransfer && e.dataTransfer.files;
-    if (fileInput && dtFiles && dtFiles.length > 0) {
-      const maxF = getMaxFiles();
-      const incoming = [...dtFiles];
-      const existing = [...fileInput.files];
-      const merged = [...existing, ...incoming];
-      if (merged.length > maxF) {
-        showFileHint(`Tu plan admite hasta ${maxF} archivo(s) por corrida. Quita los que no vayas a usar con ✕.`);
-      } else {
-        showFileHint('');
+  dropzone.addEventListener(
+    'drop',
+    e => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropzone.classList.remove('dragover');
+      const dtFiles = e.dataTransfer && e.dataTransfer.files;
+      if (fileInput && dtFiles && dtFiles.length > 0) {
+        const maxF = getMaxFiles();
+        const incoming = [...dtFiles];
+        const existing = [...fileInput.files];
+        const merged = [...existing, ...incoming];
+        if (merged.length > maxF) {
+          showFileHint(
+            `Tu plan admite hasta ${maxF} archivo(s) por corrida. Quita los que no vayas a usar con ✕.`,
+          );
+        } else {
+          showFileHint('');
+        }
+        setInputFiles(merged);
       }
-      setInputFiles(merged);
-    }
-  });
+    },
+    true,
+  );
 }
 if (fileInput) {
   fileInput.addEventListener('change', () => {
@@ -531,6 +555,7 @@ if (form) {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const submit = form.querySelector('button[type="submit"]');
+    if (!submit) return;
     const files = fileInput && fileInput.files ? [...fileInput.files] : [];
     if (!files.length) {
       if (analyzeFormStatus) {
@@ -550,7 +575,7 @@ if (form) {
     currentShareUrl = null;
     setShareControlsEnabled(false);
     hideResultHeroAndSource();
-    resultsCard.classList.remove('hidden');
+    if (resultsCard) resultsCard.classList.remove('hidden');
     if (resultsLayout) resultsLayout.classList.add('is-loading');
     if (resultsLoading) resultsLoading.classList.remove('hidden');
     startLoadingPhaseCycle();
@@ -586,7 +611,7 @@ if (form) {
           errBody += `<p class="upload-error-tip muted small">En <strong>plan gratis</strong> va <strong>un solo archivo</strong> por corrida. Deja solo el export que quieras analizar (✕ junto al nombre) y vuelve a enviar.</p>`;
         }
         if (tableroCenter) tableroCenter.innerHTML = `<div class="alert error">${errBody}</div>`;
-        resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        resultsCard?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         return;
       }
       hideAnalysisLoading();
@@ -612,13 +637,13 @@ if (form) {
         resumen_ejecutivo: (data.analysis && data.analysis.resumen_ejecutivo) ? data.analysis.resumen_ejecutivo : '',
       });
       if (currentAnalysisId) markHistorySelection(currentAnalysisId);
-      resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      resultsCard?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch (err) {
       hideAnalysisLoading();
       hideResultHeroAndSource();
       setShareControlsEnabled(false);
       if (tableroCenter) tableroCenter.innerHTML = `<div class="alert error">${htmlEscape(err.message)}</div>`;
-      resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      resultsCard?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } finally {
       submit.disabled = false;
       submit.textContent = 'Generar lectura';
@@ -697,18 +722,18 @@ document.querySelector('.history-card')?.addEventListener('click', async (e) => 
     return;
   }
   if (!res.ok || !data.ok) return;
-  resultsCard.classList.remove('hidden');
+  if (resultsCard) resultsCard.classList.remove('hidden');
   currentAnalysisId = data.id || id;
   currentShareUrl = data.share_url || null;
   if (downloadPdfBtn) {
     downloadPdfBtn.disabled = !currentAnalysisId;
   }
   setShareControlsEnabled(!!currentAnalysisId);
-  renderSummary(data.summary, data.effective_plan ?? data.plan || 'free');
+  renderSummary(data.summary, data.effective_plan ?? data.plan ?? 'free');
   renderCharts(data.summary);
   renderAnalysis(data.analysis);
   renderResultHero(data.title, data.created_at, data.analysis, data.summary);
-  resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  resultsCard?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
 if (downloadPdfBtn) {

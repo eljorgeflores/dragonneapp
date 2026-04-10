@@ -727,7 +727,36 @@ input:focus, textarea:focus {
   border-color: rgba(240,126,7,.75);
   background: rgba(240,126,7,.08);
 }
-.dropzone input[type='file'] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.dropzone-hitbox {
+  position: relative;
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dropzone-prompt {
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
+  padding: 0 8px;
+}
+.dropzone input[type='file'] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2;
+}
+.dropzone .file-list {
+  position: relative;
+  z-index: 3;
+  margin-top: 16px;
+  justify-content: center;
+}
+.file-selection-summary {
+  margin: 0 0 8px;
+  min-height: 1.25em;
+}
 .file-list { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; align-items: center; }
 .file-chip { border-radius: 999px; background: rgba(17,17,17,.05); border: 1px solid rgba(17,17,17,.05); padding: 8px 12px; font-size: 13px; color: var(--muted); }
 .file-chip-row {

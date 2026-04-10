@@ -583,7 +583,13 @@
         </div>
       </div>
     </section>
-    <section id="uploader" class="pp-section"><div class="ppc"><div class="pp-section-hero"><h2 class="pp-section-title">Sube tu reporte</h2><div class="pp-section-lead"><p>Aceptamos archivos Excel y CSV exportados desde PMS y channel managers. Primer análisis gratis para reportes de hasta <strong>{{ free_max_days }}</strong> días.</p></div></div><div class="pp-box pp-uploader"><div class="pp-dropzone"><strong>Arrastra tu archivo aquí</strong><p>o selecciónalo desde tu computadora</p><a class="pp-btn pp-btn-dark" href="{{ url_prefix }}/signup">Seleccionar archivo</a></div></div></div></section>
+    <section id="uploader" class="pp-section"><div class="ppc"><div class="pp-section-hero"><h2 class="pp-section-title">Sube tu reporte</h2><div class="pp-section-lead"><p>Aceptamos archivos Excel y CSV exportados desde PMS y channel managers. Primer análisis gratis para reportes de hasta <strong>{{ free_max_days }}</strong> días.</p></div></div><div class="pp-box pp-uploader">
+      <a href="{{ url_prefix }}/signup" class="pp-dropzone" style="display:block;text-decoration:none;color:inherit;cursor:pointer" aria-label="Crear cuenta para subir y analizar tu reporte">
+        <strong>Arrastra tu archivo aquí</strong>
+        <p>o selecciónalo desde tu computadora</p>
+        <span class="pp-btn pp-btn-dark" style="display:inline-flex;margin-top:10px;">Crear cuenta</span>
+      </a>
+    </div></div></section>
     <section class="pp-section"><div class="ppc"><div class="pp-box"><h2>Menos intuición. Más claridad. Mejores decisiones.</h2><p class="pp-muted">Pullso transforma reportes dispersos en información útil para vender mejor, proteger margen y entender tu negocio con más precisión.</p><div class="pp-hero-actions" style="margin-top:20px;margin-bottom:0;"><a class="pp-btn pp-btn-dark" href="{{ url_prefix }}/signup">Probar gratis</a><a class="pp-btn pp-btn-light" href="{{ url_prefix }}/login">Iniciar sesión</a></div></div></div></section>
   </main>
   <footer class="pp-footer" role="contentinfo" aria-label="Pie de página">

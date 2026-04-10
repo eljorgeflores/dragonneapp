@@ -34,7 +34,7 @@
         </div>
       </div>
       {% if can_upload %}
-      <form id="analyzeForm" class="analyze-form" method="post" action="#" enctype="multipart/form-data" data-max-files="{{ max_files_per_analysis }}">
+      <form id="analyzeForm" class="analyze-form" method="post" action="{{ url_prefix }}/analyze" enctype="multipart/form-data" data-max-files="{{ max_files_per_analysis }}">
         <div class="upload-coach" role="region" aria-label="Guía para subir reportes">
           <p class="upload-coach-title">Cómo preparar una buena corrida</p>
           <ul class="upload-coach-list">
@@ -54,14 +54,17 @@
         <textarea name="business_context" rows="4" placeholder="Ej.: Subir participación del canal directo en fines de semana; reducir dependencia de una OTA en temporada alta; probar estancia mínima de 2 noches en puente."></textarea>
 
         <label>Archivos a cargar</label>
+        <p id="fileSelectionSummary" class="field-hint muted small file-selection-summary" role="status" aria-live="polite"></p>
         <div class="dropzone light" id="dropzone">
-          <input id="files" name="files" type="file" {% if max_files_per_analysis > 1 %}multiple{% endif %} accept=".csv,.xlsx,.xls,.xlsm" />
-          <div>
-            <strong>{% if max_files_per_analysis > 1 %}Arrastra aquí los exports (máx. {{ max_files_per_analysis }}){% else %}Arrastra aquí tu export{% endif %}</strong>
-            <p>Plan gratis: un archivo por corrida. Pro / Pro+: varios en la misma carga.</p>
+          <div class="dropzone-hitbox">
+            <input id="files" name="files" type="file" {% if max_files_per_analysis > 1 %}multiple{% endif %} accept=".csv,.xlsx,.xls,.xlsm" />
+            <div class="dropzone-prompt">
+              <strong>{% if max_files_per_analysis > 1 %}Arrastra aquí los exports (máx. {{ max_files_per_analysis }}){% else %}Arrastra aquí tu export{% endif %}</strong>
+              <p>Plan gratis: un archivo por corrida. Pro / Pro+: varios en la misma carga.</p>
+            </div>
           </div>
+          <div id="fileList" class="file-list" aria-label="Archivos seleccionados"></div>
         </div>
-        <div id="fileList" class="file-list"></div>
         <p id="fileLimitHint" class="field-hint muted small hidden" role="status"></p>
 
         <p id="analyzeFormStatus" class="analyze-form-status hidden" role="status" aria-live="polite"></p>
