@@ -394,7 +394,13 @@ function renderSummary(summary, plan) {
       uploadNoticesPanel.classList.remove('hidden');
       uploadNoticesPanel.innerHTML = notes
         .map(n => {
-          const msg = (n && n.message) || '';
+          if (!n) return '';
+          if (Array.isArray(n.messages) && n.messages.length) {
+            const head = n.sheet ? `<strong>${htmlEscape(String(n.sheet))}</strong><br>` : '';
+            const body = n.messages.map(m => htmlEscape(String(m))).join('<br>');
+            return `<div class="alert info small">${head}${body}</div>`;
+          }
+          const msg = n.message || '';
           return msg ? `<div class="alert info small">${htmlEscape(msg)}</div>` : '';
         })
         .join('');

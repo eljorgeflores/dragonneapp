@@ -165,7 +165,59 @@ def normalize_col(col: Any) -> str:
     return col.strip("_")
 
 
-def maybe_to_datetime(series: pd.Series) -> Optional[pd.Series]:
+def _dedupe_column_names(names: List[str]) -> List[str]:
+    """
+    Evita nombres duplicados: con columnas homónimas, pandas devuelve un DataFrame en df[col]
+    y el análisis falla (p. ej. 'DataFrame' object has no attribute 'dtype').
+    """
+    counts: Dict[str, int] = {}
+    out: List[str] = []
+    for raw in names:
+        base = (raw or "").strip() or "columna"
+        n = counts.get(base, 0) + 1
+        counts[base] = n
+        if n == 1:
+            out.append(base)
+        else:
+            out.append(f"{base}_{n}")
+    return out
+
+
+def _as_single_series(val: Any) -> Optional[pd.Series]:
+    """Si llega un DataFrame (homónimos no deduplicados en otro flujo), usa la primera columna."""
+    if val is None:
+        return None
+    if isinstance(val, pd.DataFrame):
+        if val.shape[1] < 1:
+            return None
+        s = val.iloc[:, 0]
+        return s.copy() if hasattr(s, "copy") else s
+    if isinstance(val, pd.Series):
+        return val
+    try:
+        return pd.Series(val, dtype=object)
+    except Exception:
+        return None
+
+
+def _series_dtype(s: Any) -> Any:
+    ser = _as_single_series(s)
+    if ser is None or len(ser) == 0:
+        return object
+    return ser.dtype
+
+
+def _dataframe_string_cells_for_retry(df: pd.DataFrame) -> pd.DataFrame:
+    """Reintento cuando Excel mezcla tipos: todo como texto legible para fechas y montos."""
+    out = df.copy()
+    out.columns = _dedupe_column_names([normalize_col(str(c)) for c in out.columns])
+    for c in out.columns:
+        out[c] = out[c].map(lambda x: "" if pd.isna(x) else str(x).strip())
+    return out
+
+
+def maybe_to_datetime(series: Any) -> Optional[pd.Series]:
+    series = _as_single_series(series)
     if series is None or len(series) == 0:
         return None
     try:
@@ -198,6 +250,269 @@ def _has_date_header(columns: Any) -> bool:
     """True si las columnas parecen encabezado de datos (tienen Fecha/Día/Date)."""
     lower = [str(c).lower() for c in columns]
     return any("fecha" in c or "date" in c or "día" in c or "dia" in c for c in lower)
+
+
+# Palabras típicas en exportaciones PMS / channel (puntuación de fila candidata a encabezado)
+_HEADER_KEYWORD_GROUPS: Tuple[Tuple[Tuple[str, ...], float], ...] = (
+    (
+        (
+            "fecha",
+            "date",
+            "día",
+            "dia",
+            "arrival",
+            "llegada",
+            "departure",
+            "salida",
+            "checkin",
+            "check-in",
+            "checkout",
+            "check-out",
+            "stay",
+            "created",
+            "booking",
+            "night",
+            "noche",
+        ),
+        2.0,
+    ),
+    (
+        (
+            "revenue",
+            "ingreso",
+            "amount",
+            "total",
+            "tarifa",
+            "rate",
+            "adr",
+            "importe",
+            "valor",
+            "usd",
+            "mxn",
+            "eur",
+            "gross",
+            "net",
+            "room",
+        ),
+        1.5,
+    ),
+    (("channel", "canal", "source", "segment", "ota", "agency"), 1.2),
+    (("commission", "comision", "comisión", "fee", "cargo", "payment"), 1.2),
+    (("status", "estado", "estatus", "cancel", "void", "noshow"), 1.0),
+    (("reserva", "reservation", "booking_id", "confirmation", "guest", "huésped", "huesped"), 1.0),
+    (("rooms", "habitacion", "habitación", "room_nights", "noches"), 1.0),
+)
+
+
+def _score_header_labels(labels: List[Any]) -> float:
+    """Mayor puntuación = más probable que la fila sea cabecera de tabla de reservas/ingresos."""
+    score = 0.0
+    non_empty = 0
+    for x in labels:
+        if x is None or (isinstance(x, float) and pd.isna(x)):
+            continue
+        t = str(x).strip().lower()
+        if not t or t == "nan":
+            continue
+        non_empty += 1
+        if "unnamed" in t:
+            score -= 0.6
+            continue
+        for kws, w in _HEADER_KEYWORD_GROUPS:
+            if any(kw in t for kw in kws):
+                score += w
+    if non_empty < 2:
+        score -= 40.0
+    return score
+
+
+def _tabular_bonus_next_row(row: pd.Series) -> float:
+    """Bonus si la fila siguiente parece datos (números, importes, fechas parseables)."""
+    if row is None or len(row) < 2:
+        return 0.0
+    ok = 0
+    tot = 0
+    for j in range(min(len(row), 28)):
+        v = row.iloc[j]
+        if pd.isna(v):
+            continue
+        tot += 1
+        if isinstance(v, (int, float)) and not (isinstance(v, float) and pd.isna(v)):
+            ok += 1
+            continue
+        if isinstance(v, str):
+            t = v.strip().replace(" ", "").replace("$", "").replace(",", ".")
+            if t and pd.notna(pd.to_numeric(t, errors="coerce")):
+                ok += 1
+            continue
+        if pd.notna(pd.to_datetime(v, errors="coerce")):
+            ok += 1
+    if tot == 0:
+        return 0.0
+    r = ok / tot
+    if r >= 0.42:
+        return 3.0
+    if r >= 0.22:
+        return 1.4
+    return 0.0
+
+
+def _pick_best_header_row_index_with_baseline(
+    preview: pd.DataFrame, max_scan: int = 22
+) -> Tuple[int, float, float]:
+    """Elige índice de fila (0-based) con mejor score; devuelve también score de la fila 0."""
+    best_i = 0
+    best_s = -1e9
+    s0 = -1e9
+    n = min(max_scan, len(preview))
+    if n <= 0:
+        return 0, -1e9, -1e9
+    for i in range(n):
+        labels = preview.iloc[i].tolist()
+        s = _score_header_labels(labels)
+        if i + 1 < len(preview):
+            try:
+                s += _tabular_bonus_next_row(preview.iloc[i + 1])
+            except Exception:
+                pass
+        if i == 0:
+            s0 = s
+        if s > best_s:
+            best_s = s
+            best_i = i
+    return best_i, best_s, s0
+
+
+def _should_use_detected_header_row(best_i: int, best_s: float, s0: float) -> bool:
+    if best_i <= 0:
+        return False
+    if best_s >= s0 + 1.25:
+        return True
+    if s0 < 2.5 and best_s >= 3.0:
+        return True
+    return False
+
+
+def _sniff_csv_separator(raw: bytes, max_bytes: int = 16384) -> str:
+    """Elige `,` o `;` según frecuencia en las primeras líneas (la fila 1 puede ser título sin separadores)."""
+    head = raw[: min(max_bytes, len(raw))].decode("utf-8", errors="replace")
+    lines = [ln.strip() for ln in head.splitlines()[:24] if ln.strip()]
+    if not lines:
+        return ","
+    comma = sum(ln.count(",") for ln in lines)
+    semi = sum(ln.count(";") for ln in lines)
+    if semi > comma:
+        return ";"
+    return ","
+
+
+def _csv_loose_preview_matrix(raw: bytes, sep: str, encoding: str, max_lines: int = 50) -> pd.DataFrame:
+    """
+    Matriz de celdas para puntuar cabeceras sin usar read_csv en bloque (filas previas al
+    separador suelen tener menos columnas y pandas descarta líneas con on_bad_lines).
+    """
+    text = raw.decode(encoding, errors="replace").splitlines()[:max_lines]
+    rows: List[List[str]] = []
+    for ln in text:
+        if not ln.strip():
+            rows.append([""])
+            continue
+        rows.append([c.strip() for c in ln.split(sep)])
+    if not rows:
+        return pd.DataFrame()
+    ncol = max(len(r) for r in rows)
+    padded = [r + [""] * (ncol - len(r)) for r in rows]
+    return pd.DataFrame(padded, dtype=object)
+
+
+def _parse_csv_bytes_with_smart_header(raw: bytes, sep: str, filename: str) -> Tuple[pd.DataFrame, List[Dict[str, Any]]]:
+    """Lee CSV eligiendo la fila de cabecera con mayor score (títulos / metadatos arriba de la tabla)."""
+    notices: List[Dict[str, Any]] = []
+    encodings = ("utf-8-sig", "utf-8", "latin-1")
+    preview: Optional[pd.DataFrame] = None
+    enc_ok = "utf-8"
+    for enc in encodings:
+        try:
+            preview = _csv_loose_preview_matrix(raw, sep, enc)
+            enc_ok = enc
+            break
+        except Exception:
+            continue
+    read_kw: Dict[str, Any] = {"sep": sep, "on_bad_lines": "skip"}
+    if preview is None:
+        for enc in encodings:
+            try:
+                return pd.read_csv(io.BytesIO(raw), encoding=enc, **read_kw), notices
+            except Exception:
+                continue
+        raise ValueError("No se pudo leer el CSV (encoding o formato).")
+
+    if preview.shape[1] < 2:
+        try:
+            return pd.read_csv(io.BytesIO(raw), encoding=enc_ok, **read_kw), notices
+        except Exception:
+            for enc in encodings:
+                try:
+                    return pd.read_csv(io.BytesIO(raw), encoding=enc, **read_kw), notices
+                except Exception:
+                    continue
+        raise ValueError("No se pudo leer el CSV.")
+
+    read_kw["encoding"] = enc_ok
+    best_i, best_s, s0 = _pick_best_header_row_index_with_baseline(preview)
+    if _should_use_detected_header_row(best_i, best_s, s0):
+        df = pd.read_csv(io.BytesIO(raw), header=0, skiprows=best_i, **read_kw)
+        notices.append(
+            {
+                "kind": "header_auto_detected",
+                "filename": filename,
+                "message": (
+                    f"«{filename}»: tomamos la fila {best_i + 1} como cabecera de la tabla "
+                    f"(había texto o metadatos del export antes de los datos)."
+                ),
+            }
+        )
+        return df, notices
+    return pd.read_csv(io.BytesIO(raw), header=0, **read_kw), notices
+
+
+def _excel_apply_smart_header_row(
+    raw: bytes,
+    sheet: str,
+    df_default: pd.DataFrame,
+    mat_header_none: pd.DataFrame,
+    filename: str,
+) -> Tuple[pd.DataFrame, List[Dict[str, Any]]]:
+    """Si la primera fila no es la cabecera real, re-parsea con header=best_i."""
+    notices: List[Dict[str, Any]] = []
+    if mat_header_none is None or mat_header_none.empty or mat_header_none.shape[1] < 2:
+        return df_default, notices
+    preview = mat_header_none.head(45)
+    best_i, best_s, s0 = _pick_best_header_row_index_with_baseline(preview)
+    if not _should_use_detected_header_row(best_i, best_s, s0):
+        return df_default, notices
+    try:
+        kw: Dict[str, Any] = {}
+        ext = os.path.splitext(filename or "")[1].lower()
+        if ext == ".xls":
+            kw = {"engine": "xlrd", "engine_kwargs": {"ignore_workbook_corruption": True}}
+        df2 = pd.read_excel(io.BytesIO(raw), sheet_name=sheet, header=best_i, **kw)
+        if len(df2.columns) < 2:
+            return df_default, notices
+        notices.append(
+            {
+                "kind": "header_auto_detected",
+                "filename": filename,
+                "sheet": sheet,
+                "message": (
+                    f"«{filename}» (hoja «{sheet}»): cabecera de tabla en la fila {best_i + 1} "
+                    f"respecto al archivo; las filas anteriores se trataron como título o notas."
+                ),
+            }
+        )
+        return df2, notices
+    except Exception:
+        return df_default, notices
 
 
 # Meses abreviados en español (exports tipo 09/Abr/2026)
@@ -302,7 +617,7 @@ def _wide_dates_metrics_to_long(mat: pd.DataFrame, header_row: int) -> Optional[
     long_df = pd.DataFrame(records)
     wide = long_df.pivot_table(index="fecha", columns="metrica", values="valor", aggfunc="first")
     wide = wide.reset_index()
-    wide.columns = [normalize_col(str(c)) for c in wide.columns]
+    wide.columns = _dedupe_column_names([normalize_col(str(c)) for c in wide.columns])
     return wide
 
 
@@ -396,7 +711,12 @@ def _normalize_excel_matrix(mat: pd.DataFrame) -> Optional[pd.DataFrame]:
     return None
 
 
-def _excel_to_dataframes_openpyxl(raw: bytes, filename: str, read_only: bool = True) -> List[Tuple[str, pd.DataFrame]]:
+def _excel_to_dataframes_openpyxl(
+    raw: bytes,
+    filename: str,
+    read_only: bool = True,
+    extra_notices: Optional[List[Dict[str, Any]]] = None,
+) -> List[Tuple[str, pd.DataFrame]]:
     """Fallback: leer Excel con openpyxl directo (soporta formatos que pandas ExcelFile a veces rechaza)."""
     from openpyxl import load_workbook
     wb = load_workbook(io.BytesIO(raw), read_only=read_only, data_only=True)
@@ -411,8 +731,26 @@ def _excel_to_dataframes_openpyxl(raw: bytes, filename: str, read_only: bool = T
                 if norm is not None and len(norm) > 0:
                     result.append((f"{filename}::{sheet_name}", norm))
                     continue
-                header = [str(c) if c is not None else "" for c in rows[0]]
-                data = rows[1:]
+                preview = mat.head(45)
+                best_i, best_s, s0 = _pick_best_header_row_index_with_baseline(preview)
+                if _should_use_detected_header_row(best_i, best_s, s0) and best_i < len(rows):
+                    header = [str(c) if c is not None else "" for c in rows[best_i]]
+                    data = rows[best_i + 1 :]
+                    if extra_notices is not None:
+                        extra_notices.append(
+                            {
+                                "kind": "header_auto_detected",
+                                "filename": filename,
+                                "sheet": sheet_name,
+                                "message": (
+                                    f"«{filename}» (hoja «{sheet_name}»): cabecera en la fila {best_i + 1} "
+                                    f"(openpyxl); omitimos líneas previas al bloque de datos."
+                                ),
+                            }
+                        )
+                else:
+                    header = [str(c) if c is not None else "" for c in rows[0]]
+                    data = rows[1:]
                 df = pd.DataFrame(data, columns=header)
                 df = df.dropna(how="all").reset_index(drop=True)
             else:
@@ -470,31 +808,37 @@ def parse_file_with_notices(upload: UploadFile) -> Tuple[List[Tuple[str, pd.Data
     if len(raw) > MAX_UPLOAD_BYTES_PER_FILE:
         raise ValueError(f"Archivo demasiado grande. Máximo {MAX_UPLOAD_BYTES_PER_FILE // (1024*1024)} MB por archivo.")
     if ext == ".csv":
-        # Detectar separador: coma o punto y coma (común en Excel en español)
-        buf = io.BytesIO(raw)
-        first_line = buf.readline().decode("utf-8", errors="replace").strip()
-        buf.seek(0)
-        sep = ","
-        if ";" in first_line and "," not in first_line:
-            sep = ";"
-        elif ";" in first_line and first_line.count(";") >= first_line.count(","):
-            sep = ";"
+        sep = _sniff_csv_separator(raw)
+        fname = upload.filename or "reporte.csv"
         try:
-            df = pd.read_csv(buf, sep=sep, encoding="utf-8")
+            df, csv_notes = _parse_csv_bytes_with_smart_header(raw, sep, fname)
+            notices.extend(csv_notes)
         except Exception:
-            df = pd.read_csv(io.BytesIO(raw), encoding="utf-8")
-        # Si la primera fila parece encabezado de PMS (título, moneda, etc.), buscar fila con Fecha/Día
-        if not _has_date_header(df.columns) and len(df) > 0:
-            for skip in range(1, min(8, len(raw) // 80 + 1)):
-                try:
-                    buf2 = io.BytesIO(raw)
-                    df2 = pd.read_csv(buf2, sep=sep, encoding="utf-8", skiprows=skip)
-                    if len(df2.columns) >= 2 and _has_date_header(df2.columns):
-                        df = df2
-                        break
-                except Exception:
-                    continue
-        return [(upload.filename or "reporte.csv", df)], notices
+            try:
+                df = pd.read_csv(io.BytesIO(raw), sep=sep, encoding="utf-8", on_bad_lines="skip")
+            except Exception:
+                df = pd.read_csv(io.BytesIO(raw), encoding="utf-8", on_bad_lines="skip")
+            if not _has_date_header(df.columns) and len(df) > 0:
+                for skip in range(1, min(15, len(raw) // 60 + 1)):
+                    try:
+                        df2 = pd.read_csv(
+                            io.BytesIO(raw), sep=sep, encoding="utf-8", skiprows=skip, on_bad_lines="skip"
+                        )
+                        if len(df2.columns) >= 2 and _has_date_header(df2.columns):
+                            df = df2
+                            notices.append(
+                                {
+                                    "kind": "header_auto_detected",
+                                    "filename": fname,
+                                    "message": (
+                                        f"«{fname}»: cabecera con fecha detectada tras omitir {skip} fila(s) iniciales."
+                                    ),
+                                }
+                            )
+                            break
+                    except Exception:
+                        continue
+        return [(fname, df)], notices
     if ext == ".xls":
         # Excel 97-2003: xlrd a veces marca como "corruptos" archivos válidos de PMS; ignorar esa comprobación
         _xls_kw = {"engine": "xlrd", "engine_kwargs": {"ignore_workbook_corruption": True}}
@@ -508,6 +852,10 @@ def parse_file_with_notices(upload: UploadFile) -> Tuple[List[Tuple[str, pd.Data
                     result.append((f"{upload.filename}::{sheet}", norm))
                     continue
                 df = excel.parse(sheet)
+                df, sn = _excel_apply_smart_header_row(
+                    raw, sheet, df, mat, upload.filename or "archivo.xls"
+                )
+                notices.extend(sn)
                 if not _has_date_header(df.columns) and len(df) >= 4:
                     for header_row in range(1, 15):
                         try:
@@ -538,6 +886,10 @@ def parse_file_with_notices(upload: UploadFile) -> Tuple[List[Tuple[str, pd.Data
                     result.append((f"{upload.filename}::{sheet}", norm))
                     continue
                 df = excel.parse(sheet)
+                df, sn = _excel_apply_smart_header_row(
+                    raw, sheet, df, mat, upload.filename or "archivo.xlsx"
+                )
+                notices.extend(sn)
                 if not _has_date_header(df.columns) and len(df) >= 4:
                     for header_row in range(1, 15):
                         try:
@@ -558,7 +910,10 @@ def parse_file_with_notices(upload: UploadFile) -> Tuple[List[Tuple[str, pd.Data
                 for use_read_only in (True, False):
                     try:
                         sheets = _excel_to_dataframes_openpyxl(
-                            raw, upload.filename or "reporte.xlsx", read_only=use_read_only
+                            raw,
+                            upload.filename or "reporte.xlsx",
+                            read_only=use_read_only,
+                            extra_notices=notices,
                         )
                         capped, cap_notes = _apply_excel_sheet_cap(
                             upload.filename or "archivo.xlsx", sheets
@@ -579,9 +934,11 @@ def parse_file(upload: UploadFile) -> List[Tuple[str, pd.DataFrame]]:
     return sheets
 
 
-def infer_sheet(sheet_name: str, df: pd.DataFrame) -> Dict[str, Any]:
+def _infer_sheet_compute(sheet_name: str, df: pd.DataFrame) -> Dict[str, Any]:
+    """Inferencia principal; errores parciales se omiten con avisos en sheet_warnings."""
+    warnings: List[str] = []
     original_cols = [str(c) for c in df.columns]
-    norm_cols = [normalize_col(c) for c in original_cols]
+    norm_cols = _dedupe_column_names([normalize_col(c) for c in original_cols])
     work = df.copy()
     work.columns = norm_cols
     work = work.dropna(how="all")
@@ -602,20 +959,26 @@ def infer_sheet(sheet_name: str, df: pd.DataFrame) -> Dict[str, Any]:
         "taxes": find_col(norm_cols, TAX_ALIASES),
     }
 
-    date_candidates = []
+    date_candidates: List[str] = []
     for col in norm_cols:
         if any(alias in col for alias in DATE_ALIASES):
-            converted = maybe_to_datetime(work[col])
-            if converted is not None:
-                work[col] = converted
-                date_candidates.append(col)
+            try:
+                converted = maybe_to_datetime(work[col])
+                if converted is not None:
+                    work[col] = converted
+                    date_candidates.append(col)
+            except Exception as e:
+                warnings.append(f"Columna «{col}» (fecha por nombre): omitida ({type(e).__name__}).")
 
     for col in norm_cols:
-        if col not in date_candidates and work[col].dtype == object:
-            converted = maybe_to_datetime(work[col])
-            if converted is not None and len(date_candidates) < 4:
-                work[col] = converted
-                date_candidates.append(col)
+        if col not in date_candidates and _series_dtype(work[col]) == object:
+            try:
+                converted = maybe_to_datetime(work[col])
+                if converted is not None and len(date_candidates) < 4:
+                    work[col] = converted
+                    date_candidates.append(col)
+            except Exception as e:
+                warnings.append(f"Columna «{col}» (fecha heurística): omitida ({type(e).__name__}).")
 
     checkin_col = next((c for c in date_candidates if any(x in c for x in ["checkin", "check_in", "arrival"])), None)
     checkout_col = next((c for c in date_candidates if any(x in c for x in ["checkout", "check_out", "departure"])), None)
@@ -626,10 +989,10 @@ def infer_sheet(sheet_name: str, df: pd.DataFrame) -> Dict[str, Any]:
     for col in norm_cols:
         if col in date_col_set:
             continue
-        s = work[col]
-        if pd.api.types.is_datetime64_any_dtype(s):
-            continue
         try:
+            s = work[col]
+            if pd.api.types.is_datetime64_any_dtype(s):
+                continue
             converted = pd.to_numeric(s, errors="coerce")
             if converted.notna().mean() >= 0.5:
                 work[col] = converted
@@ -645,81 +1008,137 @@ def infer_sheet(sheet_name: str, df: pd.DataFrame) -> Dict[str, Any]:
     status_col = mappings["status"]
     adr_col = mappings["adr"]
 
-    # Convertir columnas de dinero con formato "$1,234.56" a numérico
-    def _to_numeric_currency(series: pd.Series) -> pd.Series:
-        if series.dtype != object and pd.api.types.is_numeric_dtype(series):
-            return series
-        cleaned = series.astype(str).str.replace(r"[$,\s]", "", regex=True)
+    def _to_numeric_currency(series: Any) -> pd.Series:
+        s = _as_single_series(series)
+        if s is None or len(s) == 0:
+            return pd.Series(dtype=float)
+        if s.dtype != object and pd.api.types.is_numeric_dtype(s):
+            return s
+        cleaned = s.astype(str).str.replace(r"[$,\s]", "", regex=True)
         return pd.to_numeric(cleaned, errors="coerce")
 
     for col in [rev_col, comm_col, pay_col, adr_col]:
         if col and col in work.columns:
-            work[col] = _to_numeric_currency(work[col])
+            try:
+                work[col] = _to_numeric_currency(work[col])
+            except Exception as e:
+                warnings.append(f"Columna «{col}» (moneda): sin convertir ({type(e).__name__}).")
 
     metrics: Dict[str, Any] = {}
     if rev_col:
-        metrics["revenue_total"] = round(float(work[rev_col].fillna(0).sum()), 2)
+        try:
+            metrics["revenue_total"] = round(float(work[rev_col].fillna(0).sum()), 2)
+        except Exception as e:
+            warnings.append(f"Ingreso total: no calculado ({type(e).__name__}).")
     if comm_col:
-        metrics["comision_total"] = round(float(work[comm_col].fillna(0).sum()), 2)
+        try:
+            metrics["comision_total"] = round(float(work[comm_col].fillna(0).sum()), 2)
+        except Exception as e:
+            warnings.append(f"Comisiones: no calculadas ({type(e).__name__}).")
     if pay_col:
-        metrics["costo_pago_total"] = round(float(work[pay_col].fillna(0).sum()), 2)
+        try:
+            metrics["costo_pago_total"] = round(float(work[pay_col].fillna(0).sum()), 2)
+        except Exception as e:
+            warnings.append(f"Costo de pago: no calculado ({type(e).__name__}).")
     if rn_col:
-        metrics["room_nights"] = round(float(work[rn_col].fillna(0).sum()), 2)
+        try:
+            metrics["room_nights"] = round(float(work[rn_col].fillna(0).sum()), 2)
+        except Exception as e:
+            warnings.append(f"Room nights: no calculadas ({type(e).__name__}).")
     elif checkin_col and checkout_col:
-        metrics["room_nights"] = round(float((work[checkout_col] - work[checkin_col]).dt.days.clip(lower=0).fillna(0).sum()), 2)
+        try:
+            metrics["room_nights"] = round(
+                float((work[checkout_col] - work[checkin_col]).dt.days.clip(lower=0).fillna(0).sum()), 2
+            )
+        except Exception as e:
+            warnings.append(f"Noches por fechas entrada/salida: no calculadas ({type(e).__name__}).")
     if adr_col:
-        metrics["adr_promedio"] = round(float(pd.to_numeric(work[adr_col], errors="coerce").mean()), 2)
+        try:
+            metrics["adr_promedio"] = round(float(pd.to_numeric(work[adr_col], errors="coerce").mean()), 2)
+        except Exception as e:
+            warnings.append(f"ADR: no calculado ({type(e).__name__}).")
     elif metrics.get("revenue_total") and metrics.get("room_nights"):
         if metrics["room_nights"] > 0:
             metrics["adr_estimado"] = round(metrics["revenue_total"] / metrics["room_nights"], 2)
 
     if status_col:
-        s = work[status_col].astype(str).str.lower()
-        cancelled = int(s.str.contains("cancel|void|no show|noshow").sum())
-        metrics["cancelaciones"] = cancelled
-        metrics["cancelacion_pct"] = round((cancelled / max(row_count, 1)) * 100, 2)
+        try:
+            s = work[status_col].astype(str).str.lower()
+            cancelled = int(s.str.contains("cancel|void|no show|noshow").sum())
+            metrics["cancelaciones"] = cancelled
+            metrics["cancelacion_pct"] = round((cancelled / max(row_count, 1)) * 100, 2)
+        except Exception as e:
+            warnings.append(f"Cancelaciones: no calculadas ({type(e).__name__}).")
 
     if channel_col:
-        channel_series = work[channel_col].astype(str).str.strip().replace("", "Sin canal")
-        top_channels = channel_series.value_counts().head(8)
-        metrics["top_canales_por_reservas"] = [{"canal": str(k), "reservas": int(v)} for k, v in top_channels.items()]
-        if rev_col:
-            rev_by_channel = work.groupby(channel_series)[rev_col].sum().sort_values(ascending=False).head(8)
-            metrics["top_canales_por_ingreso"] = [{"canal": str(k), "ingreso": round(float(v), 2)} for k, v in rev_by_channel.items()]
-        if comm_col and rev_col:
-            grouped = work.groupby(channel_series)[[rev_col, comm_col]].sum()
-            channel_margin = []
-            for chan, row in grouped.iterrows():
-                margin = float(row[rev_col]) - float(row[comm_col])
-                channel_margin.append({"canal": str(chan), "ingreso": round(float(row[rev_col]), 2), "comision": round(float(row[comm_col]), 2), "margen_estimado": round(margin, 2)})
-            metrics["margen_estimado_por_canal"] = sorted(channel_margin, key=lambda x: x["margen_estimado"], reverse=True)[:8]
+        try:
+            channel_series = work[channel_col].astype(str).str.strip().replace("", "Sin canal")
+            top_channels = channel_series.value_counts().head(8)
+            metrics["top_canales_por_reservas"] = [
+                {"canal": str(k), "reservas": int(v)} for k, v in top_channels.items()
+            ]
+        except Exception as e:
+            warnings.append(f"Ranking de canales (reservas): omitido ({type(e).__name__}).")
+        try:
+            if channel_col and rev_col:
+                channel_series = work[channel_col].astype(str).str.strip().replace("", "Sin canal")
+                rev_by_channel = work.groupby(channel_series)[rev_col].sum().sort_values(ascending=False).head(8)
+                metrics["top_canales_por_ingreso"] = [
+                    {"canal": str(k), "ingreso": round(float(v), 2)} for k, v in rev_by_channel.items()
+                ]
+        except Exception as e:
+            warnings.append(f"Ranking de canales (ingreso): omitido ({type(e).__name__}).")
+        try:
+            if channel_col and comm_col and rev_col:
+                channel_series = work[channel_col].astype(str).str.strip().replace("", "Sin canal")
+                grouped = work.groupby(channel_series)[[rev_col, comm_col]].sum()
+                channel_margin = []
+                for chan, row in grouped.iterrows():
+                    margin = float(row[rev_col]) - float(row[comm_col])
+                    channel_margin.append(
+                        {
+                            "canal": str(chan),
+                            "ingreso": round(float(row[rev_col]), 2),
+                            "comision": round(float(row[comm_col]), 2),
+                            "margen_estimado": round(margin, 2),
+                        }
+                    )
+                metrics["margen_estimado_por_canal"] = sorted(
+                    channel_margin, key=lambda x: x["margen_estimado"], reverse=True
+                )[:8]
+        except Exception as e:
+            warnings.append(f"Margen por canal: omitido ({type(e).__name__}).")
 
     min_date = None
     max_date = None
     for col in [stay_col, checkin_col, booking_col, checkout_col]:
         if col and col in work.columns:
-            col_min = work[col].dropna().min()
-            col_max = work[col].dropna().max()
-            if col_min is not pd.NaT and col_max is not pd.NaT:
-                if min_date is None or col_min < min_date:
-                    min_date = col_min
-                if max_date is None or col_max > max_date:
-                    max_date = col_max
-    # Reportes tipo forecast/revenue con una columna "Fecha" (una fila por día): usar primera columna de fecha
+            try:
+                col_min = work[col].dropna().min()
+                col_max = work[col].dropna().max()
+                if col_min is not pd.NaT and col_max is not pd.NaT:
+                    if min_date is None or col_min < min_date:
+                        min_date = col_min
+                    if max_date is None or col_max > max_date:
+                        max_date = col_max
+            except Exception:
+                pass
     if (min_date is None or max_date is None) and date_candidates:
         for col in date_candidates:
             if col not in work.columns:
                 continue
-            col_min = work[col].dropna().min()
-            col_max = work[col].dropna().max()
-            if col_min is not pd.NaT and col_max is not pd.NaT:
-                if min_date is None or col_min < min_date:
-                    min_date = col_min
-                if max_date is None or col_max > max_date:
-                    max_date = col_max
-                break
+            try:
+                col_min = work[col].dropna().min()
+                col_max = work[col].dropna().max()
+                if col_min is not pd.NaT and col_max is not pd.NaT:
+                    if min_date is None or col_min < min_date:
+                        min_date = col_min
+                    if max_date is None or col_max > max_date:
+                        max_date = col_max
+                    break
+            except Exception:
+                pass
 
-    # Normalizar a tipo fecha (evitar numpy.int64 p. ej. fechas Excel como número)
     try:
         min_date_norm = pd.Timestamp(min_date) if min_date is not None else None
     except (TypeError, ValueError):
@@ -743,7 +1162,7 @@ def infer_sheet(sheet_name: str, df: pd.DataFrame) -> Dict[str, Any]:
             days_covered = 0
 
     fields_detected = [k for k, v in mappings.items() if v]
-    return {
+    out: Dict[str, Any] = {
         "sheet_name": sheet_name,
         "rows": row_count,
         "mappings": mappings,
@@ -766,6 +1185,182 @@ def infer_sheet(sheet_name: str, df: pd.DataFrame) -> Dict[str, Any]:
         },
         "sample_columns": norm_cols[:30],
     }
+    if warnings:
+        out["sheet_warnings"] = warnings
+    return out
+
+
+def _sheet_recovery_infer(sheet_name: str, df: pd.DataFrame, exc: BaseException) -> Dict[str, Any]:
+    """
+    Último nivel: no devolver vacío si aún podemos mapear columnas por nombre y sumar/fechar.
+    Se usa tras fallo total de _infer_sheet_compute o reintento con celdas texto.
+    """
+    warnings: List[str] = [
+        f"Lectura en modo recuperación ({type(exc).__name__}). Seguimos con lo que se pueda inferir del archivo."
+    ]
+    empty_mappings = {
+        "reservation_id": None,
+        "channel": None,
+        "status": None,
+        "revenue": None,
+        "gross_revenue": None,
+        "commission": None,
+        "payment_cost": None,
+        "room_nights": None,
+        "rooms": None,
+        "adr": None,
+        "taxes": None,
+    }
+    if df is None or df.empty or len(df.columns) == 0:
+        return {
+            "sheet_name": sheet_name,
+            "rows": int(len(df)) if df is not None else 0,
+            "mappings": empty_mappings,
+            "date_columns": {"stay": None, "booking": None, "checkin": None, "checkout": None},
+            "fields_detected": [],
+            "metrics": {},
+            "days_covered": 0,
+            "date_range": {"start": None, "end": None},
+            "sample_columns": [],
+            "sheet_warnings": warnings + [str(exc)],
+        }
+
+    try:
+        work = df.copy()
+        norm_cols = _dedupe_column_names([normalize_col(str(c)) for c in df.columns])
+        work.columns = norm_cols
+        work = work.dropna(how="all").head(5000)
+    except Exception:
+        return {
+            "sheet_name": sheet_name,
+            "rows": int(len(df)),
+            "mappings": empty_mappings,
+            "date_columns": {"stay": None, "booking": None, "checkin": None, "checkout": None},
+            "fields_detected": [],
+            "metrics": {},
+            "days_covered": 0,
+            "date_range": {"start": None, "end": None},
+            "sample_columns": [],
+            "sheet_warnings": warnings + [str(exc)],
+        }
+
+    mappings = {
+        "reservation_id": find_col(norm_cols, RESERVATION_ID_ALIASES),
+        "channel": find_col(norm_cols, CHANNEL_ALIASES),
+        "status": find_col(norm_cols, STATUS_ALIASES),
+        "revenue": find_col(norm_cols, REVENUE_ALIASES),
+        "gross_revenue": find_col(norm_cols, GROSS_ALIASES),
+        "commission": find_col(norm_cols, COMM_ALIASES),
+        "payment_cost": find_col(norm_cols, PAYMENT_ALIASES),
+        "room_nights": find_col(norm_cols, ROOM_NIGHTS_ALIASES),
+        "rooms": find_col(norm_cols, ROOMS_ALIASES),
+        "adr": find_col(norm_cols, ADR_ALIASES),
+        "taxes": find_col(norm_cols, TAX_ALIASES),
+    }
+    metrics: Dict[str, Any] = {}
+    rev_c = mappings["revenue"] or mappings["gross_revenue"]
+    if rev_c:
+        try:
+            s = pd.to_numeric(_as_single_series(work[rev_c]), errors="coerce")
+            if s is not None and s.notna().any():
+                metrics["revenue_total"] = round(float(s.fillna(0).sum()), 2)
+        except Exception:
+            pass
+    if mappings["commission"]:
+        try:
+            s = pd.to_numeric(_as_single_series(work[mappings["commission"]]), errors="coerce")
+            if s is not None and s.notna().any():
+                metrics["comision_total"] = round(float(s.fillna(0).sum()), 2)
+        except Exception:
+            pass
+    if mappings["room_nights"]:
+        try:
+            s = pd.to_numeric(_as_single_series(work[mappings["room_nights"]]), errors="coerce")
+            if s is not None and s.notna().any():
+                metrics["room_nights"] = round(float(s.fillna(0).sum()), 2)
+        except Exception:
+            pass
+    if mappings["channel"]:
+        try:
+            cs = work[mappings["channel"]].astype(str).str.strip().replace("", "Sin canal")
+            vc = cs.value_counts().head(8)
+            metrics["top_canales_por_reservas"] = [{"canal": str(k), "reservas": int(v)} for k, v in vc.items()]
+        except Exception:
+            pass
+
+    stay_guess = None
+    min_date_norm = None
+    max_date_norm = None
+    for col in norm_cols:
+        try:
+            m = maybe_to_datetime(work[col])
+            if m is None or m.notna().sum() < max(2, int(len(work) * 0.2)):
+                continue
+            stay_guess = col
+            dr = m.dropna()
+            if len(dr) == 0:
+                continue
+            min_date_norm = pd.Timestamp(dr.min())
+            max_date_norm = pd.Timestamp(dr.max())
+            break
+        except Exception:
+            continue
+
+    days_covered = 0
+    if (
+        min_date_norm is not None
+        and max_date_norm is not None
+        and pd.notna(min_date_norm)
+        and pd.notna(max_date_norm)
+    ):
+        try:
+            days_covered = int((max_date_norm - min_date_norm).days) + 1
+        except (TypeError, ValueError):
+            days_covered = 0
+
+    fields_detected = [k for k, v in mappings.items() if v]
+    return {
+        "sheet_name": sheet_name,
+        "rows": int(len(work)),
+        "mappings": mappings,
+        "date_columns": {
+            "stay": stay_guess,
+            "booking": None,
+            "checkin": None,
+            "checkout": None,
+        },
+        "fields_detected": fields_detected,
+        "metrics": metrics,
+        "days_covered": days_covered,
+        "date_range": {
+            "start": min_date_norm.isoformat() if min_date_norm is not None and pd.notna(min_date_norm) else None,
+            "end": max_date_norm.isoformat() if max_date_norm is not None and pd.notna(max_date_norm) else None,
+        },
+        "sample_columns": norm_cols[:30],
+        "sheet_warnings": warnings,
+    }
+
+
+def infer_sheet(sheet_name: str, df: pd.DataFrame, _recover_depth: int = 0) -> Dict[str, Any]:
+    """
+    Orquesta inferencia + reintento con celdas como texto + recuperación mínima con métricas útiles.
+    Evita devolver resúmenes vacíos si el archivo aún permite sumar ingresos o acotar fechas.
+    """
+    if df is None:
+        return _sheet_recovery_infer(sheet_name, pd.DataFrame(), ValueError("sin datos"))
+    try:
+        return _infer_sheet_compute(sheet_name, df)
+    except Exception as e:
+        if _recover_depth < 1:
+            try:
+                df_fix = _dataframe_string_cells_for_retry(df)
+                out = infer_sheet(sheet_name, df_fix, _recover_depth=1)
+                sw = out.setdefault("sheet_warnings", [])
+                sw.insert(0, f"Reintento tras normalizar tipos de celda ({type(e).__name__}).")
+                return out
+            except Exception:
+                pass
+        return _sheet_recovery_infer(sheet_name, df, e)
 
 
 def summarize_reports(files: List[UploadFile]) -> Dict[str, Any]:
@@ -780,6 +1375,15 @@ def summarize_reports(files: List[UploadFile]) -> Dict[str, Any]:
         for sheet_name, df in sheets:
             summary = infer_sheet(sheet_name, df)
             report_summaries.append(summary)
+            sw = summary.get("sheet_warnings")
+            if sw:
+                upload_notices.append(
+                    {
+                        "kind": "sheet_infer_warnings",
+                        "sheet": sheet_name,
+                        "messages": sw,
+                    }
+                )
             max_days = max(max_days, summary.get("days_covered", 0))
             dr = summary.get("date_range", {})
             if dr.get("start"):

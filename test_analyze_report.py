@@ -14,7 +14,7 @@ from fastapi import UploadFile
 from starlette.datastructures import Headers
 
 from config import ALLOWED_UPLOAD_EXTENSIONS
-from services.analysis_core import parse_file, summarize_reports
+from services.analysis_core import infer_sheet, parse_file, parse_file_with_notices, summarize_reports
 
 
 def make_upload_file(filename: str, content: bytes, content_type: str = "application/octet-stream") -> UploadFile:
@@ -23,6 +23,28 @@ def make_upload_file(filename: str, content: bytes, content_type: str = "applica
     # UploadFile en Starlette: filename, file=stream; headers opcionales
     headers = Headers({"content-type": content_type})
     return UploadFile(filename=filename, file=stream, headers=headers)
+
+
+def test_parse_csv_with_title_preamble_then_header():
+    """Varias líneas de título antes de la cabecera real: debe elegir la fila con Fecha/Canal/Ingresos."""
+    lines = [
+        "Reporte interno — no modificar",
+        "Hotel Demo · generado automáticamente",
+        "",
+        "Fecha estancia;Canal;Ingresos netos;Noches",
+        "2025-01-01;Directo;500;2",
+        "2025-01-02;Booking;800;3",
+    ]
+    csv_content = "\n".join(lines)
+    upload = make_upload_file("export_con_titulo.csv", csv_content.encode("utf-8"), "text/csv")
+    sheets, notices = parse_file_with_notices(upload)
+    assert len(sheets) == 1
+    _, df = sheets[0]
+    assert "Fecha estancia" in df.columns or "fecha estancia" in [str(c).lower() for c in df.columns]
+    assert len(df) == 2
+    kinds = [n.get("kind") for n in notices]
+    assert "header_auto_detected" in kinds
+    print("OK test_parse_csv_with_title_preamble_then_header")
 
 
 def test_parse_csv():
@@ -69,6 +91,39 @@ def test_parse_csv_semicolon():
         # pd.read_csv sin sep= puede dar una sola columna; infer_sheet podría seguir funcionando
         raise AssertionError(f"CSV con punto y coma no debería fallar en parse_file: {e}")
     print("OK test_parse_csv_semicolon")
+
+
+def test_infer_sheet_recovery_when_compute_fails(monkeypatch):
+    """Si la ruta principal falla, debe recuperar totales y fechas sin devolver métricas vacías."""
+
+    def _boom(*_a, **_kw):
+        raise RuntimeError("fallo forzado")
+
+    monkeypatch.setattr("services.analysis_core._infer_sheet_compute", _boom)
+    df = pd.DataFrame(
+        {
+            "Ingresos netos": [100.0, 200.0],
+            "Fecha estancia": ["2025-01-01", "2025-01-02"],
+        }
+    )
+    out = infer_sheet("hoja_prueba", df)
+    assert out["metrics"].get("revenue_total") == 300.0
+    assert out.get("date_range", {}).get("start")
+    assert out.get("sheet_warnings")
+    print("OK test_infer_sheet_recovery_when_compute_fails")
+
+
+def test_infer_sheet_duplicate_column_names():
+    """Encabezados que normalizan al mismo nombre no deben lanzar (antes: DataFrame.dtype)."""
+    df = pd.DataFrame(
+        [["2025-01-01", "2025-01-02", 1000, 2000]],
+        columns=["Fecha", "fecha", "Ingresos", "ingresos"],
+    )
+    out = infer_sheet("demo", df)
+    assert out["rows"] == 1
+    assert "fecha" in out["sample_columns"] and "fecha_2" in out["sample_columns"]
+    assert "ingresos" in out["sample_columns"] and "ingresos_2" in out["sample_columns"]
+    print("OK test_infer_sheet_duplicate_column_names")
 
 
 def test_summarize_reports_csv():
@@ -150,6 +205,7 @@ def run_all():
     test_parse_csv()
     test_parse_csv_utf8_bom()
     test_parse_csv_semicolon()
+    test_infer_sheet_duplicate_column_names()
     test_summarize_reports_csv()
     test_parse_excel_xlsx()
     test_summarize_reports_excel()
