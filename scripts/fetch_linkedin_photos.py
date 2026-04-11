@@ -31,7 +31,6 @@ PROFILES = [
     ("vaniadragonne", "vania-dragonne.png"),
     ("jorgefloresacevedo", "jorge-flores.jpg"),
     ("juanjoflores", "juanjo-flores.png"),
-    ("joelkamus", "joel-gomez.png"),
     ("joaquinbenitezm", "joaquin-benitez.jpg"),
     ("jorgedecordova", "jorge-decordova.png"),
 ]
