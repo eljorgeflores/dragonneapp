@@ -36,40 +36,39 @@
       <p class="admin-client-hint muted small">En esta pantalla ajustas el plan base, el acceso manual, envías restablecimiento de contraseña, revisas sesiones, borras análisis o eliminas la cuenta.</p>
     </section>
 
-    <section class="dashboard-hero light-card">
-      <div>
-        <div class="eyebrow">Actividad</div>
-        <h2 class="admin-card-heading">Resumen comercial</h2>
-        {% if user['api_key'] %}
-        <p class="lede small">API: activa (clave asignada). <a href="/admin/api">Gestionar acceso API</a></p>
-        {% else %}
-        <p class="lede small">API: sin acceso. <a href="/admin/api">Dar acceso desde Acceso API</a></p>
-        {% endif %}
-        <p class="lede small">
-          Creado el {{ user['created_at'][:10] }} ·
-          Último login: {{ user['last_login_at'] or 'Nunca' }} ·
-          Logins: {{ user['login_count'] or 0 }}.
-        </p>
-      </div>
-      <div class="hero-plan-box">
-        <div class="pill">Métricas</div>
-        <div class="mini-kpis">
-          <div>
-            <span>Análisis generados</span>
-            <strong>{{ stats.total_analyses }}</strong>
-          </div>
-          <div>
-            <span>Archivos subidos</span>
-            <strong>{{ stats.total_files }}</strong>
-          </div>
-        </div>
-        <div class="mini-highlight">
-          <p class="muted">
-            Último análisis: {{ stats.last_analysis_at or 'N/A' }} ·
-            Última actividad: {{ stats.last_activity or 'Sin datos' }}.
+    <section class="dashboard-hero light-card admin-user-activity-card" aria-label="Resumen de actividad del cliente">
+      <div class="admin-user-activity-top">
+        <div class="admin-snapshot-intro">
+          <div class="eyebrow">Actividad</div>
+          <h2 class="admin-card-heading">Resumen comercial</h2>
+          {% if user['api_key'] %}
+          <p class="lede small">API: activa (clave asignada). <a href="{{ url_path('/admin/api') }}">Gestionar acceso API</a></p>
+          {% else %}
+          <p class="lede small">API: sin acceso. <a href="{{ url_path('/admin/api') }}">Dar acceso desde Acceso API</a></p>
+          {% endif %}
+          <p class="lede small admin-user-activity-meta">
+            Creado el {{ user['created_at'][:10] }} ·
+            Último login: {{ user['last_login_at'] or 'Nunca' }} ·
+            Logins: {{ user['login_count'] or 0 }}.
           </p>
         </div>
+        <div class="admin-activity-aside" role="group" aria-label="Métricas de uso">
+          <div class="admin-snapshot-kpis admin-snapshot-kpis--pair">
+            <div class="admin-kpi-tile">
+              <span class="admin-kpi-label">Análisis generados</span>
+              <strong class="admin-kpi-value">{{ stats.total_analyses }}</strong>
+            </div>
+            <div class="admin-kpi-tile">
+              <span class="admin-kpi-label">Archivos subidos</span>
+              <strong class="admin-kpi-value">{{ stats.total_files }}</strong>
+            </div>
+          </div>
+        </div>
       </div>
+      <p class="admin-activity-foot muted small">
+        Último análisis: {{ stats.last_analysis_at or 'N/A' }} ·
+        Última actividad: {{ stats.last_activity or 'Sin datos' }}.
+      </p>
     </section>
 
     <section class="history-card light-card admin-manage-card">
@@ -87,9 +86,9 @@
       <div class="alert error" style="margin: 0 0 16px;">No se pudo enviar el correo. Revisa Resend, SMTP y los logs del servidor.</div>
       {% endif %}
       <div class="admin-manage-grid">
-        <div class="light-card" style="padding:12px; margin-bottom:8px; grid-column:1/-1;">
-          <p class="muted small" style="margin:0 0 8px;"><strong>Resumen de acceso</strong> (<code>users.plan</code> = solo billing; efectivo = límites reales).</p>
-          <dl class="account-dl account-dl--compact" style="margin:0;">
+        <div class="admin-access-summary">
+          <p class="admin-access-summary-title muted small"><strong>Resumen de acceso</strong> (<code>users.plan</code> = solo billing; efectivo = límites reales).</p>
+          <dl class="account-dl account-dl--compact admin-access-summary-dl">
             <dt>Billing plan</dt>
             <dd>{{ paid_plan_label }} <span class="muted">(<code>users.plan</code>)</span></dd>
             <dt>Override manual configurado</dt>
@@ -104,7 +103,7 @@
             <dd>{% if manual_plan_note %}{{ manual_plan_note }}{% else %}<span class="muted">—</span>{% endif %}</dd>
           </dl>
           {% if manual_plan_updated_at %}
-          <p class="muted small" style="margin:8px 0 0;">Última modificación override: {{ manual_plan_updated_at }}{% if manual_plan_updated_by_email %} · {{ manual_plan_updated_by_email }}{% endif %}</p>
+          <p class="admin-access-summary-audit muted small">Última modificación override: {{ manual_plan_updated_at }}{% if manual_plan_updated_by_email %} · {{ manual_plan_updated_by_email }}{% endif %}</p>
           {% endif %}
         </div>
         <form class="admin-plan-form" method="post" action="/admin/users/{{ user['id'] }}/plan">
