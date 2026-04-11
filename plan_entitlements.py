@@ -6,9 +6,9 @@ from typing import Any, Mapping, Optional, Union
 
 UserLike = Union[Mapping[str, Any], Any]
 
-PLAN_RANK = {"free": 0, "pro": 1, "pro_plus": 2}
+PLAN_RANK = {"free": 0, "pro": 1, "pro_plus": 2, "free_trial": 3}
 
-VALID_MANUAL_PLANS = frozenset({"pro", "pro_plus"})
+VALID_MANUAL_PLANS = frozenset({"pro", "pro_plus", "free_trial"})
 
 
 def _get(user: UserLike, key: str, default=None):
@@ -69,7 +69,7 @@ def stored_manual_override_plan(user: UserLike) -> Optional[str]:
 def get_active_manual_plan(user: UserLike) -> Optional[str]:
     """
     Nivel otorgado por override manual si está configurado y no caducó.
-    Solo 'pro' o 'pro_plus'. None si no aplica.
+    'pro', 'pro_plus' o 'free_trial' (solo admin). None si no aplica.
     """
     override = _get(user, "manual_plan_override")
     if override is None:
@@ -92,9 +92,14 @@ def get_effective_plan(user: UserLike) -> str:
     Un override Pro con usuario pagando Pro+ no reduce el acceso; el manual solo suma
     si mejora respecto al billing. Si el override caducó, no entra en el max (equivale
     a no haber manual activo); los datos en BD se conservan.
+
+    Override `free_trial` (solo admin): plan efectivo dedicado con mismos topes que Pro+
+    en archivos/cupo/guardados, pero sin tope de días por lectura.
     """
     paid = get_paid_plan(user)
     manual = get_active_manual_plan(user)
+    if manual == "free_trial":
+        return "free_trial"
     if manual is None:
         return paid
     return max_plan(paid, manual)
@@ -163,9 +168,25 @@ def normalize_manual_expiry_form(raw: Optional[str]) -> Optional[str]:
 
 def manual_access_notice_for_account(user: UserLike) -> Optional[dict]:
     """Texto discreto para /app/account si hay override vigente."""
+    eff = get_effective_plan(user)
+    if eff == "free_trial":
+        from plans import plan_label  # import local para evitar ciclo
+
+        label = plan_label(eff)
+        exp_raw = _get(user, "manual_plan_expires_at")
+        exp = _parse_expires_at(exp_raw if exp_raw is not None else None)
+        if exp is not None:
+            exp_str = exp.strftime("%Y-%m-%d %H:%M UTC")
+            return {
+                "body": f"Tu cuenta tiene {label} concedida por el equipo.",
+                "detail": f"Activa hasta el {exp_str}. Sin tope de días por lectura; el resto de límites sigue las reglas de la prueba (archivos por corrida, lecturas al mes y análisis guardados).",
+            }
+        return {
+            "body": f"Tu cuenta tiene {label} concedida por el equipo.",
+            "detail": "Sin fecha de caducidad. Sin tope de días por lectura; el resto de límites sigue las reglas de la prueba.",
+        }
     if get_active_manual_plan(user) is None:
         return None
-    eff = get_effective_plan(user)
     from plans import plan_label  # import local para evitar ciclo
 
     label = plan_label(eff)

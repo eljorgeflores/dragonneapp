@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block title %}Administradores — Admin — Pullso{% endblock %}
-{% block body_class %}page-admin{% endblock %}
+{% block body_class %}page-app page-admin{% endblock %}
 {% block body %}
 <div class="app-shell admin-panel">
   <header class="app-topbar">
@@ -8,80 +8,127 @@
       <a href="{{ url_path('/admin') }}" class="brand-link app-brand-link" aria-label="Pullso — Administración">
         <img class="brand-logo app-pullso-logo" src="{{ url_prefix }}/static/branding/pullso-logo.svg" alt="Pullso" width="120" height="30" decoding="async" />
       </a>
-      <div class="app-context muted">Administradores · {{ current_user['email'] }}</div>
-      <div class="top-actions">
-        <a href="/admin/api" class="btn btn-secondary btn-sm">Acceso API</a>
-        <a href="/admin" class="btn btn-secondary btn-sm">Volver a admin</a>
+      <div class="app-context">
+        <div class="app-context-track muted">
+          <span class="app-context-part">Equipo admin</span>
+        </div>
+        <span class="plan-badge-inline pill app-plan-pill app-plan-pill--admin-nav" aria-hidden="true">Admin</span>
+      </div>
+      <div class="app-topbar-right">
+        <div class="top-actions">
+          <a href="{{ url_path('/admin/api') }}" class="btn btn-secondary btn-sm btn-ghost-app">Acceso API</a>
+          <a href="{{ url_path('/admin') }}" class="btn btn-secondary btn-sm btn-ghost-app">Lista de clientes</a>
+          <a href="{{ url_path('/app') }}" class="btn btn-secondary btn-sm btn-ghost-app">Panel Pullso</a>
+          <form method="post" action="{{ url_path('/logout') }}" class="logout-form"><button class="btn btn-secondary btn-sm btn-ghost-app" type="submit">Salir</button></form>
+        </div>
       </div>
     </div>
   </header>
 
   <div class="app-content">
-    <section class="dashboard-welcome admin-page-intro">
-      <h1 class="dashboard-page-title">Administradores</h1>
-      <p class="dashboard-page-desc muted">Los correos en <strong>ADMIN_EMAILS</strong> siempre tienen acceso. Desde aquí das o quitas <code>is_admin</code> a usuarios registrados.</p>
+    <section class="dashboard-welcome dashboard-welcome--compact" aria-label="Administradores del panel">
+      <div class="dashboard-welcome-top">
+        <h1 class="dashboard-page-title">Administradores</h1>
+        <p class="dashboard-welcome-lead muted">Los correos definidos en <strong>ADMIN_EMAILS</strong> en el servidor siempre pueden entrar. Aquí concedes o revocas <code class="admin-code-inline">is_admin</code> al resto de usuarios para que accedan a este mismo panel.</p>
+      </div>
+      <p class="admin-welcome-email muted small">{{ current_user['email'] }}</p>
     </section>
 
-    <section class="dashboard-hero light-card">
-      <div>
-        <div class="eyebrow">Acceso admin</div>
-        <h2 class="admin-card-heading">Quién entra al panel</h2>
-        <p class="lede small">Fijos = variables de entorno; panel = base de datos.</p>
+    <section class="dashboard-hero light-card admin-snapshot-card admin-snapshot-card--text-only">
+      <div class="admin-snapshot-intro">
+        <div class="eyebrow">Acceso</div>
+        <h2 class="admin-card-heading">Quién entra al panel admin</h2>
+        <p class="lede small">Dos fuentes: lista fija en configuración (no editable desde la web) y permisos guardados en base de datos, que sí gestionas abajo.</p>
       </div>
     </section>
 
-    <section class="history-card light-card">
-      <div class="section-head">
+    <section class="history-card light-card admin-users-section">
+      <div class="section-head section-head--minimal admin-section-head">
         <div>
           <h2>Con acceso admin</h2>
-          <p class="muted">Fijos desde servidor; el resto desde este panel.</p>
+          <p class="muted admin-section-lead">Administradores fijos del servidor y los promovidos desde el panel. Solo los de base de datos muestran botón para quitar el rol.</p>
         </div>
       </div>
-      <div class="admin-stack">
+      <div class="admin-action-list" role="list">
         {% for a in admins %}
-        <div class="admin-row-card admin-row-actions">
-          <div>
-            <div class="history-top">
-              <strong>{{ a.email }}</strong>
-              {% if a.hotel_name %}<span>{{ a.hotel_name }}</span>{% endif %}
+        <article class="admin-action-card" role="listitem">
+          <div class="admin-action-card-inner">
+            <div class="admin-action-card-top">
+              <div class="admin-user-card-identity">
+                <h3 class="admin-user-card-title">{{ a.email }}</h3>
+                <p class="admin-user-card-email">{% if a.hotel_name %}{{ a.hotel_name }}{% else %}Sin nombre de hotel{% endif %}</p>
+              </div>
+              {% if a.user_id %}
+              <a href="{{ url_path('/admin/users/' ~ a.user_id) }}" class="admin-action-card-secondary-link">
+                Ficha cliente
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </a>
+              {% endif %}
             </div>
-            <p class="muted small" style="margin: 8px 0 0;">
-              {% if a.fijo %}Fijo (configuración servidor){% else %}Asignado desde panel{% endif %}
-            </p>
+            <div class="admin-user-card-pills">
+              {% if a.fijo %}
+              <span class="pill admin-user-plan-pill admin-pill-api-off">Fijo (servidor)</span>
+              <span class="dashboard-plan-fact admin-user-badge">No editable desde la web</span>
+              {% else %}
+              <span class="pill admin-user-plan-pill admin-pill-api-on">Asignado en panel</span>
+              <span class="dashboard-plan-fact admin-user-badge">Puedes revocar abajo</span>
+              {% endif %}
+            </div>
+            <div class="admin-action-card-footer">
+              {% if a.fijo %}
+              <p class="admin-action-card-note muted small">Este acceso viene de la configuración del servidor (<strong>ADMIN_EMAILS</strong>). Para quitarlo hay que actualizar el despliegue.</p>
+              {% elif a.user_id %}
+              <div class="admin-action-card-actions">
+                <form action="{{ url_path('/admin/admins/revoke') }}" method="post" onsubmit="return confirm('¿Quitar acceso admin a este usuario?');">
+                  <input type="hidden" name="user_id" value="{{ a.user_id }}" />
+                  <button type="submit" class="btn btn-sm admin-btn-danger-outline">Quitar rol admin</button>
+                </form>
+              </div>
+              {% else %}
+              <p class="admin-action-card-note muted small">Entrada sin usuario enlazado en esta vista; la revocación desde el panel requiere un <code class="admin-code-inline">user_id</code> válido.</p>
+              {% endif %}
+            </div>
           </div>
-          {% if not a.fijo and a.user_id %}
-          <form action="/admin/admins/revoke" method="post" onsubmit="return confirm('¿Quitar acceso admin a este usuario?');">
-            <input type="hidden" name="user_id" value="{{ a.user_id }}" />
-            <button type="submit" class="btn btn-sm admin-btn-danger-outline">Quitar admin</button>
-          </form>
-          {% endif %}
-        </div>
+        </article>
         {% endfor %}
       </div>
     </section>
 
-    <section class="history-card light-card">
-      <div class="section-head">
+    <section class="history-card light-card admin-users-section">
+      <div class="section-head section-head--minimal admin-section-head">
         <div>
           <h2>Usuarios sin acceso admin</h2>
-          <p class="muted">Puedes darles acceso para que entren al panel admin.</p>
+          <p class="muted admin-section-lead">Cuentas registradas que aún son solo clientes. Promueve cuando deban gestionar el panel; la ficha cliente sigue disponible para planes y análisis.</p>
         </div>
       </div>
-      <div class="admin-stack">
+      <div class="admin-action-list" role="list">
         {% for u in non_admins %}
-        <div class="admin-row-card admin-row-actions">
-          <div>
-            <div class="history-top">
-              <strong>{{ u.email }}</strong>
-              <span>{{ u.hotel_name }}</span>
+        <article class="admin-action-card" role="listitem">
+          <div class="admin-action-card-inner">
+            <div class="admin-action-card-top">
+              <div class="admin-user-card-identity">
+                <h3 class="admin-user-card-title">{{ u.email }}</h3>
+                <p class="admin-user-card-email">{{ u.hotel_name }}</p>
+              </div>
+              <a href="{{ url_path('/admin/users/' ~ u.id) }}" class="admin-action-card-secondary-link">
+                Ficha cliente
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </a>
             </div>
-            <p class="muted small" style="margin: 8px 0 0;">Alta: {{ u.created_at[:10] }}</p>
+            <div class="admin-user-card-pills">
+              <span class="pill admin-user-plan-pill admin-pill-api-off">Solo cliente</span>
+              <span class="dashboard-plan-fact admin-user-badge">Alta {{ u.created_at[:10] }}</span>
+            </div>
+            <div class="admin-action-card-footer">
+              <div class="admin-action-card-actions">
+                <form action="{{ url_path('/admin/admins/grant') }}" method="post">
+                  <input type="hidden" name="user_id" value="{{ u.id }}" />
+                  <button type="submit" class="btn btn-primary btn-sm">Hacer administrador</button>
+                </form>
+              </div>
+            </div>
           </div>
-          <form action="/admin/admins/grant" method="post">
-            <input type="hidden" name="user_id" value="{{ u.id }}" />
-            <button type="submit" class="btn btn-primary btn-sm">Hacer admin</button>
-          </form>
-        </div>
+        </article>
         {% endfor %}
         {% if not non_admins %}
         <div class="empty-state">No hay más usuarios registrados fuera de la lista de administradores.</div>

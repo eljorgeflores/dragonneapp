@@ -20,6 +20,8 @@ def delete_analysis_by_id(conn, analysis_id: int) -> bool:
     row = conn.execute("SELECT id FROM analyses WHERE id = ?", (analysis_id,)).fetchone()
     if not row:
         return False
+    # Conserva la fila de cupo mensual (generations_this_month); el id ya no apunta a analyses.
+    conn.execute("UPDATE analysis_run_log SET analysis_id = NULL WHERE analysis_id = ?", (analysis_id,))
     _delete_uploaded_files_for_analysis(conn, analysis_id)
     conn.execute("DELETE FROM analyses WHERE id = ?", (analysis_id,))
     return True

@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block title %}Cliente — Admin — Pullso{% endblock %}
-{% block body_class %}page-admin{% endblock %}
+{% block body_class %}page-app page-admin{% endblock %}
 {% block body %}
 <div class="app-shell admin-panel">
   <header class="app-topbar">
@@ -8,22 +8,32 @@
       <a href="{{ url_path('/admin') }}" class="brand-link app-brand-link" aria-label="Pullso — Administración">
         <img class="brand-logo app-pullso-logo" src="{{ url_prefix }}/static/branding/pullso-logo.svg" alt="Pullso" width="120" height="30" decoding="async" />
       </a>
-      <div class="app-context muted">
-        Detalle de cliente · {{ user['hotel_name'] }} · {{ user['email'] }}
+      <div class="app-context">
+        <div class="app-context-track muted">
+          <span class="app-context-part">Cliente</span>
+          <span class="app-context-part">{{ user['hotel_name'] }}</span>
+        </div>
+        <span class="plan-badge-inline pill app-plan-pill admin-user-detail-pill {% if effective_plan == 'pro' %}pill-pro{% endif %}{% if effective_plan == 'pro_plus' %} pill-pro-plus{% endif %}{% if effective_plan == 'free_trial' %} pill-free-trial{% endif %}">{{ plan_label }}</span>
       </div>
-      <div class="top-actions">
-        <a href="/admin/admins" class="btn btn-secondary btn-sm">Administradores</a>
-        <a href="/admin/api" class="btn btn-secondary btn-sm">Acceso API</a>
-        <a href="/admin" class="btn btn-secondary btn-sm">Volver a admin</a>
-        <a href="/app" class="btn btn-secondary btn-sm">Panel app</a>
+      <div class="app-topbar-right">
+        <div class="top-actions">
+          <a href="{{ url_path('/admin/admins') }}" class="btn btn-secondary btn-sm btn-ghost-app">Administradores</a>
+          <a href="{{ url_path('/admin/api') }}" class="btn btn-secondary btn-sm btn-ghost-app">Acceso API</a>
+          <a href="{{ url_path('/admin') }}" class="btn btn-secondary btn-sm btn-ghost-app">Lista de clientes</a>
+          <a href="{{ url_path('/app') }}" class="btn btn-secondary btn-sm btn-ghost-app">Panel Pullso</a>
+          <form method="post" action="{{ url_path('/logout') }}" class="logout-form"><button class="btn btn-secondary btn-sm btn-ghost-app" type="submit">Salir</button></form>
+        </div>
       </div>
     </div>
   </header>
 
   <div class="app-content">
-    <section class="dashboard-welcome admin-page-intro">
-      <h1 class="dashboard-page-title">{{ user['hotel_name'] }}</h1>
-      <p class="dashboard-page-desc muted">{{ user['email'] }} · Efectivo {{ plan_label }} · Base {{ paid_plan_label }}</p>
+    <section class="dashboard-welcome dashboard-welcome--compact admin-client-intro" aria-label="Ficha de cliente">
+      <div class="dashboard-welcome-top">
+        <h1 class="dashboard-page-title">{{ user['hotel_name'] }}</h1>
+        <p class="dashboard-welcome-lead muted">{{ user['email'] }} · Plan efectivo <strong>{{ plan_label }}</strong> · Facturación (Stripe) <strong>{{ paid_plan_label }}</strong></p>
+      </div>
+      <p class="admin-client-hint muted small">En esta pantalla ajustas el plan base, el acceso manual, envías restablecimiento de contraseña, revisas sesiones, borras análisis o eliminas la cuenta.</p>
     </section>
 
     <section class="dashboard-hero light-card">
@@ -63,10 +73,10 @@
     </section>
 
     <section class="history-card light-card admin-manage-card">
-      <div class="section-head">
+      <div class="section-head section-head--minimal admin-section-head">
         <div>
           <h2>Gestionar cuenta</h2>
-          <p class="muted">El plan base refleja facturación (Stripe sincroniza este campo). El override manual suma acceso sin tocar la suscripción. Eliminar usuario borra todos sus análisis y archivos.</p>
+          <p class="muted admin-section-lead">Plan base = facturación (Stripe). Acceso manual suma derechos sin cambiar la suscripción. <strong>Prueba extendida</strong> (solo admin): mismos topes que Pro+ en archivos por corrida, lecturas al mes y análisis guardados, pero <strong>sin tope de días</strong> por lectura. Eliminar usuario borra todos sus análisis y archivos de forma permanente.</p>
         </div>
       </div>
       {% if pwd_reset == 'sent' %}
@@ -111,12 +121,13 @@
         </form>
         <form class="admin-plan-form" method="post" action="/admin/users/{{ user['id'] }}/manual-plan-override">
           <label for="manual_plan_select">Acceso manual (entitlements)</label>
-          <p class="muted small" style="margin:0 0 8px;">Se combina con el plan base: siempre gana el mejor (p. ej. pago Pro+ + manual Pro → sigue Pro+).</p>
+          <p class="muted small" style="margin:0 0 8px;">Pro / Pro+: se combinan con el plan base (gana el mejor; un manual inferior no degrada un pago superior). <strong>Prueba extendida</strong> fija el plan efectivo en ese modo (sin tope de días por lectura) mientras esté vigente.</p>
           <div class="admin-plan-row">
             <select id="manual_plan_select" name="manual_plan" class="admin-select">
               <option value="clear" {% if not manual_override_stored %}selected{% endif %}>Sin override / quitar</option>
               <option value="pro" {% if manual_override_stored == 'pro' %}selected{% endif %}>Pro</option>
               <option value="pro_plus" {% if manual_override_stored == 'pro_plus' %}selected{% endif %}>Pro+</option>
+              <option value="free_trial" {% if manual_override_stored == 'free_trial' %}selected{% endif %}>Prueba extendida (sin tope de días)</option>
             </select>
           </div>
           <label for="manual_expires_at" style="margin-top:10px;">Caducidad opcional (interpretado como UTC)</label>
@@ -145,10 +156,10 @@
     </section>
 
     <section class="history-card light-card">
-      <div class="section-head">
+      <div class="section-head section-head--minimal admin-section-head">
         <div>
           <h2>Sesiones recientes</h2>
-          <p class="muted">Aproximación de cada cuándo entra y cuánto tiempo permanece.</p>
+          <p class="muted admin-section-lead">Ventanas de uso aproximadas: inicio, fin y actividad dentro de la sesión.</p>
         </div>
       </div>
       {% if sessions %}
@@ -172,10 +183,10 @@
     </section>
 
     <section class="history-card light-card">
-      <div class="section-head">
+      <div class="section-head section-head--minimal admin-section-head">
         <div>
           <h2>Análisis generados</h2>
-          <p class="muted">Puedes borrar un análisis para liberar cupos (p. ej. límite de análisis en plan gratis).</p>
+          <p class="muted admin-section-lead">Cada fila es una lectura guardada. Borrar libera cupos (p. ej. límite del plan Gratis) y elimina los archivos asociados a ese análisis.</p>
         </div>
       </div>
       {% if analyses %}

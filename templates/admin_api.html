@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block title %}Acceso API — Admin — Pullso{% endblock %}
-{% block body_class %}page-admin{% endblock %}
+{% block body_class %}page-app page-admin{% endblock %}
 {% block body %}
 <div class="app-shell admin-panel">
   <header class="app-topbar">
@@ -8,10 +8,19 @@
       <a href="{{ url_path('/admin') }}" class="brand-link app-brand-link" aria-label="Pullso — Administración">
         <img class="brand-logo app-pullso-logo" src="{{ url_prefix }}/static/branding/pullso-logo.svg" alt="Pullso" width="120" height="30" decoding="async" />
       </a>
-      <div class="app-context muted">Acceso API · {{ current_user['email'] }}</div>
-      <div class="top-actions">
-        <a href="/admin/admins" class="btn btn-secondary btn-sm">Administradores</a>
-        <a href="/admin" class="btn btn-secondary btn-sm">Volver a admin</a>
+      <div class="app-context">
+        <div class="app-context-track muted">
+          <span class="app-context-part">API</span>
+        </div>
+        <span class="plan-badge-inline pill app-plan-pill app-plan-pill--admin-nav" aria-hidden="true">Admin</span>
+      </div>
+      <div class="app-topbar-right">
+        <div class="top-actions">
+          <a href="{{ url_path('/admin/admins') }}" class="btn btn-secondary btn-sm btn-ghost-app">Administradores</a>
+          <a href="{{ url_path('/admin') }}" class="btn btn-secondary btn-sm btn-ghost-app">Lista de clientes</a>
+          <a href="{{ url_path('/app') }}" class="btn btn-secondary btn-sm btn-ghost-app">Panel Pullso</a>
+          <form method="post" action="{{ url_path('/logout') }}" class="logout-form"><button class="btn btn-secondary btn-sm btn-ghost-app" type="submit">Salir</button></form>
+        </div>
       </div>
     </div>
   </header>
@@ -25,60 +34,73 @@
     </div>
     {% endif %}
 
-    <section class="dashboard-welcome admin-page-intro">
-      <h1 class="dashboard-page-title">Acceso API</h1>
-      <p class="dashboard-page-desc muted">Aprueba o revoca claves por usuario. Solo quien tenga clave consume la API dentro de los límites.</p>
+    <section class="dashboard-welcome dashboard-welcome--compact" aria-label="Acceso API">
+      <div class="dashboard-welcome-top">
+        <h1 class="dashboard-page-title">Acceso API</h1>
+        <p class="dashboard-welcome-lead muted">Activa o corta el acceso programático por hotel. Solo las cuentas con clave válida cuentan frente a los límites de la API; el resto recibe error de autorización.</p>
+      </div>
+      <p class="admin-welcome-email muted small">{{ current_user['email'] }}</p>
     </section>
 
-    <section class="dashboard-hero light-card">
-      <div>
+    <section class="dashboard-hero light-card admin-snapshot-card admin-snapshot-card--text-only">
+      <div class="admin-snapshot-intro">
         <div class="eyebrow">Autorización</div>
         <h2 class="admin-card-heading">Claves por hotel</h2>
-        <p class="lede small">Dar acceso genera una clave (se muestra una vez). Revocar la invalida al instante.</p>
+        <p class="lede small"><strong>Dar acceso</strong> crea una clave y se muestra una sola vez. <strong>Regenerar</strong> invalida la anterior de inmediato. <strong>Revocar</strong> deja a la cuenta sin API hasta que vuelvas a aprobarla.</p>
       </div>
     </section>
 
-    <section class="history-card light-card">
-      <div class="section-head">
+    <section class="history-card light-card admin-users-section">
+      <div class="section-head section-head--minimal admin-section-head">
         <div>
           <h2>Usuarios</h2>
-          <p class="muted">Regenerar invalida la clave anterior.</p>
+          <p class="muted admin-section-lead">Cada tarjeta es un hotel. Abajo eliges la acción sobre la clave; la ficha del cliente agrupa planes, análisis y más.</p>
         </div>
       </div>
-      <div class="admin-stack">
+      <div class="admin-action-list" role="list">
         {% for u in users %}
-        <div class="admin-row-card admin-row-actions admin-api-user-row">
-          <div>
-            <div class="history-top">
-              <strong>{{ u.hotel_name }}</strong>
-              <span>{{ u.email }}</span>
+        <article class="admin-action-card" role="listitem">
+          <div class="admin-action-card-inner">
+            <div class="admin-action-card-top">
+              <div class="admin-user-card-identity">
+                <h3 class="admin-user-card-title">{{ u.hotel_name }}</h3>
+                <p class="admin-user-card-email">{{ u.email }}</p>
+              </div>
+              <a href="{{ url_path('/admin/users/' ~ u.id) }}" class="admin-action-card-secondary-link">
+                Ficha cliente
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </a>
             </div>
-            <p class="muted small" style="margin: 8px 0 0;">
+            <div class="admin-user-card-pills">
               {% if u.api_key %}
-              API activa · <code>{{ u.api_key_masked }}</code>
+              <span class="pill admin-user-plan-pill admin-pill-api-on">API activa</span>
+              <span class="dashboard-plan-fact admin-user-badge"><code>{{ u.api_key_masked }}</code></span>
               {% else %}
-              Sin acceso API
+              <span class="pill admin-user-plan-pill admin-pill-api-off">Sin clave</span>
+              <span class="dashboard-plan-fact admin-user-badge">Sin acceso programático</span>
               {% endif %}
-            </p>
+            </div>
+            <div class="admin-action-card-footer">
+              <div class="admin-action-card-actions" aria-label="Acciones API para {{ u.hotel_name }}">
+                {% if u.api_key %}
+                <form action="{{ url_path('/admin/api/regenerate') }}" method="post" onsubmit="return confirm('¿Regenerar clave? La anterior dejará de funcionar.');">
+                  <input type="hidden" name="user_id" value="{{ u.id }}" />
+                  <button type="submit" class="btn btn-secondary btn-sm btn-ghost-app">Regenerar clave</button>
+                </form>
+                <form action="{{ url_path('/admin/api/revoke') }}" method="post" onsubmit="return confirm('¿Revocar acceso API para este usuario?');">
+                  <input type="hidden" name="user_id" value="{{ u.id }}" />
+                  <button type="submit" class="btn btn-sm admin-btn-danger-outline">Revocar API</button>
+                </form>
+                {% else %}
+                <form action="{{ url_path('/admin/api/grant') }}" method="post">
+                  <input type="hidden" name="user_id" value="{{ u.id }}" />
+                  <button type="submit" class="btn btn-primary btn-sm">Dar acceso API</button>
+                </form>
+                {% endif %}
+              </div>
+            </div>
           </div>
-          <div class="admin-inline-actions">
-            {% if u.api_key %}
-            <form action="/admin/api/regenerate" method="post" onsubmit="return confirm('¿Regenerar clave? La anterior dejará de funcionar.');">
-              <input type="hidden" name="user_id" value="{{ u.id }}" />
-              <button type="submit" class="btn btn-secondary btn-sm">Regenerar</button>
-            </form>
-            <form action="/admin/api/revoke" method="post" onsubmit="return confirm('¿Revocar acceso API para este usuario?');">
-              <input type="hidden" name="user_id" value="{{ u.id }}" />
-              <button type="submit" class="btn btn-sm admin-btn-danger-outline">Revocar</button>
-            </form>
-            {% else %}
-            <form action="/admin/api/grant" method="post">
-              <input type="hidden" name="user_id" value="{{ u.id }}" />
-              <button type="submit" class="btn btn-primary btn-sm">Dar acceso</button>
-            </form>
-            {% endif %}
-          </div>
-        </div>
+        </article>
         {% endfor %}
       </div>
     </section>

@@ -958,7 +958,7 @@ def _monthly_generation_limit_for_plan(plan: str) -> int:
         return FREE_REPORTS_PER_MONTH
     if plan == "pro":
         return PRO_90_REPORTS_PER_MONTH
-    if plan == "pro_plus":
+    if plan in ("pro_plus", "free_trial"):
         return PRO_PLUS_REPORTS_PER_MONTH
     return FREE_REPORTS_PER_MONTH
 
@@ -1092,6 +1092,26 @@ def upload_eligibility(user: sqlite3.Row) -> Dict[str, Any]:
             }
         return {"can_upload": True, "limit_reason": None, "invite_upgrade": False, "invite_contact": False, "contact_email": contact_email}
 
+    if plan == "free_trial":
+        if generations_this_month(uid) >= PRO_PLUS_REPORTS_PER_MONTH:
+            return {
+                "can_upload": False,
+                "limit_reason": f"Has alcanzado el límite de lecturas de este mes de tu prueba extendida ({PRO_PLUS_REPORTS_PER_MONTH}).",
+                "invite_upgrade": False,
+                "invite_contact": True,
+                "contact_email": contact_email,
+            }
+        total_count = analyses_count(uid)
+        if total_count >= PRO_PLUS_MAX_ANALYSES:
+            return {
+                "can_upload": False,
+                "limit_reason": "Has llegado al límite de análisis guardados de tu prueba extendida.",
+                "invite_upgrade": True,
+                "invite_contact": True,
+                "contact_email": contact_email,
+            }
+        return {"can_upload": True, "limit_reason": None, "invite_upgrade": False, "invite_contact": False, "contact_email": contact_email}
+
     return {"can_upload": True, "limit_reason": None, "invite_upgrade": False, "invite_contact": False, "contact_email": contact_email}
 
 
@@ -1179,6 +1199,22 @@ def enforce_plan(user: sqlite3.Row, summary: Dict[str, Any]):
             )
         if analyses_count(uid) >= PRO_PLUS_MAX_ANALYSES:
             raise HTTPException(status_code=402, detail="Has llegado al límite de análisis de tu plan. Contáctanos para ampliar tu capacidad.")
+        return
+
+    if plan == "free_trial":
+        if summary["total_files"] > PRO_180_MAX_FILES:
+            raise HTTPException(
+                status_code=402,
+                detail=(
+                    f"No generamos la lectura: tu prueba extendida admite hasta {PRO_180_MAX_FILES} archivos por corrida "
+                    "(mismo tope que Pro+). Parte la carga en dos envíos si necesitas más fuentes."
+                ),
+            )
+        if analyses_count(uid) >= PRO_PLUS_MAX_ANALYSES:
+            raise HTTPException(
+                status_code=402,
+                detail="Has llegado al límite de análisis guardados de tu prueba extendida. Contrata un plan o contáctanos.",
+            )
         return
 
 

@@ -33,8 +33,10 @@ from plan_entitlements import (
     get_effective_plan,
     get_paid_plan,
     manual_override_is_configured,
+    plan_for_openai_model,
     stored_manual_override_plan,
 )
+from plans import max_upload_files_for_plan
 from services.analysis_core import enforce_plan, user_row_as_dict
 
 client = TestClient(app)
@@ -163,6 +165,26 @@ def test_effective_plan_no_override_matches_billing():
     assert get_effective_plan({"plan": "free"}) == "free"
     assert get_effective_plan({"plan": "pro"}) == "pro"
     assert get_effective_plan({"plan": "pro_plus"}) == "pro_plus"
+
+
+def test_effective_plan_manual_free_trial_returns_free_trial():
+    u = {"plan": "free", "manual_plan_override": "free_trial", "manual_plan_expires_at": None}
+    assert get_active_manual_plan(u) == "free_trial"
+    assert get_effective_plan(u) == "free_trial"
+    assert plan_for_openai_model("free_trial") == "pro_180"
+    assert max_upload_files_for_plan("free_trial") == max_upload_files_for_plan("pro_plus")
+
+
+def test_effective_plan_free_trial_active_even_if_billing_pro_plus():
+    u = {"plan": "pro_plus", "manual_plan_override": "free_trial", "manual_plan_expires_at": None}
+    assert get_effective_plan(u) == "free_trial"
+
+
+def test_effective_plan_free_trial_expired_falls_back_to_billing():
+    u = {"plan": "pro", "manual_plan_override": "free_trial", "manual_plan_expires_at": _iso_utc_past()}
+    assert get_active_manual_plan(u) is None
+    assert get_effective_plan(u) == "pro"
+    assert stored_manual_override_plan(u) == "free_trial"
 
 
 def test_paid_plan_is_only_users_plan_column_semantics():
@@ -441,6 +463,42 @@ def test_enforce_plan_pro_plus_billing_with_inferior_pro_override_keeps_pro_plus
     user_fake_pro = {**user, "plan": "pro", "manual_plan_override": None, "manual_plan_expires_at": None}
     with pytest.raises(HTTPException) as ei:
         enforce_plan(user_fake_pro, summary)
+    assert ei.value.status_code == 402
+
+
+def test_enforce_plan_free_trial_allows_very_long_date_span(monkeypatch):
+    email = _unique_email()
+    _signup(email)
+    uid = _user_id_by_email(email)
+    with db() as conn:
+        conn.execute(
+            "UPDATE users SET manual_plan_override = ?, manual_plan_expires_at = ? WHERE id = ?",
+            ("free_trial", None, uid),
+        )
+    row = _fetch_user_row(uid)
+    user = user_row_as_dict(row)
+    monkeypatch.setattr("services.analysis_core.analyses_count", lambda _uid: 0)
+    summary = _summary_pro_friendly(total_files=2, days=9000)
+    enforce_plan(user, summary)
+
+
+def test_enforce_plan_free_trial_enforces_file_count(monkeypatch):
+    from config import PRO_180_MAX_FILES
+
+    email = _unique_email()
+    _signup(email)
+    uid = _user_id_by_email(email)
+    with db() as conn:
+        conn.execute(
+            "UPDATE users SET manual_plan_override = ?, manual_plan_expires_at = ? WHERE id = ?",
+            ("free_trial", None, uid),
+        )
+    row = _fetch_user_row(uid)
+    user = user_row_as_dict(row)
+    monkeypatch.setattr("services.analysis_core.analyses_count", lambda _uid: 0)
+    summary = _summary_pro_friendly(total_files=PRO_180_MAX_FILES + 1, days=10)
+    with pytest.raises(HTTPException) as ei:
+        enforce_plan(user, summary)
     assert ei.value.status_code == 402
 
 

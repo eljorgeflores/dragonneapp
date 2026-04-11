@@ -17,7 +17,7 @@
           {% if user.hotel_size %}<span class="app-context-part">{{ user.hotel_size }}</span>{% endif %}
           {% if user.hotel_location %}<span class="app-context-part">{{ user.hotel_location }}</span>{% endif %}
         </div>
-        <span class="plan-badge-inline pill app-plan-pill {% if effective_plan == 'pro' %}pill-pro{% endif %}{% if effective_plan == 'pro_plus' %} pill-pro-plus{% endif %}">{{ plan_label }}</span>
+        <span class="plan-badge-inline pill app-plan-pill {% if effective_plan == 'pro' %}pill-pro{% endif %}{% if effective_plan == 'pro_plus' %} pill-pro-plus{% endif %}{% if effective_plan == 'free_trial' %} pill-free-trial{% endif %}">{{ plan_label }}</span>
       </div>
       <div class="app-topbar-right">
         <a href="{{ url_path('/app/account') }}" class="app-user-chip" aria-label="Ir a mi cuenta">
@@ -40,8 +40,11 @@
       <p class="dashboard-welcome-lead muted">Sube tu export, escribe qué quieres entender y genera la lectura. Todo en un solo vistazo abajo.</p>
     </div>
     <div class="dashboard-plan-strip" role="status">
-      <span class="dashboard-plan-strip-pill pill {% if effective_plan == 'pro' %}pill-pro{% endif %}{% if effective_plan == 'pro_plus' %} pill-pro-plus{% endif %}">{{ plan_label }}</span>
-      {% if effective_plan == 'pro_plus' %}
+      <span class="dashboard-plan-strip-pill pill {% if effective_plan == 'pro' %}pill-pro{% endif %}{% if effective_plan == 'pro_plus' %} pill-pro-plus{% endif %}{% if effective_plan == 'free_trial' %} pill-free-trial{% endif %}">{{ plan_label }}</span>
+      {% if effective_plan == 'free_trial' %}
+      <span class="dashboard-plan-fact">{{ pro_plus_max_files }} archivos por corrida</span>
+      <span class="dashboard-plan-fact">Sin tope de días por lectura</span>
+      {% elif effective_plan == 'pro_plus' %}
       <span class="dashboard-plan-fact">{{ pro_plus_max_files }} archivos · hasta {{ pro_180_max_days }} días</span>
       {% elif effective_plan == 'pro' %}
       <span class="dashboard-plan-fact">{{ pro_max_files }} archivos · hasta {{ pro_90_max_days }} días</span>
@@ -62,6 +65,22 @@
       {% if can_upload %}
       <form id="analyzeForm" class="analyze-form analyze-form--chat" method="post" action="{{ url_prefix }}/analyze" enctype="multipart/form-data" data-max-files="{{ max_files_per_analysis }}">
         <div class="upload-block">
+        <div class="template-strip" aria-labelledby="templateStripTitle">
+          <h3 id="templateStripTitle" class="template-strip-heading">Plantillas con datos de ejemplo</h3>
+          <p class="template-strip-lead muted small">Para ver exactamente qué columnas conviene traer y cómo van ordenadas, descarga una plantilla. Los valores son ficticios: sirven para enseñar el formato, no para tomar decisiones.</p>
+          <ol class="template-strip-steps">
+            <li>Elige <strong>reservas</strong> si tu export trae <strong>una fila por reserva</strong> (fechas de entrada/salida, canal, importes). Elige <strong>diario</strong> si tu export ya viene <strong>agregado por día</strong> (una fila por fecha).</li>
+            <li>Abre la plantilla en Excel o Google Sheets. <strong>Deja intacta la primera fila</strong> (títulos de columnas). Borra solo las filas de ejemplo y sustitúyelas por tus datos.</li>
+            <li>Guarda como CSV (separado por comas) o Excel <strong>.xlsx</strong> y súbelo en el recuadro de abajo.</li>
+            <li>En el mensaje para Pullso, escribe concretamente qué quieres entender (mínimo {{ min_business_context_len }} caracteres). Puedes copiar y adaptar este ejemplo: <span class="template-strip-sample" tabindex="0">Quiero ver margen por canal y si compensa empujar venta directa frente a Booking en el rango de fechas del archivo.</span></li>
+          </ol>
+          <div class="template-strip-actions" role="group" aria-label="Descargar plantillas">
+            <a class="btn btn-secondary btn-sm" href="{{ url_prefix }}/static/plantillas/pullso_plantilla_reservas.csv" download="pullso_plantilla_reservas.csv">CSV — una fila por reserva</a>
+            <a class="btn btn-secondary btn-sm" href="{{ url_prefix }}/static/plantillas/pullso_plantilla_reservas.xlsx" download="pullso_plantilla_reservas.xlsx">Excel — una fila por reserva</a>
+            <a class="btn btn-secondary btn-sm" href="{{ url_prefix }}/static/plantillas/pullso_plantilla_diario.csv" download="pullso_plantilla_diario.csv">CSV — una fila por día</a>
+          </div>
+          <p class="template-strip-foot muted small">Si tu PMS exporta títulos en español (por ejemplo <code>fecha</code>, <code>canal</code>, <code>ingresos</code>), en muchos casos también funcionan: no hace falta que coincidan letra por letra con la plantilla.</p>
+        </div>
         <p id="fileSelectionSummary" class="field-hint muted small file-selection-summary" role="status" aria-live="polite"></p>
         <div class="dropzone light dropzone--hero dropzone--compact" id="dropzone">
           <div class="dropzone-hitbox">
@@ -131,6 +150,7 @@
         <div class="side-panel-details-body">
           <div class="upload-coach" role="region" aria-label="Guía para subir reportes">
             <ul class="upload-coach-list upload-coach-list--tight">
+              <li><strong>Plantillas:</strong> arriba del área de carga hay archivos de ejemplo (CSV/Excel) con columnas típicas; úsalos como referencia o para una primera prueba.</li>
               <li><strong>Formato:</strong> CSV o Excel desde PMS, channel o motor.</li>
               <li><strong>Mejor señal:</strong> fechas, canal/fuente e ingresos o ADR.</li>
               <li><strong>Excel (varias pestañas):</strong>
@@ -140,7 +160,7 @@
                 leemos <strong>todas</strong> las pestañas de cada libro en esta corrida.
                 {% endif %}
               </li>
-              <li><strong>Rango de fechas:</strong> tu plan permite hasta <strong>{{ plan_days_limit }} días</strong> por análisis (gratis {{ free_max_days }}, Pro {{ pro_90_max_days }}, Pro+ {{ pro_180_max_days }}). Si el export supera ese rango, <strong>no generamos la lectura</strong> y te decimos el motivo; tus archivos no se alteran.</li>
+              <li><strong>Rango de fechas:</strong> {% if plan_days_unlimited %}con tu <strong>prueba extendida</strong> no aplicamos tope de días por lectura (sí revisamos datos incoherentes o rangos absurdos).{% else %}tu plan permite hasta <strong>{{ plan_days_limit }} días</strong> por análisis (gratis {{ free_max_days }}, Pro {{ pro_90_max_days }}, Pro+ {{ pro_180_max_days }}). Si el export supera ese rango, <strong>no generamos la lectura</strong> y te decimos el motivo{% endif %}; tus archivos no se alteran.</li>
               {% if effective_plan == 'free' %}
               <li class="upload-coach-highlight"><strong>Gratis:</strong> un archivo por corrida. ¿Varias fuentes? <a href="{{ url_path('/app/account') }}">Amplía plan</a>.</li>
               {% else %}
@@ -184,10 +204,12 @@
         <span>Arch.</span>
         <span>Días</span>
         <span>Fuentes</span>
+        <span class="history-col-actions-head" aria-hidden="true"></span>
       </div>
       <div class="history-grid" id="historyGrid">
         {% for item in analyses %}
         {% set re = item.resumen_ejecutivo or '' %}
+        <div class="history-row">
         <button type="button" class="history-item" data-analysis-id="{{ item.id }}">
           <span class="history-col history-col-date">{{ item.created_at }}</span>
           <span class="history-col history-col-title">
@@ -200,6 +222,10 @@
           <span class="history-col history-col-days">{{ item.days_covered }}</span>
           <span class="history-col history-col-reports">{{ item.reports_detected }}</span>
         </button>
+        <button type="button" class="history-delete-btn" data-analysis-id="{{ item.id }}" aria-label="Eliminar esta lectura del historial" title="Eliminar del historial">
+          <svg class="history-delete-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14zM10 11v6M14 11v6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        </div>
         {% endfor %}
       </div>
     </div>

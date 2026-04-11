@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block title %}Admin — Pullso{% endblock %}
-{% block body_class %}page-admin{% endblock %}
+{% block body_class %}page-app page-admin{% endblock %}
 {% block body %}
 <div class="app-shell admin-panel">
   <header class="app-topbar">
@@ -8,11 +8,19 @@
       <a href="{{ url_path('/admin') }}" class="brand-link app-brand-link" aria-label="Pullso — Administración">
         <img class="brand-logo app-pullso-logo" src="{{ url_prefix }}/static/branding/pullso-logo.svg" alt="Pullso" width="120" height="30" decoding="async" />
       </a>
-      <div class="app-context muted">Panel admin · {{ current_user['email'] }}</div>
-      <div class="top-actions">
-        <a href="/admin/admins" class="btn btn-secondary btn-sm">Administradores</a>
-        <a href="/admin/api" class="btn btn-secondary btn-sm">Acceso API</a>
-        <a href="/app" class="btn btn-secondary btn-sm">Volver al panel</a>
+      <div class="app-context">
+        <div class="app-context-track muted">
+          <span class="app-context-part">Administración Pullso</span>
+        </div>
+        <span class="plan-badge-inline pill app-plan-pill app-plan-pill--admin-nav" aria-hidden="true">Admin</span>
+      </div>
+      <div class="app-topbar-right">
+        <div class="top-actions">
+          <a href="{{ url_path('/admin/admins') }}" class="btn btn-secondary btn-sm btn-ghost-app">Administradores</a>
+          <a href="{{ url_path('/admin/api') }}" class="btn btn-secondary btn-sm btn-ghost-app">Acceso API</a>
+          <a href="{{ url_path('/app') }}" class="btn btn-secondary btn-sm btn-ghost-app">Panel Pullso</a>
+          <form method="post" action="{{ url_path('/logout') }}" class="logout-form"><button class="btn btn-secondary btn-sm btn-ghost-app" type="submit">Salir</button></form>
+        </div>
       </div>
     </div>
   </header>
@@ -24,59 +32,125 @@
     <div class="admin-flash admin-flash-warn" role="status">Ese usuario ya no existe.</div>
     {% endif %}
 
-    <section class="dashboard-welcome admin-page-intro">
-      <h1 class="dashboard-page-title">Uso de clientes</h1>
-      <p class="dashboard-page-desc muted">Actividad en Pullso: hoteles activos, análisis y uso del producto.</p>
+    <section class="dashboard-welcome dashboard-welcome--compact" aria-label="Resumen del panel de administración">
+      <div class="dashboard-welcome-top">
+        <h1 class="dashboard-page-title">Panel de administración</h1>
+        <p class="dashboard-welcome-lead muted">Supervisa el uso de los hoteles, ajusta planes y facturación, gestiona acceso a la API y al equipo admin. Cada hotel se abre en su propia ficha con acciones detalladas.</p>
+      </div>
+      <p class="admin-welcome-email muted small" aria-label="Sesión actual">{{ current_user['email'] }}</p>
     </section>
 
-    <section class="dashboard-hero light-card">
-      <div>
+    <section class="admin-capabilities light-card" aria-label="Qué puedes hacer en este panel">
+      <h2 class="admin-capabilities-title">En este panel</h2>
+      <ul class="admin-capabilities-grid">
+        <li class="admin-capability">
+          <span class="admin-capability-icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 21V10M4 10l4-7 4 3 4-6 4 10M9 10v11M13 10v11M17 10v11" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <div>
+            <strong class="admin-capability-name">Clientes y cuentas</strong>
+            <p class="muted small admin-capability-desc">Listado de hoteles, snapshot de actividad, y por usuario: plan base (Stripe), acceso manual, restablecer contraseña, borrar análisis y eliminar cuenta.</p>
+          </div>
+        </li>
+        <li class="admin-capability">
+          <span class="admin-capability-icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z" stroke="currentColor" stroke-width="1.4"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82 1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <div>
+            <strong class="admin-capability-name">Acceso API</strong>
+            <p class="muted small admin-capability-desc">Generar, regenerar o revocar claves por hotel. Los límites de uso de la API se aplican solo a quien tenga clave activa.</p>
+          </div>
+        </li>
+        <li class="admin-capability">
+          <span class="admin-capability-icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zm12 2v6M19 17h6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <div>
+            <strong class="admin-capability-name">Equipo administrador</strong>
+            <p class="muted small admin-capability-desc">Los correos en configuración del servidor siempre entran. Aquí asignas o quitas <code class="admin-code-inline">is_admin</code> al resto de usuarios registrados.</p>
+          </div>
+        </li>
+      </ul>
+    </section>
+
+    <section class="dashboard-hero light-card admin-snapshot-card">
+      <div class="admin-snapshot-intro">
         <div class="eyebrow">Visión general</div>
         <h2 class="admin-card-heading">Snapshot</h2>
-        <p class="lede small">Mira qué hoteles están activos, cada cuándo entran y cuánto analizan.</p>
+        <p class="lede small">Hoteles registrados, actividad reciente (≤30 días) y volumen de análisis y archivos en toda la plataforma.</p>
       </div>
-      <div class="hero-plan-box">
-        <div class="pill">Totales</div>
-        <div class="mini-kpis">
-          <div>
-            <span>Hoteles</span>
-            <strong>{{ totals.total_hotels }}</strong>
-          </div>
-          <div>
-            <span>Activos (≤30 días)</span>
-            <strong>{{ totals.active_last_30d }}</strong>
-          </div>
+      <div class="admin-snapshot-kpis" role="group" aria-label="Totales globales">
+        <div class="admin-kpi-tile">
+          <span class="admin-kpi-label">Hoteles</span>
+          <strong class="admin-kpi-value">{{ totals.total_hotels }}</strong>
         </div>
-        <div class="mini-highlight">
-          <p class="muted">Total análisis: {{ totals.total_analyses }} · Archivos subidos: {{ totals.total_files }}.</p>
+        <div class="admin-kpi-tile">
+          <span class="admin-kpi-label">Activos (≤30 días)</span>
+          <strong class="admin-kpi-value">{{ totals.active_last_30d }}</strong>
+        </div>
+        <div class="admin-kpi-tile">
+          <span class="admin-kpi-label">Análisis totales</span>
+          <strong class="admin-kpi-value">{{ totals.total_analyses }}</strong>
+        </div>
+        <div class="admin-kpi-tile">
+          <span class="admin-kpi-label">Archivos subidos</span>
+          <strong class="admin-kpi-value">{{ totals.total_files }}</strong>
         </div>
       </div>
     </section>
 
-    <section class="history-card light-card">
-      <div class="section-head">
+    <section class="history-card light-card admin-users-section">
+      <div class="section-head section-head--minimal admin-section-head">
         <div>
           <h2>Hoteles y usuarios</h2>
-          <p class="muted">Ordenados por actividad reciente. Pulsa una fila para gestionar plan, borrar análisis o eliminar cuenta.</p>
+          <p class="muted admin-section-lead">Ordenados por actividad reciente. Abre una ficha para cambiar planes (base y manual), enviar restablecimiento de contraseña, borrar análisis concretos o eliminar la cuenta.</p>
         </div>
       </div>
-      <div class="admin-stack">
+      <div class="admin-user-list" role="list">
         {% for u in users %}
-        <a href="/admin/users/{{ u.id }}" class="admin-row-card admin-row-link">
-          <div class="history-top">
-            <strong>{{ u.hotel_name }}</strong>
-            <span>{{ u.email }}</span>
-          </div>
-          <p class="muted small" style="margin: 8px 0 0;">
-            Plan {{ u.plan_label }}{% if u.manual_override_active %} (incluye manual){% endif %}
-            {% if u.paid_plan_label != u.plan_label %}· facturación {{ u.paid_plan_label }}{% endif %}
-            · {{ u.total_analyses }} análisis · {{ u.total_files }} archivos en análisis.
-          </p>
-          <div class="history-meta">
-            <span>Creado: {{ u.created_at[:10] }}</span>
-            <span>Último login: {{ u.last_login_at or 'Nunca' }}</span>
-            <span>Logins: {{ u.login_count }}</span>
-            <span>Última actividad: {{ u.last_activity or 'Sin datos' }}</span>
+        <a href="{{ url_path('/admin/users/' ~ u.id) }}" class="admin-user-card" role="listitem">
+          <div class="admin-user-card-main">
+            <div class="admin-user-card-top">
+              <div class="admin-user-card-identity">
+                <h3 class="admin-user-card-title">{{ u.hotel_name }}</h3>
+                <p class="admin-user-card-email">{{ u.email }}</p>
+              </div>
+              <span class="admin-user-card-cta">
+                <span>Gestionar</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+            </div>
+            <div class="admin-user-card-pills">
+              <span class="pill app-plan-pill admin-user-plan-pill {% if u.effective_plan == 'pro' %}pill-pro{% endif %}{% if u.effective_plan == 'pro_plus' %} pill-pro-plus{% endif %}{% if u.effective_plan == 'free_trial' %} pill-free-trial{% endif %}">{{ u.plan_label }}</span>
+              {% if u.manual_override_active %}
+              <span class="dashboard-plan-fact admin-user-badge">Incluye acceso manual</span>
+              {% endif %}
+              {% if u.paid_plan_label != u.plan_label %}
+              <span class="dashboard-plan-fact admin-user-badge">Facturación: {{ u.paid_plan_label }}</span>
+              {% endif %}
+            </div>
+            <div class="admin-user-card-stats">
+              <span class="dashboard-plan-fact"><strong>{{ u.total_analyses }}</strong> análisis</span>
+              <span class="dashboard-plan-fact"><strong>{{ u.total_files }}</strong> archivos</span>
+            </div>
+            <dl class="admin-user-meta">
+              <div class="admin-user-meta-item">
+                <dt>Alta</dt>
+                <dd>{{ u.created_at[:10] }}</dd>
+              </div>
+              <div class="admin-user-meta-item">
+                <dt>Último login</dt>
+                <dd>{% if u.last_login_at %}{{ u.last_login_at }}{% else %}Nunca{% endif %}</dd>
+              </div>
+              <div class="admin-user-meta-item">
+                <dt>Entradas</dt>
+                <dd>{{ u.login_count }}</dd>
+              </div>
+              <div class="admin-user-meta-item">
+                <dt>Última actividad</dt>
+                <dd>{% if u.last_activity %}{{ u.last_activity }}{% else %}Sin datos{% endif %}</dd>
+              </div>
+            </dl>
           </div>
         </a>
         {% endfor %}

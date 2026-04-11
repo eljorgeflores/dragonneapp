@@ -16,7 +16,7 @@
           {% if user.hotel_name %}<span class="app-context-part">{{ user.hotel_name }}</span>{% endif %}
           {% if user.hotel_category %}<span class="app-context-part">{{ user.hotel_category }}</span>{% endif %}
         </div>
-        <span class="plan-badge-inline pill app-plan-pill {% if effective_plan == 'pro' %}pill-pro{% endif %}{% if effective_plan == 'pro_plus' %} pill-pro-plus{% endif %}">{{ plan_label }}</span>
+        <span class="plan-badge-inline pill app-plan-pill {% if effective_plan == 'pro' %}pill-pro{% endif %}{% if effective_plan == 'pro_plus' %} pill-pro-plus{% endif %}{% if effective_plan == 'free_trial' %} pill-free-trial{% endif %}">{{ plan_label }}</span>
       </div>
       <div class="app-topbar-right">
         <a href="{{ url_path('/app/account') }}" class="app-user-chip app-user-chip--active" aria-label="Mi cuenta" aria-current="page">
@@ -45,7 +45,7 @@
         <p class="dashboard-page-desc muted">Perfil del hotel, facturación y planes en un solo lugar.</p>
       </div>
       <div class="account-page-head-aside">
-        <span class="pill account-page-head-plan {% if effective_plan == 'pro' %}pill-pro{% endif %}{% if effective_plan == 'pro_plus' %} pill-pro-plus{% endif %}">Plan {{ plan_label }}</span>
+        <span class="pill account-page-head-plan {% if effective_plan == 'pro' %}pill-pro{% endif %}{% if effective_plan == 'pro_plus' %} pill-pro-plus{% endif %}{% if effective_plan == 'free_trial' %} pill-free-trial{% endif %}">Plan {{ plan_label }}</span>
         <a href="{{ url_path('/onboarding') }}" class="btn btn-secondary btn-sm btn-ghost-app">Editar perfil</a>
       </div>
     </header>
@@ -119,7 +119,7 @@
             <dt>Booking.com</dt>
             <dd>{% if user.hotel_booking_url %}<a href="{{ user.hotel_booking_url }}" target="_blank" rel="noopener">Ver listado</a>{% else %}—{% endif %}</dd>
             <dt>Plan actual</dt>
-            <dd><span class="pill {% if effective_plan == 'pro' %}pill-pro{% endif %}{% if effective_plan == 'pro_plus' %} pill-pro-plus{% endif %}">Plan {{ plan_label }}</span></dd>
+            <dd><span class="pill {% if effective_plan == 'pro' %}pill-pro{% endif %}{% if effective_plan == 'pro_plus' %} pill-pro-plus{% endif %}{% if effective_plan == 'free_trial' %} pill-free-trial{% endif %}">Plan {{ plan_label }}</span></dd>
           </dl>
           <p class="account-profile-body-actions"><a href="{{ url_path('/onboarding') }}" class="btn btn-secondary btn-sm btn-ghost-app">Editar datos del hotel</a></p>
         </div>
@@ -135,7 +135,7 @@
         <h3 class="account-subtitle">Tu suscripción</h3>
         <dl class="account-dl account-dl--compact">
           <dt>Plan actual</dt>
-          <dd><span class="pill {% if effective_plan == 'pro' %}pill-pro{% endif %}{% if effective_plan == 'pro_plus' %} pill-pro-plus{% endif %}">Plan {{ plan_label }}</span></dd>
+          <dd><span class="pill {% if effective_plan == 'pro' %}pill-pro{% endif %}{% if effective_plan == 'pro_plus' %} pill-pro-plus{% endif %}{% if effective_plan == 'free_trial' %} pill-free-trial{% endif %}">Plan {{ plan_label }}</span></dd>
           <dt>Estado</dt>
           <dd>{% if paid_plan == 'free' %}Sin suscripción activa{% else %}Activo · Facturación mensual{% endif %}</dd>
         </dl>
@@ -173,7 +173,11 @@
           </div>
         </summary>
         <div class="account-plans-collapsible-body">
+          {% if effective_plan == 'free_trial' %}
+          <p class="muted small account-plans-lead">Tienes <strong>prueba extendida</strong> concedida por el equipo: sin tope de días por lectura; archivos por corrida, lecturas al mes y análisis guardados siguen los mismos topes que Pro+. Cuando termine la prueba, puedes contratar Pro o Pro+ aquí.</p>
+          {% else %}
           <p class="muted small account-plans-lead">Elige Pro o Pro+. En el siguiente paso añades tarjeta; la suscripción queda activa al completar el pago.</p>
+          {% endif %}
           <div class="account-plans">
             <div class="account-plan-card {% if effective_plan == 'pro' %}account-plan-current{% endif %}">
               <div class="account-plan-name">Pro</div>

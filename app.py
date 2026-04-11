@@ -369,8 +369,15 @@ def dashboard(request: Request):
         })
     eligibility = upload_eligibility(user)
     eff = get_effective_plan(user)
+    plan_days_unlimited = eff == "free_trial"
     plan_days_limit = (
-        FREE_MAX_DAYS if eff == "free" else PRO_90_MAX_DAYS if eff == "pro" else PRO_180_MAX_DAYS
+        None
+        if plan_days_unlimited
+        else FREE_MAX_DAYS
+        if eff == "free"
+        else PRO_90_MAX_DAYS
+        if eff == "pro"
+        else PRO_180_MAX_DAYS
     )
     _seo = noindex_page_seo("/app", "Nueva lectura — Pullso", "Área autenticada (no indexar).")
     return templates.TemplateResponse("app.html", {
@@ -383,6 +390,7 @@ def dashboard(request: Request):
         "max_files_per_analysis": max_upload_files_for_plan(eff),
         "excel_max_sheets_per_file": EXCEL_MAX_SHEETS_PER_FILE,
         "plan_days_limit": plan_days_limit,
+        "plan_days_unlimited": plan_days_unlimited,
         "pro_max_files": PRO_90_MAX_FILES,
         "pro_plus_max_files": PRO_180_MAX_FILES,
         "free_max_days": FREE_MAX_DAYS,

@@ -55,6 +55,11 @@ const LOADING_PHASES = [
   'Redactando la lectura comercial (puede tardar un minuto más)…',
 ];
 
+const DELETE_ANALYSIS_CONFIRM =
+  '¿Eliminar esta lectura de tu historial?\n\n' +
+  'Se borrará de forma permanente: no podrás recuperarla ni volver a abrirla desde Pullso. Los enlaces compartidos dejarán de funcionar y no podrás usarla como referencia o comparativa en el producto para lecturas futuras.\n\n' +
+  'El cupo de lecturas de tu mes (UTC) no se restablece al borrar.';
+
 function getMaxFiles() {
   const raw = (form && form.dataset.maxFiles) || (appShell && appShell.dataset.maxFiles) || '5';
   const v = parseInt(raw, 10);
@@ -200,6 +205,10 @@ function buildPlanLimitErrorHtml(rawError) {
   } else if (errLower.includes('pro+ admite hasta') && errLower.includes('archivos por corrida')) {
     tips.push(
       'En <strong>Pro+</strong> hay un máximo de archivos por envío: divide la carga en dos envíos si necesitas todas las fuentes.'
+    );
+  } else if (errLower.includes('prueba extendida admite hasta') && errLower.includes('archivos por corrida')) {
+    tips.push(
+      'Tu <strong>prueba extendida</strong> usa el mismo tope de archivos por envío que Pro+: divide la carga si necesitas más fuentes en una sola lectura.'
     );
   }
 
@@ -395,7 +404,14 @@ function renderSummary(summary, plan) {
     }
   }
   if (planBadge) {
-    planBadge.textContent = plan === 'pro_plus' ? 'Pro+' : plan === 'pro' ? 'PRO' : 'GRATIS';
+    planBadge.textContent =
+      plan === 'pro_plus'
+        ? 'Pro+'
+        : plan === 'pro'
+          ? 'PRO'
+          : plan === 'free_trial'
+            ? 'PRUEBA'
+            : 'GRATIS';
   }
   const cards = [
     { label: 'Archivos (carga)', value: summary.total_files },
@@ -560,6 +576,8 @@ function appendToHistory(item) {
   if (!card) return;
   const grid = card.querySelector('#historyGrid');
   const empty = card.querySelector('#historyEmpty');
+  const row = document.createElement('div');
+  row.className = 'history-row';
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'history-item';
@@ -578,14 +596,88 @@ function appendToHistory(item) {
     <span class="history-col history-col-days">${item.days_covered ?? 0}</span>
     <span class="history-col history-col-reports">${item.reports_detected}</span>
   `;
+  const del = document.createElement('button');
+  del.type = 'button';
+  del.className = 'history-delete-btn';
+  del.dataset.analysisId = String(item.id);
+  del.setAttribute('aria-label', 'Eliminar esta lectura del historial');
+  del.title = 'Eliminar del historial';
+  del.innerHTML =
+    '<svg class="history-delete-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14zM10 11v6M14 11v6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  row.appendChild(btn);
+  row.appendChild(del);
   if (grid) {
-    grid.insertBefore(btn, grid.firstChild);
+    grid.insertBefore(row, grid.firstChild);
   } else if (empty) {
     const newGrid = document.createElement('div');
     newGrid.className = 'history-grid';
     newGrid.id = 'historyGrid';
-    newGrid.appendChild(btn);
+    newGrid.appendChild(row);
     empty.parentNode.replaceChild(newGrid, empty);
+  }
+}
+
+async function handleDeleteHistoryAnalysis(analysisId, triggerBtn) {
+  const id = analysisId != null ? String(analysisId).trim() : '';
+  if (!id || !window.confirm(DELETE_ANALYSIS_CONFIRM)) return;
+  if (triggerBtn) triggerBtn.disabled = true;
+  try {
+    const res = await fetch(appUrlPath(`/analysis/${id}`), {
+      method: 'DELETE',
+      headers: { Accept: 'application/json' },
+    });
+    let data = {};
+    try {
+      data = await res.json();
+    } catch {
+      data = {};
+    }
+    if (!res.ok || !data.ok) {
+      const msg =
+        data.error ||
+        (res.status === 401
+          ? 'Sesión vencida o no válida. Inicia sesión de nuevo.'
+          : 'No se pudo eliminar. Inténtalo de nuevo.');
+      window.alert(msg);
+      if (triggerBtn) triggerBtn.disabled = false;
+      return;
+    }
+    const row =
+      triggerBtn?.closest('.history-row') ||
+      document.querySelector(`.history-item[data-analysis-id="${CSS.escape(id)}"]`)?.closest('.history-row');
+    row?.remove();
+    const grid = document.getElementById('historyGrid');
+    if (grid && !grid.querySelector('.history-row')) {
+      const empty = document.createElement('div');
+      empty.className = 'empty-state';
+      empty.id = 'historyEmpty';
+      empty.textContent = 'Aún no hay lecturas guardadas. Carga un export y genera la primera.';
+      grid.replaceWith(empty);
+    }
+    if (String(currentAnalysisId) === String(id)) {
+      currentAnalysisId = null;
+      currentShareUrl = null;
+      if (downloadPdfBtn) downloadPdfBtn.disabled = true;
+      setShareControlsEnabled(false);
+      hideResultHeroAndSource();
+      if (resultsCard) resultsCard.classList.add('hidden');
+      if (tableroKpis) tableroKpis.innerHTML = '';
+      if (tableroLeft) tableroLeft.innerHTML = '';
+      if (tableroCenter) tableroCenter.innerHTML = '';
+      if (tableroRight) tableroRight.innerHTML = '';
+      if (paywallEl) {
+        paywallEl.classList.add('hidden');
+        paywallEl.innerHTML = '';
+      }
+      if (uploadNoticesPanel) {
+        uploadNoticesPanel.classList.add('hidden');
+        uploadNoticesPanel.innerHTML = '';
+      }
+      if (resultMeta) resultMeta.textContent = '';
+    }
+  } catch (err) {
+    window.alert(err.message || 'Error de red.');
+    if (triggerBtn) triggerBtn.disabled = false;
   }
 }
 
@@ -783,9 +875,16 @@ document.querySelectorAll('.tablero-toggle-bar').forEach(bar => {
   });
 });
 
-document.querySelector('.history-card')?.addEventListener('click', async (e) => {
-  const item = e.target.closest('[data-analysis-id]');
-  if (!item) return;
+document.querySelector('.history-card')?.addEventListener('click', async e => {
+  const delBtn = e.target.closest('.history-delete-btn');
+  if (delBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    await handleDeleteHistoryAnalysis(delBtn.dataset.analysisId, delBtn);
+    return;
+  }
+  const item = e.target.closest('.history-item');
+  if (!item || !item.dataset.analysisId) return;
   const id = item.dataset.analysisId;
   markHistorySelection(id);
   const res = await fetch(appUrlPath(`/analysis/${id}`));

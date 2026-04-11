@@ -97,6 +97,7 @@ def admin_home(request: Request):
             "id": r["id"],
             "hotel_name": r["hotel_name"],
             "email": r["email"],
+            "effective_plan": eff,
             "plan_label": plan_label(eff),
             "paid_plan_label": plan_label(paid),
             "manual_override_active": get_active_manual_plan(r) is not None,
