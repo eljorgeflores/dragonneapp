@@ -3612,27 +3612,162 @@ input:focus, textarea:focus {
   gap: 0;
 }
 .page-app .template-strip {
+  margin-bottom: 18px;
+  padding: 20px 20px 18px;
+  border-radius: 16px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: linear-gradient(165deg, #ffffff 0%, #f8fafc 48%, #fffefb 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.8) inset,
+    0 12px 40px -18px rgba(15, 23, 42, 0.18);
+}
+.page-app .template-strip-header {
   margin-bottom: 16px;
-  padding: 14px 16px;
-  border: 1px dashed #cbd5e1;
-  border-radius: 12px;
-  background: #f8fafc;
+  padding-bottom: 2px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+.page-app .template-strip-eyebrow {
+  margin: 0 0 6px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-primary-dark, #d96d00);
 }
 .page-app .template-strip-heading {
+  margin: 0 0 8px;
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.25;
+  color: #0f172a;
+}
+.page-app .template-strip-lead {
+  margin: 0;
+  max-width: 62ch;
+  line-height: 1.55;
+  font-size: 0.8125rem;
+}
+.page-app .template-pick-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  align-items: stretch;
+}
+@media (max-width: 900px) {
+  .page-app .template-pick-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.page-app .template-pick-card {
+  position: relative;
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.07);
+  box-shadow: 0 4px 20px -8px rgba(15, 23, 42, 0.12);
+  overflow: hidden;
+}
+.page-app .template-pick-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, var(--accent-primary, #f6a905), var(--accent-primary-strong, #f07e07));
+  border-radius: 14px 0 0 14px;
+}
+.page-app .template-pick-card--daily::before {
+  background: linear-gradient(180deg, #94a3b8, #64748b);
+}
+.page-app .template-pick-card-inner {
+  padding: 16px 16px 16px 18px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 100%;
+}
+.page-app .template-pick-badge {
+  display: inline-flex;
+  align-self: flex-start;
+  margin-bottom: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent-primary-dark, #b45309);
+  background: linear-gradient(135deg, rgba(246, 169, 5, 0.18), rgba(240, 126, 7, 0.12));
+  border: 1px solid rgba(240, 126, 7, 0.2);
+}
+.page-app .template-pick-badge--muted {
+  color: #475569;
+  background: rgba(148, 163, 184, 0.16);
+  border-color: rgba(100, 116, 139, 0.2);
+}
+.page-app .template-pick-title {
   margin: 0 0 6px;
-  font-size: 0.9375rem;
+  font-size: 1rem;
   font-weight: 600;
   letter-spacing: -0.02em;
   color: #0f172a;
 }
-.page-app .template-strip-lead {
-  margin: 0 0 10px;
-  max-width: 68ch;
+.page-app .template-pick-summary {
+  margin: 0 0 12px;
   line-height: 1.5;
 }
+.page-app .template-pick-label {
+  margin: 0 0 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+.page-app .template-pick-list {
+  margin: 0 0 14px;
+  padding-left: 1.15rem;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: #334155;
+  flex: 1;
+}
+.page-app .template-pick-list li {
+  margin-bottom: 7px;
+}
+.page-app .template-pick-list li:last-child {
+  margin-bottom: 0;
+}
+.page-app .template-pick-list strong {
+  font-weight: 600;
+  color: #0f172a;
+}
+.page-app .template-pick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 4px;
+}
+.page-app .template-pick-btn {
+  font-weight: 600;
+}
+.page-app .template-strip-howto {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(15, 23, 42, 0.07);
+}
+.page-app .template-howto-title {
+  margin: 0 0 8px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #0f172a;
+  letter-spacing: -0.015em;
+}
 .page-app .template-strip-steps {
-  margin: 0 0 12px 1.1rem;
-  padding: 0;
+  margin: 0;
+  padding-left: 1.1rem;
   font-size: 0.8125rem;
   line-height: 1.55;
   color: #334155;
@@ -3643,22 +3778,17 @@ input:focus, textarea:focus {
 .page-app .template-strip-steps li:last-child {
   margin-bottom: 0;
 }
-.page-app .template-strip-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 10px;
-}
 .page-app .template-strip-foot {
-  margin: 0;
+  margin: 12px 0 0;
   max-width: 72ch;
   line-height: 1.45;
+  font-size: 0.75rem;
 }
 .page-app .template-strip-foot code {
   font-size: 0.78em;
   padding: 1px 5px;
   border-radius: 4px;
-  background: #e2e8f0;
+  background: rgba(226, 232, 240, 0.9);
   color: #0f172a;
 }
 .page-app .template-strip-sample {

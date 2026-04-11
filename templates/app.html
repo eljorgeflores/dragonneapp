@@ -66,20 +66,61 @@
       <form id="analyzeForm" class="analyze-form analyze-form--chat" method="post" action="{{ url_prefix }}/analyze" enctype="multipart/form-data" data-max-files="{{ max_files_per_analysis }}">
         <div class="upload-block">
         <div class="template-strip" aria-labelledby="templateStripTitle">
-          <h3 id="templateStripTitle" class="template-strip-heading">Plantillas con datos de ejemplo</h3>
-          <p class="template-strip-lead muted small">Para ver exactamente qué columnas conviene traer y cómo van ordenadas, descarga una plantilla. Los valores son ficticios: sirven para enseñar el formato, no para tomar decisiones.</p>
-          <ol class="template-strip-steps">
-            <li>Elige <strong>reservas</strong> si tu export trae <strong>una fila por reserva</strong> (fechas de entrada/salida, canal, importes). Elige <strong>diario</strong> si tu export ya viene <strong>agregado por día</strong> (una fila por fecha).</li>
-            <li>Abre la plantilla en Excel o Google Sheets. <strong>Deja intacta la primera fila</strong> (títulos de columnas). Borra solo las filas de ejemplo y sustitúyelas por tus datos.</li>
-            <li>Guarda como CSV (separado por comas) o Excel <strong>.xlsx</strong> y súbelo en el recuadro de abajo.</li>
-            <li>En el mensaje para Pullso, escribe concretamente qué quieres entender (mínimo {{ min_business_context_len }} caracteres). Puedes copiar y adaptar este ejemplo: <span class="template-strip-sample" tabindex="0">Quiero ver margen por canal y si compensa empujar venta directa frente a Booking en el rango de fechas del archivo.</span></li>
-          </ol>
-          <div class="template-strip-actions" role="group" aria-label="Descargar plantillas">
-            <a class="btn btn-secondary btn-sm" href="{{ url_prefix }}/static/plantillas/pullso_plantilla_reservas.csv" download="pullso_plantilla_reservas.csv">CSV — una fila por reserva</a>
-            <a class="btn btn-secondary btn-sm" href="{{ url_prefix }}/static/plantillas/pullso_plantilla_reservas.xlsx" download="pullso_plantilla_reservas.xlsx">Excel — una fila por reserva</a>
-            <a class="btn btn-secondary btn-sm" href="{{ url_prefix }}/static/plantillas/pullso_plantilla_diario.csv" download="pullso_plantilla_diario.csv">CSV — una fila por día</a>
+          <header class="template-strip-header">
+            <p class="template-strip-eyebrow">Plantillas de referencia</p>
+            <h3 id="templateStripTitle" class="template-strip-heading">Aquí tienes el formato que Pullso lee mejor</h3>
+            <p class="template-strip-lead muted small">Descarga la que se parezca a tu export real. Los números son <strong>ficticios</strong>: sirven para ver columnas y orden, no para decidir sobre tu hotel.</p>
+          </header>
+
+          <div class="template-pick-grid" role="list">
+            <article class="template-pick-card template-pick-card--reservations" role="listitem">
+              <div class="template-pick-card-inner">
+                <div class="template-pick-badge" aria-hidden="true">Detalle</div>
+                <h4 class="template-pick-title">Una fila por reserva</h4>
+                <p class="template-pick-summary muted small">Export típico desde PMS o channel: cada reserva es una línea, con fechas, canal, importes y noches.</p>
+                <p class="template-pick-label">Úsala cuando quieras entender…</p>
+                <ul class="template-pick-list">
+                  <li><strong>Mix y share por canal</strong> (peso de Booking, Expedia, directo, OTAs y terceros).</li>
+                  <li><strong>Comisiones y margen por fuente</strong>, si traes neto o bruto y comisión.</li>
+                  <li><strong>ADR y dispersión de tarifa</strong> por reserva o por canal, según lo que exportes.</li>
+                  <li><strong>Pick-up y anticipación de venta</strong> si incluyes <em>fecha de reserva</em> y <em>fecha de llegada</em>: se leen mejor los plazos con los que se cuelan las ventas.</li>
+                  <li><strong>Cancelaciones y no-show</strong> si exportas el estado de cada reserva.</li>
+                </ul>
+                <div class="template-pick-actions" role="group" aria-label="Descargar plantilla por reserva">
+                  <a class="btn btn-secondary btn-sm template-pick-btn" href="{{ url_prefix }}/static/plantillas/pullso_plantilla_reservas.csv" download="pullso_plantilla_reservas.csv">CSV</a>
+                  <a class="btn btn-secondary btn-sm template-pick-btn" href="{{ url_prefix }}/static/plantillas/pullso_plantilla_reservas.xlsx" download="pullso_plantilla_reservas.xlsx">Excel</a>
+                </div>
+              </div>
+            </article>
+
+            <article class="template-pick-card template-pick-card--daily" role="listitem">
+              <div class="template-pick-card-inner">
+                <div class="template-pick-badge template-pick-badge--muted" aria-hidden="true">Agregado</div>
+                <h4 class="template-pick-title">Una fila por día (producción)</h4>
+                <p class="template-pick-summary muted small">Cuando ya consolidaste por noche de ocupación o por día calendario: ingresos y noches vendidas por fecha.</p>
+                <p class="template-pick-label">Úsala cuando quieras entender…</p>
+                <ul class="template-pick-list">
+                  <li><strong>Tendencia de ingresos o noches</strong> día a día (ritmo de la producción).</li>
+                  <li><strong>Comparativos entre periodos</strong> (misma estructura en dos ventanas de fechas y dos archivos, o un solo rango largo).</li>
+                  <li><strong>Patrones de ocupación o revenue</strong> cuando no tienes detalle por reserva en el export.</li>
+                  <li><strong>Pick-up visto como curva agregada</strong> si tu archivo ya refleja cómo se fue llenando cada día (por ejemplo OTB por <code>stay_date</code> exportado en distintos cortes).</li>
+                </ul>
+                <div class="template-pick-actions" role="group" aria-label="Descargar plantilla diaria">
+                  <a class="btn btn-secondary btn-sm template-pick-btn" href="{{ url_prefix }}/static/plantillas/pullso_plantilla_diario.csv" download="pullso_plantilla_diario.csv">CSV diario</a>
+                </div>
+              </div>
+            </article>
           </div>
-          <p class="template-strip-foot muted small">Si tu PMS exporta títulos en español (por ejemplo <code>fecha</code>, <code>canal</code>, <code>ingresos</code>), en muchos casos también funcionan: no hace falta que coincidan letra por letra con la plantilla.</p>
+
+          <div class="template-strip-howto">
+            <p class="template-howto-title">Cómo usarlas sin fricción</p>
+            <ol class="template-strip-steps">
+              <li>Abre la plantilla en Excel o Google Sheets. <strong>No borres ni renombres la primera fila</strong> (son los títulos que Pullso usa para reconocer columnas).</li>
+              <li>Sustituye solo las filas de ejemplo por tus datos y guarda en CSV o <strong>.xlsx</strong>.</li>
+              <li>Sube el archivo abajo y en el mensaje describe la decisión que buscas (mínimo {{ min_business_context_len }} caracteres). Ejemplo: <span class="template-strip-sample" tabindex="0">Quiero comparar margen por canal, share de Booking vs directo y si el pick-up de febrero va más ajustado que el año pasado.</span></li>
+            </ol>
+          </div>
+          <p class="template-strip-foot muted small">Muchos PMS exportan títulos en español (<code>fecha</code>, <code>canal</code>, <code>ingresos</code>…): suelen funcionar igual; no hace falta que coincidan letra por letra con la plantilla.</p>
         </div>
         <p id="fileSelectionSummary" class="field-hint muted small file-selection-summary" role="status" aria-live="polite"></p>
         <div class="dropzone light dropzone--hero dropzone--compact" id="dropzone">
@@ -150,7 +191,7 @@
         <div class="side-panel-details-body">
           <div class="upload-coach" role="region" aria-label="Guía para subir reportes">
             <ul class="upload-coach-list upload-coach-list--tight">
-              <li><strong>Plantillas:</strong> arriba del área de carga hay archivos de ejemplo (CSV/Excel) con columnas típicas; úsalos como referencia o para una primera prueba.</li>
+              <li><strong>Plantillas:</strong> encima del área de carga verás dos formatos explicados (reserva vs diario): descarga el que encaje con lo que quieres decidir (canales, pick-up, tendencias, etc.).</li>
               <li><strong>Formato:</strong> CSV o Excel desde PMS, channel o motor.</li>
               <li><strong>Mejor señal:</strong> fechas, canal/fuente e ingresos o ADR.</li>
               <li><strong>Excel (varias pestañas):</strong>
