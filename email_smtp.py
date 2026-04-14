@@ -711,6 +711,19 @@ def _hospitality_diagnosis_email_bodies(
     hotel_name: str,
     savings_line: str,
     growth_line: str,
+    savings_formula: str = "",
+    growth_formula: str = "",
+    savings_cap: str = "",
+    savings_badge: str = "",
+    savings_hook: str = "",
+    savings_formula_label: str = "",
+    growth_cap: str = "",
+    growth_badge: str = "",
+    growth_hook: str = "",
+    growth_formula_label: str = "",
+    trust_line: str = "",
+    disclaimer_short: str = "",
+    cta_note: str = "",
     facts_rows: list[tuple[str, str]],
     disclaimer: str,
     result_narrative: str = "",
@@ -722,6 +735,19 @@ def _hospitality_diagnosis_email_bodies(
     cn = (contact_name or "").replace("\n", " ").strip() or ("Cliente" if lang == "es" else "Guest")
     ctx_plain = (context_line or "").replace("\n", " ").strip()
     meet = (meeting_url or "").strip()
+    sav_formula_txt = (savings_formula or "").strip()
+    gro_formula_txt = (growth_formula or "").strip()
+    sav_cap = (savings_cap or "").strip()
+    sav_badge = (savings_badge or "").strip()
+    sav_hook = (savings_hook or "").strip()
+    sav_formula_label = (savings_formula_label or "").strip()
+    gro_cap = (growth_cap or "").strip()
+    gro_badge = (growth_badge or "").strip()
+    gro_hook = (growth_hook or "").strip()
+    gro_formula_label = (growth_formula_label or "").strip()
+    trust = (trust_line or "").strip()
+    disc_short = (disclaimer_short or "").strip()
+    cta_note_txt = (cta_note or "").strip()
     if lang == "es":
         subject = f"Tu diagnóstico de posicionamiento online — {sub_hotel}"
         intro = (
@@ -733,10 +759,33 @@ def _hospitality_diagnosis_email_bodies(
         if ctx_plain:
             intro += ctx_plain + "\n\n"
         narrative_block = (f"{result_narrative.strip()}\n\n" if (result_narrative or "").strip() else "")
-        mid = f"{narrative_block}Ahorro anual estimado (orientativo): {savings_line}\n{growth_line}\n\n"
+        if sav_cap:
+            mid = (
+                f"{narrative_block}"
+                f"{sav_cap}\n{savings_line}\n"
+                f"{(sav_badge + ' — ' if sav_badge else '')}{sav_hook}\n\n"
+            )
+        else:
+            mid = f"{narrative_block}Ahorro anual estimado (orientativo): {savings_line}\n\n"
+        if sav_formula_txt:
+            mid += f"{sav_formula_label or 'Tu ruta numérica'}\n{sav_formula_txt}\n\n"
+        if gro_cap:
+            mid += (
+                f"{gro_cap}\n{growth_line}\n"
+                f"{(gro_badge + ' — ' if gro_badge else '')}{gro_hook}\n\n"
+            )
+        else:
+            mid += f"{growth_line}\n\n"
+        if gro_formula_txt:
+            mid += f"{gro_formula_label or 'Tu proyección'}\n{gro_formula_txt}\n\n"
+        if trust:
+            mid += trust + "\n\n"
+        if disc_short:
+            mid += disc_short + "\n\n"
         cta_txt = f"Agendar reunión: {meet}\n\n" if meet else ""
         outro = (
-            "\n\n" + disclaimer + "\n\n"
+            ("\n\n" + disclaimer + "\n\n" if disclaimer else "\n\n")
+            + (cta_note_txt + "\n\n" if cta_note_txt else "")
             + cta_txt
             + "—\nJorge Flores · Head of Hospitality\n+52 998 186 4670 · jorge@dragonne.co\n"
         )
@@ -751,10 +800,33 @@ def _hospitality_diagnosis_email_bodies(
         if ctx_plain:
             intro += ctx_plain + "\n\n"
         narrative_block = (f"{result_narrative.strip()}\n\n" if (result_narrative or "").strip() else "")
-        mid = f"{narrative_block}Estimated annual commission savings (indicative): {savings_line}\n{growth_line}\n\n"
+        if sav_cap:
+            mid = (
+                f"{narrative_block}"
+                f"{sav_cap}\n{savings_line}\n"
+                f"{(sav_badge + ' — ' if sav_badge else '')}{sav_hook}\n\n"
+            )
+        else:
+            mid = f"{narrative_block}Estimated annual commission savings (indicative): {savings_line}\n\n"
+        if sav_formula_txt:
+            mid += f"{sav_formula_label or 'Your numeric path'}\n{sav_formula_txt}\n\n"
+        if gro_cap:
+            mid += (
+                f"{gro_cap}\n{growth_line}\n"
+                f"{(gro_badge + ' — ' if gro_badge else '')}{gro_hook}\n\n"
+            )
+        else:
+            mid += f"{growth_line}\n\n"
+        if gro_formula_txt:
+            mid += f"{gro_formula_label or 'Your projection'}\n{gro_formula_txt}\n\n"
+        if trust:
+            mid += trust + "\n\n"
+        if disc_short:
+            mid += disc_short + "\n\n"
         cta_txt = f"Book a meeting: {meet}\n\n" if meet else ""
         outro = (
-            "\n\n" + disclaimer + "\n\n"
+            ("\n\n" + disclaimer + "\n\n" if disclaimer else "\n\n")
+            + (cta_note_txt + "\n\n" if cta_note_txt else "")
             + cta_txt
             + "—\nJorge Flores · Head of Hospitality\n+52 998 186 4670 · jorge@dragonne.co\n"
         )
@@ -774,12 +846,12 @@ def _hospitality_diagnosis_email_bodies(
             f"{escape(ctx_plain)}</p>"
         )
     story_p_es = (
-        "Con lo que declaraste sobre tamaño, ocupación y canales, el bloque naranja resume el margen en juego "
-        "y el horizonte orientativo; la tabla inferior recoge los datos tal como los enviaste."
+        "Estas dos cifras responden a lo mismo desde ángulos distintos: cuánto margen suele quedar atrapado en comisiones OTAs "
+        "con el mix que declaraste, y un techo ilustrativo si fortaleces directo y negociación de canales."
     )
     story_p_en = (
-        "From the size, occupancy, and channel inputs you shared, the orange block summarizes margin at stake "
-        "and the indicative upside; the table below mirrors what you submitted."
+        "These two figures answer the same question from two angles: typical margin trapped in OTA commissions with the mix you shared, "
+        "and an illustrative ceiling if you strengthen direct and channel negotiation."
     )
     sig_img = absolute_url("/static/team/jorge-flores.jpg")
     cta_label = "Agendar reunión" if lang == "es" else "Book a meeting"
@@ -801,6 +873,70 @@ def _hospitality_diagnosis_email_bodies(
             f"{escape(cta_label)}</a>"
             "</td></tr></table>"
         )
+    formula_css = (
+        "margin:10px 0 0;padding:12px 12px 12px 14px;border-radius:14px;"
+        "background:linear-gradient(165deg,rgba(246,169,5,.08),rgba(11,13,18,.04));"
+        "border:1px solid rgba(11,13,18,.08);"
+        "font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,'Liberation Mono','Courier New',monospace;"
+        "font-size:12px;line-height:1.5;color:#111;white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;"
+    )
+    def _card_html(*, cap: str, badge: str, hook: str, main: str, label: str, formula: str) -> str:
+        bits = []
+        if cap:
+            bits.append(
+                f"<p style=\"margin:0 0 6px;font-size:11px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:#6b7280;line-height:1.35;\">{escape(cap)}</p>"
+            )
+        if badge:
+            bits.append(
+                f"<p style=\"margin:0 0 8px;font-size:11px;font-weight:800;color:#b45309;letter-spacing:.02em;\">{escape(badge)}</p>"
+            )
+        if main:
+            bits.append(
+                f"<p style=\"margin:0 0 6px;font-size:22px;font-weight:900;color:#111;letter-spacing:-.03em;line-height:1.18;\">{escape(main)}</p>"
+            )
+        if hook:
+            bits.append(
+                f"<p style=\"margin:0;font-size:13px;line-height:1.55;color:#4b5563;font-weight:600;\">{escape(hook)}</p>"
+            )
+        if formula:
+            if label:
+                bits.append(
+                    f"<p style=\"margin:14px 0 0;font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:#b45309;\">{escape(label)}</p>"
+                )
+            bits.append(f"<pre style=\"{formula_css}\">{escape(formula)}</pre>")
+        return "".join(bits)
+
+    card_1 = _card_html(
+        cap=sav_cap,
+        badge=sav_badge,
+        hook=sav_hook,
+        main=savings_line,
+        label=sav_formula_label,
+        formula=sav_formula_txt,
+    )
+    card_2 = _card_html(
+        cap=gro_cap,
+        badge=gro_badge,
+        hook=gro_hook,
+        main=growth_line,
+        label=gro_formula_label,
+        formula=gro_formula_txt,
+    )
+    trust_html = (
+        f"<p style=\"margin:12px 0 0;font-size:12px;line-height:1.5;color:#6b7280;font-style:italic;text-align:center;\">{escape(trust)}</p>"
+        if trust
+        else ""
+    )
+    disc_short_html = (
+        f"<p style=\"margin:10px 0 0;font-size:12px;line-height:1.5;color:#6b7280;\">{escape(disc_short)}</p>"
+        if disc_short
+        else ""
+    )
+    cta_note_html = (
+        f"<p style=\"margin:10px 0 0;font-size:12px;line-height:1.5;color:#6b7280;text-align:center;\">{escape(cta_note_txt)}</p>"
+        if cta_note_txt
+        else ""
+    )
     html = f"""<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#f4f4f6;font-family:Inter,Segoe UI,system-ui,sans-serif;">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f4f4f6;padding:24px 12px;">
@@ -827,17 +963,19 @@ def _hospitality_diagnosis_email_bodies(
             if (result_narrative or "").strip()
             else ""
           )}
+          {trust_html}
+          {disc_short_html}
           {cta_html}
+          {cta_note_html}
         </td></tr>
         <tr><td style="padding:8px 28px 20px 28px;">
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-radius:12px;overflow:hidden;border:1px solid #f0e8dc;background:linear-gradient(165deg,#fffdf9,#fff7ee);">
-            <tr><td style="padding:18px 20px;">
-              <p style="margin:0 0 6px;font-size:12px;font-weight:700;color:#b45309;text-transform:uppercase;letter-spacing:.06em;">
-                {"Resultados orientativos" if lang == "es" else "Indicative results"}
-              </p>
-              <p style="margin:0 0 4px;font-size:26px;font-weight:800;color:#111;letter-spacing:-.03em;">{escape(savings_line)}</p>
-              <p style="margin:0;font-size:15px;line-height:1.45;color:#374151;">{escape(growth_line)}</p>
-            </td></tr>
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-radius:14px;overflow:hidden;border:1px solid #f0e8dc;background:linear-gradient(165deg,#fffdf9,#fff7ee);">
+            <tr><td style="padding:18px 20px;">{card_1}</td></tr>
+          </table>
+        </td></tr>
+        <tr><td style="padding:0 28px 20px 28px;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-radius:14px;overflow:hidden;border:1px solid #e5e7eb;background:#f8fafc;">
+            <tr><td style="padding:18px 20px;">{card_2}</td></tr>
           </table>
         </td></tr>
         <tr><td style="padding:0 28px 8px 28px;">
@@ -882,6 +1020,19 @@ def send_hospitality_diagnosis_report(
     hotel_name: str,
     savings_line: str,
     growth_line: str,
+    savings_formula: str = "",
+    growth_formula: str = "",
+    savings_cap: str = "",
+    savings_badge: str = "",
+    savings_hook: str = "",
+    savings_formula_label: str = "",
+    growth_cap: str = "",
+    growth_badge: str = "",
+    growth_hook: str = "",
+    growth_formula_label: str = "",
+    trust_line: str = "",
+    disclaimer_short: str = "",
+    cta_note: str = "",
     facts_rows: list[tuple[str, str]],
     disclaimer: str,
     result_narrative: str = "",
@@ -900,6 +1051,19 @@ def send_hospitality_diagnosis_report(
         hotel_name=hotel_name.strip() or ("Hotel" if lang == "es" else "Hotel"),
         savings_line=savings_line,
         growth_line=growth_line,
+        savings_formula=savings_formula,
+        growth_formula=growth_formula,
+        savings_cap=savings_cap,
+        savings_badge=savings_badge,
+        savings_hook=savings_hook,
+        savings_formula_label=savings_formula_label,
+        growth_cap=growth_cap,
+        growth_badge=growth_badge,
+        growth_hook=growth_hook,
+        growth_formula_label=growth_formula_label,
+        trust_line=trust_line,
+        disclaimer_short=disclaimer_short,
+        cta_note=cta_note,
         facts_rows=facts_rows,
         disclaimer=disclaimer,
         result_narrative=result_narrative,
