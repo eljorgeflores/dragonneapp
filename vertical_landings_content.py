@@ -32,7 +32,7 @@ _PAGES: dict[str, dict[str, dict]] = {
             ),
             "breadcrumb_name": "Hospitalidad",
             "eyebrow": "HOSPITALITY · HOTELES INDEPENDIENTES Y BOUTIQUE",
-            "hero_title": "Más claridad para decidir. Más orden para operar. Más margen para crecer.",
+            "hero_title": "Más claridad para decidir.\nMás orden para operar.\nMás margen para crecer.",
             "hero_sub": (
                 "Ayudamos a hoteles independientes y boutique a fortalecer su gestión comercial, operativa y tecnológica desde la "
                 "viabilidad y la preapertura hasta el día a día del hotel."
@@ -45,9 +45,8 @@ _PAGES: dict[str, dict[str, dict]] = {
             "vl_cta_hero_secondary_kicker": "SIN COMPROMISO",
             "vl_cta_hero_secondary_title": "Diagnóstico gratis y presentación",
             "vl_cta_hero_secondary_intro": (
-                "Si aún no quieres reunión: en el diagnóstico conviertes tamaño, ocupación y mix OTAs en dos lecturas claras "
-                "(margen en comisiones y horizonte de directo) y recibes el resumen brandeado por correo; "
-                "o revisa la presentación para el contexto estratégico."
+                "Si aún no quieres reunión: usa el diagnóstico para convertir tamaño, ocupación y mix de OTAs en lecturas claras "
+                "(comisiones y potencial de mejora). O revisa la presentación para el contexto estratégico."
             ),
             "vl_cta_hero_deck": "Presentación",
             "vl_cta_bottom_lead": "Presentación o diagnóstico gratis (comisiones y margen de mejora).",
