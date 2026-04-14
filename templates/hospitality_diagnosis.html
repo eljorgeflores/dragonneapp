@@ -141,6 +141,7 @@
     background:linear-gradient(180deg,#fff,#f8fafc);font-size:.8rem;line-height:1.5;color:var(--ink);font-weight:600
   }
   .hdg-result-grid{display:grid;gap:14px;grid-template-columns:1fr 1fr;margin-bottom:12px}
+  .hdg-result-grid--3{grid-template-columns:1fr}
   @media (max-width:440px){.hdg-result-grid{grid-template-columns:1fr;gap:16px}}
   .hdg-res{margin:0;padding:16px 14px;border-radius:16px;background:var(--soft);border:1px solid var(--line);min-width:0}
   .hdg-res--hero{border-color:rgba(240,126,7,.22);box-shadow:0 10px 32px rgba(240,126,7,.1)}
@@ -486,7 +487,7 @@
       </p>
       <p id="hdg-success-personal" class="hdg-success-personal" hidden></p>
       <p class="hdg-res-preamble">{{ d.res_story_intro }}</p>
-      <div class="hdg-result-grid">
+      <div class="hdg-result-grid hdg-result-grid--3">
         <div class="hdg-res hdg-res--hero">
           <p class="hdg-res-cap">{{ d.res_savings_cap }}</p>
           <p class="hdg-res-badge">{{ d.res_savings_badge }}</p>
@@ -507,6 +508,13 @@
             <p class="hdg-formula-kicker" id="hdg-kicker-fg">{{ d.res_growth_formula_label }}</p>
             <pre class="hdg-formula" id="hdg-formula-growth" aria-labelledby="hdg-kicker-fg"></pre>
           </div>
+        </div>
+        <div class="hdg-res">
+          <p class="hdg-res-cap">{{ d.res_total_cap }}</p>
+          <p class="hdg-res-badge">{{ d.res_total_badge }}</p>
+          <p class="hdg-res-desc">{{ d.res_total_hook }}</p>
+          <strong id="hdg-out-total-main"></strong>
+          <span id="hdg-out-total-sub" class="hdg-res-sub" hidden></span>
         </div>
       </div>
       <p class="hdg-trust">{{ d.res_trust_line }}</p>
@@ -870,6 +878,8 @@
           var os = document.getElementById('hdg-out-savings');
           var ogm = document.getElementById('hdg-out-growth-main');
           var ogs = document.getElementById('hdg-out-growth-sub');
+          var otm = document.getElementById('hdg-out-total-main');
+          var ots = document.getElementById('hdg-out-total-sub');
           var preS = document.getElementById('hdg-formula-savings');
           var preG = document.getElementById('hdg-formula-growth');
           var wrapS = document.getElementById('hdg-block-formula-savings');
@@ -902,6 +912,19 @@
             }else{
               preG.textContent = '';
               wrapG.hidden = true;
+            }
+          }
+          if(otm){
+            otm.textContent = d.total_main || '';
+          }
+          if(ots){
+            var tsub = d.total_sub || '';
+            if(tsub){
+              ots.textContent = tsub;
+              ots.hidden = false;
+            }else{
+              ots.textContent = '';
+              ots.hidden = true;
             }
           }
         }

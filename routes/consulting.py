@@ -514,6 +514,36 @@ def _fmt_diag_growth_parts(n: float, g: float, lang: str) -> tuple[str, str]:
     return main, sub
 
 
+def _fmt_diag_direct_mix_gain(
+    *,
+    lang: str,
+    gain_mxn: float,
+    direct_now: float,
+    direct_target: float,
+) -> str:
+    now = round(direct_now * 10) / 10
+    tgt = round(direct_target * 10) / 10
+    if lang == "es":
+        return f"Hoy declaraste {now:.1f}% directo. Si subes a {tgt:.1f}%, son ≈ ${gain_mxn:,.0f} MXN /año."
+    return f"You reported {now:.1f}% direct. If you reach {tgt:.1f}%, that's ≈ ${gain_mxn:,.0f} MXN/yr."
+
+
+def _fmt_diag_total_uplift(
+    *,
+    lang: str,
+    uplift_mxn: float,
+    uplift_rate: float,
+) -> tuple[str, str]:
+    pct = round(uplift_rate * 1000) / 10
+    if lang == "es":
+        main = f"${uplift_mxn:,.0f} MXN /año en ingresos adicionales"
+        sub = f"(≈{pct}% sobre ingresos actuales)"
+    else:
+        main = f"${uplift_mxn:,.0f} MXN/yr in additional revenue"
+        sub = f"(≈{pct}% of current revenue)"
+    return main, sub
+
+
 def _fmt_diag_growth(n: float, g: float, lang: str) -> str:
     main, sub = _fmt_diag_growth_parts(n, g, lang)
     return f"{main} {sub}"
@@ -538,9 +568,13 @@ def _hospitality_diag_formula_blocks(
     rev = float(nums["rev_year_mxn"])
     comm = float(nums["avg_ota_commission"])
     sav = float(nums["savings_mxn"])
-    gro = float(nums["growth_mxn"])
-    g = float(nums["growth_rate"])
-    gpct = round(g * 1000) / 10
+    mix = float(nums.get("mix_shift_gain_mxn") or 0.0)
+    d_now = float(nums.get("direct_now_pct") or 0.0)
+    d_tgt = float(nums.get("direct_target_pct") or 0.0)
+    d_delta = float(nums.get("direct_delta_pct") or 0.0)
+    uplift = float(nums.get("total_uplift_mxn") or 0.0)
+    uplift_rate = float(nums.get("total_uplift_rate") or 0.0)
+    up_pct = round(uplift_rate * 1000) / 10 if uplift_rate else 20.0
     rooms_s = str(int(rooms)) if float(rooms) == int(rooms) else f"{rooms:g}"
     occ_s = str(int(occ)) if float(occ) == int(occ) else f"{occ:.1f}".rstrip("0").rstrip(".")
     adr_s = f"{adr:,.0f}"
@@ -557,9 +591,13 @@ def _hospitality_diag_formula_blocks(
             f"   → {mx(sav)} /año (orientativo)"
         )
         growth = (
-            "③ Potencial de más ventas (mismo ingreso base, escenario de mejora)\n"
-            f"   {mx(rev)} /año × {gpct:.1f}% (mix y directo optimizables)\n"
-            f"   → {mx(gro)} /año (orientativo)"
+            "③ Mover mix a directo (sin vender más noches)\n"
+            f"   directo: {d_now:.1f}% → {d_tgt:.1f}% (Δ {d_delta:.1f} pts)\n"
+            f"   {mx(rev)} /año × Δ {d_delta:.1f}% × {comm:.1f}% (comisión OTA) × 0.7 (prudente)\n"
+            f"   → {mx(mix)} /año (orientativo)\n\n"
+            "④ Crecer ingreso total (escenario optimizado)\n"
+            f"   {mx(rev)} /año × {up_pct:.1f}%\n"
+            f"   → {mx(uplift)} /año (orientativo)"
         )
     else:
         savings = (
@@ -571,9 +609,13 @@ def _hospitality_diag_formula_blocks(
             f"   → {mx(sav)} /yr (indicative)"
         )
         growth = (
-            "③ Potential additional sales (same revenue base, upside scenario)\n"
-            f"   {mx(rev)} /yr × {gpct:.1f}% (improvable mix and direct)\n"
-            f"   → {mx(gro)} /yr (indicative)"
+            "③ Shift mix to direct (without selling more nights)\n"
+            f"   direct: {d_now:.1f}% → {d_tgt:.1f}% (Δ {d_delta:.1f} pts)\n"
+            f"   {mx(rev)} /yr × Δ {d_delta:.1f}% × {comm:.1f}% (OTA commission) × 0.7 (prudent)\n"
+            f"   → {mx(mix)} /yr (indicative)\n\n"
+            "④ Grow total revenue (optimized scenario)\n"
+            f"   {mx(rev)} /yr × {up_pct:.1f}%\n"
+            f"   → {mx(uplift)} /yr (indicative)"
         )
     return savings, growth
 
@@ -700,10 +742,20 @@ async def _hospitality_diagnosis_submit(request: Request, lang: str) -> JSONResp
         return JSONResponse({"ok": False, "error": "compute"}, status_code=400)
     v = get_vertical_landing_copy("hospitality", lang)
     savings_line = _fmt_diag_money(nums["savings_mxn"], lang)
-    growth_main, growth_sub = _fmt_diag_growth_parts(
-        nums["growth_mxn"], nums["growth_rate"], lang
+    # (B) Mix a directo
+    mix_line = _fmt_diag_direct_mix_gain(
+        lang=lang,
+        gain_mxn=float(nums.get("mix_shift_gain_mxn") or 0.0),
+        direct_now=float(nums.get("direct_now_pct") or 0.0),
+        direct_target=float(nums.get("direct_target_pct") or 0.0),
     )
-    growth_line = f"{growth_main} {growth_sub}"
+    # (C) +20% ingresos
+    total_main, total_sub = _fmt_diag_total_uplift(
+        lang=lang,
+        uplift_mxn=float(nums.get("total_uplift_mxn") or 0.0),
+        uplift_rate=float(nums.get("total_uplift_rate") or 0.20),
+    )
+    total_line = f"{total_main} {total_sub}"
     savings_formula, growth_formula = _hospitality_diag_formula_blocks(
         lang, rooms, adr, occ, pct_ota, nums
     )
@@ -774,7 +826,7 @@ async def _hospitality_diagnosis_submit(request: Request, lang: str) -> JSONResp
         lang=lang,
         hotel_name=hotel[:200],
         savings_line=savings_line,
-        growth_line=growth_line,
+        growth_line=mix_line,
         savings_formula=savings_formula,
         growth_formula=growth_formula,
         savings_cap=str(diag_ui.get("res_savings_cap") or ""),
@@ -801,9 +853,9 @@ async def _hospitality_diagnosis_submit(request: Request, lang: str) -> JSONResp
                 "error": "email_delivery",
                 "saved": True,
                 "savings_line": savings_line,
-                "growth_line": growth_line,
-                "growth_main": growth_main,
-                "growth_sub": growth_sub,
+                "growth_line": mix_line,
+                "total_main": total_main,
+                "total_sub": total_sub,
                 "savings_formula": savings_formula,
                 "growth_formula": growth_formula,
                 "hotel_name": hotel.strip()[:200],
@@ -814,9 +866,9 @@ async def _hospitality_diagnosis_submit(request: Request, lang: str) -> JSONResp
         {
             "ok": True,
             "savings_line": savings_line,
-            "growth_line": growth_line,
-            "growth_main": growth_main,
-            "growth_sub": growth_sub,
+            "growth_line": mix_line,
+            "total_main": total_main,
+            "total_sub": total_sub,
             "savings_formula": savings_formula,
             "growth_formula": growth_formula,
             "hotel_name": hotel.strip()[:200],

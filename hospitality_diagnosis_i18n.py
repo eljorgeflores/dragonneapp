@@ -95,13 +95,19 @@ def get_hospitality_diagnosis_page(lang: str) -> dict:
                 "no el total que pagas hoy. Con mejor negociación y mix de canales, el upside suele ampliarse."
             ),
             "res_savings_formula_label": "Tu ruta numérica (orientativa)",
-            "res_growth_cap": "Potencial de más ventas al año (orientativo)",
-            "res_growth_badge": "Segunda lectura · mismo ingreso base",
+            "res_growth_cap": "Más ingreso si mueves mix a directo (orientativo)",
+            "res_growth_badge": "Lectura 2 · sin vender más noches",
             "res_growth_hook": (
-                "Es un horizonte alentador si fortaleces venta directa y ordenas canales: "
-                "el porcentaje muestra el tamaño relativo frente al mismo ingreso base que usamos arriba."
+                "En cristiano: hoy declaraste un % de venta directa. Si lo subes a un objetivo realista, "
+                "y esa parte deja de entrar por OTAs, te quedas con más por pagar menos comisión."
             ),
-            "res_growth_formula_label": "Tu proyección (mismo ingreso base)",
+            "res_growth_formula_label": "Cómo lo calculamos (y el escenario +20%)",
+            "res_total_cap": "Crecimiento total del hotel (orientativo)",
+            "res_total_badge": "Lectura 3 · estrategia optimizada",
+            "res_total_hook": (
+                "Esto es el upside por ejecutar bien: más conversión, mejor canal directo y mejor mix. "
+                "Usamos +20% como referencia promedio cuando la estrategia está optimizada."
+            ),
             "res_disclaimer_short": (
                 "Reglas fijas, redondeos y escenarios prudentes pero alentadores; cifras ilustrativas. "
                 "En una reunión revisamos supuestos contigo. No sustituye análisis contable ni promete resultados."
@@ -236,13 +242,19 @@ def get_hospitality_diagnosis_page(lang: str) -> dict:
             "not everything you pay today. With stronger channel mix and negotiation, upside usually grows."
         ),
         "res_savings_formula_label": "Your numeric path (indicative)",
-        "res_growth_cap": "Potential additional annual sales (indicative)",
-        "res_growth_badge": "Second read · same revenue base",
+        "res_growth_cap": "More revenue by shifting mix to direct (indicative)",
+        "res_growth_badge": "Read 2 · without selling more nights",
         "res_growth_hook": (
-            "An encouraging horizon if you strengthen direct bookings and tidy channels: "
-            "the percentage shows the relative size against the same revenue base we used above."
+            "Plain English: you reported a current direct share. If you move direct to a realistic target, "
+            "and that share stops coming through OTAs, you keep more by paying less commission."
         ),
-        "res_growth_formula_label": "Your projection (same revenue base)",
+        "res_growth_formula_label": "How we calculate it (and the +20% scenario)",
+        "res_total_cap": "Total hotel growth (indicative)",
+        "res_total_badge": "Read 3 · optimized strategy",
+        "res_total_hook": (
+            "This is upside from execution: higher conversion, stronger direct channel, and better mix. "
+            "We use +20% as an average reference when the strategy is optimized."
+        ),
         "res_disclaimer_short": (
             "Fixed rules, rounding, and prudent but encouraging scenarios; illustrative numbers. "
             "In a meeting we walk through assumptions with you. Not accounting advice or a guarantee of outcomes."
