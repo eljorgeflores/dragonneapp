@@ -16,7 +16,7 @@
   .cp-nav{max-width:1200px;margin:0 auto;display:flex;align-items:center;min-height:64px;gap:40px}
   .cp-nav-left{display:flex;align-items:center;gap:16px;flex-shrink:0}
   .cp-brand{display:flex;align-items:center;font-weight:700;letter-spacing:-.03em;color:var(--dark)}
-  .cp-brand img{height:clamp(44px,4.5vw,52px);width:auto;display:block}
+  .cp-brand img{height:clamp(58px,5.6vw,74px);width:auto;display:block}
   .cp-nav-links{display:flex;align-items:center;gap:32px;flex:1;justify-content:center}
   .cp-nav-links a{color:var(--text);font-size:.9375rem;font-weight:500;letter-spacing:-.01em;white-space:nowrap;transition:color .2s;opacity:.88}
   .cp-nav-links a:hover{opacity:1;color:var(--text)}
@@ -218,12 +218,33 @@
   }
   .cp-logo-slot__img{
     max-width:100%;
-    max-height:100%;
     width:auto;
-    height:auto;
+    height:42px;
+    max-height:none;
     object-fit:contain;
     object-position:center;
     display:block;
+  }
+  /* Ajuste óptico: el SVG de SiteMinder trae “aire” y carga hacia la izquierda */
+  .cp-logo-slot__img--siteminder{
+    height:38px;
+    object-position:center;
+    transform:translateX(10px) scale(.92);
+    transform-origin:center;
+  }
+  @media (min-width:768px){
+    .cp-logo-slot__img{height:48px}
+    .cp-logo-slot__img--siteminder{height:44px;transform:translateX(12px) scale(.92)}
+  }
+
+  /* Opción: logos en un solo tono (gris) */
+  .cp-logo-strip.cp-logo-strip--mono .cp-logo-slot__img{
+    filter:grayscale(100%) saturate(0%) brightness(.25) contrast(1.25);
+    opacity:.86;
+  }
+  .cp-logo-strip.cp-logo-strip--mono .cp-logo-slot__img:hover{
+    filter:none;
+    opacity:1;
   }
   .cp-logo-slot--pending .cp-logo-slot__frame{
     border:1px solid var(--line);
