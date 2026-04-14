@@ -85,7 +85,7 @@ CONSULTING_TRANSLATIONS = {
         "word_3_quote": "Necesitábamos orden sin burocracia. Dragonné entendió el ritmo y nos dejó bases que podemos seguir escalando nosotros.",
         "word_3_author": "María Madrigal · CEO de Molcajete Diseño",
         "word_4_quote": "Comprime meses de aprendizaje en semanas. El sentido de urgencia y la claridad con la que trabajan marcan la diferencia.",
-        "word_4_author": "Cofundador · Startup fintech en aceleración",
+        "word_4_author": "Jorge de Cordova · Fundador de Shuttle Central",
         "cases_label": "Resultados",
         "cases_title": "Casos de éxito",
         "cases_lead": "Proyectos recientes donde talento, procesos y estrategia comercial generaron impacto medible.",
