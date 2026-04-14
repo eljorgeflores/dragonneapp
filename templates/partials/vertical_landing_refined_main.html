@@ -35,10 +35,12 @@
   }
   .vl-h-hero-copy h1{
     margin:0 0 16px!important;max-width:22ch!important;width:100%;
-    font-size:clamp(1.95rem,3.5vw,3.05rem)!important;line-height:1.1!important;
+    font-size:clamp(1.95rem,3.5vw,3.05rem)!important;line-height:1.14!important;
     letter-spacing:-.038em!important;font-weight:800!important;
     background:linear-gradient(92deg,var(--accent-gold),var(--accent))!important;
     -webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;
+    /* Evita recorte de descendentes (p.ej. "g") cuando el contenedor tiene overflow:hidden */
+    padding-bottom:.06em;
   }
   .vl-h-hero-copy .cp-hero-tagline{
     margin:0 0 21px!important;max-width:min(54ch,100%)!important;font-size:1.05rem!important;line-height:1.58!important;
@@ -469,6 +471,17 @@
   }
   .vl-h-cta-box .cp-btn-outline{
     min-height:46px;padding:0 21px
+  }
+  @media (max-width:520px){
+    .vl-h-cta-box .cp-cta-buttons{
+      flex-direction:column;
+      align-items:stretch;
+      justify-content:center;
+    }
+    .vl-h-cta-box .cp-btn{
+      width:100%;
+      justify-content:center;
+    }
   }
 </style>
 

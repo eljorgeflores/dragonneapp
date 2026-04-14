@@ -34,7 +34,36 @@
             <label class="cp-form-label" for="lead-message">{{ t.form_message }}</label>
             <textarea class="cp-form-input cp-form-textarea" id="lead-message" name="message" rows="6" maxlength="5000"></textarea>
             <label class="cp-form-label" for="lead-phone">{{ t.form_phone }}</label>
-            <input class="cp-form-input" id="lead-phone" name="phone" type="tel" maxlength="50" />
+            <div class="cp-phone-row">
+              <select
+                class="cp-form-input cp-phone-cc"
+                id="lead-phone-cc"
+                name="phone_cc"
+                required
+                aria-label="{% if lang == 'en' %}Country code{% else %}Lada / prefijo{% endif %}"
+              >
+                <option value="+52" selected>+52</option>
+                <option value="+1">+1</option>
+                <option value="+34">+34</option>
+                <option value="+57">+57</option>
+                <option value="+54">+54</option>
+                <option value="+56">+56</option>
+                <option value="+51">+51</option>
+              </select>
+              <input
+                class="cp-form-input"
+                id="lead-phone"
+                name="phone"
+                type="text"
+                inputmode="numeric"
+                pattern="[0-9]{8,15}"
+                oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+                autocomplete="tel-national"
+                required
+                maxlength="15"
+                placeholder="{% if lang == 'en' %}Phone number{% else %}Número{% endif %}"
+              />
+            </div>
             <div class="cp-form-actions">
               <button type="submit" class="cp-btn cp-btn-primary">{{ t.form_submit }}</button>
             </div>

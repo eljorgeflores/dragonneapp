@@ -930,18 +930,36 @@ def consulting_lead_submit(
     company: str = Form(""),
     type: str = Form(""),
     message: str = Form(""),
-    phone: str = Form(""),
+    phone_cc: str = Form(..., min_length=1, max_length=8),
+    phone: str = Form(..., min_length=1, max_length=32),
     lang: str = Form("es"),
 ):
     email = email.strip().lower()
     if not re.match(r"^[^@]+@[^@]+\.[^@]+$", email):
         return JSONResponse({"ok": False, "error": "invalid_email"}, status_code=400)
+    phone_cc = (phone_cc or "").strip()
+    # Normaliza: solo permitimos prefijos tipo +52, +1, etc.
+    if not re.match(r"^\+\d{1,4}$", phone_cc):
+        return JSONResponse({"ok": False, "error": "invalid_phone"}, status_code=400)
+    phone_digits = re.sub(r"\D", "", (phone or ""))
+    if len(phone_digits) < 8 or len(phone_digits) > 15:
+        return JSONResponse({"ok": False, "error": "invalid_phone"}, status_code=400)
+    phone_norm = f"{phone_cc} {phone_digits}"
     now = datetime.now(timezone.utc).isoformat()
     with db() as conn:
         conn.execute(
             """INSERT INTO consulting_leads (name, email, company, type, message, phone, lang, created_at)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-            (name.strip()[:200], email, (company or "").strip()[:300], (type or "").strip()[:80], (message or "").strip()[:5000], (phone or "").strip()[:50], (lang or "es")[:5], now),
+            (
+                name.strip()[:200],
+                email,
+                (company or "").strip()[:300],
+                (type or "").strip()[:80],
+                (message or "").strip()[:5000],
+                phone_norm[:50],
+                (lang or "es")[:5],
+                now,
+            ),
         )
     try:
         send_consulting_lead_email(
@@ -951,7 +969,7 @@ def consulting_lead_submit(
             company=(company or "").strip()[:300],
             type_=(type or "").strip()[:80],
             message=(message or "").strip()[:5000],
-            phone=(phone or "").strip()[:50],
+            phone=phone_norm[:50],
             lang=(lang or "es")[:5],
         )
     except Exception:

@@ -336,6 +336,8 @@
   .cp-form-feedback{margin:12px 0 0;font-size:.95rem}
   .cp-form-feedback--success{color:#0d7d3d}
   .cp-form-feedback--error{color:#9f3333}
+  .cp-phone-row{display:grid;grid-template-columns:minmax(92px,110px) 1fr;gap:10px;align-items:end}
+  .cp-phone-cc{padding-right:10px}
   .cp-footer{padding:40px 0 28px;color:var(--muted);font-size:.9rem;border-top:1px solid var(--line);text-align:center}
   .cp-footer p{margin:0 0 4px}
   .cp-footer-links{display:flex;flex-wrap:wrap;gap:12px 20px;justify-content:center;margin-top:12px}
@@ -354,7 +356,15 @@
   .cp-nav-mobile a:last-child{border-bottom:0}
   .cp-nav-mobile-soon{display:block;padding:10px 0 10px 12px;font-size:.95rem;color:var(--muted);border-bottom:1px solid var(--line);opacity:.75}
   .cp-nav-mobile-subtitle{display:block;padding:16px 0 6px;font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
-  .cp-nav-mobile .cp-btn{margin-top:16px;width:100%;justify-content:center}
+  /* CTA dentro del menú móvil: no heredar estilos de link-list */
+  .cp-nav-mobile a.cp-btn{
+    display:inline-flex;
+    width:100%;
+    margin-top:16px;
+    padding:0 22px;
+    justify-content:center;
+    border-bottom:0;
+  }
 
   @media (max-width:967px){
     .cpc{width:min(1100px,calc(100% - 32px));margin-left:auto;margin-right:auto}
@@ -362,12 +372,34 @@
     .cp-nav-right{display:none}
     .cp-nav{justify-content:space-between;gap:12px;min-height:56px}
     .cp-nav-wrap{position:relative;padding:0 16px}
+    .cp-nav-left{gap:12px}
+    .cp-lang{gap:6px}
     .cp-nav-hamburger{display:flex;align-items:center}
-    .cp-nav-mobile{display:block;max-height:0;overflow:hidden;opacity:0;transition:max-height .25s ease,opacity .2s}
+    .cp-nav-mobile{
+      display:block;
+      max-height:0;
+      overflow:hidden;
+      opacity:0;
+      transition:max-height .25s ease,opacity .2s;
+      padding:16px 16px calc(24px + env(safe-area-inset-bottom,0px));
+    }
     #cp-nav-toggle:checked ~ .cp-nav-mobile{max-height:80vh;opacity:1;overflow-y:auto}
     #cp-nav-toggle:checked ~ .cp-nav .cp-nav-hamburger-btn span{background:transparent}
     #cp-nav-toggle:checked ~ .cp-nav .cp-nav-hamburger-btn span::before{transform:translateY(7px) rotate(45deg)}
     #cp-nav-toggle:checked ~ .cp-nav .cp-nav-hamburger-btn span::after{transform:translateY(-5px) rotate(-45deg)}
+  }
+  @media (max-width:520px){
+    .cp-brand img{height:52px}
+    .cp-nav{min-height:60px}
+    .cp-nav-left{gap:10px}
+    .cp-lang{font-size:.66rem;letter-spacing:.01em;gap:6px}
+    .cp-lang-link{
+      min-width:22px;
+      height:22px;
+      padding:0 6px;
+    }
+    .cp-actions .cp-btn{min-height:40px;padding:0 16px;font-size:.88rem}
+    .cp-nav-mobile .cp-btn{min-height:48px;font-size:.95rem}
   }
   @media (max-width:767px){
     .cpc{width:min(1100px,calc(100% - 40px));margin-left:auto;margin-right:auto}

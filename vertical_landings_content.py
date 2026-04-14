@@ -155,8 +155,7 @@ _PAGES: dict[str, dict[str, dict]] = {
                 ),
                 _pair(
                     "Talento y capacitación donde haga falta",
-                    "Cuando la brecha es de capacidades, apoyamos en búsqueda, selección y entrenamiento de perfiles clave en áreas como e-commerce, revenue, "
-                    "servicio, administración o finanzas.",
+                    "Si falta capacidad, sumamos talento y capacitación para ejecutar y sostener el cambio.",
                 ),
             ],
             "sec_stages_label": "ALCANCE",
@@ -408,7 +407,7 @@ _PAGES: dict[str, dict[str, dict]] = {
                 ),
                 _pair(
                     "Talent and training where needed",
-                    "When the gap is capability, we support search, selection, and training of key profiles in areas such as e-commerce, revenue, service, administration, or finance.",
+                    "When capacity is missing, we add talent and training to execute and sustain the change.",
                 ),
             ],
             "sec_stages_label": "SCOPE",
