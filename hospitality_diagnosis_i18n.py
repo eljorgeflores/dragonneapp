@@ -79,9 +79,7 @@ def get_hospitality_diagnosis_page(lang: str) -> dict:
             "res_trust_line": (
                 "En DRAGONNÉ trabajamos hoteles independientes y boutique: el mismo lenguaje que gerencia y recepción."
             ),
-            "success_cta_note": (
-                "Reunión breve (~30 min): validamos supuestos y te dejamos 2–3 palancas claras para margen y mix. Sin pitch largo."
-            ),
+            "success_cta_note": "",
             "success_inbox_aria": "Dónde ver el correo",
             "success_inbox_tip": (
                 "Revisa tu bandeja de entrada y spam o promociones. "
@@ -226,9 +224,7 @@ def get_hospitality_diagnosis_page(lang: str) -> dict:
         "res_trust_line": (
             "At DRAGONNÉ we focus on independent and boutique hotels—the same language leadership and the front desk use."
         ),
-        "success_cta_note": (
-            "Short call (~30 min): we validate assumptions and leave you with 2–3 clear levers for margin and mix. No long pitch."
-        ),
+        "success_cta_note": "",
         "success_inbox_aria": "Where to find the email",
         "success_inbox_tip": (
             "Check your inbox and spam or promotions. It can take a few minutes. "
