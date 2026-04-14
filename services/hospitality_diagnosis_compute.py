@@ -46,7 +46,7 @@ def _target_direct_pct(pct_direct_online: float | None, pct_ota: float) -> float
     - <10%  -> 20%
     - 10–20 -> 30%
     - 30–40 -> 40%
-    - >=40  -> 40% (tope)
+    - >=40  -> 50% (tope)
     - Si no hay dato, inferimos uno conservador a partir de pct_ota (misma heurística previa).
     """
     if pct_direct_online is None or pct_direct_online != pct_direct_online:
@@ -58,7 +58,7 @@ def _target_direct_pct(pct_direct_online: float | None, pct_ota: float) -> float
     if d <= 30.0:
         return 30.0
     if d >= 40.0:
-        return 40.0
+        return 50.0
     if d >= 30.0:
         return 40.0
     # Entre 30–40 ya cubrimos arriba; el resto cae en 30 por realismo.
