@@ -14,7 +14,7 @@
         <h1>{{ t.hero_title }}</h1>
         <p class="cp-hero-tagline">{{ t.hero_tagline }}</p>
         <div class="cp-hero-actions">
-          <a class="cp-btn cp-btn-primary" href="#lead-form">{{ t.hero_apply }}</a>
+          <a class="cp-btn cp-btn-primary" href="{{ contact_form_url }}">{{ t.hero_apply }}</a>
         </div>
       </div>
     </section>
@@ -234,21 +234,18 @@
             <h4>{{ t.case_1_title }}</h4>
             <p class="cp-case-result">{{ t.case_1_result }}</p>
             <p class="cp-case-quote">"{{ t.case_1_quote }}"</p>
-            <p class="cp-case-author">{{ t.case_1_author }}</p>
           </div>
           <div class="cp-case">
             <span class="cp-case-tag">{{ t.case_2_tag }}</span>
             <h4>{{ t.case_2_title }}</h4>
             <p class="cp-case-result">{{ t.case_2_result }}</p>
             <p class="cp-case-quote">"{{ t.case_2_quote }}"</p>
-            <p class="cp-case-author">{{ t.case_2_author }}</p>
           </div>
           <div class="cp-case">
             <span class="cp-case-tag">{{ t.case_3_tag }}</span>
             <h4>{{ t.case_3_title }}</h4>
             <p class="cp-case-result">{{ t.case_3_result }}</p>
             <p class="cp-case-quote">"{{ t.case_3_quote }}"</p>
-            <p class="cp-case-author">{{ t.case_3_author }}</p>
           </div>
         </div>
       </div>
@@ -348,43 +345,6 @@
       </div>
     </section>
 
-    <!-- Formulario lead -->
-    <section class="cp-section cp-section--muted" id="lead-form">
-      <div class="cpc">
-        <div class="cp-section-hero">
-          <h2 class="cp-section-title">{{ t.form_title }}</h2>
-          <p class="cp-section-lead">{{ t.form_lead }}</p>
-        </div>
-        <div class="cp-form-wrap">
-          <form id="consulting-lead-form" class="cp-lead-form" action="{{ lead_form_action }}" method="post">
-            <input type="hidden" name="lang" value="{{ lang }}" />
-            <label class="cp-form-label" for="lead-name">{{ t.form_name }}</label>
-            <input class="cp-form-input" id="lead-name" name="name" type="text" required maxlength="200" />
-            <label class="cp-form-label" for="lead-email">{{ t.form_email }}</label>
-            <input class="cp-form-input" id="lead-email" name="email" type="email" required maxlength="254" />
-            <label class="cp-form-label" for="lead-company">{{ t.form_company }}</label>
-            <input class="cp-form-input" id="lead-company" name="company" type="text" maxlength="300" />
-            <label class="cp-form-label" for="lead-type">{{ t.form_type }}</label>
-            <select class="cp-form-input" id="lead-type" name="type">
-              <option value="">{{ t.form_type }}</option>
-              <option value="startup">{{ t.form_type_startup }}</option>
-              <option value="smb">{{ t.form_type_smb }}</option>
-              <option value="hospitality">{{ t.form_type_hospitality }}</option>
-              <option value="media">{{ t.form_type_media }}</option>
-            </select>
-            <label class="cp-form-label" for="lead-message">{{ t.form_message }}</label>
-            <textarea class="cp-form-input cp-form-textarea" id="lead-message" name="message" rows="4" maxlength="5000"></textarea>
-            <label class="cp-form-label" for="lead-phone">{{ t.form_phone }}</label>
-            <input class="cp-form-input" id="lead-phone" name="phone" type="tel" maxlength="50" />
-            <div class="cp-form-actions">
-              <button type="submit" class="cp-btn cp-btn-primary">{{ t.form_submit }}</button>
-            </div>
-            <p id="lead-form-message" class="cp-form-feedback" aria-live="polite"></p>
-          </form>
-        </div>
-      </div>
-    </section>
-
     <!-- CTA final -->
     <section class="cp-section" id="contacto">
       <div class="cpc">
@@ -393,7 +353,7 @@
           <p>{{ t.cta_lead }}</p>
           <div class="cp-cta-buttons">
             <a class="cp-btn cp-btn-outline" href="https://calendar.google.com/calendar/appointments/schedules/AcZssZ387VmTo3CquOrVY76jpM5FK7oKH8yMolIRGL0PiAiY7nZwhr_maqZacHRTN3jy6Dgc-V53No5J?gv=true" target="_blank" rel="noopener noreferrer">{{ t.cta_book_demo }}</a>
-            <a class="cp-btn cp-btn-primary" href="#lead-form">{{ t.cta_apply }}</a>
+            <a class="cp-btn cp-btn-primary" href="{{ contact_form_url }}">{{ t.cta_apply }}</a>
           </div>
         </div>
       </div>

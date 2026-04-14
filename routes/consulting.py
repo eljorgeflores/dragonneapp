@@ -121,6 +121,9 @@ def render_consulting_landing(
         }
 
     lead_path = url_path("/consultoria/lead")
+    contact_form_url = (
+        url_path("/consultoria/contacto") if plang == "es" else url_path("/consulting/contact")
+    )
 
     return templates.TemplateResponse(
         "consulting.html",
@@ -131,6 +134,7 @@ def render_consulting_landing(
             "t": t,
             "calendar_url": calendar_url(),
             "lead_form_action": lead_path,
+            "contact_form_url": contact_form_url,
             "meta_title": meta_title,
             "meta_description": meta_description,
             "meta_keywords": (
@@ -150,6 +154,58 @@ def render_consulting_landing(
             "html_lang": html_lang,
             "hreflang_alternates": hreflang_alternates,
             "structured_data": structured,
+        },
+    )
+
+
+def render_consulting_contact_form(request: Request, lang: str = "es"):
+    if lang not in ("es", "en"):
+        lang = "es"
+    trans = _consulting_translations()
+    t = trans.get(lang) or trans.get("es")
+    t = _DefaultT(t) if t else _DefaultT()
+    plang = "en" if lang == "en" else "es"
+    lead_path = url_path("/consultoria/lead")
+    if plang == "en":
+        meta_title = "Contact — DRAGONNÉ"
+        meta_description = "Tell us what you need. We'll reply with a clear next step."
+        canonical_url = absolute_url("/consulting/contact")
+        html_lang = "en"
+        og_locale = "en_US"
+        og_locale_alternate = "es_MX"
+    else:
+        meta_title = "Contacto — DRAGONNÉ"
+        meta_description = "Cuéntanos qué necesitas. Te respondemos con un siguiente paso claro."
+        canonical_url = absolute_url("/consultoria/contacto")
+        html_lang = "es-MX"
+        og_locale = "es_MX"
+        og_locale_alternate = "en_US"
+    hreflang_alternates = [
+        {"hreflang": "es", "href": absolute_url("/consultoria/contacto")},
+        {"hreflang": "en", "href": absolute_url("/consulting/contact")},
+        {"hreflang": "x-default", "href": absolute_url("/consultoria/contacto")},
+    ]
+    return templates.TemplateResponse(
+        "consulting_form.html",
+        {
+            "request": request,
+            "current_year": datetime.now(timezone.utc).year,
+            "lang": lang,
+            "t": t,
+            "calendar_url": calendar_url(),
+            "lead_form_action": lead_path,
+            "meta_title": meta_title,
+            "meta_description": meta_description,
+            "canonical_url": canonical_url,
+            "robots_meta": "index, follow",
+            "og_title": meta_title,
+            "og_description": meta_description,
+            "og_locale": og_locale,
+            "og_locale_alternate": og_locale_alternate,
+            "twitter_title": meta_title,
+            "twitter_description": meta_description,
+            "html_lang": html_lang,
+            "hreflang_alternates": hreflang_alternates,
         },
     )
 
@@ -273,7 +329,7 @@ def render_vertical_landing_page(request: Request, lang: str, slug: str):
             "v": v,
             "vertical_slug": slug,
             "consulting_home": consulting_home,
-            "lead_anchor": f"{consulting_home}#lead-form",
+            "lead_anchor": url_path("/consultoria/contacto") if lang == "es" else url_path("/consulting/contact"),
             "calendar_url": calendar_url(),
             "meta_title": meta_title,
             "meta_description": meta_description,
@@ -306,6 +362,16 @@ def consulting_es_page(request: Request):
 @router.get("/consulting", response_class=HTMLResponse)
 def consulting_en_page(request: Request):
     return render_consulting_landing(request, lang="en", page="consulting")
+
+
+@router.get("/consultoria/contacto", response_class=HTMLResponse)
+def consulting_contact_es(request: Request):
+    return render_consulting_contact_form(request, lang="es")
+
+
+@router.get("/consulting/contact", response_class=HTMLResponse)
+def consulting_contact_en(request: Request):
+    return render_consulting_contact_form(request, lang="en")
 
 
 @router.get("/hoteles", response_class=HTMLResponse)

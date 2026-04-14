@@ -1,0 +1,73 @@
+{# Landing dedicada al formulario de contacto de consultoría. #}
+{% extends 'base.html' %}
+{% block body %}
+{% include 'partials/cp_consulting_styles.html' %}
+
+<div class="cp">
+{% include 'partials/cp_consulting_header.html' %}
+
+  <main id="main">
+    <section class="cp-section cp-section--muted" id="lead-form">
+      <div class="cpc">
+        <div class="cp-section-hero">
+          <p class="cp-section-label">{{ t.nav_contact }}</p>
+          <h1 class="cp-section-title">{{ t.form_title }}</h1>
+          <p class="cp-section-lead">{{ t.form_lead }}</p>
+        </div>
+        <div class="cp-form-wrap">
+          <form id="consulting-lead-form" class="cp-lead-form" action="{{ lead_form_action }}" method="post">
+            <input type="hidden" name="lang" value="{{ lang }}" />
+            <label class="cp-form-label" for="lead-name">{{ t.form_name }}</label>
+            <input class="cp-form-input" id="lead-name" name="name" type="text" required maxlength="200" />
+            <label class="cp-form-label" for="lead-email">{{ t.form_email }}</label>
+            <input class="cp-form-input" id="lead-email" name="email" type="email" required maxlength="254" />
+            <label class="cp-form-label" for="lead-company">{{ t.form_company }}</label>
+            <input class="cp-form-input" id="lead-company" name="company" type="text" maxlength="300" />
+            <label class="cp-form-label" for="lead-type">{{ t.form_type }}</label>
+            <select class="cp-form-input" id="lead-type" name="type">
+              <option value="">{{ t.form_type }}</option>
+              <option value="startup">{{ t.form_type_startup }}</option>
+              <option value="smb">{{ t.form_type_smb }}</option>
+              <option value="hospitality">{{ t.form_type_hospitality }}</option>
+              <option value="media">{{ t.form_type_media }}</option>
+            </select>
+            <label class="cp-form-label" for="lead-message">{{ t.form_message }}</label>
+            <textarea class="cp-form-input cp-form-textarea" id="lead-message" name="message" rows="6" maxlength="5000"></textarea>
+            <label class="cp-form-label" for="lead-phone">{{ t.form_phone }}</label>
+            <input class="cp-form-input" id="lead-phone" name="phone" type="tel" maxlength="50" />
+            <div class="cp-form-actions">
+              <button type="submit" class="cp-btn cp-btn-primary">{{ t.form_submit }}</button>
+            </div>
+            <p id="lead-form-message" class="cp-form-feedback" aria-live="polite"></p>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="cp-footer" role="contentinfo">
+    <div class="cpc">
+      <p><strong>DRAGONNÉ</strong> — {{ t.footer_tagline }}</p>
+      <p>{{ t.footer_vert }}</p>
+      <p>Querétaro, México · &copy; {{ current_year or '2025' }} DRAGONNÉ</p>
+      <nav class="cp-footer-links" aria-label="Enlaces">
+        <a href="{{ url_path('/consultoria') if lang == 'es' else url_path('/consulting') }}#con-quienes">{{ t.footer_links_work }}</a>
+        <a href="{{ url_path('/consultoria') if lang == 'es' else url_path('/consulting') }}#servicios">{{ t.footer_links_services }}</a>
+        <a href="{{ url_path('/consultoria/contacto') if lang == 'es' else url_path('/consulting/contact') }}">{{ t.footer_links_contact }}</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script>
+  (function(){
+    var toggle = document.getElementById('cp-nav-toggle');
+    var mobileNav = document.querySelector('.cp-nav-mobile');
+    if (toggle && mobileNav) {
+      mobileNav.addEventListener('click', function(e) {
+        if (e.target.closest('a')) toggle.checked = false;
+      });
+    }
+  })();
+  </script>
+</div>
+{% endblock %}
