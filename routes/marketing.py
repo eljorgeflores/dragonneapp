@@ -494,6 +494,8 @@ def _sitemap_entries():
         ("/consulting", "weekly", "0.95"),
         ("/hoteles", "weekly", "0.88"),
         ("/hotels", "weekly", "0.88"),
+        ("/hoteles/ventas", "monthly", "0.82"),
+        ("/hotels/sales", "monthly", "0.82"),
         ("/consultoria/startups", "weekly", "0.88"),
         ("/consultoria/smbs", "weekly", "0.88"),
         ("/consultoria/medios", "weekly", "0.88"),

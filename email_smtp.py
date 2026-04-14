@@ -1,9 +1,12 @@
 """Envío SMTP (recuperación contraseña, compartir análisis, lead consultoría)."""
+from __future__ import annotations
+
 import logging
 import smtplib
 import ssl
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from html import escape
 
 import requests
 
@@ -82,6 +85,7 @@ def _send_via_resend(
     *,
     purpose: str = "email",
     sender_plausible: bool,
+    cc: list[str] | None = None,
 ) -> bool:
     """Envío vía Resend (HTTPS). `from` debe ser un remitente verificado en el panel de Resend."""
     if not config.RESEND_API_KEY:
@@ -96,19 +100,22 @@ def _send_via_resend(
         )
         return False
     try:
+        _payload: dict = {
+            "from": from_addr,
+            "to": [to_addr],
+            "subject": subject,
+            "text": text,
+            "html": html,
+        }
+        if cc:
+            _payload["cc"] = [c.strip() for c in cc if (c or "").strip()]
         r = requests.post(
             _RESEND_API_URL,
             headers={
                 "Authorization": f"Bearer {config.RESEND_API_KEY}",
                 "Content-Type": "application/json",
             },
-            json={
-                "from": from_addr,
-                "to": [to_addr],
-                "subject": subject,
-                "text": text,
-                "html": html,
-            },
+            json=_payload,
             timeout=30,
         )
     except requests.RequestException as exc:
@@ -691,3 +698,199 @@ def send_pullso_mvp_lead_email(
     except Exception as exc:
         _log.warning("Falló envío correo lead Pullso YC: %s", exc, exc_info=True)
         return False
+
+
+DRAGONNE_DIAG_CC = "jorge@dragonne.co"
+
+
+def _hospitality_diagnosis_email_bodies(
+    *,
+    lang: str,
+    contact_name: str,
+    hotel_name: str,
+    savings_line: str,
+    growth_line: str,
+    facts_rows: list[tuple[str, str]],
+    disclaimer: str,
+    result_narrative: str = "",
+    context_line: str = "",
+) -> tuple[str, str, str]:
+    """(subject, text_plain, html)"""
+    sub_hotel = (hotel_name or "").replace("\n", " ").strip()[:80] or ("Hotel" if lang == "es" else "Hotel")
+    cn = (contact_name or "").replace("\n", " ").strip() or ("Cliente" if lang == "es" else "Guest")
+    ctx_plain = (context_line or "").replace("\n", " ").strip()
+    if lang == "es":
+        subject = f"Tu diagnóstico de posicionamiento online — {sub_hotel}"
+        intro = (
+            f"Hola {cn},\n\n"
+            f"Gracias por el diagnóstico inicial de posicionamiento online para {sub_hotel}. "
+            "Con habitaciones, ADR, ocupación y mix OTAs te dejamos dos lecturas accionables: cuánto margen suele "
+            "quedar en intermediarios y un techo ilustrativo si fortaleces venta directa y ordenas canales.\n\n"
+        )
+        if ctx_plain:
+            intro += ctx_plain + "\n\n"
+        narrative_block = (f"{result_narrative.strip()}\n\n" if (result_narrative or "").strip() else "")
+        mid = f"{narrative_block}Ahorro anual estimado (orientativo): {savings_line}\n{growth_line}\n\n"
+        outro = (
+            "\n\n" + disclaimer + "\n\n"
+            "—\nConsultoría hospitality · dragonne.co\n"
+        )
+    else:
+        subject = f"Your online positioning diagnosis — {sub_hotel}"
+        intro = (
+            f"Hi {cn},\n\n"
+            f"Thanks for completing the initial online positioning diagnosis for {sub_hotel}. "
+            "From rooms, ADR, occupancy, and OTA mix we distilled two actionable reads: typical margin left "
+            "in intermediaries and an illustrative upside if you strengthen direct and tidy channels.\n\n"
+        )
+        if ctx_plain:
+            intro += ctx_plain + "\n\n"
+        narrative_block = (f"{result_narrative.strip()}\n\n" if (result_narrative or "").strip() else "")
+        mid = f"{narrative_block}Estimated annual commission savings (indicative): {savings_line}\n{growth_line}\n\n"
+        outro = (
+            "\n\n" + disclaimer + "\n\n"
+            "—\nHospitality consulting · dragonne.co\n"
+        )
+    fact_lines_txt = "\n".join(f"{k}: {v}" for k, v in facts_rows)
+    text = intro + mid + fact_lines_txt + outro
+
+    rows_html = "".join(
+        f"<tr><td style='padding:10px 14px;border-bottom:1px solid #eee;color:#555;font-size:14px'>{escape(k)}</td>"
+        f"<td style='padding:10px 14px;border-bottom:1px solid #eee;font-size:14px;font-weight:600;color:#111'>{escape(v)}</td></tr>"
+        for k, v in facts_rows
+    )
+    ctx_html = ""
+    if ctx_plain:
+        ctx_html = (
+            "<p style=\"margin:12px 0 0;font-size:13px;line-height:1.5;color:#4b5563;"
+            "border-left:3px solid #f6a905;padding-left:12px;\">"
+            f"{escape(ctx_plain)}</p>"
+        )
+    story_p_es = (
+        "Con lo que declaraste sobre tamaño, ocupación y canales, el bloque naranja resume el margen en juego "
+        "y el horizonte orientativo; la tabla inferior recoge los datos tal como los enviaste."
+    )
+    story_p_en = (
+        "From the size, occupancy, and channel inputs you shared, the orange block summarizes margin at stake "
+        "and the indicative upside; the table below mirrors what you submitted."
+    )
+    html = f"""<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f4f4f6;font-family:Inter,Segoe UI,system-ui,sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f4f4f6;padding:24px 12px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" style="max-width:560px;background:#fff;border-radius:16px;overflow:hidden;
+        box-shadow:0 12px 40px rgba(0,0,0,.08);border:1px solid #ececf0;">
+        <tr><td style="padding:0;background:linear-gradient(90deg,#f6a905,#f07e07);height:4px;font-size:0;line-height:0;">&nbsp;</td></tr>
+        <tr><td style="padding:28px 28px 8px 28px;">
+          <p style="margin:0 0 6px;font-size:11px;font-weight:800;letter-spacing:.14em;color:#9a9ca3;">
+            {"Diagnóstico online" if lang == "es" else "Online diagnosis"}
+          </p>
+          <h1 style="margin:0;font-size:22px;line-height:1.2;color:#111;font-weight:800;letter-spacing:-.02em;">
+            {"Diagnóstico inicial de posicionamiento online" if lang == "es" else "Initial online positioning diagnosis"}
+          </h1>
+          <p style="margin:14px 0 0;font-size:15px;line-height:1.55;color:#4b5563;">
+            {"Hola" if lang == "es" else "Hi"} <strong>{escape(contact_name)}</strong> — {"este es el resumen brandeado para" if lang == "es" else "this is the branded summary for"} <strong>{escape(hotel_name)}</strong>.
+          </p>
+          <p style="margin:10px 0 0;font-size:14px;line-height:1.55;color:#6b7280;">
+            {escape(story_p_es if lang == "es" else story_p_en)}
+          </p>
+          {ctx_html}
+          {(
+            f"<p style=\"margin:14px 0 0;font-size:14px;line-height:1.55;color:#374151;font-weight:600;\">{escape((result_narrative or '').strip())}</p>"
+            if (result_narrative or "").strip()
+            else ""
+          )}
+        </td></tr>
+        <tr><td style="padding:8px 28px 20px 28px;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-radius:12px;overflow:hidden;border:1px solid #f0e8dc;background:linear-gradient(165deg,#fffdf9,#fff7ee);">
+            <tr><td style="padding:18px 20px;">
+              <p style="margin:0 0 6px;font-size:12px;font-weight:700;color:#b45309;text-transform:uppercase;letter-spacing:.06em;">
+                {"Resultados orientativos" if lang == "es" else "Indicative results"}
+              </p>
+              <p style="margin:0 0 4px;font-size:26px;font-weight:800;color:#111;letter-spacing:-.03em;">{escape(savings_line)}</p>
+              <p style="margin:0;font-size:15px;line-height:1.45;color:#374151;">{escape(growth_line)}</p>
+            </td></tr>
+          </table>
+        </td></tr>
+        <tr><td style="padding:0 28px 8px 28px;">
+          <p style="margin:0 0 8px;font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;">
+            {"Datos declarados" if lang == "es" else "Submitted inputs"}
+          </p>
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #eee;border-radius:10px;overflow:hidden;">
+            {rows_html}
+          </table>
+        </td></tr>
+        <tr><td style="padding:16px 28px 28px 28px;">
+          <p style="margin:0;font-size:12px;line-height:1.5;color:#6b7280;">{escape(disclaimer)}</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>"""
+    return subject, text, html
+
+
+def send_hospitality_diagnosis_report(
+    *,
+    to_email: str,
+    contact_name: str,
+    lang: str,
+    hotel_name: str,
+    savings_line: str,
+    growth_line: str,
+    facts_rows: list[tuple[str, str]],
+    disclaimer: str,
+    result_narrative: str = "",
+    context_line: str = "",
+) -> bool:
+    """
+    Envía el reporte al lead y copia a jorge@dragonne.co (SMTP o Resend con CC).
+    """
+    to_addr = (to_email or "").strip()
+    if not to_addr or "@" not in to_addr:
+        return False
+    subject, text, html = _hospitality_diagnosis_email_bodies(
+        lang=lang,
+        contact_name=contact_name.strip() or ("Cliente" if lang == "es" else "Guest"),
+        hotel_name=hotel_name.strip() or ("Hotel" if lang == "es" else "Hotel"),
+        savings_line=savings_line,
+        growth_line=growth_line,
+        facts_rows=facts_rows,
+        disclaimer=disclaimer,
+        result_narrative=result_narrative,
+        context_line=context_line,
+    )
+    _rp = config.resend_sender_plausible()
+    cc_list = [DRAGONNE_DIAG_CC]
+
+    if config.SMTP_HOST and config.SMTP_USER and config.SMTP_PASSWORD:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = config.EMAIL_FROM
+        msg["To"] = to_addr
+        msg["Cc"] = ", ".join(cc_list)
+        msg["Reply-To"] = DRAGONNE_DIAG_CC
+        msg.attach(MIMEText(text, "plain", "utf-8"))
+        msg.attach(MIMEText(html, "html", "utf-8"))
+        try:
+            _sendmail([to_addr, cc_list[0]], msg.as_string())
+            _log.info("hospitality_diag.email_sent channel=smtp to=%s cc=%s", to_addr, cc_list[0])
+            return True
+        except Exception as exc:
+            _log.warning("hospitality_diag.email_failed channel=smtp detail=%s", exc, exc_info=True)
+
+    if config.RESEND_API_KEY and _rp:
+        if _send_via_resend(
+            to_addr,
+            subject,
+            text,
+            html,
+            purpose="hospitality_diagnosis",
+            sender_plausible=_rp,
+            cc=cc_list,
+        ):
+            _log.info("hospitality_diag.email_sent channel=resend to=%s", to_addr)
+            return True
+
+    _log.warning("hospitality_diag.email_failed reason=no_delivery_channel to=%s", to_addr)
+    return False

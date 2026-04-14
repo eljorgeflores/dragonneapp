@@ -5,64 +5,7 @@
 {% include 'partials/cp_consulting_styles.html' %}
 
 <div class="cp">
-  <a href="#main" class="cp-skip">Saltar al contenido</a>
-  <header class="cp-nav-wrap" id="cp-header">
-    <input type="checkbox" id="cp-nav-toggle" class="cp-nav-toggle" aria-hidden="true" aria-label="Menú" />
-    <div class="cp-nav">
-      <div class="cp-nav-left">
-        <a href="{{ url_path('/consultoria') if lang == 'es' else url_path('/consulting') }}#top" class="cp-brand">
-          <img src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" width="160" height="36" loading="eager" decoding="async" />
-        </a>
-        <div class="cp-lang">
-          <a href="{{ url_path('/consulting') }}" hreflang="en" class="cp-lang-link {% if lang == 'en' %}is-active{% endif %}" aria-current="{% if lang == 'en' %}true{% else %}false{% endif %}">EN</a>
-          <a href="{{ url_path('/consultoria') }}" hreflang="es" class="cp-lang-link {% if lang == 'es' %}is-active{% endif %}" aria-current="{% if lang == 'es' %}true{% else %}false{% endif %}">ES</a>
-        </div>
-      </div>
-      <nav class="cp-nav-links" aria-label="Navegación principal">
-        <div class="cp-nav-item" tabindex="-1">
-          <button type="button" class="cp-nav-dropdown-btn" aria-expanded="false" aria-haspopup="true">{{ t.nav_verticals }}</button>
-          <div class="cp-nav-sub" role="menu">
-            <div class="cp-nav-sub-group" role="group" aria-label="{{ t.vert_hosp }}">
-              <span class="cp-nav-sub-group-title">{{ t.vert_hosp }}</span>
-              <a href="{{ url_path('/hoteles') if lang == 'es' else url_path('/hotels') }}" role="menuitem">{{ t.vert_hosp_tab_consulting }}</a>
-              <a href="{{ url_path('/pullso') }}" role="menuitem">{{ t.nav_vertical_pullso }}</a>
-            </div>
-            <a href="{{ url_path('/consultoria/startups') if lang == 'es' else url_path('/consulting/startups') }}" role="menuitem">{{ t.vert_nav_startups }}</a>
-            <a href="{{ url_path('/consultoria/smbs') if lang == 'es' else url_path('/consulting/smbs') }}" role="menuitem">{{ t.vert_nav_smbs }}</a>
-            <a href="{{ url_path('/consultoria/medios') if lang == 'es' else url_path('/consulting/medios') }}" role="menuitem">{{ t.vert_nav_media }}</a>
-          </div>
-        </div>
-        <a href="#servicios">{{ t.nav_services }}</a>
-        <a href="#metodologia">{{ t.nav_method }}</a>
-        <a href="#palabras">{{ t.nav_testimonials }}</a>
-        <a href="#equipo">{{ t.nav_team }}</a>
-        <a href="#contacto">{{ t.nav_contact }}</a>
-      </nav>
-      <div class="cp-nav-right">
-        <div class="cp-actions">
-          <a class="cp-btn cp-btn-primary" href="https://calendar.google.com/calendar/appointments/schedules/AcZssZ387VmTo3CquOrVY76jpM5FK7oKH8yMolIRGL0PiAiY7nZwhr_maqZacHRTN3jy6Dgc-V53No5J?gv=true" target="_blank" rel="noopener noreferrer">{{ t.cta_header_agendar }}</a>
-        </div>
-      </div>
-      <label for="cp-nav-toggle" class="cp-nav-hamburger" aria-label="Abrir menú">
-        <span class="cp-nav-hamburger-btn"><span></span></span>
-      </label>
-    </div>
-    <div class="cp-nav-mobile">
-      <span class="cp-nav-mobile-subtitle">{{ t.nav_verticals }}</span>
-      <span class="cp-nav-mobile-subtitle">{{ t.vert_hosp }}</span>
-      <a class="cp-nav-mobile-sub" href="{{ url_path('/hoteles') if lang == 'es' else url_path('/hotels') }}">{{ t.vert_hosp_tab_consulting }}</a>
-      <a class="cp-nav-mobile-sub" href="{{ url_path('/pullso') }}">{{ t.nav_vertical_pullso }}</a>
-      <a href="{{ url_path('/consultoria/startups') if lang == 'es' else url_path('/consulting/startups') }}">{{ t.vert_nav_startups }}</a>
-      <a href="{{ url_path('/consultoria/smbs') if lang == 'es' else url_path('/consulting/smbs') }}">{{ t.vert_nav_smbs }}</a>
-      <a href="{{ url_path('/consultoria/medios') if lang == 'es' else url_path('/consulting/medios') }}">{{ t.vert_nav_media }}</a>
-      <a href="#servicios">{{ t.nav_services }}</a>
-      <a href="#metodologia">{{ t.nav_method }}</a>
-      <a href="#palabras">{{ t.nav_testimonials }}</a>
-      <a href="#equipo">{{ t.nav_team }}</a>
-      <a href="#contacto">{{ t.nav_contact }}</a>
-      <a class="cp-btn cp-btn-primary" href="https://calendar.google.com/calendar/appointments/schedules/AcZssZ387VmTo3CquOrVY76jpM5FK7oKH8yMolIRGL0PiAiY7nZwhr_maqZacHRTN3jy6Dgc-V53No5J?gv=true" target="_blank" rel="noopener noreferrer">{{ t.cta_header_agendar }}</a>
-    </div>
-  </header>
+{% include 'partials/cp_consulting_header.html' %}
 
   <main id="main">
     <!-- Hero — fondo tablero + destellos naranjas con motion -->
@@ -113,12 +56,12 @@
           </li>
           <li class="cp-logo-slot">
             <div class="cp-logo-slot__frame">
-              <img class="cp-logo-slot__img" src="/static/portfolio-clients/siteminder.png?v=2" alt="SiteMinder" loading="lazy" decoding="async" />
+              <img class="cp-logo-slot__img" src="/static/branding/integrations/siteminder.svg?v=1" alt="SiteMinder" loading="lazy" decoding="async" />
             </div>
           </li>
           <li class="cp-logo-slot">
             <div class="cp-logo-slot__frame">
-              <img class="cp-logo-slot__img" src="/static/portfolio-clients/guruhotel.png?v=3" alt="GuruHotel" loading="lazy" decoding="async" />
+              <img class="cp-logo-slot__img" src="/static/portfolio-clients/guruhotel.svg?v=1" alt="GuruHotel" loading="lazy" decoding="async" />
             </div>
           </li>
           <li class="cp-logo-slot">

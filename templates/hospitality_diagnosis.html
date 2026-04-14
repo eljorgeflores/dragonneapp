@@ -1,0 +1,948 @@
+{% extends 'base.html' %}
+{% block body_class %}cp hdg hdg--wiz{% endblock %}
+{% block head_extra %}
+<style>
+  .hdg{--ink:#0b0d12;--muted:#64748b;--line:rgba(11,13,18,.08);--acc:#f07e07;--acc2:#f6a905;--surface:#fff;--soft:#f8fafc}
+  .hdg .cp{background:var(--soft);min-height:100vh}
+  .hdg--wiz .cp-nav-wrap{background:rgba(255,255,255,.72);backdrop-filter:saturate(1.2) blur(10px);border-bottom-color:transparent}
+  .hdg-main{padding:clamp(8px,2vw,20px) 0 clamp(36px,6vw,64px)}
+  .hdg-shell{max-width:min(540px,calc(100% - 28px));margin:0 auto}
+  .hdg-back{margin:0 0 12px}
+  .hdg-back a{font-size:.78rem;font-weight:600;color:var(--muted);text-decoration:none;letter-spacing:.02em}
+  .hdg-back a:hover{color:var(--acc)}
+  .hdg-hero{margin:0 0 16px;text-align:center;padding:4px 4px 0}
+  .hdg-hero .hdg-kicker{margin:0 0 4px;font-size:.62rem;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+  .hdg-title{margin:0;font-size:clamp(1.15rem,4vw,1.55rem);font-weight:800;letter-spacing:-.035em;line-height:1.18;color:var(--ink);padding:0 4px}
+  .hdg-lead{margin:6px 0 0;font-size:.82rem;color:var(--muted)}
+  .hdg-wiztop{margin-bottom:14px}
+  .hdg-meta{margin:0 0 10px;text-align:center;font-size:.72rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .hdg-prog{
+    height:4px;border-radius:999px;background:rgba(11,13,18,.06);overflow:hidden;
+    margin:0 auto;max-width:320px
+  }
+  .hdg-prog__fill{
+    height:100%;width:16.66%;border-radius:999px;
+    background:linear-gradient(90deg,var(--acc2),var(--acc));
+    transition:width .35s cubic-bezier(.4,0,.2,1)
+  }
+  .hdg-alert{
+    margin:0 0 12px;padding:11px 13px;border-radius:14px;font-size:.82rem;line-height:1.45;
+    background:rgba(220,38,38,.07);border:1px solid rgba(220,38,38,.16);color:#7f1d1d
+  }
+  .hdg-surface{
+    border-radius:22px;border:1px solid var(--line);
+    background:var(--surface);
+    box-shadow:0 20px 50px rgba(11,13,18,.07),0 0 0 1px rgba(255,255,255,.9) inset;
+    overflow:visible
+  }
+  #hdg-form-wrap form{overflow:visible}
+  .hdg-step{padding:26px 22px 28px;display:none;animation:hdgFade .28s ease;overflow:visible;position:relative}
+  .hdg-step.is-active{z-index:4}
+  .hdg-step.is-active{display:block}
+  @keyframes hdgFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .hdg-stephead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin:0 0 18px}
+  .hdg-stephead .hdg-steptitle{margin:0;flex:1}
+  .hdg-tipwrap--head{margin-top:2px}
+  .hdg-steptitle{margin:0 0 18px;font-size:1.05rem;font-weight:800;letter-spacing:-.03em;color:var(--ink);line-height:1.2}
+  .hdg-field{margin:0 0 16px}
+  .hdg-field:last-child{margin-bottom:0}
+  .hdg-labrow{display:flex;align-items:center;gap:8px;margin:0 0 8px;min-height:1.2em}
+  .hdg-lab{flex:1;font-size:.8rem;font-weight:600;color:var(--ink);letter-spacing:.01em;margin:0}
+  .hdg-inp,.hdg-sel{
+    width:100%;height:48px;padding:0 14px;border:1px solid rgba(11,13,18,.1);border-radius:14px;
+    font-size:1rem;font-family:inherit;background:#fff;color:var(--ink);
+    transition:border-color .15s,box-shadow .15s;box-sizing:border-box
+  }
+  .hdg-inp--xl{font-size:1.2rem;font-weight:600;letter-spacing:-.02em;padding:0 16px;height:54px}
+  .hdg-inp::placeholder{color:#94a3b8}
+  .hdg-inp:focus,.hdg-sel:focus{
+    outline:0;border-color:rgba(240,126,7,.5);
+    box-shadow:0 0 0 3px rgba(240,126,7,.12)
+  }
+  .hdg-inp[type="number"]{-moz-appearance:textfield;appearance:textfield}
+  .hdg-inp[type="number"]::-webkit-outer-spin-button,.hdg-inp[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .hdg-grid2{display:grid;gap:12px 14px;grid-template-columns:1fr 1fr}
+  @media (max-width:440px){.hdg-grid2{grid-template-columns:1fr}}
+  .hdg-phone{display:grid;grid-template-columns:minmax(104px,118px) 1fr;gap:10px;align-items:end}
+  .hdg-sel--cc{font-size:.8rem;padding-right:6px}
+  .hdg-tipwrap{position:relative;flex-shrink:0;z-index:1}
+  .hdg-tipwrap.is-open{z-index:40}
+  .hdg-tipbtn{
+    width:24px;height:24px;padding:0;border-radius:999px;border:1px solid rgba(11,13,18,.12);
+    background:#fff;font-size:.7rem;font-weight:800;color:var(--muted);line-height:1;cursor:pointer;
+    transition:color .15s,border-color .15s,background .15s,box-shadow .15s
+  }
+  .hdg-tipbtn:hover,.hdg-tipbtn:focus-visible{color:var(--acc);border-color:rgba(240,126,7,.45);box-shadow:0 0 0 2px rgba(240,126,7,.12)}
+  .hdg-tipbtn:focus-visible{outline:0}
+  /* Globo arriba del «?»: no tapa inputs debajo ni queda bajo el footer de la tarjeta */
+  .hdg-tipbubble{
+    position:absolute;right:0;bottom:calc(100% + 10px);top:auto;left:auto;
+    width:min(300px,max(200px,calc(100vw - 36px)));max-height:min(240px,50vh);overflow:auto;
+    padding:12px 14px;border-radius:14px;font-size:.78rem;font-weight:450;line-height:1.5;color:#e2e8f0;
+    background:#0f172a;border:1px solid rgba(255,255,255,.1);
+    box-shadow:0 12px 40px rgba(0,0,0,.3);z-index:100;
+    visibility:hidden;opacity:0;transform:translateY(6px);transition:opacity .15s,visibility .15s,transform .15s;pointer-events:none;text-align:left
+  }
+  .hdg-tipwrap.is-open .hdg-tipbubble,
+  .hdg-tipwrap:hover .hdg-tipbubble,
+  .hdg-tipwrap:focus-within .hdg-tipbubble{
+    visibility:visible;opacity:1;transform:translateY(0);pointer-events:auto
+  }
+  @media (hover:none){
+    .hdg-tipwrap:hover .hdg-tipbubble{visibility:hidden;opacity:0;pointer-events:none}
+    .hdg-tipwrap.is-open .hdg-tipbubble{visibility:visible;opacity:1;pointer-events:auto}
+  }
+  .hdg-ota-row{display:flex;gap:10px;align-items:flex-end;margin-bottom:12px}
+  .hdg-ota-cells{flex:1;min-width:0;display:grid;grid-template-columns:1fr minmax(72px,84px);gap:10px}
+  .hdg-ota-rm{
+    flex-shrink:0;width:44px;height:48px;padding:0;border-radius:14px;border:1px solid rgba(11,13,18,.1);
+    background:#fff;color:#b91c1c;font-size:1.2rem;line-height:1;cursor:pointer
+  }
+  .hdg-ota-rm[hidden]{visibility:hidden;pointer-events:none}
+  .hdg-ota-add{
+    margin-top:4px;display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 16px;
+    border-radius:14px;border:1px dashed rgba(11,13,18,.16);background:transparent;font:inherit;font-size:.8rem;font-weight:600;color:var(--muted);cursor:pointer
+  }
+  .hdg-ota-add:hover{border-color:var(--acc);color:var(--acc)}
+  .hdg-wiznav{
+    position:relative;z-index:1;
+    display:flex;gap:10px;align-items:center;padding:16px 20px 20px;
+    border-top:1px solid var(--line);background:linear-gradient(180deg,#fafbfc,#fff)
+  }
+  .hdg-wiznav .hdg-ghost{
+    flex:0 0 auto;min-height:48px;padding:0 18px;border-radius:14px;border:1px solid rgba(11,13,18,.12);
+    background:#fff;font:inherit;font-weight:600;font-size:.88rem;color:var(--ink);cursor:pointer
+  }
+  .hdg-wiznav .hdg-ghost:disabled{opacity:.35;pointer-events:none}
+  .hdg-wiznav .hdg-primary{
+    flex:1;min-height:50px;padding:0 18px;border-radius:14px;border:0;font:inherit;font-weight:700;font-size:.9rem;
+    color:#fff;cursor:pointer;
+    background:linear-gradient(120deg,var(--acc2),var(--acc));
+    box-shadow:0 12px 28px rgba(240,126,7,.28)
+  }
+  .hdg-wiznav .hdg-primary:disabled{opacity:.55;pointer-events:none}
+  .hdg-wiznav .hdg-primary.is-hidden{display:none}
+  .hdg-privacy{margin:10px 20px 18px;font-size:.65rem;line-height:1.45;color:var(--muted);text-align:center}
+  .hdg-privacy__link{color:var(--muted);text-decoration:underline;text-decoration-color:rgba(100,116,139,.55);text-underline-offset:2px;font-weight:600}
+  .hdg-privacy__link:hover{color:var(--acc);text-decoration-color:rgba(240,126,7,.5)}
+  .hdg-visually-hidden{
+    position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0
+  }
+  .hdg-success{padding:26px 22px 28px}
+  .hdg-success .hdg-alert{margin:0 0 14px}
+  .hdg-success h2{margin:0 0 6px;font-size:1.35rem;font-weight:800;letter-spacing:-.03em;color:var(--ink);line-height:1.15;text-wrap:balance}
+  .hdg-success-lead{display:flex;align-items:flex-start;flex-wrap:wrap;gap:8px;margin:0 0 16px;font-size:.86rem;color:var(--muted);line-height:1.45}
+  .hdg-success-lead__text{flex:1;min-width:min(100%,160px)}
+  .hdg-tipwrap--success{margin-left:2px;flex-shrink:0;margin-top:1px}
+  .hdg-success-personal{margin:0 0 14px;font-size:.92rem;font-weight:700;color:var(--ink);line-height:1.35}
+  .hdg-success-personal .hdg-success-hotel{color:var(--acc);font-weight:800}
+  .hdg-res-preamble{
+    margin:0 0 16px;padding:12px 14px;border-radius:14px;border:1px solid rgba(11,13,18,.08);
+    background:linear-gradient(180deg,#fff,#f8fafc);font-size:.8rem;line-height:1.5;color:var(--ink);font-weight:600
+  }
+  .hdg-result-grid{display:grid;gap:14px;grid-template-columns:1fr 1fr;margin-bottom:12px}
+  @media (max-width:440px){.hdg-result-grid{grid-template-columns:1fr;gap:16px}}
+  .hdg-res{margin:0;padding:16px 14px;border-radius:16px;background:var(--soft);border:1px solid var(--line);min-width:0}
+  .hdg-res--hero{border-color:rgba(240,126,7,.22);box-shadow:0 10px 32px rgba(240,126,7,.1)}
+  .hdg-res--secondary{opacity:.98}
+  .hdg-res--secondary .hdg-res-cap{color:#64748b}
+  .hdg-res-badge{margin:-2px 0 8px;font-size:.62rem;font-weight:700;color:var(--acc);letter-spacing:.03em;line-height:1.3}
+  .hdg-res-cap{margin:0 0 6px;font-size:.62rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);line-height:1.35}
+  .hdg-res-desc{margin:0 0 12px;font-size:.72rem;line-height:1.5;color:var(--muted);font-weight:500;letter-spacing:0;text-transform:none;max-width:62ch}
+  .hdg-formula-block{margin-top:14px}
+  .hdg-formula-kicker{margin:0 0 6px;font-size:.58rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--acc)}
+  .hdg-formula{
+    margin:0 0 12px;padding:12px 12px 12px 14px;border-radius:14px;
+    background:linear-gradient(165deg,rgba(246,169,5,.08),rgba(11,13,18,.04));
+    border:1px solid rgba(11,13,18,.08);
+    font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+    font-size:.66rem;line-height:1.55;color:var(--ink);white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;
+    max-width:100%;tab-size:2
+  }
+  .hdg-res strong{font-size:1rem;font-weight:800;color:var(--ink);line-height:1.3;display:block;max-width:100%;overflow-wrap:break-word}
+  .hdg-res--hero strong{font-size:clamp(1.02rem,4.6vw,1.2rem);letter-spacing:-.025em}
+  .hdg-res--secondary strong{font-size:clamp(.92rem,3.8vw,1.05rem);color:#334155}
+  .hdg-res-sub{display:block;margin-top:6px;font-size:.78rem;font-weight:600;color:var(--muted);line-height:1.4;overflow-wrap:break-word}
+  .hdg-trust{margin:0 auto 12px;font-size:.72rem;line-height:1.45;color:var(--muted);font-style:italic;text-align:center;max-width:52ch}
+  .hdg-micro{font-size:.68rem;color:var(--muted);line-height:1.5;margin:0 0 16px;max-width:62ch}
+  @media (max-width:440px){
+    .hdg-success{padding:22px 16px 24px}
+    .hdg-success h2{font-size:clamp(1.08rem,5vw,1.32rem)}
+    .hdg-success-lead{font-size:.84rem}
+    .hdg-res{padding:15px 12px}
+    .hdg-res-cap{font-size:.58rem;letter-spacing:.08em}
+    .hdg-res-desc{font-size:.78rem;margin-bottom:12px;max-width:none}
+    .hdg-formula{font-size:.62rem;padding:10px 10px 10px 12px;line-height:1.52}
+    .hdg-res strong{font-size:clamp(.88rem,4.2vw,.98rem)}
+    .hdg-res-sub{font-size:.74rem}
+    .hdg-micro{font-size:.72rem;max-width:none}
+  }
+  .hdg-actions{display:flex;flex-wrap:wrap;gap:10px}
+  .hdg-actions--success{flex-direction:column;align-items:center;gap:10px}
+  .hdg-actions--success .cp-btn{min-width:min(280px,100%)}
+  .hdg-cta-note{margin:0;font-size:.72rem;line-height:1.45;color:var(--muted);text-align:center;max-width:36rem}
+  @media (max-width:400px){.hdg-actions:not(.hdg-actions--success){flex-direction:column}.hdg-actions:not(.hdg-actions--success) .cp-btn{width:100%;justify-content:center}}
+</style>
+{% endblock %}
+
+{% block body %}
+{% include 'partials/cp_consulting_styles.html' %}
+
+<div class="cp">
+{% include 'partials/cp_consulting_header.html' %}
+
+<main id="main" class="hdg-main">
+  <div class="cpc hdg-shell">
+    <p class="hdg-back"><a href="{{ hotels_home }}">{{ d.nav_back }}</a></p>
+
+    <header class="hdg-hero">
+      {% if d.hero_kicker %}<p class="hdg-kicker">{{ d.hero_kicker }}</p>{% endif %}
+      <h1 class="hdg-title">{{ d.hero_title }}</h1>
+      {% if d.hero_lead %}<p class="hdg-lead">{{ d.hero_lead }}</p>{% endif %}
+    </header>
+
+    <div class="hdg-wiztop">
+      <p id="hdg-wiz-meta" class="hdg-meta" aria-live="polite"></p>
+      <div class="hdg-prog" role="progressbar" id="hdg-prog" aria-valuemin="1" aria-valuemax="{{ d.wiz_total }}" aria-valuenow="1" aria-label="{{ d.wiz_progress_aria }}">
+        <div class="hdg-prog__fill" id="hdg-prog-fill"></div>
+      </div>
+    </div>
+
+    <div id="hdg-alert" class="hdg-alert" hidden role="alert"></div>
+
+    <div id="hdg-form-wrap" class="hdg-surface">
+      <form id="hdg-form" novalidate>
+        <div class="hdg-step is-active" data-wiz-step="1" aria-hidden="false">
+          <h2 class="hdg-steptitle">{{ d.wiz_t1 }}</h2>
+          <div class="hdg-field">
+            <div class="hdg-labrow">
+              <label class="hdg-lab" for="hdg-hotel">{{ d.lbl_hotel }}</label>
+              <span class="hdg-tipwrap">
+                <button type="button" class="hdg-tipbtn" aria-label="{{ d.help_aria }}">?</button>
+                <span class="hdg-tipbubble" role="tooltip">{{ d.tp_hotel }}</span>
+              </span>
+            </div>
+            <input class="hdg-inp hdg-inp--xl" type="text" id="hdg-hotel" name="hotel" inputmode="text" autocomplete="organization" autocapitalize="words" required />
+          </div>
+          <div class="hdg-field">
+            <div class="hdg-labrow">
+              <label class="hdg-lab" for="hdg-location">{{ d.lbl_hotel_location }}</label>
+              <span class="hdg-tipwrap">
+                <button type="button" class="hdg-tipbtn" aria-label="{{ d.help_aria }}">?</button>
+                <span class="hdg-tipbubble" role="tooltip">{{ d.tp_location }}</span>
+              </span>
+            </div>
+            <input class="hdg-inp hdg-inp--xl" type="text" id="hdg-location" name="hotel_location" inputmode="text" autocomplete="address-level2" maxlength="160" placeholder="{{ d.hotel_location_placeholder }}" />
+          </div>
+          <div class="hdg-field">
+            <div class="hdg-labrow">
+              <label class="hdg-lab" for="hdg-category">{{ d.lbl_hotel_category }}</label>
+              <span class="hdg-tipwrap">
+                <button type="button" class="hdg-tipbtn" aria-label="{{ d.help_aria }}">?</button>
+                <span class="hdg-tipbubble" role="tooltip">{{ d.tp_category }}</span>
+              </span>
+            </div>
+            <select class="hdg-sel" id="hdg-category" name="hotel_category" aria-label="{{ d.lbl_hotel_category }}">
+              <option value="">{{ d.opt_cat_placeholder }}</option>
+              {% for slug, cat_label in d.hotel_category_labels.items() %}
+              <option value="{{ slug }}">{{ cat_label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="hdg-step" data-wiz-step="2" aria-hidden="true">
+          <h2 class="hdg-steptitle">{{ d.wiz_t2 }}</h2>
+          <div class="hdg-grid2">
+            <div class="hdg-field">
+              <div class="hdg-labrow">
+                <label class="hdg-lab" for="hdg-rooms">{{ d.lbl_rooms }}</label>
+                <span class="hdg-tipwrap"><button type="button" class="hdg-tipbtn" aria-label="{{ d.help_aria }}">?</button><span class="hdg-tipbubble" role="tooltip">{{ d.tp_rooms }}</span></span>
+              </div>
+              <input class="hdg-inp" type="number" id="hdg-rooms" name="rooms" inputmode="numeric" min="1" step="1" required />
+            </div>
+            <div class="hdg-field">
+              <div class="hdg-labrow">
+                <label class="hdg-lab" for="hdg-adr">{{ d.lbl_adr }}</label>
+                <span class="hdg-tipwrap"><button type="button" class="hdg-tipbtn" aria-label="{{ d.help_aria }}">?</button><span class="hdg-tipbubble" role="tooltip">{{ d.tp_adr }}</span></span>
+              </div>
+              <input class="hdg-inp" type="number" id="hdg-adr" name="adr" inputmode="decimal" min="0" step="0.01" required />
+            </div>
+          </div>
+          <div class="hdg-grid2">
+            <div class="hdg-field">
+              <div class="hdg-labrow">
+                <label class="hdg-lab" for="hdg-occ">{{ d.lbl_occ }}</label>
+                <span class="hdg-tipwrap"><button type="button" class="hdg-tipbtn" aria-label="{{ d.help_aria }}">?</button><span class="hdg-tipbubble" role="tooltip">{{ d.tp_occ }}</span></span>
+              </div>
+              <input class="hdg-inp" type="number" id="hdg-occ" name="occ" inputmode="numeric" min="1" max="100" step="1" placeholder="{{ d.occ_placeholder }}" />
+            </div>
+            <div class="hdg-field">
+              <div class="hdg-labrow">
+                <label class="hdg-lab" for="hdg-numotas">{{ d.lbl_numotas }}</label>
+                <span class="hdg-tipwrap"><button type="button" class="hdg-tipbtn" aria-label="{{ d.help_aria }}">?</button><span class="hdg-tipbubble" role="tooltip">{{ d.tp_numotas }}</span></span>
+              </div>
+              <input class="hdg-inp" type="number" id="hdg-numotas" name="numotas" inputmode="numeric" min="0" step="1" value="2" />
+            </div>
+          </div>
+        </div>
+
+        <div class="hdg-step" data-wiz-step="3" aria-hidden="true">
+          <div class="hdg-stephead">
+            <h2 class="hdg-steptitle">{{ d.wiz_t3 }}</h2>
+            <span class="hdg-tipwrap hdg-tipwrap--head">
+              <button type="button" class="hdg-tipbtn" aria-label="{{ d.help_aria }}">?</button>
+              <span class="hdg-tipbubble" role="tooltip">{{ d.tp_ota }}</span>
+            </span>
+          </div>
+          <div id="hdg-ota-rows">
+            <div class="hdg-ota-row" data-ota-row>
+              <div class="hdg-ota-cells">
+                <div class="hdg-field" style="margin:0">
+                  <label class="hdg-lab">{{ d.lbl_ota_name }}</label>
+                  <input class="hdg-inp hdg-ota-name" type="text" inputmode="text" autocomplete="off" placeholder="Booking" />
+                </div>
+                <div class="hdg-field" style="margin:0">
+                  <label class="hdg-lab">{{ d.lbl_ota_comm }}</label>
+                  <input class="hdg-inp hdg-ota-comm" type="number" inputmode="decimal" min="0" max="50" step="0.1" placeholder="15" />
+                </div>
+              </div>
+              <button type="button" class="hdg-ota-rm" data-ota-remove aria-label="{{ d.remove_ota_aria }}" hidden>×</button>
+            </div>
+            <div class="hdg-ota-row" data-ota-row>
+              <div class="hdg-ota-cells">
+                <div class="hdg-field" style="margin:0">
+                  <label class="hdg-lab">{{ d.lbl_ota_name }}</label>
+                  <input class="hdg-inp hdg-ota-name" type="text" inputmode="text" autocomplete="off" placeholder="Expedia" />
+                </div>
+                <div class="hdg-field" style="margin:0">
+                  <label class="hdg-lab">{{ d.lbl_ota_comm }}</label>
+                  <input class="hdg-inp hdg-ota-comm" type="number" inputmode="decimal" min="0" max="50" step="0.1" placeholder="18" />
+                </div>
+              </div>
+              <button type="button" class="hdg-ota-rm" data-ota-remove aria-label="{{ d.remove_ota_aria }}" hidden>×</button>
+            </div>
+          </div>
+          <button type="button" class="hdg-ota-add" id="hdg-add-ota">{{ d.btn_add_ota }}</button>
+        </div>
+
+        <div class="hdg-step" data-wiz-step="4" aria-hidden="true">
+          <h2 class="hdg-steptitle">{{ d.wiz_t4 }}</h2>
+          <div class="hdg-grid2">
+            <div class="hdg-field">
+              <div class="hdg-labrow">
+                <label class="hdg-lab" for="hdg-pct-ota">{{ d.lbl_pct_ota }}</label>
+                <span class="hdg-tipwrap"><button type="button" class="hdg-tipbtn" aria-label="{{ d.help_aria }}">?</button><span class="hdg-tipbubble" role="tooltip">{{ d.tp_pct_ota }}</span></span>
+              </div>
+              <input class="hdg-inp" type="number" id="hdg-pct-ota" name="pct_ota" inputmode="decimal" min="0" max="100" step="0.5" required />
+            </div>
+            <div class="hdg-field">
+              <div class="hdg-labrow">
+                <label class="hdg-lab" for="hdg-pct-direct">{{ d.lbl_pct_direct }}</label>
+                <span class="hdg-tipwrap"><button type="button" class="hdg-tipbtn" aria-label="{{ d.help_aria }}">?</button><span class="hdg-tipbubble" role="tooltip">{{ d.tp_pct_direct }}</span></span>
+              </div>
+              <input class="hdg-inp" type="number" id="hdg-pct-direct" name="pct_direct" inputmode="decimal" min="0" max="100" step="0.5" placeholder="—" />
+            </div>
+          </div>
+        </div>
+
+        <div class="hdg-step" data-wiz-step="5" aria-hidden="true">
+          <h2 class="hdg-steptitle">{{ d.wiz_t5 }}</h2>
+          <div class="hdg-grid2">
+            <div class="hdg-field">
+              <div class="hdg-labrow">
+                <label class="hdg-lab" for="hdg-web">{{ d.lbl_has_web }}</label>
+                <span class="hdg-tipwrap"><button type="button" class="hdg-tipbtn" aria-label="{{ d.help_aria }}">?</button><span class="hdg-tipbubble" role="tooltip">{{ d.tp_web }}</span></span>
+              </div>
+              <select class="hdg-sel" id="hdg-web" name="has_web">
+                <option value="yes">{{ v.diag_opt_yes }}</option>
+                <option value="no">{{ v.diag_opt_no }}</option>
+                <option value="unsure" selected>{{ v.diag_opt_unsure }}</option>
+              </select>
+            </div>
+            <div class="hdg-field">
+              <div class="hdg-labrow">
+                <label class="hdg-lab" for="hdg-be">{{ d.lbl_web_be }}</label>
+                <span class="hdg-tipwrap"><button type="button" class="hdg-tipbtn" aria-label="{{ d.help_aria }}">?</button><span class="hdg-tipbubble" role="tooltip">{{ d.tp_be }}</span></span>
+              </div>
+              <select class="hdg-sel" id="hdg-be" name="web_be">
+                <option value="yes">{{ v.diag_opt_yes }}</option>
+                <option value="no">{{ v.diag_opt_no }}</option>
+                <option value="unsure" selected>{{ v.diag_opt_unsure }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="hdg-field">
+            <div class="hdg-labrow">
+              <label class="hdg-lab" for="hdg-pay">{{ d.lbl_pay }}</label>
+              <span class="hdg-tipwrap"><button type="button" class="hdg-tipbtn" aria-label="{{ d.help_aria }}">?</button><span class="hdg-tipbubble" role="tooltip">{{ d.tp_pay }}</span></span>
+            </div>
+            <select class="hdg-sel" id="hdg-pay" name="pay">
+              <option value="yes">{{ v.diag_opt_yes }}</option>
+              <option value="no">{{ v.diag_opt_no }}</option>
+              <option value="unsure" selected>{{ v.diag_opt_unsure }}</option>
+            </select>
+          </div>
+          <div class="hdg-grid2">
+            <div class="hdg-field">
+              <div class="hdg-labrow">
+                <label class="hdg-lab" for="hdg-pms">{{ d.lbl_pms }}</label>
+                <span class="hdg-tipwrap"><button type="button" class="hdg-tipbtn" aria-label="{{ d.help_aria }}">?</button><span class="hdg-tipbubble" role="tooltip">{{ d.tp_pms }}</span></span>
+              </div>
+              <input class="hdg-inp" type="text" id="hdg-pms" name="pms" inputmode="text" autocomplete="off" placeholder="Opera" />
+            </div>
+            <div class="hdg-field">
+              <div class="hdg-labrow">
+                <label class="hdg-lab" for="hdg-cm">{{ d.lbl_cm }}</label>
+                <span class="hdg-tipwrap"><button type="button" class="hdg-tipbtn" aria-label="{{ d.help_aria }}">?</button><span class="hdg-tipbubble" role="tooltip">{{ d.tp_cm }}</span></span>
+              </div>
+              <input class="hdg-inp" type="text" id="hdg-cm" name="cm" inputmode="text" autocomplete="off" placeholder="Siteminder" />
+            </div>
+          </div>
+        </div>
+
+        <div class="hdg-step" data-wiz-step="6" aria-hidden="true">
+          <h2 class="hdg-steptitle">{{ d.wiz_t6 }}</h2>
+          <div class="hdg-field">
+            <div class="hdg-labrow">
+              <label class="hdg-lab" for="hdg-contact-name">{{ d.lbl_name }}</label>
+              <span class="hdg-tipwrap"><button type="button" class="hdg-tipbtn" aria-label="{{ d.help_aria }}">?</button><span class="hdg-tipbubble" role="tooltip">{{ d.tp_name }}</span></span>
+            </div>
+            <input class="hdg-inp" type="text" id="hdg-contact-name" name="contact_name" inputmode="text" autocomplete="name" required />
+          </div>
+          <div class="hdg-field">
+            <div class="hdg-labrow">
+              <label class="hdg-lab" for="hdg-contact-email">{{ d.lbl_email }}</label>
+              <span class="hdg-tipwrap"><button type="button" class="hdg-tipbtn" aria-label="{{ d.help_aria }}">?</button><span class="hdg-tipbubble" role="tooltip">{{ d.tp_email }}</span></span>
+            </div>
+            <input class="hdg-inp" type="email" id="hdg-contact-email" name="contact_email" inputmode="email" autocomplete="email" required />
+          </div>
+          <div class="hdg-field">
+            <div class="hdg-labrow">
+              <span class="hdg-lab">{{ d.lbl_phone }}</span>
+              <span class="hdg-tipwrap"><button type="button" class="hdg-tipbtn" aria-label="{{ d.help_aria }}">?</button><span class="hdg-tipbubble" role="tooltip">{{ d.tp_phone }}</span></span>
+            </div>
+            <div class="hdg-phone">
+              <div>
+                <label class="hdg-visually-hidden" for="hdg-phone-cc">{{ d.lbl_phone_prefix }}</label>
+                <select id="hdg-phone-cc" class="hdg-sel hdg-sel--cc" aria-label="{{ d.lbl_phone_prefix }}">
+                  <option value="+52" {% if lang == 'es' %}selected{% endif %}>MX +52</option>
+                  <option value="+1" {% if lang == 'en' %}selected{% endif %}>US/CA +1</option>
+                  <option value="+34">ES +34</option>
+                  <option value="+54">AR +54</option>
+                  <option value="+55">BR +55</option>
+                  <option value="+56">CL +56</option>
+                  <option value="+57">CO +57</option>
+                  <option value="+506">CR +506</option>
+                  <option value="+593">EC +593</option>
+                  <option value="+503">SV +503</option>
+                  <option value="+502">GT +502</option>
+                  <option value="+504">HN +504</option>
+                  <option value="+505">NI +505</option>
+                  <option value="+507">PA +507</option>
+                  <option value="+51">PE +51</option>
+                  <option value="+595">PY +595</option>
+                  <option value="+598">UY +598</option>
+                  <option value="+58">VE +58</option>
+                  <option value="+44">UK +44</option>
+                  <option value="+33">FR +33</option>
+                  <option value="+49">DE +49</option>
+                  <option value="+351">PT +351</option>
+                </select>
+              </div>
+              <div>
+                <label class="hdg-visually-hidden" for="hdg-contact-phone">{{ d.phone_placeholder }}</label>
+                <input class="hdg-inp" type="tel" id="hdg-contact-phone" name="contact_phone_local" inputmode="numeric" autocomplete="tel-national" placeholder="{{ d.phone_placeholder }}" required />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <p class="hdg-visually-hidden">
+          <label for="hdg-hp">{{ d.honeypot_label }}</label>
+          <input type="text" id="hdg-hp" name="website" tabindex="-1" autocomplete="off" />
+        </p>
+
+        <div class="hdg-wiznav">
+          <button type="button" class="hdg-ghost" id="hdg-wiz-back" disabled>{{ d.btn_back }}</button>
+          <button type="button" class="hdg-primary" id="hdg-wiz-next">{{ d.btn_next }}</button>
+          <button type="submit" class="hdg-primary is-hidden" id="hdg-submit">{{ d.submit_label }}</button>
+        </div>
+        <p class="hdg-privacy">
+          {{ d.privacy_note_before }}<a class="hdg-privacy__link" href="{{ url_path('/terminos') }}">{{ d.privacy_link_terms }}</a>{{ d.privacy_note_between }}<a class="hdg-privacy__link" href="{{ url_path('/privacidad') }}">{{ d.privacy_link_privacy }}</a>{{ d.privacy_note_after }}
+        </p>
+      </form>
+    </div>
+
+    <div id="hdg-success" class="hdg-surface hdg-success" hidden>
+      <div id="hdg-email-warn" class="hdg-alert" style="display:none" role="status"></div>
+      <h2>{{ d.success_title }}</h2>
+      <p class="hdg-success-lead">
+        <span class="hdg-success-lead__text">{{ d.success_lead }}</span>
+        <span class="hdg-tipwrap hdg-tipwrap--success">
+          <button type="button" class="hdg-tipbtn" aria-label="{{ d.success_inbox_aria }}">?</button>
+          <span class="hdg-tipbubble" role="tooltip">{{ d.success_inbox_tip }}</span>
+        </span>
+      </p>
+      <p id="hdg-success-personal" class="hdg-success-personal" hidden></p>
+      <p class="hdg-res-preamble">{{ d.res_story_intro }}</p>
+      <div class="hdg-result-grid">
+        <div class="hdg-res hdg-res--hero">
+          <p class="hdg-res-cap">{{ d.res_savings_cap }}</p>
+          <p class="hdg-res-badge">{{ d.res_savings_badge }}</p>
+          <p class="hdg-res-desc">{{ d.res_savings_hook }}</p>
+          <strong id="hdg-out-savings"></strong>
+          <div id="hdg-block-formula-savings" class="hdg-formula-block" hidden>
+            <p class="hdg-formula-kicker" id="hdg-kicker-fs">{{ d.res_savings_formula_label }}</p>
+            <pre class="hdg-formula" id="hdg-formula-savings" aria-labelledby="hdg-kicker-fs"></pre>
+          </div>
+        </div>
+        <div class="hdg-res hdg-res--secondary">
+          <p class="hdg-res-cap">{{ d.res_growth_cap }}</p>
+          <p class="hdg-res-badge">{{ d.res_growth_badge }}</p>
+          <p class="hdg-res-desc">{{ d.res_growth_hook }}</p>
+          <strong id="hdg-out-growth-main"></strong>
+          <span id="hdg-out-growth-sub" class="hdg-res-sub" hidden></span>
+          <div id="hdg-block-formula-growth" class="hdg-formula-block" hidden>
+            <p class="hdg-formula-kicker" id="hdg-kicker-fg">{{ d.res_growth_formula_label }}</p>
+            <pre class="hdg-formula" id="hdg-formula-growth" aria-labelledby="hdg-kicker-fg"></pre>
+          </div>
+        </div>
+      </div>
+      <p class="hdg-trust">{{ d.res_trust_line }}</p>
+      <p class="hdg-micro">{{ d.res_disclaimer_short }}</p>
+      <div class="hdg-actions hdg-actions--success">
+        <a class="cp-btn cp-btn-primary" href="{{ calendar_url }}" target="_blank" rel="noopener noreferrer">{{ d.success_cta_calendar }}</a>
+        <p class="hdg-cta-note">{{ d.success_cta_note }}</p>
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+
+<script>
+(function(){
+  var WIZ = {
+    total: {{ d.wiz_total|int }},
+    stepWord: {{ d.wiz_step_word|tojson }},
+    ofWord: {{ d.wiz_of|tojson }}
+  };
+  var submitUrl = {{ diag_submit_url|tojson }};
+  var msgVal = {{ d.err_validation|tojson }};
+  var msgOta = {{ d.err_ota_step|tojson }};
+  var msgServer = {{ d.err_server|tojson }};
+  var msgEmail = {{ d.err_email_delivery|tojson }};
+  var successBefore = {{ d.success_for_hotel_before|tojson }};
+  var successAfter = {{ d.success_for_hotel_after|tojson }};
+  var loadingLabel = {{ d.submit_loading|tojson }};
+  var submitBtn = document.getElementById('hdg-submit');
+  var nextBtn = document.getElementById('hdg-wiz-next');
+  var backBtn = document.getElementById('hdg-wiz-back');
+  var form = document.getElementById('hdg-form');
+  var alertEl = document.getElementById('hdg-alert');
+  var formWrap = document.getElementById('hdg-form-wrap');
+  var successEl = document.getElementById('hdg-success');
+  var otaWrap = document.getElementById('hdg-ota-rows');
+  var addOta = document.getElementById('hdg-add-ota');
+  var metaEl = document.getElementById('hdg-wiz-meta');
+  var progFill = document.getElementById('hdg-prog-fill');
+  var progBar = document.getElementById('hdg-prog');
+  var step = 1;
+
+  function showAlert(text){
+    if(!alertEl) return;
+    alertEl.textContent = text;
+    alertEl.hidden = false;
+  }
+  function hideAlert(){
+    if(!alertEl) return;
+    alertEl.hidden = true;
+    alertEl.textContent = '';
+  }
+
+  function closeAllTips(){
+    document.querySelectorAll('.hdg-tipwrap.is-open').forEach(function(w){ w.classList.remove('is-open'); });
+  }
+  document.addEventListener('click', function(ev){
+    if(!ev.target.closest || !ev.target.closest('.hdg-tipwrap')) closeAllTips();
+  });
+  document.addEventListener('keydown', function(ev){
+    if(ev.key === 'Escape') closeAllTips();
+  });
+  document.querySelectorAll('.hdg-tipbtn').forEach(function(btn){
+    btn.addEventListener('click', function(ev){
+      ev.preventDefault();
+      ev.stopPropagation();
+      var w = btn.closest('.hdg-tipwrap');
+      if(!w) return;
+      var open = w.classList.contains('is-open');
+      closeAllTips();
+      if(!open) w.classList.add('is-open');
+    });
+  });
+  document.querySelectorAll('.hdg-tipbubble').forEach(function(b){
+    b.addEventListener('click', function(ev){ ev.stopPropagation(); });
+  });
+
+  function syncOtaRemoveButtons(){
+    if(!otaWrap) return;
+    var rows = otaWrap.querySelectorAll('[data-ota-row]');
+    var show = rows.length > 1;
+    rows.forEach(function(row){
+      var btn = row.querySelector('[data-ota-remove]');
+      if(btn){
+        btn.hidden = !show;
+        btn.setAttribute('aria-hidden', show ? 'false' : 'true');
+      }
+    });
+  }
+  if(otaWrap){
+    syncOtaRemoveButtons();
+    otaWrap.addEventListener('click', function(ev){
+      var rm = ev.target.closest && ev.target.closest('[data-ota-remove]');
+      if(!rm) return;
+      var row = rm.closest('[data-ota-row]');
+      if(!row || !otaWrap) return;
+      if(otaWrap.querySelectorAll('[data-ota-row]').length <= 1) return;
+      row.parentNode.removeChild(row);
+      syncOtaRemoveButtons();
+    });
+  }
+  if(addOta && otaWrap){
+    addOta.addEventListener('click', function(){
+      var first = otaWrap.querySelector('[data-ota-row]');
+      if(!first) return;
+      var clone = first.cloneNode(true);
+      clone.querySelectorAll('input').forEach(function(inp){ inp.value = ''; });
+      otaWrap.appendChild(clone);
+      syncOtaRemoveButtons();
+    });
+  }
+
+  function collectOtas(){
+    var rows = otaWrap ? otaWrap.querySelectorAll('[data-ota-row]') : [];
+    var out = [];
+    rows.forEach(function(row){
+      var name = (row.querySelector('.hdg-ota-name') || {}).value;
+      var comm = (row.querySelector('.hdg-ota-comm') || {}).value;
+      out.push({ name: (name || '').trim(), comm: comm === '' ? null : comm });
+    });
+    return out;
+  }
+
+  function validateOtaRows(){
+    if(!otaWrap) return false;
+    var rows = otaWrap.querySelectorAll('[data-ota-row]');
+    var complete = 0;
+    for(var i = 0; i < rows.length; i++){
+      var row = rows[i];
+      var nameInp = row.querySelector('.hdg-ota-name');
+      var commInp = row.querySelector('.hdg-ota-comm');
+      var name = (nameInp && nameInp.value ? String(nameInp.value) : '').trim();
+      var commStr = commInp && commInp.value !== undefined && commInp.value !== null ? String(commInp.value).trim() : '';
+      var comm = parseFloat(commStr);
+      var hasName = name.length > 0;
+      var hasComm = !isNaN(comm) && comm > 0 && comm <= 50;
+      if(!hasName && commStr === '') continue;
+      if(!hasName) return false;
+      if(!hasComm) return false;
+      complete++;
+    }
+    return complete >= 1;
+  }
+
+  function firstInvalidStep(maxStep){
+    for(var s = 1; s <= maxStep; s++){
+      if(!validateStep(s)) return s;
+    }
+    return 0;
+  }
+
+  function alertForInvalidStep(badStep){
+    showAlert(badStep === 3 ? msgOta : msgVal);
+  }
+
+  function buildPhone(){
+    var cc = (document.getElementById('hdg-phone-cc') || {}).value || '';
+    var loc = (document.getElementById('hdg-contact-phone') || {}).value || '';
+    var digits = String(loc).replace(/\D/g, '');
+    return (cc + ' ' + digits).trim();
+  }
+
+  function validateStep(n){
+    if(n === 1){
+      var h = (document.getElementById('hdg-hotel') || {}).value.trim();
+      return !!h;
+    }
+    if(n === 2){
+      var rooms = parseFloat((document.getElementById('hdg-rooms') || {}).value);
+      var adr = parseFloat((document.getElementById('hdg-adr') || {}).value);
+      var occ = parseFloat((document.getElementById('hdg-occ') || {}).value);
+      var numotas = parseInt((document.getElementById('hdg-numotas') || {}).value, 10);
+      return (
+        rooms >= 1 &&
+        adr > 0 &&
+        !isNaN(rooms) &&
+        !isNaN(adr) &&
+        !isNaN(occ) &&
+        occ >= 1 &&
+        occ <= 100 &&
+        !isNaN(numotas) &&
+        numotas >= 0 &&
+        numotas <= 99
+      );
+    }
+    if(n === 3) return validateOtaRows();
+    if(n === 4){
+      var p = parseFloat((document.getElementById('hdg-pct-ota') || {}).value);
+      return !isNaN(p) && p >= 0 && p <= 100;
+    }
+    if(n === 5) return true;
+    if(n === 6){
+      var nm = (document.getElementById('hdg-contact-name') || {}).value.trim();
+      var em = (document.getElementById('hdg-contact-email') || {}).value.trim();
+      var ok = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em);
+      var ph = buildPhone().replace(/\D/g, '');
+      return !!nm && ok && ph.length >= 10;
+    }
+    return true;
+  }
+
+  function setStep(n){
+    closeAllTips();
+    step = Math.max(1, Math.min(WIZ.total, n));
+    document.querySelectorAll('.hdg-step').forEach(function(el){
+      var sn = parseInt(el.getAttribute('data-wiz-step'), 10);
+      var on = sn === step;
+      el.classList.toggle('is-active', on);
+      el.setAttribute('aria-hidden', on ? 'false' : 'true');
+    });
+    if(metaEl) metaEl.textContent = WIZ.stepWord + ' ' + step + ' ' + WIZ.ofWord + ' ' + WIZ.total;
+    if(progFill) progFill.style.width = (100 * step / WIZ.total) + '%';
+    if(progBar){
+      progBar.setAttribute('aria-valuenow', String(step));
+      progBar.setAttribute('aria-valuemax', String(WIZ.total));
+    }
+    if(backBtn) backBtn.disabled = step <= 1;
+    if(nextBtn && submitBtn){
+      var last = step >= WIZ.total;
+      nextBtn.classList.toggle('is-hidden', last);
+      submitBtn.classList.toggle('is-hidden', !last);
+    }
+    hideAlert();
+    var active = document.querySelector('.hdg-step.is-active');
+    if(active){
+      var fe = active.querySelector('input,select,button:not(.hdg-tipbtn)');
+      if(fe && typeof fe.focus === 'function') setTimeout(function(){ try{ fe.focus(); }catch(e){} }, 60);
+    }
+  }
+
+  setStep(1);
+
+  if(backBtn){
+    backBtn.addEventListener('click', function(){
+      if(step > 1) setStep(step - 1);
+    });
+  }
+  if(nextBtn){
+    nextBtn.addEventListener('click', function(){
+      var bad = firstInvalidStep(step);
+      if(bad){
+        alertForInvalidStep(bad);
+        return;
+      }
+      if(step < WIZ.total) setStep(step + 1);
+    });
+  }
+
+  if(form){
+    form.addEventListener('keydown', function(ev){
+      if(ev.key !== 'Enter' || ev.shiftKey) return;
+      var t = ev.target;
+      if(t && t.tagName === 'TEXTAREA') return;
+      if(t && t.closest && t.closest('.hdg-tipwrap')) return;
+      ev.preventDefault();
+      if(step < WIZ.total){
+        var badK = firstInvalidStep(step);
+        if(badK){
+          alertForInvalidStep(badK);
+          return;
+        }
+        setStep(step + 1);
+      } else if(submitBtn && !submitBtn.disabled){
+        submitBtn.click();
+      }
+    });
+  }
+
+  if(form && submitBtn){
+    form.addEventListener('submit', function(ev){
+      ev.preventDefault();
+      hideAlert();
+      if(step !== WIZ.total){
+        setStep(WIZ.total);
+        return;
+      }
+      var badSubmit = firstInvalidStep(WIZ.total);
+      if(badSubmit){
+        alertForInvalidStep(badSubmit);
+        return;
+      }
+      var hotel = (document.getElementById('hdg-hotel') || {}).value;
+      var rooms = parseFloat((document.getElementById('hdg-rooms') || {}).value);
+      var adr = parseFloat((document.getElementById('hdg-adr') || {}).value);
+      var pctOta = parseFloat((document.getElementById('hdg-pct-ota') || {}).value);
+      var contactName = (document.getElementById('hdg-contact-name') || {}).value;
+      var contactEmail = (document.getElementById('hdg-contact-email') || {}).value;
+      var occRaw = (document.getElementById('hdg-occ') || {}).value;
+      var occ = parseFloat(occRaw);
+      var numotasRaw = (document.getElementById('hdg-numotas') || {}).value;
+      var numotas = parseInt(numotasRaw, 10);
+      var pctDirectEl = document.getElementById('hdg-pct-direct');
+      var pctDirectStr = pctDirectEl ? pctDirectEl.value : '';
+      var pctDirect = pctDirectStr === '' ? '' : parseFloat(pctDirectStr);
+      var locEl = document.getElementById('hdg-location');
+      var catEl = document.getElementById('hdg-category');
+      var payload = {
+        hotel: hotel.trim(),
+        hotel_location: locEl ? String(locEl.value || '').trim().slice(0, 160) : '',
+        hotel_category: catEl ? String(catEl.value || '').trim().slice(0, 40) : '',
+        rooms: rooms,
+        adr: adr,
+        occ: occ,
+        numotas: numotas,
+        otas: collectOtas(),
+        has_web: (document.getElementById('hdg-web') || {}).value || 'unsure',
+        web_be: (document.getElementById('hdg-be') || {}).value || 'unsure',
+        pay: (document.getElementById('hdg-pay') || {}).value || 'unsure',
+        pms: (document.getElementById('hdg-pms') || {}).value || '',
+        cm: (document.getElementById('hdg-cm') || {}).value || '',
+        pct_ota: pctOta,
+        pct_direct: isNaN(pctDirect) ? '' : pctDirect,
+        contact_name: contactName.trim(),
+        contact_email: contactEmail.trim().toLowerCase(),
+        contact_phone: buildPhone().slice(0, 120),
+        website: (document.getElementById('hdg-hp') || {}).value || ''
+      };
+      var origLabel = submitBtn.textContent;
+      submitBtn.disabled = true;
+      if(nextBtn) nextBtn.disabled = true;
+      if(backBtn) backBtn.disabled = true;
+      submitBtn.textContent = loadingLabel;
+      fetch(submitUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(function(r){
+        return r.json().then(function(data){ return { ok: r.ok, status: r.status, data: data }; });
+      }).catch(function(){
+        return { ok: false, status: 0, data: {} };
+      }).then(function(res){
+        submitBtn.disabled = false;
+        if(nextBtn) nextBtn.disabled = false;
+        if(backBtn) backBtn.disabled = step <= 1;
+        submitBtn.textContent = origLabel;
+        var d = res.data || {};
+        if(d.ignored) return;
+        function fillPersonalLine(data){
+          var pe = document.getElementById('hdg-success-personal');
+          if(!pe) return;
+          var hn = (data && data.hotel_name ? String(data.hotel_name) : '').trim();
+          if(!hn){
+            var hi = document.getElementById('hdg-hotel');
+            if(hi) hn = (hi.value || '').trim();
+          }
+          pe.replaceChildren();
+          if(!hn){
+            pe.hidden = true;
+            return;
+          }
+          pe.append(document.createTextNode(successBefore));
+          var s = document.createElement('strong');
+          s.className = 'hdg-success-hotel';
+          s.textContent = hn.slice(0, 200);
+          pe.append(s);
+          pe.append(document.createTextNode(successAfter));
+          pe.hidden = false;
+        }
+        function fillResults(){
+          fillPersonalLine(d);
+          var os = document.getElementById('hdg-out-savings');
+          var ogm = document.getElementById('hdg-out-growth-main');
+          var ogs = document.getElementById('hdg-out-growth-sub');
+          var preS = document.getElementById('hdg-formula-savings');
+          var preG = document.getElementById('hdg-formula-growth');
+          var wrapS = document.getElementById('hdg-block-formula-savings');
+          var wrapG = document.getElementById('hdg-block-formula-growth');
+          if(os) os.textContent = d.savings_line || '';
+          if(ogm) ogm.textContent = d.growth_main || d.growth_line || '';
+          if(ogs){
+            var sub = d.growth_sub || '';
+            if(sub){
+              ogs.textContent = sub;
+              ogs.hidden = false;
+            }else{
+              ogs.textContent = '';
+              ogs.hidden = true;
+            }
+          }
+          if(preS && wrapS){
+            if(d.savings_formula){
+              preS.textContent = d.savings_formula;
+              wrapS.hidden = false;
+            }else{
+              preS.textContent = '';
+              wrapS.hidden = true;
+            }
+          }
+          if(preG && wrapG){
+            if(d.growth_formula){
+              preG.textContent = d.growth_formula;
+              wrapG.hidden = false;
+            }else{
+              preG.textContent = '';
+              wrapG.hidden = true;
+            }
+          }
+        }
+        function showSuccessPanel(emailWarn){
+          fillResults();
+          var warn = document.getElementById('hdg-email-warn');
+          if(warn){
+            if(emailWarn){
+              warn.textContent = emailWarn;
+              warn.style.display = 'block';
+            }else{
+              warn.textContent = '';
+              warn.style.display = 'none';
+            }
+          }
+          if(formWrap) formWrap.hidden = true;
+          if(successEl){
+            successEl.hidden = false;
+            successEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }
+        if(d.ok && res.ok){
+          showSuccessPanel('');
+          return;
+        }
+        if(d.error === 'email_delivery' && d.savings_line && d.growth_line){
+          showSuccessPanel(msgEmail);
+          return;
+        }
+        if(d.error === 'email_delivery'){
+          showAlert(msgEmail);
+          return;
+        }
+        if((res.status === 400 && d.error) || d.error === 'invalid_phone'){
+          showAlert(msgVal);
+          return;
+        }
+        showAlert(msgServer);
+      });
+    });
+  }
+})();
+</script>
+{% endblock %}

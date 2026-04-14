@@ -1,0 +1,708 @@
+{% extends "base.html" %}
+{% block body_class %}hpd{% endblock %}
+{% block head_extra %}
+<style>
+  .hpd .float-contact{display:none}
+  .hpd{
+    --hpd-gold:#f6a905;
+    --hpd-orange:#f07e07;
+    --hpd-dark:#0c0c0e;
+    --hpd-muted:rgba(255,255,255,.72);
+    --hpd-muted-dark:#5c6169;
+    --hpd-line:rgba(52,52,52,.1);
+    margin:0;
+    min-height:100vh;
+    font-family:"Inter",system-ui,sans-serif;
+    color:#1a1a1a;
+    background:var(--hpd-dark);
+  }
+  html:has(body.hpd){scroll-snap-type:y proximity;scroll-behavior:smooth}
+  .hpd-skip{
+    position:absolute;left:-9999px;top:0;z-index:200;padding:12px 18px;background:#fff;color:#111;font-weight:600;border-radius:0 0 10px 0;
+  }
+  .hpd-skip:focus{left:0;outline:2px solid var(--hpd-orange);outline-offset:2px}
+  /* Barra superior solo en esta plantilla (deck ventas /hoteles/ventas). No compartir selectores con cp-vl ni otras landings. */
+  body.hpd .hpd-top{
+    position:fixed;top:0;left:0;right:0;z-index:100;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:10px 18px;
+    background:rgba(12,12,14,.72);
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    border-bottom:1px solid rgba(255,255,255,.06);
+  }
+  body.hpd .hpd-top a{color:rgba(255,255,255,.88);font-size:.8125rem;font-weight:600;text-decoration:none}
+  body.hpd .hpd-top a:hover{color:#fff}
+  body.hpd .hpd-top__brand{
+    display:flex;align-items:center;flex-shrink:0;
+    max-height:44px;
+  }
+  body.hpd .hpd-top__brand img{
+    height:clamp(22px,2.6vw,28px);
+    width:auto;
+    max-width:min(200px,58vw);
+    max-height:28px;
+    object-fit:contain;
+    display:block;
+    opacity:1;
+  }
+  body.hpd .hpd-top__mid{display:flex;align-items:center;gap:18px;flex-wrap:wrap;justify-content:center}
+  body.hpd .hpd-top__lang{display:flex;gap:6px}
+  body.hpd .hpd-top__lang a{
+    min-width:34px;height:32px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;
+    font-size:.75rem;font-weight:700;letter-spacing:.04em;color:rgba(255,255,255,.55)
+  }
+  body.hpd .hpd-top__lang a.is-active{background:#fff;color:var(--hpd-dark)}
+  .hpd-main{padding-top:52px;padding-bottom:env(safe-area-inset-bottom,0)}
+  .hpd-slide{
+    scroll-snap-align:start;
+    scroll-margin-top:52px;
+    min-height:100dvh;
+    min-height:100svh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    padding:48px max(16px,env(safe-area-inset-right,0px)) max(64px,calc(env(safe-area-inset-bottom,0px) + 40px)) max(16px,env(safe-area-inset-left,0px));
+    box-sizing:border-box;
+    position:relative;
+  }
+  .hpd-slide__inner{width:min(640px,100%);margin:0 auto}
+  .hpd-slide__inner--wide{width:min(920px,100%)}
+  .hpd-sprite{position:fixed;width:0;height:0;overflow:hidden;clip:rect(0,0,0,0)}
+  .hpd-slide--hero .hpd-slide__inner{text-align:left}
+  .hpd-hero-brand{
+    margin:0 0 clamp(20px,3.5vw,30px) 0;
+    max-width:100%;
+    width:fit-content;
+  }
+  @media (min-width:520px){
+    .hpd-hero-brand{margin-left:-20px;max-width:calc(100% + 20px)}
+  }
+  @media (min-width:720px){
+    .hpd-hero-brand{margin-left:-28px;max-width:calc(100% + 28px)}
+  }
+  .hpd-hero-brand__logo{
+    width:min(100%,min(92vw,320px));
+    height:auto;
+    display:block;
+  }
+  .hpd-kicker-row{
+    display:flex;align-items:center;gap:12px;
+    margin:0 0 16px;flex-wrap:wrap;
+  }
+  .hpd-kicker-row--solo{margin-bottom:14px}
+  .hpd-step-badge{
+    flex-shrink:0;
+    display:inline-flex;align-items:center;justify-content:center;
+    width:38px;height:38px;border-radius:12px;
+    font-size:.78rem;font-weight:900;letter-spacing:-.03em;
+    color:#fff;
+    background:linear-gradient(135deg,var(--hpd-gold),var(--hpd-orange));
+    box-shadow:0 6px 20px rgba(240,126,7,.35),0 0 0 1px rgba(255,255,255,.12) inset;
+    animation:hpd-badge-pulse 3.2s ease-in-out infinite;
+  }
+  @keyframes hpd-badge-pulse{
+    0%,100%{box-shadow:0 6px 20px rgba(240,126,7,.35),0 0 0 1px rgba(255,255,255,.12) inset;transform:scale(1)}
+    50%{box-shadow:0 10px 32px rgba(246,169,5,.45),0 0 0 1px rgba(255,255,255,.2) inset;transform:scale(1.04)}
+  }
+  .hpd-kicker{
+    margin:0;
+    font-size:.68rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase;
+    color:rgba(255,255,255,.55);
+  }
+  .hpd-slide--light .hpd-kicker,.hpd-slide--cta .hpd-kicker{color:var(--hpd-orange)}
+  .hpd-slide--hero .hpd-kicker{color:rgba(255,255,255,.58)}
+  .hpd-slide--close .hpd-kicker{color:var(--hpd-orange)}
+  .hpd-slide--hero{
+    background:
+      radial-gradient(ellipse 80% 55% at 20% 20%,rgba(246,169,5,.18),transparent 55%),
+      radial-gradient(ellipse 60% 45% at 85% 70%,rgba(240,126,7,.12),transparent 50%),
+      linear-gradient(165deg,#0c0c0e 0%,#14141a 100%);
+    color:#fff;
+  }
+  .hpd-slide--light{
+    background:linear-gradient(180deg,#fafafa 0%,#f3f4f6 100%);
+    color:#1a1a1a;
+  }
+  .hpd-slide--dark{
+    background:linear-gradient(165deg,#12121a 0%,#0a0a0d 100%);
+    color:#fff;
+  }
+  .hpd-slide--services{
+    background:
+      radial-gradient(ellipse 70% 50% at 12% 18%,rgba(246,169,5,.14),transparent 52%),
+      radial-gradient(ellipse 55% 45% at 92% 88%,rgba(240,126,7,.1),transparent 48%),
+      linear-gradient(168deg,#14141c 0%,#0b0b0f 45%,#12100e 100%);
+    color:#fff;
+  }
+  .hpd-slide--services .hpd-body{color:rgba(255,255,255,.76);max-width:48ch}
+  .hpd-svc-grid{
+    display:flex;flex-direction:row;flex-wrap:nowrap;justify-content:center;align-items:stretch;
+    gap:clamp(8px,1.8vw,14px);margin:26px auto 0;padding:0;list-style:none;width:100%;max-width:min(920px,100%);
+  }
+  .hpd-svc-tile{
+    flex:1 1 0;min-width:0;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:12px;
+    margin:0;padding:22px 12px 20px;border-radius:18px;
+    border:1px solid rgba(255,255,255,.14);
+    background:rgba(255,255,255,.055);
+    opacity:0;
+    transform:translateY(16px);
+    transition:opacity .6s cubic-bezier(.22,1,.36,1),transform .6s cubic-bezier(.22,1,.36,1),border-color .25s,box-shadow .25s;
+  }
+  .hpd-slide.is-hpd-inview .hpd-svc-tile{opacity:1;transform:none}
+  .hpd-slide.is-hpd-inview .hpd-svc-tile:nth-child(1){transition-delay:.06s}
+  .hpd-slide.is-hpd-inview .hpd-svc-tile:nth-child(2){transition-delay:.12s}
+  .hpd-slide.is-hpd-inview .hpd-svc-tile:nth-child(3){transition-delay:.18s}
+  .hpd-slide.is-hpd-inview .hpd-svc-tile:nth-child(4){transition-delay:.24s}
+  .hpd-svc-tile:hover{
+    border-color:rgba(246,169,5,.4);
+    box-shadow:0 0 28px rgba(246,169,5,.12);
+  }
+  .hpd-svc-tile__icon{
+    width:54px;height:54px;border-radius:17px;
+    display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(145deg,rgba(246,169,5,.28),rgba(240,126,7,.14));
+    border:1px solid rgba(246,169,5,.38);
+    color:#fff;
+  }
+  .hpd-svc-tile__svg{width:28px;height:28px}
+  .hpd-svc-tile__label{
+    margin:0;font-size:.78rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.94);
+    line-height:1.35;max-width:100%;hyphens:auto;overflow-wrap:anywhere;
+  }
+  @media (max-width:520px){
+    .hpd-svc-tile{padding:16px 6px 14px;gap:10px}
+    .hpd-svc-tile__icon{width:46px;height:46px;border-radius:14px}
+    .hpd-svc-tile__svg{width:24px;height:24px}
+    .hpd-svc-tile__label{font-size:.62rem;letter-spacing:.07em;line-height:1.3}
+  }
+  .hpd-slide--cta,.hpd-slide--close{
+    background:linear-gradient(180deg,#fff 0%,#f7f7f8 100%);
+    color:#1a1a1a;
+    min-height:min(100dvh,720px);
+  }
+  .hpd-slide--close{
+    background:linear-gradient(165deg,#fff 0%,#fff9f2 55%,#faf8f5 100%);
+    border-top:1px solid rgba(240,126,7,.12);
+  }
+  .hpd-slide--lead{
+    background:linear-gradient(180deg,#f4f5f7 0%,#eceef2 100%);
+    color:#1a1a1a;
+    min-height:min(100dvh,max-content);
+    padding-bottom:80px;
+  }
+  .hpd-slide__inner--form{max-width:min(480px,100%)}
+  .hpd-slide__inner--contact{max-width:min(520px,100%);text-align:center}
+  .hpd-contact-end{padding:8px 0 12px}
+  .hpd-title--contact{margin:0 0 14px;font-size:clamp(1.65rem,4vw,2.35rem)}
+  .hpd-contact-email{
+    display:inline-block;font-size:clamp(1.1rem,2.4vw,1.35rem);font-weight:800;
+    color:var(--hpd-orange);text-decoration:none;letter-spacing:.02em;
+    padding:10px 18px;border-radius:12px;border:1px solid rgba(240,126,7,.35);
+    background:rgba(240,126,7,.06);
+  }
+  .hpd-contact-email:hover{background:rgba(240,126,7,.12)}
+  .hpd-title--form{font-size:clamp(1.45rem,3.5vw,2rem);margin-bottom:12px}
+  .hpd-form-lead{margin:0 0 22px;font-size:.95rem;line-height:1.55;color:var(--hpd-muted-dark)}
+  .hpd-title{
+    margin:0 0 20px;
+    font-size:clamp(1.85rem,5.2vw,3rem);
+    font-weight:800;
+    letter-spacing:-.04em;
+    line-height:1.08;
+  }
+  .hpd-title--split{
+    font-size:clamp(1.5rem,3.9vw,2.45rem);
+    line-height:1.14;
+    max-width:min(32ch,100%);
+  }
+  .hpd-slide--dark .hpd-body--compact{
+    font-size:clamp(.94rem,1.75vw,1.05rem);
+    line-height:1.48;
+    max-width:38ch;
+  }
+  .hpd-slide--hero .hpd-title{
+    background:linear-gradient(100deg,#fff 0%,#ffe8c4 25%,#fff 50%,#ffd89a 75%,#fff 100%);
+    background-size:220% 100%;
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    animation:hpd-title-shine 9s ease-in-out infinite;
+  }
+  @keyframes hpd-title-shine{
+    0%,100%{background-position:0% 50%}
+    50%{background-position:100% 50%}
+  }
+  .hpd-lead,.hpd-body{
+    margin:0;
+    font-size:clamp(1.02rem,2.1vw,1.2rem);
+    line-height:1.62;
+    font-weight:450;
+    max-width:54ch;
+  }
+  .hpd-slide--hero .hpd-lead{color:rgba(255,255,255,.82)}
+  .hpd-slide--light .hpd-body,.hpd-slide--cta .hpd-body,.hpd-slide--close .hpd-body{color:var(--hpd-muted-dark)}
+  .hpd-slide--dark .hpd-body{color:var(--hpd-muted)}
+  .hpd-card-grid{
+    display:grid;gap:14px;
+    grid-template-columns:1fr;
+    margin-top:24px;
+    list-style:none;padding:0;margin:24px 0 0;
+  }
+  @media (min-width:780px){
+    .hpd-card-grid--2{grid-template-columns:repeat(2,1fr);gap:16px}
+  }
+  .hpd-card{
+    position:relative;display:flex;gap:14px;align-items:flex-start;
+    margin:0;padding:18px 18px 17px;
+    border-radius:16px;
+    border:1px solid rgba(52,52,52,.1);
+    background:linear-gradient(165deg,#fff 0%,#f6f7f9 100%);
+    box-shadow:0 8px 28px rgba(18,22,40,.07);
+    opacity:0;
+    transform:translateY(22px) scale(.97);
+    transition:
+      opacity .65s cubic-bezier(.22,1,.36,1),
+      transform .65s cubic-bezier(.22,1,.36,1),
+      box-shadow .25s ease,border-color .25s ease;
+  }
+  .hpd-slide.is-hpd-inview .hpd-card{
+    opacity:1;
+    transform:none;
+  }
+  .hpd-slide.is-hpd-inview .hpd-card:nth-child(1){transition-delay:.05s}
+  .hpd-slide.is-hpd-inview .hpd-card:nth-child(2){transition-delay:.12s}
+  .hpd-slide.is-hpd-inview .hpd-card:nth-child(3){transition-delay:.19s}
+  .hpd-slide.is-hpd-inview .hpd-card:nth-child(4){transition-delay:.26s}
+  .hpd-card:hover{
+    border-color:rgba(240,126,7,.28);
+    box-shadow:0 14px 40px rgba(240,126,7,.12);
+  }
+  .hpd-card__icon-wrap{
+    flex-shrink:0;width:46px;height:46px;border-radius:14px;
+    display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(145deg,rgba(246,169,5,.14),rgba(240,126,7,.08));
+    border:1px solid rgba(240,126,7,.2);
+    color:var(--hpd-orange);
+  }
+  .hpd-card__svg{display:block;width:24px;height:24px}
+  .hpd-card__body{min-width:0}
+  .hpd-card__title{
+    margin:0 0 6px;font-size:.82rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#1a1a1a;
+  }
+  .hpd-card__text{margin:0;font-size:.9rem;line-height:1.52;color:var(--hpd-muted-dark)}
+  .hpd-chips{
+    display:flex;flex-wrap:wrap;gap:10px;margin:22px 0 0;padding:0;list-style:none;
+  }
+  .hpd-chip{
+    margin:0;padding:9px 16px 8px;border-radius:999px;
+    font-size:.68rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+    color:rgba(255,255,255,.92);
+    border:1px solid rgba(255,255,255,.22);
+    background:rgba(255,255,255,.06);
+    animation:hpd-chip-float 4s ease-in-out infinite;
+  }
+  .hpd-chip:nth-child(2){animation-delay:.5s}
+  .hpd-chip:nth-child(3){animation-delay:1s}
+  .hpd-chip:nth-child(4){animation-delay:1.5s}
+  @keyframes hpd-chip-float{
+    0%,100%{transform:translateY(0);border-color:rgba(255,255,255,.22);box-shadow:none}
+    50%{transform:translateY(-3px);border-color:rgba(246,169,5,.45);box-shadow:0 0 20px rgba(246,169,5,.15)}
+  }
+  .hpd-bullets{
+    margin:18px 0 0;padding:0 0 0 1.15em;
+    font-size:clamp(.98rem,1.8vw,1.08rem);
+    line-height:1.55;
+    color:var(--hpd-muted-dark);
+    max-width:52ch;
+  }
+  .hpd-bullets li{margin:0 0 10px}
+  .hpd-form{display:flex;flex-direction:column;gap:14px;margin-top:6px}
+  .hpd-form-label{font-size:.82rem;font-weight:600;color:#242424}
+  .hpd-form-input,.hpd-form-textarea{
+    width:100%;box-sizing:border-box;padding:11px 13px;border:1px solid var(--hpd-line);border-radius:8px;
+    font-size:1rem;font-family:inherit;background:#fff;
+  }
+  .hpd-form-textarea{resize:vertical;min-height:96px}
+  .hpd-form-actions{margin-top:4px}
+  .hpd-form-feedback{margin:8px 0 0;font-size:.9rem;min-height:1.25em}
+  .hpd-form-feedback--success{color:#0d7d3d}
+  .hpd-form-feedback--error{color:#9f3333}
+  .hpd-scroll{
+    position:absolute;bottom:28px;left:50%;transform:translateX(-50%);
+    font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+    color:rgba(255,255,255,.4);
+    animation:hpd-bob 2.4s ease-in-out infinite;
+  }
+  .hpd-slide--light .hpd-scroll,.hpd-slide--cta .hpd-scroll{color:rgba(52,52,52,.35)}
+  @keyframes hpd-bob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(6px)}}
+  .hpd-progress{
+    position:fixed;right:18px;top:50%;transform:translateY(-50%);
+    display:flex;flex-direction:column;gap:8px;z-index:90;
+  }
+  .hpd-progress i{
+    display:block;width:7px;height:7px;border-radius:50%;
+    background:rgba(255,255,255,.22);transition:transform .2s,background .2s
+  }
+  .hpd-progress i.is-lit{background:linear-gradient(135deg,var(--hpd-gold),var(--hpd-orange));transform:scale(1.25)}
+  @media (max-width:720px){
+    .hpd-progress{display:none}
+  }
+  .hpd-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
+  .hpd-btn{
+    display:inline-flex;align-items:center;justify-content:center;
+    min-height:48px;padding:0 22px;border-radius:8px;font-weight:600;font-size:.94rem;
+    border:1px solid transparent;text-decoration:none;cursor:pointer;font:inherit;
+  }
+  .hpd-btn--primary{
+    background:linear-gradient(90deg,var(--hpd-gold),var(--hpd-orange));
+    color:#fff;
+    box-shadow:0 10px 28px rgba(240,126,7,.28);
+  }
+  .hpd-btn--ghost{
+    background:transparent;border-color:rgba(26,26,26,.2);color:#1a1a1a;
+  }
+  .hpd-slide--dark .hpd-btn--ghost{border-color:rgba(255,255,255,.35);color:#fff}
+  .hpd-footer{
+    padding:20px 24px 28px;
+    text-align:center;
+    font-size:.78rem;
+    color:rgba(255,255,255,.45);
+    background:var(--hpd-dark);
+  }
+  .hpd-footer a{color:rgba(255,255,255,.65);font-weight:600}
+  @media (max-width:640px){
+    body.hpd .hpd-top{
+      flex-wrap:wrap;
+      row-gap:8px;
+      padding:8px max(12px,env(safe-area-inset-left,0px)) 10px max(12px,env(safe-area-inset-right,0px));
+    }
+    body.hpd .hpd-top__mid{flex:1 1 100%;order:3;justify-content:center;padding-top:6px;border-top:1px solid rgba(255,255,255,.08)}
+    body.hpd .hpd-top__brand{order:1}
+    body.hpd .hpd-top__lang{order:2;margin-left:auto}
+    body.hpd .hpd-top a{font-size:.78rem}
+    .hpd-main{padding-top:96px}
+  }
+  @media (max-width:720px){
+    .hpd-svc-grid{
+      flex-wrap:wrap;
+      justify-content:center;
+      max-width:440px;
+      margin-left:auto;margin-right:auto;
+    }
+    .hpd-svc-tile{
+      flex:1 1 calc(50% - 7px);
+      min-width:min(160px,calc(50% - 7px));
+    }
+  }
+  @media (max-width:480px){
+    .hpd-slide{padding-top:40px;padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px))}
+    .hpd-title{font-size:clamp(1.55rem,7vw,2.4rem)}
+    .hpd-actions{flex-direction:column;align-items:stretch}
+    .hpd-actions .hpd-btn{width:100%;justify-content:center}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .hpd-slide--hero .hpd-title,.hpd-step-badge,.hpd-chip,.hpd-scroll{animation:none!important}
+    .hpd-card,.hpd-svc-tile{opacity:1!important;transform:none!important;transition:none!important}
+  }
+  .hpd-diag-fab{
+    position:fixed;right:14px;bottom:max(18px,env(safe-area-inset-bottom));z-index:120;
+    padding:12px 18px;border-radius:999px;text-align:center;text-decoration:none;
+    font:700 .78rem/1.25 Inter,system-ui,sans-serif;letter-spacing:.02em;
+    background-color:#e07006;
+    background-image:linear-gradient(135deg,#f6a905 0%,#f07e07 52%,#e86a00 100%);
+    color:#fff !important;border:2px solid rgba(12,12,14,.32);
+    text-shadow:0 1px 2px rgba(0,0,0,.35);
+    box-shadow:0 10px 36px rgba(240,126,7,.42),0 0 0 1px rgba(255,255,255,.12) inset;
+    max-width:min(220px,72vw);
+    transition:transform .15s,box-shadow .15s;
+  }
+  .hpd-diag-fab:hover{transform:translateY(-1px);box-shadow:0 14px 40px rgba(240,126,7,.55)}
+  @media print{
+    /* Hoja horizontal; cada slide = bloque centrado vertical y horizontal (estilo deck) */
+    @page{
+      size:A4 landscape;
+      margin:0;
+    }
+    html:has(body.hpd){
+      scroll-snap-type:none;
+      margin:0!important;
+      background:transparent!important;
+      height:auto!important;
+    }
+    body.hpd{
+      margin:0!important;
+      background:transparent!important;
+      min-height:0!important;
+    }
+    html:has(body.hpd) .hpd-main{
+      background:transparent!important;
+    }
+    .hpd,.hpd-slide,.hpd-slide--hero,.hpd-slide--light,.hpd-slide--dark,.hpd-slide--services,.hpd-slide--close,.hpd-slide--lead,.hpd-card,.hpd-svc-tile,.hpd-chip,.hpd-btn--primary{
+      -webkit-print-color-adjust:exact!important;
+      print-color-adjust:exact!important;
+      color-adjust:exact!important;
+    }
+    body.hpd .hpd-top,.hpd-progress,.hpd-scroll,.hpd-no-print,.hpd-footer,.float-contact{display:none!important}
+    /* La slide de «Descargar PDF» no entra al PDF (solo en pantalla) */
+    .hpd-slide--close{display:none!important;height:0!important;min-height:0!important;padding:0!important;margin:0!important;break-after:auto!important;page-break-after:auto!important}
+    .hpd-main{
+      padding:0!important;
+      margin:0!important;
+      display:block!important;
+    }
+    .hpd-slide{
+      display:flex!important;
+      flex-direction:column!important;
+      justify-content:center!important;
+      align-items:center!important;
+      min-height:100vh!important;
+      min-height:100dvh!important;
+      width:100%!important;
+      box-sizing:border-box!important;
+      scroll-snap-align:none!important;
+      page-break-after:always;
+      break-after:page;
+      page-break-inside:auto;
+      break-inside:auto;
+      padding:12mm 14mm!important;
+      position:relative;
+    }
+    .hpd-slide:last-of-type{
+      page-break-after:auto;
+      break-after:auto;
+    }
+    .hpd-slide__inner,
+    .hpd-slide__inner--wide,
+    .hpd-slide__inner--contact{
+      margin-left:auto!important;
+      margin-right:auto!important;
+      flex:0 1 auto;
+      width:100%!important;
+    }
+    .hpd-slide__inner{max-width:min(52rem,100%)!important}
+    .hpd-slide__inner--wide{max-width:min(62rem,100%)!important}
+    .hpd-step-badge,.hpd-chip,.hpd-card,.hpd-svc-tile{animation:none!important}
+    .hpd-card,.hpd-svc-tile{opacity:1!important;transform:none!important}
+    /* Misma rejilla 2×2 que en desktop (el preview de impresión suele ser <780px y caía en 1 columna) */
+    .hpd-card-grid--2{
+      grid-template-columns:repeat(2,minmax(0,1fr))!important;
+      gap:12px!important;
+      margin-top:16px!important;
+    }
+    .hpd-card{
+      break-inside:avoid!important;
+      page-break-inside:avoid!important;
+    }
+    .hpd-svc-grid{
+      flex-wrap:nowrap!important;
+      gap:10px!important;
+      margin-top:18px!important;
+    }
+    /* Slide «Qué hace el equipo» (índice 5 en 0-based): compactar para caber en una hoja horizontal */
+    [data-hpd-slide="5"] .hpd-title{font-size:clamp(1.35rem,3.2vw,1.85rem)!important;margin-bottom:12px!important}
+    [data-hpd-slide="5"] .hpd-body{font-size:.92rem!important;line-height:1.45!important;max-width:62ch!important;margin-bottom:0!important}
+    [data-hpd-slide="5"] .hpd-card{padding:11px 12px 10px!important;gap:10px!important}
+    [data-hpd-slide="5"] .hpd-card__icon-wrap{width:40px!important;height:40px!important;border-radius:12px!important}
+    [data-hpd-slide="5"] .hpd-card__svg{width:20px!important;height:20px!important}
+    [data-hpd-slide="5"] .hpd-card__title{font-size:.72rem!important;margin-bottom:4px!important}
+    [data-hpd-slide="5"] .hpd-card__text{font-size:.78rem!important;line-height:1.38!important}
+    [data-hpd-slide="5"] .hpd-kicker-row{margin-bottom:10px!important}
+    /* background-clip:text suele vaciarse al imprimir: mismo bloque, titular blanco sólido */
+    .hpd-hero-brand{margin-bottom:16px!important;margin-left:-22px!important;max-width:calc(100% + 22px)!important}
+    .hpd-hero-brand__logo{width:min(100%,300px)!important;height:auto!important;max-height:56px!important}
+    .hpd-slide--hero .hpd-title{
+      background:none!important;
+      -webkit-background-clip:border-box!important;
+      background-clip:border-box!important;
+      -webkit-text-fill-color:#fff!important;
+      color:#fff!important;
+      animation:none!important;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block body %}
+<a class="hpd-skip hpd-no-print" href="#main">{{ d.skip }}</a>
+<header class="hpd-top hpd-no-print" aria-label="{% if lang == 'en' %}Page{% else %}Página{% endif %}">
+  <a class="hpd-top__brand" href="{{ url_path('/consultoria') if lang == 'es' else url_path('/consulting') }}">
+    <img src="{{ url_prefix }}/static/branding/dragonne-logo-white-header.png?v=6" alt="DRAGONNÉ" width="280" height="45" loading="eager" decoding="async" />
+  </a>
+  <nav class="hpd-top__mid" aria-label="{% if lang == 'en' %}Main{% else %}Principal{% endif %}">
+    <a href="{{ url_path('/hoteles') if lang == 'es' else url_path('/hotels') }}">{{ d.nav_back_hotels }}</a>
+    <a href="{{ calendar_url }}" target="_blank" rel="noopener noreferrer">{{ d.nav_schedule_meeting }}</a>
+  </nav>
+  <div class="hpd-top__lang" aria-label="{% if lang == 'en' %}Language{% else %}Idioma{% endif %}">
+    <a href="{{ url_path('/hotels/sales') }}" hreflang="en" class="{% if lang == 'en' %}is-active{% endif %}">{{ d.nav_lang_en }}</a>
+    <a href="{{ url_path('/hoteles/ventas') }}" hreflang="es" class="{% if lang == 'es' %}is-active{% endif %}">{{ d.nav_lang_es }}</a>
+  </div>
+</header>
+
+<div class="hpd-progress hpd-no-print" aria-hidden="true">
+  {% for s in d.slides %}<i data-hpd-idx="{{ loop.index0 }}"></i>{% endfor %}
+</div>
+
+<main class="hpd-main" id="main">
+  <svg class="hpd-sprite" aria-hidden="true" focusable="false">
+    <symbol id="hpd-ic-radar" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="2.25" fill="currentColor"/>
+      <path fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.2 5.2l1.8 1.8M17 17l1.8 1.8M18.8 5.2 17 7M7 17l-1.8 1.8"/>
+      <path fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" opacity=".55" d="M12 7a5 5 0 0 1 3.54 8.54"/>
+    </symbol>
+    <symbol id="hpd-ic-mix" viewBox="0 0 24 24">
+      <path fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" d="M4 7h6M4 12h16M4 17h11M14 7h6"/>
+      <rect x="15" y="5" width="5" height="4" rx="1" fill="currentColor" opacity=".35"/>
+    </symbol>
+    <symbol id="hpd-ic-rocket" viewBox="0 0 24 24">
+      <path fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" d="M12 3s7 5 7 11a6.8 6.8 0 0 1-14 0c0-6 7-11 7-11z"/>
+      <path fill="currentColor" d="M12 11.5a1.5 1.5 0 1 0 0 .01z" opacity=".5"/>
+      <path fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" d="M9 20l1-3M15 20l-1-3"/>
+    </symbol>
+    <symbol id="hpd-ic-users" viewBox="0 0 24 24">
+      <path fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" d="M8 11a3 3 0 1 0 0 .01zM16 11a3 3 0 1 0 0 .01z"/>
+      <path fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" d="M4.5 19.5c.6-2.8 3-4.5 6-4.5M19.5 19.5c-.6-2.8-3.2-4.5-6-4.5"/>
+    </symbol>
+    <symbol id="hpd-ic-globe" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/>
+      <path fill="none" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" d="M3 12h18M12 3.5c2.4 2.8 2.4 14.2 0 17M12 3.5c-2.4 2.8-2.4 14.2 0 17" opacity=".65"/>
+    </symbol>
+    <symbol id="hpd-ic-revenue" viewBox="0 0 24 24">
+      <path fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" d="M4 18V6M8 18v-7M12 18V9M16 18v-4M20 18V4"/>
+    </symbol>
+    <symbol id="hpd-ic-megaphone" viewBox="0 0 24 24">
+      <path fill="none" stroke="currentColor" stroke-width="1.65" stroke-linejoin="round" d="M14 4L6 8H4v6h2l8 4V4z"/>
+      <path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" d="M18 8a3 3 0 0 1 0 6"/>
+    </symbol>
+    <symbol id="hpd-ic-social" viewBox="0 0 24 24">
+      <rect x="3" y="5" width="18" height="14" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.65"/>
+      <circle cx="8.5" cy="10" r="1.6" fill="currentColor"/>
+      <path fill="none" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round" d="M21 15l-5-4-3 3-2-2-4 4"/>
+    </symbol>
+  </svg>
+
+  {% for s in d.slides %}
+  {% set variant = s.variant %}
+  <section
+    class="hpd-slide {% if variant == 'hero' %}hpd-slide--hero{% elif variant == 'light' %}hpd-slide--light{% elif variant == 'dark' %}hpd-slide--dark{% elif variant == 'services' %}hpd-slide--services{% elif variant == 'close' %}hpd-slide--close{% elif variant == 'lead' %}hpd-slide--lead{% else %}hpd-slide--cta{% endif %}"
+    data-hpd-slide="{{ loop.index0 }}"
+    {% if variant == 'lead' %}id="hpd-lead"{% endif %}
+    {% if variant == 'hero' %}aria-label="{% if lang == 'en' %}Introduction{% else %}Introducción{% endif %}"{% endif %}
+    {% if variant == 'lead' %}aria-label="{{ d.contact_title }}"{% endif %}
+  >
+    <div class="hpd-slide__inner {% if s.wide is defined and s.wide %}hpd-slide__inner--wide{% endif %} {% if variant == 'lead' %}hpd-slide__inner--contact{% endif %}">
+      {% if variant == 'hero' %}
+      <div class="hpd-hero-brand">
+        <img class="hpd-hero-brand__logo" src="{{ url_prefix }}/static/branding/dragonne-logo-principal.png" alt="Dragonné" width="320" height="62" loading="eager" decoding="async" />
+      </div>
+      {% endif %}
+      {% if variant != 'lead' %}
+      <div class="hpd-kicker-row {% if s.step is not defined %}hpd-kicker-row--solo{% endif %}">
+        {% if s.step is defined %}
+        <span class="hpd-step-badge">{{ '%02d'|format(s.step|int) }}</span>
+        {% endif %}
+        <p class="hpd-kicker">{{ s.kicker }}</p>
+      </div>
+      {% endif %}
+      {% if variant == 'lead' %}
+      <div class="hpd-contact-end">
+        <h2 class="hpd-title hpd-title--contact">{{ d.contact_title }}</h2>
+        <a class="hpd-contact-email" href="mailto:{{ d.contact_email }}">{{ d.contact_email }}</a>
+      </div>
+      {% else %}
+      {% if s.title_lines is defined %}
+      <h1 class="hpd-title hpd-title--split">{% for line in s.title_lines %}{% if not loop.first %}<br />{% endif %}{{ line }}{% endfor %}</h1>
+      {% elif s.title %}<h1 class="hpd-title {% if variant == 'hero' %}hpd-title--shine{% endif %}">{{ s.title }}</h1>{% endif %}
+      {% if s.lead is defined and s.lead %}
+      <p class="hpd-lead">{{ s.lead }}</p>
+      {% endif %}
+      {% if s.body is defined and s.body %}
+      <p class="hpd-body {% if s.body_compact is defined and s.body_compact %}hpd-body--compact{% endif %}">{{ s.body }}</p>
+      {% endif %}
+      {% if s.chips is defined %}
+      <ul class="hpd-chips" role="list">
+        {% for c in s.chips %}<li class="hpd-chip">{{ c }}</li>{% endfor %}
+      </ul>
+      {% endif %}
+      {% if s.services is defined %}
+      <ul class="hpd-svc-grid" role="list">
+        {% for svc in s.services %}
+        <li class="hpd-svc-tile" role="listitem">
+          <div class="hpd-svc-tile__icon" aria-hidden="true">
+            <svg class="hpd-svc-tile__svg" viewBox="0 0 24 24" focusable="false"><use href="#hpd-ic-{{ svc.icon }}"/></svg>
+          </div>
+          <p class="hpd-svc-tile__label">{{ svc.label }}</p>
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      {% if s.bullets is defined %}
+        {% set first_b = s.bullets[0] %}
+        {% if first_b is mapping %}
+        <ul class="hpd-card-grid hpd-card-grid--2" role="list">
+          {% for b in s.bullets %}
+          <li class="hpd-card" role="listitem">
+            <div class="hpd-card__icon-wrap">
+              <svg class="hpd-card__svg" width="24" height="24" aria-hidden="true"><use href="#hpd-ic-{{ b.icon }}"/></svg>
+            </div>
+            <div class="hpd-card__body">
+              {% if b.title is defined %}<h3 class="hpd-card__title">{{ b.title }}</h3>{% endif %}
+              <p class="hpd-card__text">{{ b.text }}</p>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <ul class="hpd-bullets" role="list">
+          {% for b in s.bullets %}<li>{{ b }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+      {% endif %}
+      {% if variant == 'close' %}
+      <div class="hpd-actions">
+        <button type="button" class="hpd-btn hpd-btn--primary hpd-no-print" id="hpd-print">{{ d.cta_pdf }}</button>
+        <a class="hpd-btn hpd-btn--ghost hpd-no-print" href="{{ calendar_url }}" target="_blank" rel="noopener noreferrer">{{ d.cta_calendar }}</a>
+      </div>
+      {% endif %}
+      {% endif %}
+    </div>
+    {% if loop.first %}
+    <p class="hpd-scroll" aria-hidden="true">{{ d.scroll_hint }}</p>
+    {% endif %}
+  </section>
+  {% endfor %}
+</main>
+
+<a class="hpd-diag-fab hpd-no-print" href="{{ url_path('/hoteles/diagnostico') if lang == 'es' else url_path('/hotels/diagnosis') }}">{{ v.diag_cta_open }}</a>
+
+<footer class="hpd-footer">
+  <p>{{ d.footer_note }} <a href="{{ url_path('/consultoria') if lang == 'es' else url_path('/consulting') }}">dragonne.co</a></p>
+</footer>
+
+<script>
+(function(){
+  var slides=[].slice.call(document.querySelectorAll('[data-hpd-slide]'));
+  if(slides.length){
+    var ioView=new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        en.target.classList.toggle('is-hpd-inview',en.isIntersecting);
+      });
+    },{threshold:0.28,rootMargin:'0px 0px -8% 0px'});
+    slides.forEach(function(s){ioView.observe(s);});
+  }
+  var dots=[].slice.call(document.querySelectorAll('.hpd-progress i'));
+  if(slides.length&&dots.length){
+    var obs=new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if(!en.isIntersecting)return;
+        var idx=parseInt(en.target.getAttribute('data-hpd-slide'),10);
+        if(isNaN(idx))return;
+        dots.forEach(function(d,i){d.classList.toggle('is-lit',i===idx);});
+      });
+    },{rootMargin:'-42% 0px -42% 0px',threshold:0});
+    slides.forEach(function(s){obs.observe(s);});
+  }
+  var printBtn=document.getElementById('hpd-print');
+  if(printBtn)printBtn.addEventListener('click',function(){window.print();});
+})();
+</script>
+{% endblock %}

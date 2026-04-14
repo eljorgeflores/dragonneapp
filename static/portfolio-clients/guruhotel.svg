@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 88" role="img" aria-label="GuruHotel" shape-rendering="geometricPrecision" text-rendering="geometricPrecision">
+  <defs>
+    <linearGradient id="gh-face" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#124899"/>
+      <stop offset="100%" stop-color="#3d9fff"/>
+    </linearGradient>
+    <linearGradient id="gh-fold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1a5fbf"/>
+      <stop offset="100%" stop-color="#2b7fd4"/>
+    </linearGradient>
+    <linearGradient id="gh-accent" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ea580c"/>
+      <stop offset="100%" stop-color="#facc15"/>
+    </linearGradient>
+  </defs>
+  <!-- Marca tipo carpeta / pliegue (vector ntido, sin compresin) -->
+  <g transform="translate(6,10)">
+    <path fill="url(#gh-face)" d="M36 2L74 20v38L36 76 2 56V18z"/>
+    <path fill="url(#gh-fold)" d="M2 18L36 2v38L2 56z"/>
+    <path fill="url(#gh-accent)" d="M8 52L36 76 22 48z"/>
+  </g>
+  <text
+    x="96"
+    y="60"
+    font-family="system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif"
+    font-size="40"
+    font-weight="700"
+    fill="#0c1f3a"
+    letter-spacing="-0.04em"
+  >guruhotel</text>
+</svg>

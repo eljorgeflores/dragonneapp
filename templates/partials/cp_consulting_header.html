@@ -1,0 +1,63 @@
+{# Barra de navegación estándar consultoría (misma que consulting.html). Opcional: consulting_nav_prefix (p. ej. consulting_home) para anclas #servicios → base#servicios en otras rutas. Opcional: consulting_header_lang_en / consulting_header_lang_es (p. ej. landings de verticales) para EN/ES sin salir de la vertical. #}
+{% set _pfx = consulting_nav_prefix if consulting_nav_prefix is defined and consulting_nav_prefix else '' %}
+{% set _cal = calendar_url|default('https://calendar.google.com/calendar/appointments/schedules/AcZssZ387VmTo3CquOrVY76jpM5FK7oKH8yMolIRGL0PiAiY7nZwhr_maqZacHRTN3jy6Dgc-V53No5J?gv=true') %}
+{% set _lang_en = consulting_header_lang_en if consulting_header_lang_en is defined and consulting_header_lang_en else url_path('/consulting') %}
+{% set _lang_es = consulting_header_lang_es if consulting_header_lang_es is defined and consulting_header_lang_es else url_path('/consultoria') %}
+<a href="#main" class="cp-skip">{% if lang == 'en' %}Skip to content{% else %}Saltar al contenido{% endif %}</a>
+<header class="cp-nav-wrap" id="cp-header">
+  <input type="checkbox" id="cp-nav-toggle" class="cp-nav-toggle" aria-hidden="true" aria-label="{% if lang == 'en' %}Menu{% else %}Menú{% endif %}" />
+  <div class="cp-nav">
+    <div class="cp-nav-left">
+      <a href="{{ url_path('/consultoria') if lang == 'es' else url_path('/consulting') }}#top" class="cp-brand">
+        <img src="{{ url_prefix }}/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" width="231" height="52" loading="eager" decoding="async" />
+      </a>
+      <div class="cp-lang">
+        <a href="{{ _lang_en }}" hreflang="en" class="cp-lang-link {% if lang == 'en' %}is-active{% endif %}" aria-current="{% if lang == 'en' %}true{% else %}false{% endif %}">EN</a>
+        <a href="{{ _lang_es }}" hreflang="es" class="cp-lang-link {% if lang == 'es' %}is-active{% endif %}" aria-current="{% if lang == 'es' %}true{% else %}false{% endif %}">ES</a>
+      </div>
+    </div>
+    <nav class="cp-nav-links" aria-label="{% if lang == 'en' %}Main navigation{% else %}Navegación principal{% endif %}">
+      <div class="cp-nav-item" tabindex="-1">
+        <button type="button" class="cp-nav-dropdown-btn" aria-expanded="false" aria-haspopup="true">{{ t.nav_verticals }}</button>
+        <div class="cp-nav-sub" role="menu">
+          <div class="cp-nav-sub-group" role="group" aria-label="{{ t.vert_hosp }}">
+            <span class="cp-nav-sub-group-title">{{ t.vert_hosp }}</span>
+            <a href="{{ url_path('/hoteles') if lang == 'es' else url_path('/hotels') }}" role="menuitem">{{ t.vert_hosp_tab_consulting }}</a>
+            <a href="{{ url_path('/pullso') }}" role="menuitem">{{ t.nav_vertical_pullso }}</a>
+          </div>
+          <a href="{{ url_path('/consultoria/startups') if lang == 'es' else url_path('/consulting/startups') }}" role="menuitem">{{ t.vert_nav_startups }}</a>
+          <a href="{{ url_path('/consultoria/smbs') if lang == 'es' else url_path('/consulting/smbs') }}" role="menuitem">{{ t.vert_nav_smbs }}</a>
+          <a href="{{ url_path('/consultoria/medios') if lang == 'es' else url_path('/consulting/medios') }}" role="menuitem">{{ t.vert_nav_media }}</a>
+        </div>
+      </div>
+      <a href="{{ _pfx }}#servicios">{{ t.nav_services }}</a>
+      <a href="{{ _pfx }}#metodologia">{{ t.nav_method }}</a>
+      <a href="{{ _pfx }}#palabras">{{ t.nav_testimonials }}</a>
+      <a href="{{ _pfx }}#equipo">{{ t.nav_team }}</a>
+      <a href="{{ _pfx }}#contacto">{{ t.nav_contact }}</a>
+    </nav>
+    <div class="cp-nav-right">
+      <div class="cp-actions">
+        <a class="cp-btn cp-btn-primary" href="{{ _cal }}" target="_blank" rel="noopener noreferrer">{{ t.cta_header_agendar }}</a>
+      </div>
+    </div>
+    <label for="cp-nav-toggle" class="cp-nav-hamburger" aria-label="{% if lang == 'en' %}Open menu{% else %}Abrir menú{% endif %}">
+      <span class="cp-nav-hamburger-btn"><span></span></span>
+    </label>
+  </div>
+  <div class="cp-nav-mobile">
+    <span class="cp-nav-mobile-subtitle">{{ t.nav_verticals }}</span>
+    <span class="cp-nav-mobile-subtitle">{{ t.vert_hosp }}</span>
+    <a class="cp-nav-mobile-sub" href="{{ url_path('/hoteles') if lang == 'es' else url_path('/hotels') }}">{{ t.vert_hosp_tab_consulting }}</a>
+    <a class="cp-nav-mobile-sub" href="{{ url_path('/pullso') }}">{{ t.nav_vertical_pullso }}</a>
+    <a href="{{ url_path('/consultoria/startups') if lang == 'es' else url_path('/consulting/startups') }}">{{ t.vert_nav_startups }}</a>
+    <a href="{{ url_path('/consultoria/smbs') if lang == 'es' else url_path('/consulting/smbs') }}">{{ t.vert_nav_smbs }}</a>
+    <a href="{{ url_path('/consultoria/medios') if lang == 'es' else url_path('/consulting/medios') }}">{{ t.vert_nav_media }}</a>
+    <a href="{{ _pfx }}#servicios">{{ t.nav_services }}</a>
+    <a href="{{ _pfx }}#metodologia">{{ t.nav_method }}</a>
+    <a href="{{ _pfx }}#palabras">{{ t.nav_testimonials }}</a>
+    <a href="{{ _pfx }}#equipo">{{ t.nav_team }}</a>
+    <a href="{{ _pfx }}#contacto">{{ t.nav_contact }}</a>
+    <a class="cp-btn cp-btn-primary" href="{{ _cal }}" target="_blank" rel="noopener noreferrer">{{ t.cta_header_agendar }}</a>
+  </div>
+</header>

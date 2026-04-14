@@ -39,6 +39,67 @@ _PAGES: dict[str, dict[str, dict]] = {
             ),
             "cta_primary_label": "Agendar reunión",
             "cta_secondary_label": "Escribirnos",
+            "problem_deck_link_label": "Presentación →",
+            "sales_deck_popup_label": "¿Encaja con tu hotel?",
+            "sales_deck_popup_aria": "Abrir la presentación comercial y ver si encaja con tu hotel",
+            "vl_cta_hero_secondary_kicker": "SIN COMPROMISO",
+            "vl_cta_hero_secondary_title": "Diagnóstico gratis y presentación",
+            "vl_cta_hero_secondary_intro": (
+                "Si aún no quieres reunión: en el diagnóstico conviertes tamaño, ocupación y mix OTAs en dos lecturas claras "
+                "(margen en comisiones y horizonte de directo) y recibes el resumen brandeado por correo; "
+                "o revisa la presentación para el contexto estratégico."
+            ),
+            "vl_cta_hero_deck": "Presentación",
+            "vl_cta_bottom_lead": "Presentación o diagnóstico gratis (comisiones y margen de mejora).",
+            "vl_cta_bottom_deck": "Abrir presentación",
+            "vl_cta_bottom_diag": "Abrir diagnóstico gratis",
+            "diag_cta_open": "Diagnóstico gratis",
+            "diag_title": "Diagnóstico gratis para tu hotel",
+            "diag_subtitle": (
+                "Puedes añadir ciudad y tipo de propiedad (opcional, para contexto). Con habitaciones, ADR, ocupación, mix OTAs y comisiones "
+                "armamos un primer diagnóstico numérico sin costo: ahorro potencial en comisiones y un rango de mejora comercial. "
+                "Cifras orientativas para conversar; el análisis fino viene con tus datos reales."
+            ),
+            "diag_close": "Cerrar",
+            "diag_calc": "Ver estimación",
+            "diag_back": "Ajustar datos",
+            "diag_book": "Agendar para revisar estos números",
+            "diag_disclaimer": (
+                "Cifras ilustrativas (no constituyen promesa de resultados). Sirven para conversar con un revenue manager DRAGONNÉ "
+                "y validar supuestos con tus datos reales."
+            ),
+            "diag_l_hotel": "Nombre del hotel",
+            "diag_l_rooms": "Número de habitaciones",
+            "diag_l_adr": "Tarifa promedio (ADR) por noche, moneda local",
+            "diag_l_occ": "Ocupación anual estimada (%)",
+            "diag_l_occ_ph": "Tu % anual estimado (1–100)",
+            "diag_l_numotas": "¿Cuántas OTAs tienes conectadas?",
+            "diag_l_ota_block": "OTAs y comisión (%) que pagas a cada una",
+            "diag_l_ota_name": "OTA (ej. Booking, Expedia…)",
+            "diag_l_ota_comm": "Comisión %",
+            "diag_l_add_ota": "+ Agregar otra OTA",
+            "diag_l_has_web": "¿Tienen sitio web propio?",
+            "diag_l_web_be": "¿El sitio tiene motor de reservas?",
+            "diag_l_pay_online": "¿Aceptan pagos en línea (tarjeta/TPV en web)?",
+            "diag_l_pms": "¿Qué PMS usan?",
+            "diag_l_cm": "¿Qué channel manager usan?",
+            "diag_l_pct_ota": "% de ventas del hotel que vienen por OTAs (sobre 100% ventas totales)",
+            "diag_l_pct_direct": "% de ventas online que vienen del sitio web oficial (directo, sobre 100% ventas online)",
+            "diag_l_pct_direct_ph": "Si no tienes el dato, estima o deja en blanco",
+            "diag_opt_yes": "Sí",
+            "diag_opt_no": "No",
+            "diag_opt_unsure": "No estoy seguro",
+            "diag_res_savings_title": "1. Ahorro anual estimado en comisiones OTAs",
+            "diag_res_savings_body": (
+                "Si migraran al canal directo (web con motor y pagos en línea) la mitad del volumen que hoy venden por OTAs, "
+                "dejarían de pagar comisión sobre esa fracción. Usamos el promedio de las comisiones que indicaste por OTA."
+            ),
+            "diag_res_growth_title": "2. Potencial de crecimiento en ventas totales",
+            "diag_res_growth_body": (
+                "Combinamos tu mix OTAs vs. directo online con reglas de sensibilidad tipo revenue management: "
+                "más dependencia de OTAs y menos venta directa online implica mayor techo de mejora con estrategia y ejecución; "
+                "si ya vendes bien en directo, el margen adicional se acerca al piso del rango (pero sigue siendo relevante por eficiencia de mix)."
+            ),
             "highlights": [
                 "Viabilidad, preapertura y operación en curso",
                 "Diagnóstico comercial, operativo y tecnológico",
@@ -47,14 +108,15 @@ _PAGES: dict[str, dict[str, dict]] = {
             "sec_problems_label": "RETOS",
             "sec_problems_title": "Problemas que no siempre se ven a tiempo, pero sí pegan en margen, ritmo y control",
             "sec_problems_lead": (
-                "Trabajamos con hoteles que ya sienten fricción, desorden o presión en resultados, "
-                "aunque el problema de fondo no siempre esté claramente diagnosticado."
+                "Los hoteleros independientes suelen competir con menos tiempo de dirección y sin el talento experto en comercial, "
+                "revenue y operación que hoy exige exprimir al máximo el activo frente a cadenas y vecinos bien resueltos. "
+                "El síntoma es margen, ritmo o control; la raíz, muchas veces, es capacidad y foco."
             ),
             "problems": [
                 _pair(
-                    "Ingresos por debajo del potencial",
-                    "Hay demanda, esfuerzo comercial o buena ocupación, pero el negocio no convierte eso en la rentabilidad esperada. "
-                    "La fuga puede estar en mezcla de canales, estructura comercial, procesos o ejecución.",
+                    "Capacidad y foco frente al comp set",
+                    "Sin horas de dirección ni perfiles senior en comercial y revenue, el hotel no opera a su techo: se reacciona, "
+                    "se copia lo obvio y la propiedad deja dinero sobre la mesa frente a competidores con más estructura.",
                 ),
                 _pair(
                     "Operación desalineada",
@@ -232,6 +294,66 @@ _PAGES: dict[str, dict[str, dict]] = {
             ),
             "cta_primary_label": "Book a meeting",
             "cta_secondary_label": "Write to us",
+            "problem_deck_link_label": "Presentation →",
+            "sales_deck_popup_label": "See if it fits your hotel",
+            "sales_deck_popup_aria": "Open the commercial presentation to see if it fits your hotel",
+            "vl_cta_hero_secondary_kicker": "NO COMMITMENT YET",
+            "vl_cta_hero_secondary_title": "Free diagnosis & presentation",
+            "vl_cta_hero_secondary_intro": (
+                "Not ready to meet? The diagnosis turns size, occupancy, and OTA mix into two clear reads (commission margin and direct upside) "
+                "and emails you a branded summary—or open the presentation for strategic context."
+            ),
+            "vl_cta_hero_deck": "Presentation",
+            "vl_cta_bottom_lead": "Presentation or free diagnosis (commissions and upside range).",
+            "vl_cta_bottom_deck": "Open presentation",
+            "vl_cta_bottom_diag": "Open free diagnosis",
+            "diag_cta_open": "Free diagnosis",
+            "diag_title": "Free diagnosis for your hotel",
+            "diag_subtitle": (
+                "You can add city and property type (optional, for context). From rooms, ADR, occupancy, OTA mix, and commissions we generate "
+                "a first numeric diagnosis at no cost: potential commission savings and a commercial improvement range. "
+                "Directional figures to discuss; deep analysis uses your real data."
+            ),
+            "diag_close": "Close",
+            "diag_calc": "See estimate",
+            "diag_back": "Edit inputs",
+            "diag_book": "Book a call to review",
+            "diag_disclaimer": (
+                "Illustrative numbers (not a guarantee). They are meant to discuss with a DRAGONNÉ revenue manager "
+                "and validate assumptions with your real data."
+            ),
+            "diag_l_hotel": "Hotel name",
+            "diag_l_rooms": "Number of rooms",
+            "diag_l_adr": "Average daily rate (ADR) per night, local currency",
+            "diag_l_occ": "Estimated annual occupancy (%)",
+            "diag_l_occ_ph": "Your estimated annual % (1–100)",
+            "diag_l_numotas": "How many OTAs are you connected to?",
+            "diag_l_ota_block": "OTAs and commission (%) you pay each",
+            "diag_l_ota_name": "OTA (e.g. Booking, Expedia…)",
+            "diag_l_ota_comm": "Commission %",
+            "diag_l_add_ota": "+ Add another OTA",
+            "diag_l_has_web": "Do you have your own website?",
+            "diag_l_web_be": "Does the site have a booking engine?",
+            "diag_l_pay_online": "Do you accept online payments on the web?",
+            "diag_l_pms": "Which PMS do you use?",
+            "diag_l_cm": "Which channel manager do you use?",
+            "diag_l_pct_ota": "% of hotel sales from OTAs (of 100% total hotel sales)",
+            "diag_l_pct_direct": "% of online sales from the official website (direct, of 100% online sales)",
+            "diag_l_pct_direct_ph": "If unknown, estimate or leave blank",
+            "diag_opt_yes": "Yes",
+            "diag_opt_no": "No",
+            "diag_opt_unsure": "Not sure",
+            "diag_res_savings_title": "1. Estimated annual OTA commission savings",
+            "diag_res_savings_body": (
+                "If half of today’s OTA volume moved to your direct channel (site with booking engine and online payments), "
+                "you would stop paying commission on that slice. We use the average commission you entered per OTA."
+            ),
+            "diag_res_growth_title": "2. Potential uplift in total hotel sales",
+            "diag_res_growth_body": (
+                "We combine your OTA vs. direct-online mix with revenue-style sensitivity rules: "
+                "higher OTA dependence and lower direct-online share implies a higher upside range with strategy and execution; "
+                "if you already sell well direct, the incremental % moves toward the lower bound (still meaningful via mix efficiency)."
+            ),
             "highlights": [
                 "Feasibility, pre-opening, and ongoing operations",
                 "Commercial, operational, and technology diagnosis",
@@ -240,13 +362,15 @@ _PAGES: dict[str, dict[str, dict]] = {
             "sec_problems_label": "CHALLENGES",
             "sec_problems_title": "Problems you don’t always see in time—but they hit margin, pace, and control",
             "sec_problems_lead": (
-                "We work with hotels that already feel friction, disorder, or pressure on results—even when the root issue is not clearly diagnosed."
+                "Independent hoteliers often compete with less leadership time and without the expert commercial, revenue, and operations talent "
+                "needed to run the asset at full potential against chains and sharp local competitors. The symptom is margin, pace, or control; "
+                "the root cause is often capacity and focus."
             ),
             "problems": [
                 _pair(
-                    "Revenue below potential",
-                    "There is demand, commercial effort, or solid occupancy, but the business does not convert that into expected profitability. "
-                    "The leak may be channel mix, commercial structure, processes, or execution.",
+                    "Capacity and focus vs. the comp set",
+                    "Without leadership bandwidth and senior commercial/revenue profiles, the hotel does not run at its ceiling: it reacts, copies the obvious, "
+                    "and leaves money on the table versus competitors with stronger structure.",
                 ),
                 _pair(
                     "Misaligned operations",

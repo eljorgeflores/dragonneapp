@@ -1,72 +1,21 @@
-{# Landings de verticales DRAGONNÉ — contexto desde routes/consulting.py #}
+{# Landings de verticales DRAGONNÉ — mismo header que consulting.html (cp_consulting_header). Deck ventas usa otra plantilla (hospitality_problem_deck). #}
 {% extends 'base.html' %}
 {% block body %}
 {% include 'partials/cp_consulting_styles.html' %}
-
-<div class="cp cp-vl">
-  <a href="#main" class="cp-skip">{% if lang == 'en' %}Skip to content{% else %}Saltar al contenido{% endif %}</a>
-  <header class="cp-nav-wrap" id="cp-header">
-    <input type="checkbox" id="cp-nav-toggle" class="cp-nav-toggle" aria-hidden="true" />
-    <div class="cp-nav">
-      <div class="cp-nav-left">
-        <a href="{{ consulting_home }}#top" class="cp-brand">
-          <img src="/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" width="160" height="36" loading="eager" decoding="async" />
-        </a>
-        <div class="cp-lang">
-          <a href="{{ url_path('/hotels') if vertical_slug == 'hospitality' else url_path('/consulting/' ~ vertical_slug) }}" hreflang="en" class="cp-lang-link {% if lang == 'en' %}is-active{% endif %}" aria-current="{% if lang == 'en' %}true{% else %}false{% endif %}">EN</a>
-          <a href="{{ url_path('/hoteles') if vertical_slug == 'hospitality' else url_path('/consultoria/' ~ vertical_slug) }}" hreflang="es" class="cp-lang-link {% if lang == 'es' %}is-active{% endif %}" aria-current="{% if lang == 'es' %}true{% else %}false{% endif %}">ES</a>
-        </div>
-      </div>
-      <nav class="cp-nav-links" aria-label="{% if lang == 'en' %}Main navigation{% else %}Navegación principal{% endif %}">
-        <div class="cp-nav-item" tabindex="-1">
-          <button type="button" class="cp-nav-dropdown-btn" aria-expanded="false" aria-haspopup="true">{{ t.nav_verticals }}</button>
-          <div class="cp-nav-sub" role="menu">
-            <div class="cp-nav-sub-group" role="group" aria-label="{{ t.vert_hosp }}">
-              <span class="cp-nav-sub-group-title">{{ t.vert_hosp }}</span>
-              <a href="{{ url_path('/hoteles') if lang == 'es' else url_path('/hotels') }}" role="menuitem" {% if vertical_slug == 'hospitality' %}aria-current="page"{% endif %}>{{ t.vert_hosp_tab_consulting }}</a>
-              <a href="{{ url_path('/pullso') }}" role="menuitem">{{ t.nav_vertical_pullso }}</a>
-            </div>
-            <a href="{{ url_path('/consultoria/startups') if lang == 'es' else url_path('/consulting/startups') }}" role="menuitem" {% if vertical_slug == 'startups' %}aria-current="page"{% endif %}>{{ t.vert_nav_startups }}</a>
-            <a href="{{ url_path('/consultoria/smbs') if lang == 'es' else url_path('/consulting/smbs') }}" role="menuitem" {% if vertical_slug == 'smbs' %}aria-current="page"{% endif %}>{{ t.vert_nav_smbs }}</a>
-            <a href="{{ url_path('/consultoria/medios') if lang == 'es' else url_path('/consulting/medios') }}" role="menuitem" {% if vertical_slug == 'medios' %}aria-current="page"{% endif %}>{{ t.vert_nav_media }}</a>
-          </div>
-        </div>
-        <a href="{{ consulting_home }}#servicios">{{ t.nav_services }}</a>
-        <a href="{{ consulting_home }}#metodologia">{{ t.nav_method }}</a>
-        <a href="{{ consulting_home }}#palabras">{{ t.nav_testimonials }}</a>
-        <a href="{{ consulting_home }}#equipo">{{ t.nav_team }}</a>
-        <a href="{{ consulting_home }}#contacto">{{ t.nav_contact }}</a>
-      </nav>
-      <div class="cp-nav-right">
-        <div class="cp-actions">
-          <a class="cp-btn cp-btn-primary" href="{{ calendar_url }}" target="_blank" rel="noopener noreferrer">{{ t.cta_header_agendar }}</a>
-        </div>
-      </div>
-      <label for="cp-nav-toggle" class="cp-nav-hamburger" aria-label="{% if lang == 'en' %}Menu{% else %}Menú{% endif %}">
-        <span class="cp-nav-hamburger-btn"><span></span></span>
-      </label>
-    </div>
-    <div class="cp-nav-mobile">
-      <span class="cp-nav-mobile-subtitle">{{ t.nav_verticals }}</span>
-      <span class="cp-nav-mobile-subtitle">{{ t.vert_hosp }}</span>
-      <a class="cp-nav-mobile-sub" href="{{ url_path('/hoteles') if lang == 'es' else url_path('/hotels') }}">{{ t.vert_hosp_tab_consulting }}</a>
-      <a class="cp-nav-mobile-sub" href="{{ url_path('/pullso') }}">{{ t.nav_vertical_pullso }}</a>
-      <a href="{{ url_path('/consultoria/startups') if lang == 'es' else url_path('/consulting/startups') }}">{{ t.vert_nav_startups }}</a>
-      <a href="{{ url_path('/consultoria/smbs') if lang == 'es' else url_path('/consulting/smbs') }}">{{ t.vert_nav_smbs }}</a>
-      <a href="{{ url_path('/consultoria/medios') if lang == 'es' else url_path('/consulting/medios') }}">{{ t.vert_nav_media }}</a>
-      <a href="{{ consulting_home }}#servicios">{{ t.nav_services }}</a>
-      <a href="{{ consulting_home }}#metodologia">{{ t.nav_method }}</a>
-      <a href="{{ consulting_home }}#palabras">{{ t.nav_testimonials }}</a>
-      <a href="{{ consulting_home }}#equipo">{{ t.nav_team }}</a>
-      <a href="{{ consulting_home }}#contacto">{{ t.nav_contact }}</a>
-      <a class="cp-btn cp-btn-primary" href="{{ calendar_url }}" target="_blank" rel="noopener noreferrer">{{ t.cta_header_agendar }}</a>
-    </div>
-  </header>
-
+{% if vertical_slug == 'hospitality' %}
+  {% set consulting_header_lang_en = url_path('/hotels') %}
+  {% set consulting_header_lang_es = url_path('/hoteles') %}
+{% else %}
+  {% set consulting_header_lang_en = url_path('/consulting/' ~ vertical_slug) %}
+  {% set consulting_header_lang_es = url_path('/consultoria/' ~ vertical_slug) %}
+{% endif %}
+<div class="cp">
+  {% set consulting_nav_prefix = consulting_home %}
+  {% include 'partials/cp_consulting_header.html' %}
   {% if vertical_slug == 'hospitality' %}
-  {% include 'partials/vertical_landing_hospitality_main.html' %}
+    {% include 'partials/vertical_landing_hospitality_main.html' %}
   {% else %}
-  {% include 'partials/vertical_landing_refined_main.html' %}
+    {% include 'partials/vertical_landing_refined_main.html' %}
   {% endif %}
 
   <footer class="cp-footer" role="contentinfo">
@@ -85,7 +34,7 @@
   <script>
   (function(){
     var toggle = document.getElementById('cp-nav-toggle');
-    var mobileNav = document.querySelector('.cp-vl .cp-nav-mobile');
+    var mobileNav = document.querySelector('.cp-nav-mobile');
     if (toggle && mobileNav) {
       mobileNav.addEventListener('click', function(e) {
         if (e.target.closest('a')) toggle.checked = false;

@@ -192,6 +192,23 @@ def init_db():
         )
         conn.execute(
             """
+            CREATE TABLE IF NOT EXISTS hospitality_diag_submissions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                created_at TEXT NOT NULL,
+                lang TEXT NOT NULL,
+                contact_name TEXT NOT NULL,
+                contact_email TEXT NOT NULL,
+                contact_phone TEXT,
+                hotel_name TEXT NOT NULL,
+                savings_mxn REAL NOT NULL,
+                growth_mxn REAL NOT NULL,
+                growth_rate REAL NOT NULL,
+                payload_json TEXT NOT NULL
+            );
+            """
+        )
+        conn.execute(
+            """
             CREATE TABLE IF NOT EXISTS pullso_whatsapp_waitlist (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 full_name TEXT NOT NULL,

@@ -1,0 +1,449 @@
+{# Diagnóstico hotel: modal + script. Requiere v (hospitality), lang, calendar_url. Opcional: diag_floating_btn (bool) #}
+<style>
+  .vl-diag{--dark:#1a1a1a;--muted:#5c6169;--accent-gold:#f6a905;--accent:#f07e07}
+  .vl-diag-fab{
+    position:fixed;right:14px;bottom:max(18px,env(safe-area-inset-bottom));z-index:120;
+    padding:12px 18px;border-radius:999px;cursor:pointer;text-align:center;
+    font:700 .78rem/1.25 Inter,system-ui,sans-serif;letter-spacing:.02em;
+    -webkit-appearance:none;appearance:none;
+    /* Fondo sólido + degradado: evita “pill blanca” si el gradiente falla en algunos navegadores */
+    background-color:#e07006;
+    background-image:linear-gradient(135deg,#f6a905 0%,#f07e07 52%,#e86a00 100%);
+    color:#fff !important;
+    -webkit-text-fill-color:#fff;
+    border:2px solid rgba(12,12,14,.32);
+    text-shadow:0 1px 2px rgba(0,0,0,.35);
+    box-shadow:0 10px 36px rgba(240,126,7,.42),0 0 0 1px rgba(255,255,255,.12) inset;
+    max-width:min(220px,72vw);
+    isolation:isolate;
+    mix-blend-mode:normal;
+    transition:transform .15s,box-shadow .15s,background .2s,border-color .2s,color .2s
+  }
+  .vl-diag-fab:hover{transform:translateY(-1px);box-shadow:0 14px 40px rgba(240,126,7,.55),0 0 0 1px rgba(255,255,255,.14) inset}
+  /* Sobre fondos claros (slides claras, secciones blancas): máximo contraste */
+  .vl-diag-fab.vl-diag-fab--on-light{
+    background-color:#101014;
+    background-image:linear-gradient(180deg,#22232a 0%,#0c0c10 100%);
+    color:#fff !important;
+    -webkit-text-fill-color:#fff;
+    border:2px solid rgba(246,169,5,.92);
+    text-shadow:0 1px 2px rgba(0,0,0,.55);
+    box-shadow:0 10px 34px rgba(0,0,0,.3),0 0 0 1px rgba(255,255,255,.07) inset,0 0 26px rgba(246,169,5,.2)
+  }
+  .vl-diag-fab.vl-diag-fab--on-light:hover{
+    box-shadow:0 14px 40px rgba(0,0,0,.38),0 0 0 1px rgba(255,255,255,.1) inset,0 0 32px rgba(246,169,5,.28)
+  }
+  .hpd .vl-diag-fab{z-index:130}
+  .vl-diag{
+    position:fixed;inset:0;z-index:400;display:flex;align-items:flex-start;justify-content:center;
+    padding:max(12px,env(safe-area-inset-top,0px)) max(10px,env(safe-area-inset-right,0px)) max(20px,env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px));
+    overflow-y:auto;-webkit-overflow-scrolling:touch;
+    visibility:hidden;opacity:0;transition:opacity .2s,visibility .2s
+  }
+  .vl-diag.is-open{visibility:visible;opacity:1}
+  .vl-diag__backdrop{position:fixed;inset:0;background:rgba(12,12,14,.55);backdrop-filter:blur(4px)}
+  .vl-diag__panel{
+    position:relative;width:min(560px,calc(100% - 16px));margin-top:2vh;margin-bottom:2vh;
+    background:#fff;border-radius:16px;box-shadow:0 24px 64px rgba(0,0,0,.18);
+    border:1px solid rgba(52,52,52,.1);max-height:min(94dvh,900px);overflow:hidden;display:flex;flex-direction:column
+  }
+  @media (max-width:480px){
+    .vl-diag__panel{width:calc(100% - 12px);border-radius:14px;margin-top:1vh}
+  }
+  .vl-diag__head{padding:22px 22px 16px;border-bottom:1px solid rgba(52,52,52,.08)}
+  @media (max-width:480px){
+    .vl-diag__head{padding:20px 48px 14px 16px}
+  }
+  .vl-diag__head h2{margin:0 0 8px;font-size:clamp(1.12rem,2.4vw,1.35rem);font-weight:800;letter-spacing:-.03em;color:var(--dark);line-height:1.2}
+  .vl-diag__head p{margin:0;font-size:.88rem;line-height:1.5;color:var(--muted)}
+  .vl-diag__close{
+    position:absolute;top:12px;right:12px;width:44px;height:44px;border:0;border-radius:10px;
+    background:rgba(52,52,52,.06);cursor:pointer;font-size:1.35rem;line-height:1;color:var(--dark);transition:background .2s;
+    display:flex;align-items:center;justify-content:center;touch-action:manipulation
+  }
+  .vl-diag__close:hover{background:rgba(52,52,52,.1)}
+  .vl-diag__body{padding:18px 22px max(22px,env(safe-area-inset-bottom,0px));overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch}
+  @media (max-width:480px){.vl-diag__body{padding:16px 16px max(20px,env(safe-area-inset-bottom,0px))}}
+  .vl-diag__step{display:none}
+  .vl-diag__step.is-active{display:block}
+  .vl-diag fieldset{border:0;margin:0 0 16px;padding:0}
+  .vl-diag legend{font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  .vl-diag label{display:block;font-size:.82rem;font-weight:600;color:var(--dark);margin:0 0 6px}
+  .vl-diag input[type="text"],.vl-diag input[type="number"],.vl-diag select,.vl-diag textarea{
+    width:100%;padding:10px 12px;border:1px solid rgba(52,52,52,.14);border-radius:8px;font-size:.9rem;font-family:inherit;margin-bottom:4px
+  }
+  .vl-diag textarea{min-height:52px;resize:vertical}
+  .vl-diag .vl-diag__grid2{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+  @media (max-width:520px){.vl-diag .vl-diag__grid2{grid-template-columns:1fr}}
+  .vl-diag__ota-row{display:grid;grid-template-columns:1fr 88px;gap:8px;margin-bottom:8px;align-items:end}
+  .vl-diag__btn-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+  @media (max-width:420px){
+    .vl-diag__btn-row{flex-direction:column;align-items:stretch}
+    .vl-diag__btn-row .vl-diag__btn{width:100%;justify-content:center}
+  }
+  .vl-diag__btn{
+    display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 18px;border-radius:8px;
+    font-weight:600;font-size:.9rem;border:1px solid transparent;cursor:pointer;font-family:inherit;text-decoration:none
+  }
+  .vl-diag__btn--primary{background:linear-gradient(90deg,var(--accent-gold),var(--accent));color:#fff;border:0}
+  .vl-diag__btn--ghost{background:#fff;border-color:rgba(52,52,52,.2);color:var(--dark)}
+  .vl-diag__btn--ghost:hover{border-color:rgba(52,52,52,.35)}
+  .vl-diag__res{margin:0 0 16px;padding:14px 14px 12px;border-radius:12px;background:linear-gradient(165deg,#fafafa,#f3f4f6);border:1px solid rgba(52,52,52,.08)}
+  .vl-diag__res h3{margin:0 0 6px;font-size:.95rem;font-weight:800;color:var(--dark)}
+  .vl-diag__res p{margin:0 0 8px;font-size:.82rem;color:var(--muted);line-height:1.45}
+  .vl-diag__res strong{font-size:1.35rem;font-weight:800;letter-spacing:-.02em;color:var(--dark);display:block}
+  .vl-diag__micro{font-size:.75rem;color:var(--muted);line-height:1.45;margin-top:12px}
+</style>
+{% if diag_floating_btn %}
+<button type="button" class="vl-diag-fab hpd-no-print" id="vl-diag-open" aria-haspopup="dialog" aria-controls="vl-diag-dialog">{{ v.diag_cta_open }}</button>
+{% endif %}
+<div class="vl-diag" id="vl-diag-root" aria-hidden="true">
+  <div class="vl-diag__backdrop" id="vl-diag-backdrop" tabindex="-1"></div>
+  <div class="vl-diag__panel" id="vl-diag-dialog" role="dialog" aria-modal="true" aria-labelledby="vl-diag-title">
+    <button type="button" class="vl-diag__close" id="vl-diag-close" aria-label="{{ v.diag_close }}">&times;</button>
+    <div class="vl-diag__head">
+      <h2 id="vl-diag-title">{{ v.diag_title }}</h2>
+      <p>{{ v.diag_subtitle }}</p>
+    </div>
+    <div class="vl-diag__body">
+      <div class="vl-diag__step is-active" id="vl-diag-step-form">
+        <form id="vl-diag-form" novalidate>
+          <fieldset>
+            <legend>{{ v.diag_l_hotel }}</legend>
+            <label for="vl-diag-hotel">{{ v.diag_l_hotel }}</label>
+            <input type="text" id="vl-diag-hotel" name="hotel" autocomplete="organization" required />
+          </fieldset>
+          <div class="vl-diag__grid2">
+            <fieldset>
+              <legend>{{ v.diag_l_rooms }}</legend>
+              <label for="vl-diag-rooms">{{ v.diag_l_rooms }}</label>
+              <input type="number" id="vl-diag-rooms" name="rooms" min="1" step="1" required />
+            </fieldset>
+            <fieldset>
+              <legend>{{ v.diag_l_adr }}</legend>
+              <label for="vl-diag-adr">{{ v.diag_l_adr }}</label>
+              <input type="number" id="vl-diag-adr" name="adr" min="0" step="0.01" required />
+            </fieldset>
+          </div>
+          <fieldset>
+            <legend>{{ v.diag_l_occ }}</legend>
+            <label for="vl-diag-occ">{{ v.diag_l_occ }}</label>
+            <input type="number" id="vl-diag-occ" name="occ" min="1" max="100" step="1" required placeholder="{{ v.diag_l_occ_ph }}" />
+          </fieldset>
+          <fieldset>
+            <legend>{{ v.diag_l_numotas }}</legend>
+            <label for="vl-diag-numotas">{{ v.diag_l_numotas }}</label>
+            <input type="number" id="vl-diag-numotas" name="numotas" min="0" step="1" value="2" />
+          </fieldset>
+          <fieldset>
+            <legend>{{ v.diag_l_ota_block }}</legend>
+            <p class="vl-diag__micro" style="margin-top:0">{{ v.diag_l_ota_block }}</p>
+            <div id="vl-diag-ota-rows">
+              <div class="vl-diag__ota-row">
+                <div>
+                  <label>{{ v.diag_l_ota_name }}</label>
+                  <input type="text" class="vl-diag-ota-name" placeholder="Booking" />
+                </div>
+                <div>
+                  <label>{{ v.diag_l_ota_comm }}</label>
+                  <input type="number" class="vl-diag-ota-comm" min="0" max="50" step="0.1" placeholder="15" />
+                </div>
+              </div>
+              <div class="vl-diag__ota-row">
+                <div>
+                  <label>{{ v.diag_l_ota_name }}</label>
+                  <input type="text" class="vl-diag-ota-name" placeholder="Expedia" />
+                </div>
+                <div>
+                  <label>{{ v.diag_l_ota_comm }}</label>
+                  <input type="number" class="vl-diag-ota-comm" min="0" max="50" step="0.1" placeholder="18" />
+                </div>
+              </div>
+            </div>
+            <button type="button" class="vl-diag__btn vl-diag__btn--ghost" id="vl-diag-add-ota" style="margin-top:4px">{{ v.diag_l_add_ota }}</button>
+          </fieldset>
+          <div class="vl-diag__grid2">
+            <fieldset>
+              <legend>{{ v.diag_l_has_web }}</legend>
+              <label for="vl-diag-web">{{ v.diag_l_has_web }}</label>
+              <select id="vl-diag-web" name="has_web">
+                <option value="yes">{{ v.diag_opt_yes }}</option>
+                <option value="no">{{ v.diag_opt_no }}</option>
+                <option value="unsure">{{ v.diag_opt_unsure }}</option>
+              </select>
+            </fieldset>
+            <fieldset>
+              <legend>{{ v.diag_l_web_be }}</legend>
+              <label for="vl-diag-be">{{ v.diag_l_web_be }}</label>
+              <select id="vl-diag-be" name="web_be">
+                <option value="yes">{{ v.diag_opt_yes }}</option>
+                <option value="no">{{ v.diag_opt_no }}</option>
+                <option value="unsure">{{ v.diag_opt_unsure }}</option>
+              </select>
+            </fieldset>
+          </div>
+          <fieldset>
+            <legend>{{ v.diag_l_pay_online }}</legend>
+            <label for="vl-diag-pay">{{ v.diag_l_pay_online }}</label>
+            <select id="vl-diag-pay" name="pay">
+              <option value="yes">{{ v.diag_opt_yes }}</option>
+              <option value="no">{{ v.diag_opt_no }}</option>
+              <option value="unsure">{{ v.diag_opt_unsure }}</option>
+            </select>
+          </fieldset>
+          <div class="vl-diag__grid2">
+            <fieldset>
+              <legend>{{ v.diag_l_pms }}</legend>
+              <label for="vl-diag-pms">{{ v.diag_l_pms }}</label>
+              <input type="text" id="vl-diag-pms" name="pms" placeholder="Opera, Cloudbeds…" />
+            </fieldset>
+            <fieldset>
+              <legend>{{ v.diag_l_cm }}</legend>
+              <label for="vl-diag-cm">{{ v.diag_l_cm }}</label>
+              <input type="text" id="vl-diag-cm" name="cm" placeholder="SiteMinder…" />
+            </fieldset>
+          </div>
+          <div class="vl-diag__grid2">
+            <fieldset>
+              <legend>{{ v.diag_l_pct_ota }}</legend>
+              <label for="vl-diag-pct-ota">{{ v.diag_l_pct_ota }}</label>
+              <input type="number" id="vl-diag-pct-ota" name="pct_ota" min="0" max="100" step="0.5" required />
+            </fieldset>
+            <fieldset>
+              <legend>{{ v.diag_l_pct_direct }}</legend>
+              <label for="vl-diag-pct-direct">{{ v.diag_l_pct_direct }}</label>
+              <input type="number" id="vl-diag-pct-direct" name="pct_direct" min="0" max="100" step="0.5" placeholder="{{ v.diag_l_pct_direct_ph }}" />
+            </fieldset>
+          </div>
+          <div class="vl-diag__btn-row">
+            <button type="submit" class="vl-diag__btn vl-diag__btn--primary">{{ v.diag_calc }}</button>
+            <button type="button" class="vl-diag__btn vl-diag__btn--ghost" id="vl-diag-cancel">{{ v.diag_close }}</button>
+          </div>
+        </form>
+      </div>
+      <div class="vl-diag__step" id="vl-diag-step-res" aria-live="polite">
+        <div class="vl-diag__res" id="vl-diag-res-savings">
+          <h3>{{ v.diag_res_savings_title }}</h3>
+          <p>{{ v.diag_res_savings_body }}</p>
+          <strong id="vl-diag-out-savings">—</strong>
+        </div>
+        <div class="vl-diag__res" id="vl-diag-res-growth">
+          <h3>{{ v.diag_res_growth_title }}</h3>
+          <p>{{ v.diag_res_growth_body }}</p>
+          <strong id="vl-diag-out-growth">—</strong>
+        </div>
+        <p class="vl-diag__micro">{{ v.diag_disclaimer }}</p>
+        <div class="vl-diag__btn-row">
+          <a class="vl-diag__btn vl-diag__btn--primary" href="{{ calendar_url }}" target="_blank" rel="noopener noreferrer">{{ v.diag_book }}</a>
+          <button type="button" class="vl-diag__btn vl-diag__btn--ghost" id="vl-diag-back">{{ v.diag_back }}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var lang = {{ (lang == 'en')|tojson }};
+  var fmtMoney = function(n){
+    try{
+      return new Intl.NumberFormat(lang ? 'en-US' : 'es-MX', { style:'currency', currency:'MXN', maximumFractionDigits:0 }).format(n);
+    }catch(e){ return '$' + Math.round(n).toLocaleString(); }
+  };
+  var fmtPct = function(x){ return (Math.round(x * 10) / 10) + '%'; };
+  var root = document.getElementById('vl-diag-root');
+  if(!root) return;
+  var openBtn = document.getElementById('vl-diag-open');
+  var closeBtn = document.getElementById('vl-diag-close');
+  var cancelBtn = document.getElementById('vl-diag-cancel');
+  var backdrop = document.getElementById('vl-diag-backdrop');
+  var form = document.getElementById('vl-diag-form');
+  var stepForm = document.getElementById('vl-diag-step-form');
+  var stepRes = document.getElementById('vl-diag-step-res');
+  var backBtn = document.getElementById('vl-diag-back');
+  var addOta = document.getElementById('vl-diag-add-ota');
+  var otaWrap = document.getElementById('vl-diag-ota-rows');
+  function openM(){
+    root.classList.add('is-open');
+    root.setAttribute('aria-hidden','false');
+    document.body.style.overflow='hidden';
+    stepForm.classList.add('is-active');
+    stepRes.classList.remove('is-active');
+    var h = document.getElementById('vl-diag-hotel');
+    if(h) h.focus();
+  }
+  function closeM(){
+    root.classList.remove('is-open');
+    root.setAttribute('aria-hidden','true');
+    document.body.style.overflow='';
+    if(openBtn) openBtn.focus();
+  }
+  if(openBtn) openBtn.addEventListener('click', openM);
+  document.querySelectorAll('[data-vl-diag-open]').forEach(function(el){
+    el.addEventListener('click', function(ev){
+      ev.preventDefault();
+      openM();
+    });
+  });
+  [closeBtn, cancelBtn, backdrop].forEach(function(el){
+    if(el) el.addEventListener('click', closeM);
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key==='Escape' && root.classList.contains('is-open')) closeM();
+  });
+  if(addOta && otaWrap){
+    addOta.addEventListener('click', function(){
+      var first = otaWrap.querySelector('.vl-diag__ota-row');
+      if(!first) return;
+      var clone = first.cloneNode(true);
+      clone.querySelectorAll('input').forEach(function(inp){ inp.value=''; });
+      otaWrap.appendChild(clone);
+    });
+  }
+  if(backBtn){
+    backBtn.addEventListener('click', function(){
+      stepRes.classList.remove('is-active');
+      stepForm.classList.add('is-active');
+    });
+  }
+  function avgOtaCommission(){
+    var rows = otaWrap ? otaWrap.querySelectorAll('.vl-diag__ota-row') : [];
+    var sum = 0, n = 0;
+    rows.forEach(function(row){
+      var c = parseFloat(row.querySelector('.vl-diag-ota-comm') && row.querySelector('.vl-diag-ota-comm').value);
+      if(!isNaN(c) && c > 0){ sum += c; n++; }
+    });
+    if(n) return sum / n;
+    return 17;
+  }
+  function growthRate(pctOta, pctDirectOnline){
+    var o = Math.max(0, Math.min(100, pctOta)) / 100;
+    var dRaw = pctDirectOnline;
+    if(dRaw === '' || dRaw === null || isNaN(dRaw)){
+      dRaw = Math.max(6, Math.min(32, 28 - (pctOta * 0.22)));
+    }
+    var d = Math.max(0, Math.min(100, dRaw)) / 100;
+    var base;
+    if(d < 0.10) base = 0.40;
+    else if(d > 0.28) base = 0.20;
+    else base = 0.40 - ((d - 0.10) / 0.18) * 0.20;
+    var bonus = Math.min(0.06, Math.max(0, (pctOta - 52) / 180));
+    if(o > 0.55) bonus += Math.min(0.04, (o - 0.55) * 0.12);
+    var g = base + bonus;
+    return Math.max(0.18, Math.min(0.42, g));
+  }
+  if(form){
+    form.addEventListener('submit', function(ev){
+      ev.preventDefault();
+      var hotel = (document.getElementById('vl-diag-hotel')||{}).value;
+      var rooms = parseFloat((document.getElementById('vl-diag-rooms')||{}).value);
+      var adr = parseFloat((document.getElementById('vl-diag-adr')||{}).value);
+      var occ = parseFloat((document.getElementById('vl-diag-occ')||{}).value);
+      var pctOta = parseFloat((document.getElementById('vl-diag-pct-ota')||{}).value);
+      var pctDirectStr = (document.getElementById('vl-diag-pct-direct')||{}).value;
+      var pctDirect = pctDirectStr === '' ? NaN : parseFloat(pctDirectStr);
+      if(
+        !hotel ||
+        !rooms ||
+        rooms < 1 ||
+        !adr ||
+        adr <= 0 ||
+        isNaN(occ) ||
+        occ < 1 ||
+        occ > 100 ||
+        isNaN(pctOta)
+      ){
+        alert(
+          lang
+            ? 'Please complete hotel, rooms, ADR, occupancy (1–100), and OTA sales %.'
+            : 'Completa hotel, habitaciones, ADR, ocupación (1–100) y % ventas OTAs.'
+        );
+        return;
+      }
+      pctOta = Math.max(0, Math.min(100, pctOta));
+      var revYear = rooms * adr * 365 * (occ / 100);
+      var comm = avgOtaCommission();
+      var savings = revYear * (pctOta / 100) * 0.5 * (comm / 100);
+      var g = growthRate(pctOta, pctDirect);
+      var growthAmt = revYear * g;
+      var outS = document.getElementById('vl-diag-out-savings');
+      var outG = document.getElementById('vl-diag-out-growth');
+      if(outS) outS.textContent = fmtMoney(savings) + (lang ? ' /yr (indicative)' : ' /año (orientativo)');
+      if(outG) outG.textContent = fmtMoney(growthAmt) + (lang ? ' /yr additional sales (≈' : ' /año ventas adicionales (≈') + fmtPct(g * 100) + (lang ? ' of current revenue)' : ' sobre ingresos actuales)');
+      stepForm.classList.remove('is-active');
+      stepRes.classList.add('is-active');
+    });
+  }
+})();
+</script>
+<script>
+(function(){
+  var fab = document.getElementById('vl-diag-open');
+  if(!fab || !fab.classList.contains('vl-diag-fab')) return;
+  var root = document.getElementById('vl-diag-root');
+  function parseRgb(str){
+    if(!str) return null;
+    var m = String(str).match(/rgba?\(([^)]+)\)/);
+    if(!m) return null;
+    var p = m[1].split(',').map(function(x){ return parseFloat(String(x).trim()); });
+    if(p.length < 3 || [p[0],p[1],p[2]].some(function(n){ return isNaN(n); })) return null;
+    return { r:p[0]/255, g:p[1]/255, b:p[2]/255, a:p.length>3 && !isNaN(p[3]) ? p[3] : 1 };
+  }
+  function channelLum(c){
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  }
+  function relLum(rgb){
+    if(!rgb || rgb.a < 0.04) return null;
+    var R = channelLum(rgb.r), G = channelLum(rgb.g), B = channelLum(rgb.b);
+    return 0.2126 * R + 0.7152 * G + 0.0722 * B;
+  }
+  function luminanceBehindElement(el){
+    var cur = el;
+    var top = document.documentElement;
+    while(cur && cur !== top){
+      var st = window.getComputedStyle(cur);
+      var rgb = parseRgb(st.backgroundColor);
+      if(rgb){
+        var L = relLum(rgb);
+        if(L !== null) return L;
+      }
+      cur = cur.parentElement;
+    }
+    var htmlRgb = parseRgb(window.getComputedStyle(top).backgroundColor);
+    return htmlRgb ? (relLum(htmlRgb) || 0.92) : 0.92;
+  }
+  function sampleUnderFab(){
+    var r = fab.getBoundingClientRect();
+    if(r.width < 1 || r.height < 1) return 0.5;
+    var cx = Math.min(window.innerWidth - 1, Math.max(1, Math.floor(r.left + r.width / 2)));
+    var cy = Math.min(window.innerHeight - 1, Math.max(1, Math.floor(r.top + r.height / 2)));
+    var prev = fab.style.pointerEvents;
+    fab.style.pointerEvents = 'none';
+    var hit = document.elementFromPoint(cx, cy);
+    fab.style.pointerEvents = prev;
+    if(!hit) return 0.85;
+    return luminanceBehindElement(hit);
+  }
+  function tick(){
+    if(root && root.classList.contains('is-open')) return;
+    var L = sampleUnderFab();
+    fab.classList.toggle('vl-diag-fab--on-light', L >= 0.52);
+  }
+  var scheduled = false;
+  function req(){
+    if(scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(function(){
+      scheduled = false;
+      tick();
+    });
+  }
+  tick();
+  window.addEventListener('scroll', req, { passive: true, capture: true });
+  window.addEventListener('resize', req, { passive: true });
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden) tick(); });
+  var scrollRoots = document.querySelectorAll('.hpd-main, main.vl-h');
+  for(var i = 0; i < scrollRoots.length; i++){
+    scrollRoots[i].addEventListener('scroll', req, { passive: true });
+  }
+})();
+</script>
