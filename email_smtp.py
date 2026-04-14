@@ -931,9 +931,21 @@ def _hospitality_diagnosis_email_bodies(
         label=gro_formula_label,
         formula=gro_formula_txt,
     )
-    trust_html = ""
-    disc_short_html = ""
-    cta_note_html = ""
+    trust_html = (
+        f"<p style=\"margin:14px 0 0;font-size:12px;line-height:1.5;color:#6b7280;font-style:italic;text-align:center;\">{escape(trust)}</p>"
+        if trust
+        else ""
+    )
+    disc_short_html = (
+        f"<p style=\"margin:10px 0 0;font-size:12px;line-height:1.5;color:#6b7280;\">{escape(disc_short)}</p>"
+        if disc_short
+        else ""
+    )
+    cta_note_html = (
+        f"<p style=\"margin:10px 0 0;font-size:12px;line-height:1.5;color:#6b7280;text-align:center;\">{escape(cta_note_txt)}</p>"
+        if cta_note_txt
+        else ""
+    )
     html = f"""<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#f4f4f6;font-family:Inter,Segoe UI,system-ui,sans-serif;">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f4f4f6;padding:24px 12px;">
@@ -958,10 +970,7 @@ def _hospitality_diagnosis_email_bodies(
           </p>
           <p style="margin:10px 0 0;font-size:14px;line-height:1.55;color:#6b7280;">{escape(core_story)}</p>
           {ctx_html}
-          {trust_html}
-          {disc_short_html}
           {cta_html}
-          {cta_note_html}
         </td></tr>
         <tr><td style="padding:8px 28px 20px 28px;">
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-radius:14px;overflow:hidden;border:1px solid #f0e8dc;background:linear-gradient(165deg,#fffdf9,#fff7ee);">
@@ -982,7 +991,10 @@ def _hospitality_diagnosis_email_bodies(
           </table>
         </td></tr>
         <tr><td style="padding:16px 28px 28px 28px;">
-          <p style="margin:0;font-size:12px;line-height:1.5;color:#6b7280;">{escape(disclaimer)}</p>
+          {trust_html}
+          {disc_short_html}
+          {cta_note_html}
+          <p style="margin:12px 0 0;font-size:12px;line-height:1.5;color:#6b7280;">{escape(disclaimer)}</p>
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:18px 0 0;border-top:1px solid #eee;padding-top:16px;">
             <tr>
               <td style="width:56px;vertical-align:top;">
