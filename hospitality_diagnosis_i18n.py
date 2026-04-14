@@ -8,17 +8,16 @@ def get_hospitality_diagnosis_page(lang: str) -> dict:
         return {
             "meta_title": "Diagnóstico inicial de posicionamiento online para tu hotel",
             "meta_description": (
-                "En pocos pasos ves margen en comisiones OTAs y un horizonte de mejora con mejor directo. "
-                "Resumen brandeado por correo en minutos."
+                "Pocos pasos: lecturas orientativas de margen en OTAs y de potencial en venta directa. "
+                "Resumen por correo al terminar."
             ),
             "breadcrumb_name": "Diagnóstico",
             "nav_back": "← Hotelería",
-            "hero_kicker": "DRAGONNÉ · consultoría hospitality",
+            "hero_kicker": "",
             "hero_title": "Diagnóstico inicial de posicionamiento online",
             "hero_lead": (
-                "No es un cuestionario largo: es una foto honesta de cómo tu tamaño, ocupación y mix de canales "
-                "traducen en margen en juego y en un techo ilustrativo si ordenas OTAs y fortaleces la venta directa. "
-                "Al final recibes por correo el mismo resumen, con el tono y la marca DRAGONNÉ."
+                "En 6 pasos obtienes 2 lecturas: comisiones OTAs y potencial en venta directa. "
+                "Al enviar, te llega el resumen por correo."
             ),
             "wiz_total": 6,
             "wiz_step_word": "Paso",
@@ -37,7 +36,7 @@ def get_hospitality_diagnosis_page(lang: str) -> dict:
             "lbl_hotel_location": "Ciudad y país",
             "hotel_location_placeholder": "Ej. Mérida, México",
             "lbl_hotel_category": "Tipo de propiedad",
-            "opt_cat_placeholder": "Elige una opción (opcional)",
+            "opt_cat_placeholder": "Elige una opción",
             "diag_facts_location": "Ciudad / país",
             "diag_facts_category": "Tipo de propiedad",
             "lbl_rooms": "Habitaciones",
@@ -75,8 +74,7 @@ def get_hospitality_diagnosis_page(lang: str) -> dict:
             "res_story_intro": (
                 "Estas dos cifras responden a lo mismo desde ángulos distintos: cuánto margen suele quedar "
                 "atrapado en comisiones OTAs con el mix que declaraste, y un techo ilustrativo si fortaleces "
-                "directo y negociación de canales. Si indicaste ciudad o tipo de propiedad, también nos ayuda "
-                "a contextualizar el seguimiento (no cambia las fórmulas automáticas)."
+                "directo y negociación de canales."
             ),
             "res_trust_line": (
                 "En DRAGONNÉ trabajamos hoteles independientes y boutique: el mismo lenguaje que gerencia y recepción."
@@ -121,16 +119,15 @@ def get_hospitality_diagnosis_page(lang: str) -> dict:
             # Tooltips (hover / foco / toque en «?»)
             "tp_hotel": "Nombre comercial o marca del hotel. Lo usamos para personalizar el correo y el contexto del diagnóstico.",
             "tp_location": "Opcional pero muy útil: mercado local y segmentación del seguimiento. No altera el cálculo automático.",
-            "tp_category": "Opcional. Describe tu posicionamiento frente al huésped; no entra en las fórmulas del resumen.",
+            "tp_category": "Describe el tipo de propiedad; no entra en las fórmulas del resumen.",
             "hotel_category_labels": {
-                "boutique": "Boutique",
+                "boutique": "Hotel Boutique",
                 "business": "Hotel de negocios",
-                "city": "Hotel de ciudad",
-                "resort": "Resort",
-                "budget": "Económico / budget",
-                "all_inclusive": "Todo incluido",
-                "luxury": "Lujo",
-                "other": "Otro",
+                "city": "Hotel de Ciudad",
+                "beach": "Hotel de Playa",
+                "budget": "Budget Hotel",
+                "all_inclusive": "Todo incluído",
+                "luxury": "Luxury Hotel",
             },
             "tp_rooms": "Número de habitaciones vendibles. Con ADR y ocupación proyectamos ingresos base del año.",
             "tp_adr": "Tarifa promedio por noche en moneda local, antes de impuestos.",
@@ -151,17 +148,16 @@ def get_hospitality_diagnosis_page(lang: str) -> dict:
     return {
         "meta_title": "Initial online positioning diagnosis for your hotel",
         "meta_description": (
-            "In a few steps: OTA commission margin and illustrative upside with stronger direct. "
-            "Branded email summary in minutes."
+            "A few steps: indicative reads on OTA commission margin and room to grow direct. "
+            "Email summary when you submit."
         ),
         "breadcrumb_name": "Diagnosis",
         "nav_back": "← Hospitality",
-        "hero_kicker": "DRAGONNÉ · hospitality consulting",
+        "hero_kicker": "",
         "hero_title": "Initial online positioning diagnosis",
         "hero_lead": (
-            "Not a long survey: a candid snapshot of how your size, occupancy, and channel mix "
-            "translate into margin at stake today and an illustrative ceiling if you tighten OTAs "
-            "and grow direct bookings. You receive the same summary by email, on-brand with DRAGONNÉ."
+            "In 6 steps you get 2 reads: OTA commissions and direct-booking upside. "
+            "When you submit, we email you the summary."
         ),
         "wiz_total": 6,
         "wiz_step_word": "Step",

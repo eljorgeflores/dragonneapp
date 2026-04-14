@@ -4,6 +4,7 @@ Consultoría (fuera del núcleo DragonApp SaaS).
 Rutas aisladas en este módulo para poder extraerlas a otro ASGI/despliegue sin tocar
 el resto de routers. Ver docs/dragonapp_phase1.md y docs/dragonapp_phase2.md.
 """
+import importlib
 import importlib.util
 import json
 import re
@@ -13,10 +14,11 @@ from typing import Any
 from fastapi import APIRouter, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
+import config
 from config import BASE_DIR, url_path
 from db import db
 from email_smtp import send_consulting_lead_email, send_hospitality_diagnosis_report
-from hospitality_diagnosis_i18n import get_hospitality_diagnosis_page
+import hospitality_diagnosis_i18n as hd_i18n
 from marketing_context import marketing_page_context
 from seo_helpers import absolute_url, breadcrumb_list_node, graph_consulting_lang, graph_homepage, organization_node
 from services.hospitality_diagnosis_compute import compute_hospitality_diagnosis
@@ -331,7 +333,13 @@ def render_hospitality_diagnosis_page(request: Request, lang: str):
     if lang not in ("es", "en"):
         lang = "es"
     v = get_vertical_landing_copy("hospitality", lang)
-    d = get_hospitality_diagnosis_page(lang)
+    # En local iteramos copy; recarga el módulo para reflejar cambios sin reiniciar uvicorn.
+    if (config.APP_URL or "").startswith(("http://127.0.0.1", "http://localhost")):
+        try:
+            importlib.reload(hd_i18n)
+        except Exception:
+            pass
+    d = hd_i18n.get_hospitality_diagnosis_page(lang)
     ctx = marketing_page_context()
     path_es = "/hoteles/diagnostico"
     path_en = "/hotels/diagnosis"
@@ -366,6 +374,9 @@ def render_hospitality_diagnosis_page(request: Request, lang: str):
     raw_t = trans.get(lang) or trans.get("es")
     t = _DefaultT(raw_t) if raw_t else _DefaultT()
     diag_submit_url = url_path("/hoteles/diagnostico" if lang == "es" else "/hotels/diagnosis")
+    # Copy vive en Python (hospitality_diagnosis_i18n); sin recarga del proceso el HTML queda viejo.
+    # Evita además que el navegador cachee esta página durante iteraciones de copy.
+    _no_store = {"Cache-Control": "no-store, max-age=0", "Pragma": "no-cache"}
     return templates.TemplateResponse(
         "hospitality_diagnosis.html",
         {
@@ -406,6 +417,7 @@ def render_hospitality_diagnosis_page(request: Request, lang: str):
                 else "Initial online positioning diagnosis for hotels"
             ),
         },
+        headers=_no_store,
     )
 
 
@@ -505,11 +517,10 @@ _ALLOWED_HOTEL_CATEGORY = frozenset(
         "boutique",
         "business",
         "city",
-        "resort",
         "budget",
         "all_inclusive",
         "luxury",
-        "other",
+        "beach",
     }
 )
 
@@ -517,7 +528,7 @@ _ALLOWED_HOTEL_CATEGORY = frozenset(
 def _hotel_category_display(lang: str, slug: str) -> str:
     if not slug or slug not in _ALLOWED_HOTEL_CATEGORY:
         return ""
-    d = get_hospitality_diagnosis_page(lang if lang in ("es", "en") else "es")
+    d = hd_i18n.get_hospitality_diagnosis_page(lang if lang in ("es", "en") else "es")
     labels = d.get("hotel_category_labels") or {}
     return str(labels.get(slug) or "").strip()
 
@@ -630,7 +641,7 @@ async def _hospitality_diagnosis_submit(request: Request, lang: str) -> JSONResp
     savings_formula, growth_formula = _hospitality_diag_formula_blocks(
         lang, rooms, adr, occ, pct_ota, nums
     )
-    diag_ui = get_hospitality_diagnosis_page(lang)
+    diag_ui = hd_i18n.get_hospitality_diagnosis_page(lang)
     result_narrative = str(diag_ui.get("res_story_intro") or "")
     facts_rows: list[tuple[str, str]] = [
         (v["diag_l_hotel"], hotel[:120]),
@@ -663,6 +674,7 @@ async def _hospitality_diagnosis_submit(request: Request, lang: str) -> JSONResp
         )
     disclaimer = v["diag_disclaimer"]
     context_line = _hospitality_diag_email_context_line(lang, hotel_location, cat_display)
+    meet_url = calendar_url()
     now = datetime.now(timezone.utc).isoformat()
     store = {
         **payload,
@@ -701,6 +713,7 @@ async def _hospitality_diagnosis_submit(request: Request, lang: str) -> JSONResp
         disclaimer=disclaimer,
         result_narrative=result_narrative,
         context_line=context_line,
+        meeting_url=meet_url,
     )
     if not sent:
         return JSONResponse(

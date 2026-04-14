@@ -242,7 +242,7 @@
                 <span class="hdg-tipbubble" role="tooltip">{{ d.tp_category }}</span>
               </span>
             </div>
-            <select class="hdg-sel" id="hdg-category" name="hotel_category" aria-label="{{ d.lbl_hotel_category }}">
+            <select class="hdg-sel" id="hdg-category" name="hotel_category" aria-label="{{ d.lbl_hotel_category }}" required>
               <option value="">{{ d.opt_cat_placeholder }}</option>
               {% for slug, cat_label in d.hotel_category_labels.items() %}
               <option value="{{ slug }}">{{ cat_label }}</option>

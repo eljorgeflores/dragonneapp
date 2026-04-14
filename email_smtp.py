@@ -12,6 +12,7 @@ import requests
 
 import config
 from debuglog import fd2ebf_log
+from seo_helpers import absolute_url
 
 _log = logging.getLogger(__name__)
 
@@ -714,11 +715,13 @@ def _hospitality_diagnosis_email_bodies(
     disclaimer: str,
     result_narrative: str = "",
     context_line: str = "",
+    meeting_url: str = "",
 ) -> tuple[str, str, str]:
     """(subject, text_plain, html)"""
     sub_hotel = (hotel_name or "").replace("\n", " ").strip()[:80] or ("Hotel" if lang == "es" else "Hotel")
     cn = (contact_name or "").replace("\n", " ").strip() or ("Cliente" if lang == "es" else "Guest")
     ctx_plain = (context_line or "").replace("\n", " ").strip()
+    meet = (meeting_url or "").strip()
     if lang == "es":
         subject = f"Tu diagnóstico de posicionamiento online — {sub_hotel}"
         intro = (
@@ -731,9 +734,11 @@ def _hospitality_diagnosis_email_bodies(
             intro += ctx_plain + "\n\n"
         narrative_block = (f"{result_narrative.strip()}\n\n" if (result_narrative or "").strip() else "")
         mid = f"{narrative_block}Ahorro anual estimado (orientativo): {savings_line}\n{growth_line}\n\n"
+        cta_txt = f"Agendar reunión: {meet}\n\n" if meet else ""
         outro = (
             "\n\n" + disclaimer + "\n\n"
-            "—\nConsultoría hospitality · dragonne.co\n"
+            + cta_txt
+            + "—\nJorge Flores · Head of Hospitality\n+52 998 186 4670 · jorge@dragonne.co\n"
         )
     else:
         subject = f"Your online positioning diagnosis — {sub_hotel}"
@@ -747,9 +752,11 @@ def _hospitality_diagnosis_email_bodies(
             intro += ctx_plain + "\n\n"
         narrative_block = (f"{result_narrative.strip()}\n\n" if (result_narrative or "").strip() else "")
         mid = f"{narrative_block}Estimated annual commission savings (indicative): {savings_line}\n{growth_line}\n\n"
+        cta_txt = f"Book a meeting: {meet}\n\n" if meet else ""
         outro = (
             "\n\n" + disclaimer + "\n\n"
-            "—\nHospitality consulting · dragonne.co\n"
+            + cta_txt
+            + "—\nJorge Flores · Head of Hospitality\n+52 998 186 4670 · jorge@dragonne.co\n"
         )
     fact_lines_txt = "\n".join(f"{k}: {v}" for k, v in facts_rows)
     text = intro + mid + fact_lines_txt + outro
@@ -774,6 +781,26 @@ def _hospitality_diagnosis_email_bodies(
         "From the size, occupancy, and channel inputs you shared, the orange block summarizes margin at stake "
         "and the indicative upside; the table below mirrors what you submitted."
     )
+    sig_img = absolute_url("/static/team/jorge-flores.jpg")
+    cta_label = "Agendar reunión" if lang == "es" else "Book a meeting"
+    cta_intro = (
+        "Agenda una reunión con uno de nuestros Revenue Managers."
+        if lang == "es"
+        else "Book a meeting with one of our Revenue Managers."
+    )
+    cta_html = ""
+    if meet:
+        cta_html = (
+            f"<p style=\"margin:14px 0 0;font-size:13px;line-height:1.5;color:#374151;font-weight:650;\">{escape(cta_intro)}</p>"
+            "<table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" style=\"margin:16px 0 0;\">"
+            "<tr><td align=\"center\">"
+            f"<a href=\"{escape(meet)}\" target=\"_blank\" rel=\"noopener noreferrer\" "
+            "style=\"display:inline-block;padding:12px 18px;border-radius:12px;"
+            "background:linear-gradient(120deg,#f6a905,#f07e07);color:#fff;text-decoration:none;"
+            "font-weight:800;font-size:14px;letter-spacing:.01em;\">"
+            f"{escape(cta_label)}</a>"
+            "</td></tr></table>"
+        )
     html = f"""<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#f4f4f6;font-family:Inter,Segoe UI,system-ui,sans-serif;">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f4f4f6;padding:24px 12px;">
@@ -789,7 +816,7 @@ def _hospitality_diagnosis_email_bodies(
             {"Diagnóstico inicial de posicionamiento online" if lang == "es" else "Initial online positioning diagnosis"}
           </h1>
           <p style="margin:14px 0 0;font-size:15px;line-height:1.55;color:#4b5563;">
-            {"Hola" if lang == "es" else "Hi"} <strong>{escape(contact_name)}</strong> — {"este es el resumen brandeado para" if lang == "es" else "this is the branded summary for"} <strong>{escape(hotel_name)}</strong>.
+            {"Hola" if lang == "es" else "Hi"} <strong>{escape(contact_name)}</strong> — {"este es tu resumen para" if lang == "es" else "here is your summary for"} <strong>{escape(hotel_name)}</strong>.
           </p>
           <p style="margin:10px 0 0;font-size:14px;line-height:1.55;color:#6b7280;">
             {escape(story_p_es if lang == "es" else story_p_en)}
@@ -800,6 +827,7 @@ def _hospitality_diagnosis_email_bodies(
             if (result_narrative or "").strip()
             else ""
           )}
+          {cta_html}
         </td></tr>
         <tr><td style="padding:8px 28px 20px 28px;">
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-radius:12px;overflow:hidden;border:1px solid #f0e8dc;background:linear-gradient(165deg,#fffdf9,#fff7ee);">
@@ -822,6 +850,22 @@ def _hospitality_diagnosis_email_bodies(
         </td></tr>
         <tr><td style="padding:16px 28px 28px 28px;">
           <p style="margin:0;font-size:12px;line-height:1.5;color:#6b7280;">{escape(disclaimer)}</p>
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:18px 0 0;border-top:1px solid #eee;padding-top:16px;">
+            <tr>
+              <td style="width:56px;vertical-align:top;">
+                <img src="{sig_img}" alt="Jorge Flores" width="44" height="44"
+                  style="display:block;border-radius:999px;border:1px solid #eee;object-fit:cover;" />
+              </td>
+              <td style="vertical-align:top;">
+                <p style="margin:0;font-size:13px;font-weight:800;color:#111;line-height:1.25;">Jorge Flores</p>
+                <p style="margin:2px 0 0;font-size:12px;color:#6b7280;line-height:1.35;">Head of Hospitality</p>
+                <p style="margin:8px 0 0;font-size:12px;line-height:1.5;">
+                  <a href="tel:+529981864670" style="color:#111;text-decoration:none;font-weight:700;">+52 998 186 4670</a><br />
+                  <a href="mailto:jorge@dragonne.co" style="color:#111;text-decoration:none;font-weight:700;">jorge@dragonne.co</a>
+                </p>
+              </td>
+            </tr>
+          </table>
         </td></tr>
       </table>
     </td></tr>
@@ -842,6 +886,7 @@ def send_hospitality_diagnosis_report(
     disclaimer: str,
     result_narrative: str = "",
     context_line: str = "",
+    meeting_url: str = "",
 ) -> bool:
     """
     Envía el reporte al lead y copia a jorge@dragonne.co (SMTP o Resend con CC).
@@ -859,6 +904,7 @@ def send_hospitality_diagnosis_report(
         disclaimer=disclaimer,
         result_narrative=result_narrative,
         context_line=context_line,
+        meeting_url=meeting_url,
     )
     _rp = config.resend_sender_plausible()
     cc_list = [DRAGONNE_DIAG_CC]

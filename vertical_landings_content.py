@@ -65,8 +65,7 @@ _PAGES: dict[str, dict[str, dict]] = {
             "diag_back": "Ajustar datos",
             "diag_book": "Agendar para revisar estos números",
             "diag_disclaimer": (
-                "Cifras ilustrativas (no constituyen promesa de resultados). Sirven para conversar con un revenue manager DRAGONNÉ "
-                "y validar supuestos con tus datos reales."
+                "Cifras ilustrativas (no constituyen promesa de resultados)."
             ),
             "diag_l_hotel": "Nombre del hotel",
             "diag_l_rooms": "Número de habitaciones",
