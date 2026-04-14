@@ -232,6 +232,13 @@
     transform:translateX(10px) scale(.92);
     transform-origin:center;
   }
+  @media (max-width:767px){
+    /* En móvil el offset se siente “raro”; mejor tratarlo como el resto */
+    .cp-logo-slot__img--siteminder{
+      height:40px;
+      transform:none;
+    }
+  }
   @media (min-width:768px){
     .cp-logo-slot__img{height:48px}
     .cp-logo-slot__img--siteminder{height:44px;transform:translateX(12px) scale(.92)}
