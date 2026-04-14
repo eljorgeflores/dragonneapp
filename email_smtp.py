@@ -721,6 +721,10 @@ def _hospitality_diagnosis_email_bodies(
     growth_badge: str = "",
     growth_hook: str = "",
     growth_formula_label: str = "",
+    total_line: str = "",
+    total_cap: str = "",
+    total_badge: str = "",
+    total_hook: str = "",
     trust_line: str = "",
     disclaimer_short: str = "",
     cta_note: str = "",
@@ -745,6 +749,10 @@ def _hospitality_diagnosis_email_bodies(
     gro_badge = (growth_badge or "").strip()
     gro_hook = (growth_hook or "").strip()
     gro_formula_label = (growth_formula_label or "").strip()
+    tot_line = (total_line or "").strip()
+    tot_cap = (total_cap or "").strip()
+    tot_badge = (total_badge or "").strip()
+    tot_hook = (total_hook or "").strip()
     disc_short = (disclaimer_short or "").strip()
     hospitality_url_txt = absolute_url("/hoteles" if lang == "es" else "/hotels")
     if lang == "es":
@@ -777,6 +785,10 @@ def _hospitality_diagnosis_email_bodies(
             mid += f"{growth_line}\n\n"
         if gro_formula_txt:
             mid += f"{gro_formula_label or 'Tu proyección'}\n{gro_formula_txt}\n\n"
+        if tot_line:
+            mid += f"{tot_cap or 'Crecimiento total'}\n{tot_line}\n"
+            if tot_badge or tot_hook:
+                mid += f"{(tot_badge + ' — ' if tot_badge else '')}{tot_hook}\n\n"
         cta_txt = f"Ver vertical de hospitality: {hospitality_url_txt}\n"
         if meet:
             cta_txt += f"Agendar reunión: {meet}\n"
@@ -816,6 +828,10 @@ def _hospitality_diagnosis_email_bodies(
             mid += f"{growth_line}\n\n"
         if gro_formula_txt:
             mid += f"{gro_formula_label or 'Your projection'}\n{gro_formula_txt}\n\n"
+        if tot_line:
+            mid += f"{tot_cap or 'Total growth'}\n{tot_line}\n"
+            if tot_badge or tot_hook:
+                mid += f"{(tot_badge + ' — ' if tot_badge else '')}{tot_hook}\n\n"
         cta_txt = f"View hospitality vertical: {hospitality_url_txt}\n"
         if meet:
             cta_txt += f"Book a meeting: {meet}\n"
@@ -931,6 +947,14 @@ def _hospitality_diagnosis_email_bodies(
         label=gro_formula_label,
         formula=gro_formula_txt,
     )
+    card_3 = _card_html(
+        cap=tot_cap,
+        badge=tot_badge,
+        hook=tot_hook,
+        main=tot_line,
+        label="",
+        formula="",
+    ) if tot_line else ""
     trust_html = (
         f"<p style=\"margin:14px 0 0;font-size:12px;line-height:1.5;color:#6b7280;font-style:italic;text-align:center;\">{escape(trust)}</p>"
         if trust
@@ -982,6 +1006,15 @@ def _hospitality_diagnosis_email_bodies(
             <tr><td style="padding:18px 20px;">{card_2}</td></tr>
           </table>
         </td></tr>
+        {(
+          "<tr><td style=\"padding:0 28px 20px 28px;\">"
+          "<table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" style=\"border-radius:14px;overflow:hidden;border:1px solid #e5e7eb;background:#fff;\">"
+          f"<tr><td style=\"padding:18px 20px;\">{card_3}</td></tr>"
+          "</table>"
+          "</td></tr>"
+          if card_3
+          else ""
+        )}
         <tr><td style="padding:0 28px 8px 28px;">
           <p style="margin:0 0 8px;font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;">
             {"Datos declarados" if lang == "es" else "Submitted inputs"}
@@ -1037,6 +1070,10 @@ def send_hospitality_diagnosis_report(
     growth_badge: str = "",
     growth_hook: str = "",
     growth_formula_label: str = "",
+    total_line: str = "",
+    total_cap: str = "",
+    total_badge: str = "",
+    total_hook: str = "",
     trust_line: str = "",
     disclaimer_short: str = "",
     cta_note: str = "",
@@ -1068,6 +1105,10 @@ def send_hospitality_diagnosis_report(
         growth_badge=growth_badge,
         growth_hook=growth_hook,
         growth_formula_label=growth_formula_label,
+        total_line=total_line,
+        total_cap=total_cap,
+        total_badge=total_badge,
+        total_hook=total_hook,
         trust_line=trust_line,
         disclaimer_short=disclaimer_short,
         cta_note=cta_note,

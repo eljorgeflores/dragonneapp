@@ -55,13 +55,13 @@ def _target_direct_pct(pct_direct_online: float | None, pct_ota: float) -> float
     d = max(0.0, min(100.0, float(pct_direct_online)))
     if d < 10.0:
         return 20.0
-    if d <= 20.0:
+    if d <= 30.0:
         return 30.0
     if d >= 40.0:
         return 40.0
     if d >= 30.0:
         return 40.0
-    # Entre 20–30: mantenemos 30 como referencia alcanzable.
+    # Entre 30–40 ya cubrimos arriba; el resto cae en 30 por realismo.
     return 30.0
 
 
