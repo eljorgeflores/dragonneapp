@@ -106,10 +106,7 @@ def get_hospitality_diagnosis_page(lang: str) -> dict:
                 "Esto es el upside por ejecutar bien: más conversión, mejor canal directo y mejor mix. "
                 "Usamos +20% como referencia promedio cuando la estrategia está optimizada."
             ),
-            "res_disclaimer_short": (
-                "Reglas fijas, redondeos y escenarios prudentes pero alentadores; cifras ilustrativas. "
-                "En una reunión revisamos supuestos contigo. No sustituye análisis contable ni promete resultados."
-            ),
+            "res_disclaimer_short": "Escenario estimado, no sustituye un análisis completo.",
             "err_validation": "Revisa el paso actual: datos obligatorios, correo y teléfono válido (10+ dígitos con prefijo).",
             "err_ota_step": (
                 "En «OTAs y comisiones»: completa al menos una fila con canal y comisión %, "
@@ -251,10 +248,7 @@ def get_hospitality_diagnosis_page(lang: str) -> dict:
             "This is upside from execution: higher conversion, stronger direct channel, and better mix. "
             "We use +20% as an average reference when the strategy is optimized."
         ),
-        "res_disclaimer_short": (
-            "Fixed rules, rounding, and prudent but encouraging scenarios; illustrative numbers. "
-            "In a meeting we walk through assumptions with you. Not accounting advice or a guarantee of outcomes."
-        ),
+        "res_disclaimer_short": "Estimated scenario; it does not replace a full analysis.",
         "err_validation": "Check this step: required fields, email, and a valid phone (10+ digits with prefix).",
         "err_ota_step": (
             "Under «OTAs & commission»: fill at least one row with channel and commission %, "
