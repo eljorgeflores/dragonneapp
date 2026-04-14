@@ -745,9 +745,8 @@ def _hospitality_diagnosis_email_bodies(
     gro_badge = (growth_badge or "").strip()
     gro_hook = (growth_hook or "").strip()
     gro_formula_label = (growth_formula_label or "").strip()
-    trust = (trust_line or "").strip()
     disc_short = (disclaimer_short or "").strip()
-    cta_note_txt = (cta_note or "").strip()
+    hospitality_url_txt = absolute_url("/hoteles" if lang == "es" else "/hotels")
     if lang == "es":
         subject = f"Tu diagnóstico de posicionamiento online — {sub_hotel}"
         intro = (
@@ -778,14 +777,12 @@ def _hospitality_diagnosis_email_bodies(
             mid += f"{growth_line}\n\n"
         if gro_formula_txt:
             mid += f"{gro_formula_label or 'Tu proyección'}\n{gro_formula_txt}\n\n"
-        if trust:
-            mid += trust + "\n\n"
-        if disc_short:
-            mid += disc_short + "\n\n"
-        cta_txt = f"Agendar reunión: {meet}\n\n" if meet else ""
+        cta_txt = f"Ver vertical de hospitality: {hospitality_url_txt}\n"
+        if meet:
+            cta_txt += f"Agendar reunión: {meet}\n"
+        cta_txt += "\n"
         outro = (
-            ("\n\n" + disclaimer + "\n\n" if disclaimer else "\n\n")
-            + (cta_note_txt + "\n\n" if cta_note_txt else "")
+            ("\n\n" + (disc_short or disclaimer) + "\n\n" if (disc_short or disclaimer) else "\n\n")
             + cta_txt
             + "—\nJorge Flores · Head of Hospitality\n+52 998 186 4670 · jorge@dragonne.co\n"
         )
@@ -819,14 +816,12 @@ def _hospitality_diagnosis_email_bodies(
             mid += f"{growth_line}\n\n"
         if gro_formula_txt:
             mid += f"{gro_formula_label or 'Your projection'}\n{gro_formula_txt}\n\n"
-        if trust:
-            mid += trust + "\n\n"
-        if disc_short:
-            mid += disc_short + "\n\n"
-        cta_txt = f"Book a meeting: {meet}\n\n" if meet else ""
+        cta_txt = f"View hospitality vertical: {hospitality_url_txt}\n"
+        if meet:
+            cta_txt += f"Book a meeting: {meet}\n"
+        cta_txt += "\n"
         outro = (
-            ("\n\n" + disclaimer + "\n\n" if disclaimer else "\n\n")
-            + (cta_note_txt + "\n\n" if cta_note_txt else "")
+            ("\n\n" + (disc_short or disclaimer) + "\n\n" if (disc_short or disclaimer) else "\n\n")
             + cta_txt
             + "—\nJorge Flores · Head of Hospitality\n+52 998 186 4670 · jorge@dragonne.co\n"
         )
@@ -846,31 +841,45 @@ def _hospitality_diagnosis_email_bodies(
             f"{escape(ctx_plain)}</p>"
         )
     story_p_es = (
-        "Estas dos cifras responden a lo mismo desde ángulos distintos: cuánto margen suele quedar atrapado en comisiones OTAs "
-        "con el mix que declaraste, y un techo ilustrativo si fortaleces directo y negociación de canales."
+        "Estas dos cifras resumen tu diagnóstico: margen en comisiones OTAs y potencial de crecimiento en venta directa."
     )
     story_p_en = (
-        "These two figures answer the same question from two angles: typical margin trapped in OTA commissions with the mix you shared, "
-        "and an illustrative ceiling if you strengthen direct and channel negotiation."
+        "These two figures summarize your diagnosis: OTA commission margin and direct-sales growth potential."
     )
+    core_story = (result_narrative or "").strip() or (story_p_es if lang == "es" else story_p_en)
     sig_img = absolute_url("/static/team/jorge-flores.jpg")
+    brand_logo = absolute_url("/static/branding/dragonne-wordmark.png")
+    hospitality_url = absolute_url("/hoteles" if lang == "es" else "/hotels")
     cta_label = "Agendar reunión" if lang == "es" else "Book a meeting"
-    cta_intro = (
-        "Agenda una reunión con uno de nuestros Revenue Managers."
-        if lang == "es"
-        else "Book a meeting with one of our Revenue Managers."
-    )
+    cta_hospitality_label = "Ver vertical de hospitality" if lang == "es" else "View hospitality vertical"
     cta_html = ""
     if meet:
         cta_html = (
-            f"<p style=\"margin:14px 0 0;font-size:13px;line-height:1.5;color:#374151;font-weight:650;\">{escape(cta_intro)}</p>"
-            "<table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" style=\"margin:16px 0 0;\">"
+            "<table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" style=\"margin:12px 0 0;\">"
+            "<tr><td align=\"center\" style=\"padding-bottom:10px;\">"
+            f"<a href=\"{escape(hospitality_url)}\" target=\"_blank\" rel=\"noopener noreferrer\" "
+            "style=\"display:inline-block;padding:10px 16px;border-radius:10px;"
+            "background:#fff;color:#111827;text-decoration:none;"
+            "font-weight:700;font-size:13px;border:1px solid #e5e7eb;\">"
+            f"{escape(cta_hospitality_label)}</a>"
+            "</td></tr>"
             "<tr><td align=\"center\">"
             f"<a href=\"{escape(meet)}\" target=\"_blank\" rel=\"noopener noreferrer\" "
             "style=\"display:inline-block;padding:12px 18px;border-radius:12px;"
             "background:linear-gradient(120deg,#f6a905,#f07e07);color:#fff;text-decoration:none;"
             "font-weight:800;font-size:14px;letter-spacing:.01em;\">"
             f"{escape(cta_label)}</a>"
+            "</td></tr></table>"
+        )
+    else:
+        cta_html = (
+            "<table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" style=\"margin:12px 0 0;\">"
+            "<tr><td align=\"center\">"
+            f"<a href=\"{escape(hospitality_url)}\" target=\"_blank\" rel=\"noopener noreferrer\" "
+            "style=\"display:inline-block;padding:10px 16px;border-radius:10px;"
+            "background:#fff;color:#111827;text-decoration:none;"
+            "font-weight:700;font-size:13px;border:1px solid #e5e7eb;\">"
+            f"{escape(cta_hospitality_label)}</a>"
             "</td></tr></table>"
         )
     formula_css = (
@@ -922,21 +931,9 @@ def _hospitality_diagnosis_email_bodies(
         label=gro_formula_label,
         formula=gro_formula_txt,
     )
-    trust_html = (
-        f"<p style=\"margin:12px 0 0;font-size:12px;line-height:1.5;color:#6b7280;font-style:italic;text-align:center;\">{escape(trust)}</p>"
-        if trust
-        else ""
-    )
-    disc_short_html = (
-        f"<p style=\"margin:10px 0 0;font-size:12px;line-height:1.5;color:#6b7280;\">{escape(disc_short)}</p>"
-        if disc_short
-        else ""
-    )
-    cta_note_html = (
-        f"<p style=\"margin:10px 0 0;font-size:12px;line-height:1.5;color:#6b7280;text-align:center;\">{escape(cta_note_txt)}</p>"
-        if cta_note_txt
-        else ""
-    )
+    trust_html = ""
+    disc_short_html = ""
+    cta_note_html = ""
     html = f"""<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
 <body style="margin:0;padding:0;background:#f4f4f6;font-family:Inter,Segoe UI,system-ui,sans-serif;">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f4f4f6;padding:24px 12px;">
@@ -945,6 +942,11 @@ def _hospitality_diagnosis_email_bodies(
         box-shadow:0 12px 40px rgba(0,0,0,.08);border:1px solid #ececf0;">
         <tr><td style="padding:0;background:linear-gradient(90deg,#f6a905,#f07e07);height:4px;font-size:0;line-height:0;">&nbsp;</td></tr>
         <tr><td style="padding:28px 28px 8px 28px;">
+          <p style="margin:0 0 12px;">
+            <a href="{hospitality_url}" target="_blank" rel="noopener noreferrer">
+              <img src="{brand_logo}" alt="DRAGONNÉ" width="160" style="display:block;width:160px;max-width:100%;height:auto;border:0;" />
+            </a>
+          </p>
           <p style="margin:0 0 6px;font-size:11px;font-weight:800;letter-spacing:.14em;color:#9a9ca3;">
             {"Diagnóstico online" if lang == "es" else "Online diagnosis"}
           </p>
@@ -954,15 +956,8 @@ def _hospitality_diagnosis_email_bodies(
           <p style="margin:14px 0 0;font-size:15px;line-height:1.55;color:#4b5563;">
             {"Hola" if lang == "es" else "Hi"} <strong>{escape(contact_name)}</strong> — {"este es tu resumen para" if lang == "es" else "here is your summary for"} <strong>{escape(hotel_name)}</strong>.
           </p>
-          <p style="margin:10px 0 0;font-size:14px;line-height:1.55;color:#6b7280;">
-            {escape(story_p_es if lang == "es" else story_p_en)}
-          </p>
+          <p style="margin:10px 0 0;font-size:14px;line-height:1.55;color:#6b7280;">{escape(core_story)}</p>
           {ctx_html}
-          {(
-            f"<p style=\"margin:14px 0 0;font-size:14px;line-height:1.55;color:#374151;font-weight:600;\">{escape((result_narrative or '').strip())}</p>"
-            if (result_narrative or "").strip()
-            else ""
-          )}
           {trust_html}
           {disc_short_html}
           {cta_html}
