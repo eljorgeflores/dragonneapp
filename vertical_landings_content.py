@@ -45,8 +45,8 @@ _PAGES: dict[str, dict[str, dict]] = {
             "vl_cta_hero_secondary_kicker": "SIN COMPROMISO",
             "vl_cta_hero_secondary_title": "Diagnóstico gratis y presentación",
             "vl_cta_hero_secondary_intro": (
-                "Si aún no quieres reunión: usa el diagnóstico para convertir tamaño, ocupación y mix de OTAs en lecturas claras "
-                "(comisiones y potencial de mejora). O revisa la presentación para el contexto estratégico."
+                "Si aún no quieres una reunión, descubre cuánto dinero podrías ahorrarte en comisiones y el ingreso adicional "
+                "que podría estar generando tu hotel con una estrategia optimizada."
             ),
             "vl_cta_hero_deck": "Presentación",
             "vl_cta_bottom_lead": "Presentación o diagnóstico gratis (comisiones y margen de mejora).",
