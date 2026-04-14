@@ -98,7 +98,7 @@ def get_hospitality_diagnosis_page(lang: str) -> dict:
             "res_growth_cap": "Más ingreso si mueves mix a directo (orientativo)",
             "res_growth_badge": "Lectura 2 · sin vender más noches",
             "res_growth_hook": (
-                "En cristiano: hoy declaraste un % de venta directa. Si lo subes a un objetivo realista, "
+                "Hoy declaraste un % de venta directa. Si lo subes a un objetivo realista, "
                 "y esa parte deja de entrar por OTAs, te quedas con más por pagar menos comisión."
             ),
             "res_growth_formula_label": "Cómo lo calculamos (y el escenario +20%)",
@@ -245,7 +245,7 @@ def get_hospitality_diagnosis_page(lang: str) -> dict:
         "res_growth_cap": "More revenue by shifting mix to direct (indicative)",
         "res_growth_badge": "Read 2 · without selling more nights",
         "res_growth_hook": (
-            "Plain English: you reported a current direct share. If you move direct to a realistic target, "
+            "You reported a current direct share. If you move direct to a realistic target, "
             "and that share stops coming through OTAs, you keep more by paying less commission."
         ),
         "res_growth_formula_label": "How we calculate it (and the +20% scenario)",
