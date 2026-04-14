@@ -11,10 +11,9 @@ def get_hospitality_problem_deck_copy(lang: str) -> dict:
 
 _COPY = {
     "es": {
-        "meta_title": "El reto del hotel independiente: tiempo, talento y vecinos que sí ordenaron ventas | DRAGONNÉ",
+        "meta_title": "El reto del hotel independiente — DRAGONNÉ",
         "meta_description": (
-            "Por qué muchos independientes llenan pero no les rinde la cuenta, y cómo DRAGONNÉ ayuda con diagnóstico claro, "
-            "prioridades y ejecución en comercial y operación."
+            "Por qué muchos hoteles independientes llenan pero no les rinde la cuenta, y cómo ordenar ventas, canales y operación."
         ),
         "breadcrumb_name": "Deck comercial",
         "skip": "Saltar al contenido",
@@ -192,10 +191,9 @@ _COPY = {
         ],
     },
     "en": {
-        "meta_title": "The independent hotel challenge: time, talent, and sharper competitors | DRAGONNÉ",
+        "meta_title": "The independent hotel challenge — DRAGONNÉ",
         "meta_description": (
-            "Why many independents fill rooms but the account still hurts, and how DRAGONNÉ helps with clear diagnosis, "
-            "priorities, and execution in commercial and operations."
+            "Why many independent hotels fill rooms but profits lag—and how to organize sales, channels, and ops."
         ),
         "breadcrumb_name": "Sales deck",
         "skip": "Skip to content",

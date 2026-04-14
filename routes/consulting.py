@@ -241,6 +241,7 @@ def render_hospitality_problem_deck_page(request: Request, lang: str):
     html_lang = "es-MX" if lang == "es" else "en"
     og_locale = "es_MX" if lang == "es" else "en_US"
     og_locale_alternate = "en_US" if lang == "es" else "es_MX"
+    og_image = absolute_url("/static/branding/meta-logo.png")
     trans = _consulting_translations()
     raw_t = trans.get(lang) or trans.get("es")
     t = _DefaultT(raw_t) if raw_t else _DefaultT()
@@ -265,6 +266,7 @@ def render_hospitality_problem_deck_page(request: Request, lang: str):
             "robots_meta": "index, follow",
             "og_title": d["meta_title"],
             "og_description": d["meta_description"],
+            "og_image": og_image,
             "og_locale": og_locale,
             "og_locale_alternate": og_locale_alternate,
             "twitter_title": d["meta_title"],
