@@ -916,9 +916,56 @@ document.querySelector('.history-card')?.addEventListener('click', async e => {
 });
 
 if (downloadPdfBtn) {
-  downloadPdfBtn.addEventListener('click', () => {
+  downloadPdfBtn.addEventListener('click', async () => {
     if (!currentAnalysisId) return;
-    window.location.href = appUrlPath(`/analysis/${currentAnalysisId}/pdf`);
+    const pdfHref = appUrlPath(`/analysis/${currentAnalysisId}/pdf`);
+    const originalLabel = downloadPdfBtn.textContent;
+    downloadPdfBtn.disabled = true;
+    downloadPdfBtn.textContent = 'Generando PDF…';
+    try {
+      const res = await fetch(pdfHref, {
+        method: 'GET',
+        credentials: 'same-origin',
+        headers: { Accept: 'application/pdf' },
+      });
+      if (res.status === 401) {
+        let msg = 'Sesión vencida o no válida. Inicia sesión de nuevo e intenta descargar el PDF otra vez.';
+        try {
+          const j = await res.json();
+          if (j && j.redirect) {
+            followAppRedirect(j.redirect);
+            return;
+          }
+          if (j && j.error) msg = String(j.error);
+        } catch {
+          /* ignore */
+        }
+        alert(msg);
+        return;
+      }
+      if (!res.ok) {
+        alert('No se pudo generar el PDF. Intenta de nuevo o recarga la página.');
+        return;
+      }
+      const blob = await res.blob();
+      const cd = res.headers.get('Content-Disposition') || '';
+      const m = cd.match(/filename="([^"]+)"/);
+      const fname = m && m[1] ? m[1] : `pullso-lectura-${currentAnalysisId}.pdf`;
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = objectUrl;
+      a.download = fname;
+      a.rel = 'noopener';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch (err) {
+      alert(err && err.message ? err.message : 'Error al descargar el PDF.');
+    } finally {
+      downloadPdfBtn.disabled = false;
+      downloadPdfBtn.textContent = originalLabel;
+    }
   });
 }
 

@@ -284,7 +284,10 @@ async def http_exception_handler(request: Request, exc: HTTPException):
         wants_html = "text/html" in accept and "application/json" not in accept
         raw_path = request.url.path or ""
         path = internal_path(raw_path)
-        if wants_html or path.startswith("/app") or path.startswith("/admin") or path == "/":
+        # Descarga de PDF: no forzar redirección HTML (Accept suele ser */* o application/pdf);
+        # el cliente autenticado usa fetch con Accept application/pdf.
+        is_analysis_pdf = path.startswith("/analysis/") and path.endswith("/pdf")
+        if (wants_html and not is_analysis_pdf) or path.startswith("/app") or path.startswith("/admin") or path == "/":
             next_url = path if path and path != "/" else "/app"
             return RedirectResponse(
                 url=f"{url_path('/login')}?next={quote(next_url, safe='/')}",
