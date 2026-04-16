@@ -22,6 +22,7 @@ def delete_analysis_by_id(conn, analysis_id: int) -> bool:
         return False
     # Conserva la fila de cupo mensual (generations_this_month); el id ya no apunta a analyses.
     conn.execute("UPDATE analysis_run_log SET analysis_id = NULL WHERE analysis_id = ?", (analysis_id,))
+    conn.execute("DELETE FROM analysis_whatsapp_sends WHERE analysis_id = ?", (analysis_id,))
     _delete_uploaded_files_for_analysis(conn, analysis_id)
     conn.execute("DELETE FROM analyses WHERE id = ?", (analysis_id,))
     return True
@@ -32,6 +33,7 @@ def delete_user_and_related(conn, user_id: int) -> bool:
     for r in rows:
         _delete_uploaded_files_for_analysis(conn, r["id"])
     conn.execute("DELETE FROM analysis_run_log WHERE user_id = ?", (user_id,))
+    conn.execute("DELETE FROM analysis_whatsapp_sends WHERE user_id = ?", (user_id,))
     conn.execute("DELETE FROM analyses WHERE user_id = ?", (user_id,))
     conn.execute("DELETE FROM user_sessions WHERE user_id = ?", (user_id,))
     conn.execute("DELETE FROM password_resets WHERE user_id = ?", (user_id,))

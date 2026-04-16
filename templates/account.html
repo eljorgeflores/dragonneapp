@@ -128,6 +128,45 @@
     </aside>
 
     <div class="account-page-col account-page-col--main" aria-label="Facturación y planes">
+    {% if whatsapp_notice %}
+    <p class="account-notice account-page-alert muted small" role="status">
+      {% if whatsapp_notice.kind == 'ok' %}
+        Preferencias de WhatsApp guardadas.
+      {% elif whatsapp_notice.code == 'too_many' %}
+        Demasiados números. Reduce la lista (máximo 10 por ahora).
+      {% elif whatsapp_notice.code == 'invalid_phone' %}
+        Algún número no es válido. Usa formato internacional (E.164), por ejemplo +529981234567.
+      {% elif whatsapp_notice.code == 'empty_recipients' %}
+        Marcaste recibir mensajes pero no hay números. Añade al menos uno o desmarca el consentimiento.
+      {% else %}
+        No se pudieron guardar los datos de WhatsApp. Revisa los números e inténtalo de nuevo.
+      {% endif %}
+    </p>
+    {% endif %}
+
+    <section class="account-section light-card" aria-labelledby="accountWaHeading">
+      <h2 id="accountWaHeading" class="account-section-title">WhatsApp (diagnóstico)</h2>
+      <p class="muted small" style="margin-top:0.35rem;line-height:1.55">
+        Indica los móviles que deben recibir el resumen por WhatsApp (formato internacional, uno por línea).
+        Pullso envía desde su número oficial; necesitamos tu consentimiento explícito.
+        {% if not kapso_whatsapp_template_configured %}
+        <strong>Nota:</strong> en el servidor aún no está definido un template aprobado para reabrir conversaciones fuera de la ventana de 24h
+        (<code>KAPSO_WHATSAPP_UTILITY_TEMPLATE_NAME</code>).
+        {% endif %}
+      </p>
+      <form method="post" action="{{ url_path('/app/account/whatsapp') }}" class="account-wa-form" style="margin-top:1rem">
+        <div style="margin-bottom:0.75rem">
+          <label for="waRecipients" class="chat-composer-label">Números destino</label>
+          <textarea id="waRecipients" name="recipients_text" class="chat-composer-field" rows="4" placeholder="+529981234567&#10;+5215511122233">{{ whatsapp_recipients_text }}</textarea>
+        </div>
+        <label class="account-wa-opt" style="display:flex;gap:0.5rem;align-items:flex-start;margin-bottom:1rem;cursor:pointer">
+          <input type="checkbox" name="pullso_whatsapp_opt_in" value="1" {% if whatsapp_opt_in %}checked{% endif %} style="margin-top:0.2rem" />
+          <span class="small">Autorizo a Pullso a enviarme mensajes de WhatsApp con diagnósticos y lecturas comerciales a los números indicados. Puedo retirar este consentimiento cuando quiera desmarcando esta casilla y guardando.</span>
+        </label>
+        <button type="submit" class="btn btn-secondary btn-sm">Guardar WhatsApp</button>
+      </form>
+    </section>
+
     <section class="account-section light-card account-section--billing">
       <h2 class="account-section-title">Facturación y planes</h2>
 

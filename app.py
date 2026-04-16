@@ -42,6 +42,7 @@ from config import (
     STRIPE_PUBLISHABLE_KEY,
     STRIPE_SECRET_KEY,
     STRIPE_WEBHOOK_SECRET,
+    KAPSO_WHATSAPP_UTILITY_TEMPLATE_NAME,
     internal_path,
     password_reset_email_delivery_configured,
     resend_sender_plausible,
@@ -87,7 +88,7 @@ Servicios: services/analysis_core, share_service, pdf_service, billing_stripe. V
 from urllib.parse import quote
 
 from auth_session import is_admin_user, onboarding_pending, require_user
-from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi import FastAPI, Form, HTTPException, Query, Request
 from fastapi.exception_handlers import http_exception_handler as default_http_exception_handler
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -98,6 +99,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from seo_helpers import noindex_page_seo
 from templating import templates
 from time_utils import now_iso
+from services.pullso_whatsapp_user_delivery import recipients_list_from_user_column, save_user_whatsapp_settings
 
 # Campos de contexto hotelero que enriquecen lecturas (excluye correo y plan).
 _PROFILE_ENRICHMENT_FIELDS = (
@@ -311,6 +313,11 @@ def account_page(request: Request):
     eff = get_effective_plan(user)
     paid = get_paid_plan(user)
     profile_filled, profile_total = _profile_enrichment_counts(user)
+    whatsapp_notice = request.session.pop("account_whatsapp_notice", None)
+    wa_digits = recipients_list_from_user_column(user["pullso_whatsapp_to"])
+    whatsapp_recipients_text = "\n".join(f"+{d}" for d in wa_digits)
+    whatsapp_opt_in = bool(int(user["pullso_whatsapp_opt_in"] or 0))
+    kapso_whatsapp_template_configured = bool((KAPSO_WHATSAPP_UTILITY_TEMPLATE_NAME or "").strip())
     return templates.TemplateResponse("account.html", {
         "request": request,
         "user": user,
@@ -333,8 +340,31 @@ def account_page(request: Request):
         "stripe_publishable_key": STRIPE_PUBLISHABLE_KEY,
         "profile_filled": profile_filled,
         "profile_total": profile_total,
+        "whatsapp_notice": whatsapp_notice,
+        "whatsapp_recipients_text": whatsapp_recipients_text,
+        "whatsapp_opt_in": whatsapp_opt_in,
+        "kapso_whatsapp_template_configured": kapso_whatsapp_template_configured,
         **_seo,
     })
+
+
+@app.post("/app/account/whatsapp")
+def account_whatsapp_save(
+    request: Request,
+    recipients_text: str = Form(""),
+    pullso_whatsapp_opt_in: str = Form(""),
+):
+    """Guarda destinatarios WhatsApp y consentimiento (opt-in / opt-out)."""
+    user = require_user(request)
+    if onboarding_pending(user):
+        return RedirectResponse(url_path("/onboarding"), status_code=303)
+    opt_in = (pullso_whatsapp_opt_in or "").strip() == "1"
+    err = save_user_whatsapp_settings(int(user["id"]), recipients_text, opt_in)
+    if err:
+        request.session["account_whatsapp_notice"] = {"kind": "error", "code": err}
+    else:
+        request.session["account_whatsapp_notice"] = {"kind": "ok"}
+    return RedirectResponse(url_path("/app/account"), status_code=303)
 
 
 @app.get("/app", response_class=HTMLResponse)

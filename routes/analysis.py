@@ -1,13 +1,14 @@
 """Rutas web del flujo de análisis (capa delgada → services)."""
 from typing import List
 
-from fastapi import APIRouter, File, Form, Request, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse
 
 from admin_ops import delete_analysis_by_id
 from auth_session import require_user
 from db import db
 from services.analysis_service import run_web_analyze
+from services.pullso_whatsapp_user_delivery import send_diagnosis_whatsapp_for_analysis
 from services.pdf_service import streaming_pdf_response_for_owned_analysis
 from services.share_service import (
     analysis_detail_json_response,
@@ -65,3 +66,14 @@ def shared_analysis_view(request: Request, share_token: str):
 def analysis_pdf(request: Request, analysis_id: int):
     user = require_user(request)
     return streaming_pdf_response_for_owned_analysis(user, analysis_id)
+
+
+@router.post("/analysis/{analysis_id}/whatsapp-diagnosis")
+def analysis_whatsapp_diagnosis(request: Request, analysis_id: int):
+    """Envía el diagnóstico de la lectura por WhatsApp (Kapso) a los números configurados en Mi cuenta."""
+    user = require_user(request)
+    try:
+        results = send_diagnosis_whatsapp_for_analysis(int(user["id"]), int(analysis_id))
+    except HTTPException as exc:
+        return JSONResponse({"ok": False, "error": exc.detail}, status_code=exc.status_code)
+    return JSONResponse({"ok": True, "results": results})

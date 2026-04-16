@@ -107,13 +107,15 @@ def init_db():
             "hotel_booking_url",
             # Pullso Brief: número destino en WhatsApp (E.164, p. ej. +52999...)
             "pullso_whatsapp_to",
+            "pullso_whatsapp_opt_in",
+            "pullso_whatsapp_opt_in_at",
             "manual_plan_override",
             "manual_plan_expires_at",
             "manual_plan_note",
             "manual_plan_updated_at",
         ]:
             try:
-                if col in ["login_count", "is_admin", "hotel_stars"]:
+                if col in ["login_count", "is_admin", "hotel_stars", "pullso_whatsapp_opt_in"]:
                     conn.execute(f"ALTER TABLE users ADD COLUMN {col} INTEGER DEFAULT 0")
                 else:
                     conn.execute(f"ALTER TABLE users ADD COLUMN {col} TEXT")
@@ -267,4 +269,22 @@ def init_db():
             INSERT OR IGNORE INTO analysis_run_log (user_id, analysis_id, created_at)
             SELECT user_id, id, created_at FROM analyses
             """
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS analysis_whatsapp_sends (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                analysis_id INTEGER NOT NULL,
+                phone_e164 TEXT NOT NULL,
+                channel TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                FOREIGN KEY(user_id) REFERENCES users(id),
+                FOREIGN KEY(analysis_id) REFERENCES analyses(id)
+            );
+            """
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_analysis_wa_sends_lookup "
+            "ON analysis_whatsapp_sends(user_id, analysis_id, phone_e164, created_at)"
         )

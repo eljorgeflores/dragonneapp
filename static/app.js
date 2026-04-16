@@ -44,6 +44,7 @@ const downloadPdfBtn = document.getElementById('downloadPdfBtn');
 const copyShareBtn = document.getElementById('copyShareBtn');
 const emailShareBtn = document.getElementById('emailShareBtn');
 const serverEmailShareBtn = document.getElementById('serverEmailShareBtn');
+const whatsappDiagnosisBtn = document.getElementById('whatsappDiagnosisBtn');
 const shareFeedback = document.getElementById('shareFeedback');
 let currentAnalysisId = null;
 let currentShareUrl = null;
@@ -664,6 +665,7 @@ async function handleDeleteHistoryAnalysis(analysisId, triggerBtn) {
       currentAnalysisId = null;
       currentShareUrl = null;
       if (downloadPdfBtn) downloadPdfBtn.disabled = true;
+      if (whatsappDiagnosisBtn) whatsappDiagnosisBtn.disabled = true;
       setShareControlsEnabled(false);
       hideResultHeroAndSource();
       if (resultsCard) resultsCard.classList.add('hidden');
@@ -702,6 +704,7 @@ function setShareControlsEnabled(on) {
   if (copyShareBtn) copyShareBtn.disabled = !on;
   if (emailShareBtn) emailShareBtn.disabled = !on;
   if (serverEmailShareBtn) serverEmailShareBtn.disabled = !on;
+  if (whatsappDiagnosisBtn) whatsappDiagnosisBtn.disabled = !on;
   if (!on && shareFeedback) {
     shareFeedback.classList.add('hidden');
     shareFeedback.textContent = '';
@@ -1011,6 +1014,66 @@ if (emailShareBtn) {
       `Te comparto la lectura generada con Pullso:\n\n${url}\n\nQuien tenga el enlace puede ver el tablero sin iniciar sesión.`
     );
     window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  });
+}
+
+if (whatsappDiagnosisBtn) {
+  whatsappDiagnosisBtn.addEventListener('click', async () => {
+    if (!currentAnalysisId) return;
+    shareFeedback?.classList.add('hidden');
+    const original = whatsappDiagnosisBtn.textContent;
+    whatsappDiagnosisBtn.disabled = true;
+    whatsappDiagnosisBtn.textContent = 'Enviando…';
+    try {
+      const res = await fetch(appUrlPath(`/analysis/${currentAnalysisId}/whatsapp-diagnosis`), {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+        body: '{}',
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 401) {
+        let msg = 'Sesión vencida o no válida. Inicia sesión de nuevo.';
+        try {
+          if (data && data.redirect) {
+            followAppRedirect(data.redirect);
+            return;
+          }
+          if (data && data.error) msg = String(data.error);
+        } catch {
+          /* ignore */
+        }
+        window.alert(msg);
+        return;
+      }
+      if (!res.ok || !data.ok) {
+        if (shareFeedback) {
+          shareFeedback.textContent = data.error || data.detail || 'No se pudo enviar por WhatsApp.';
+          shareFeedback.classList.remove('hidden');
+        }
+        return;
+      }
+      const rows = Array.isArray(data.results) ? data.results : [];
+      const parts = rows.map(r => {
+        const ph = r.phone || '';
+        if (r.status === 'sent') return `${ph}: enviado (${r.channel || 'texto'})`;
+        if (r.status === 'skipped_cooldown') return `${ph}: omitido (anti-spam)`;
+        if (r.status === 'partial') return `${ph}: template enviado; texto pendiente`;
+        return `${ph}: error`;
+      });
+      if (shareFeedback) {
+        shareFeedback.textContent = parts.length ? parts.join(' · ') : 'Listo.';
+        shareFeedback.classList.remove('hidden');
+      }
+    } catch (e) {
+      if (shareFeedback) {
+        shareFeedback.textContent = e && e.message ? e.message : 'Error de red.';
+        shareFeedback.classList.remove('hidden');
+      }
+    } finally {
+      whatsappDiagnosisBtn.disabled = !currentAnalysisId;
+      whatsappDiagnosisBtn.textContent = original;
+    }
   });
 }
 

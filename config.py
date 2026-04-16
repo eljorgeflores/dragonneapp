@@ -225,6 +225,24 @@ KAPSO_WEBHOOK_SECRET = _normalize_api_secret(os.getenv("KAPSO_WEBHOOK_SECRET", "
 # Base URL del proxy Meta/WhatsApp en Kapso.
 KAPSO_WHATSAPP_BASE_URL = (os.getenv("KAPSO_WHATSAPP_BASE_URL") or "https://api.kapso.ai/meta/whatsapp/v24.0").strip().rstrip("/")
 
+# Template Utility aprobado en Meta (para reabrir conversación fuera de ventana de 24h).
+KAPSO_WHATSAPP_UTILITY_TEMPLATE_NAME = (os.getenv("KAPSO_WHATSAPP_UTILITY_TEMPLATE_NAME") or "").strip()
+KAPSO_WHATSAPP_UTILITY_TEMPLATE_LANGUAGE = (os.getenv("KAPSO_WHATSAPP_UTILITY_TEMPLATE_LANGUAGE") or "es_MX").strip()
+def _bounded_int_env(name: str, default: int, lo: int, hi: int) -> int:
+    raw = (os.getenv(name) or "").strip()
+    if not raw:
+        return default
+    try:
+        v = int(raw)
+    except ValueError:
+        return default
+    return max(lo, min(hi, v))
+
+
+# Límite de destinatarios por usuario y anti-spam (mismo análisis + mismo número).
+PULLSO_WHATSAPP_MAX_RECIPIENTS = _bounded_int_env("PULLSO_WHATSAPP_MAX_RECIPIENTS", 10, 1, 20)
+PULLSO_WHATSAPP_COOLDOWN_SECONDS = _bounded_int_env("PULLSO_WHATSAPP_COOLDOWN_SECONDS", 3600, 60, 86400)
+
 
 # Caducidad del enlace de restablecimiento (debe coincidir con textos de correo y UI)
 PASSWORD_RESET_TOKEN_TTL_HOURS = max(1, int(os.getenv("PASSWORD_RESET_TOKEN_TTL_HOURS", "1")))
