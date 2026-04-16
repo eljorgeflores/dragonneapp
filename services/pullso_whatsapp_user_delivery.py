@@ -138,6 +138,66 @@ def recipients_list_from_user_column(blob: Optional[str]) -> List[str]:
     return [d] if d else []
 
 
+def recipients_named_entries_from_blob(blob: Optional[str]) -> List[Dict[str, str]]:
+    """
+    Destinatarios con nombre (si existe) y teléfono en dígitos E.164, sin duplicar por número.
+    """
+    if blob is None:
+        return []
+    s = str(blob).strip()
+    if not s:
+        return []
+    if s.startswith("["):
+        try:
+            data = json.loads(s)
+            if not isinstance(data, list):
+                return []
+            raw = _raw_recipient_entries_from_json_list(data)
+            seen: set = set()
+            out: List[Dict[str, str]] = []
+            for e in raw:
+                ph = e.get("phone") or ""
+                if not ph or ph in seen:
+                    continue
+                seen.add(ph)
+                nm = (e.get("name") or "").strip()[:80]
+                out.append({"name": nm, "phone": ph})
+            return out
+        except (json.JSONDecodeError, TypeError):
+            return []
+    d = normalize_e164_digits(s)
+    return [{"name": "", "phone": d}] if d else []
+
+
+def _sanitize_recipient_display_name(name: str) -> str:
+    """Texto seguro para saludo en WhatsApp (sin saltos ni marcadores que rompan el cuerpo)."""
+    s = (name or "").replace("\n", " ").replace("\r", "").strip()
+    s = re.sub(r"\s+", " ", s)
+    s = s.replace("*", "").replace("_", "").replace("`", "")
+    return s[:48] if s else ""
+
+
+def personalized_whatsapp_brief_body(base_body: str, recipient_name: str) -> str:
+    """
+    Antepone saludo comercial usando el nombre guardado en Mi cuenta; luego el cuerpo común (resumen + enlace).
+    """
+    label = _sanitize_recipient_display_name(recipient_name)
+    if label:
+        intro = (
+            f"*Hola {label},*\n\n"
+            "Aquí va tu *Pullso Brief*: resumen de la lectura, señales clave y enlace al tablero en solo lectura.\n\n"
+        )
+    else:
+        intro = (
+            "*Hola,*\n\n"
+            "Te enviamos tu *Pullso Brief* con el resumen de la lectura y el enlace al tablero (solo lectura).\n\n"
+        )
+    full = f"{intro}{base_body}".strip()
+    if len(full) > 3900:
+        full = full[:3897].rstrip() + "…"
+    return full
+
+
 def split_e164_prefix_and_national(digits: str) -> Tuple[str, str]:
     """Separa prefijo internacional conocido del resto (para inputs de cuenta)."""
     d = re.sub(r"\D", "", digits or "")
@@ -416,6 +476,7 @@ def send_diagnosis_whatsapp_for_analysis(user_id: int, analysis_id: int) -> List
                 hid = int(hid_raw)
             except (TypeError, ValueError):
                 hid = None
+        wa_blob: Optional[str] = None
         if hid is not None and hid > 0:
             if not conn.execute(
                 "SELECT 1 FROM hotel_members WHERE hotel_id = ? AND user_id = ?",
@@ -430,31 +491,32 @@ def send_diagnosis_whatsapp_for_analysis(user_id: int, analysis_id: int) -> List
                     status_code=400,
                     detail="Activa el consentimiento y guarda al menos un número en Mi cuenta → WhatsApp (hotel actual).",
                 )
-            phones = recipients_list_from_user_column(hrow["pullso_whatsapp_to"])
-            if not phones:
-                raise HTTPException(
-                    status_code=400,
-                    detail="Configura al menos un número de WhatsApp en Mi cuenta para el hotel de esta lectura.",
-                )
+            wa_blob = hrow["pullso_whatsapp_to"]
         else:
             if not int(user["pullso_whatsapp_opt_in"] or 0):
                 raise HTTPException(
                     status_code=400,
                     detail="Activa el consentimiento y guarda al menos un número en Mi cuenta → WhatsApp.",
                 )
-            phones = recipients_list_from_user_column(user["pullso_whatsapp_to"])
-            if not phones:
-                raise HTTPException(
-                    status_code=400,
-                    detail="Configura al menos un número de WhatsApp en Mi cuenta.",
-                )
+            wa_blob = user["pullso_whatsapp_to"]
+        recipient_entries = recipients_named_entries_from_blob(wa_blob)
+        if not recipient_entries:
+            raise HTTPException(
+                status_code=400,
+                detail="Configura al menos un número de WhatsApp en Mi cuenta para el hotel de esta lectura."
+                if hid is not None and hid > 0
+                else "Configura al menos un número de WhatsApp en Mi cuenta.",
+            )
         analysis = json.loads(row["analysis_json"])
         title = row["title"] or ""
         share_tok = _ensure_share_token(conn, analysis_id, user_id)
-        body_text = _build_diagnosis_text(title, analysis, share_tok)
+        base_body = _build_diagnosis_text(title, analysis, share_tok)
 
     results: List[Dict[str, Any]] = []
-    for phone_digits in phones:
+    for entry in recipient_entries:
+        phone_digits = entry["phone"]
+        display_name = entry.get("name") or ""
+        body_text = personalized_whatsapp_brief_body(base_body, display_name)
         with db() as conn:
             if _cooldown_active(conn, user_id, analysis_id, phone_digits):
                 results.append(
