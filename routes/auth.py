@@ -771,4 +771,10 @@ def onboarding(
             (hotel_name, contact_name, hotel_size, hotel_category, hotel_location, stars_int, location_ctx,
              pms, channel_mgr, booking_eng, tech_other, gmb_url, expedia_url, booking_url, now_iso(), user["id"]),
         )
+    try:
+        from services.hotel_pullso import sync_hotels_after_onboarding
+
+        sync_hotels_after_onboarding(request, int(user["id"]))
+    except Exception:
+        pass
     return RedirectResponse(url_path("/app"), status_code=303)

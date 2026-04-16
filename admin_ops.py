@@ -35,6 +35,13 @@ def delete_user_and_related(conn, user_id: int) -> bool:
     conn.execute("DELETE FROM analysis_run_log WHERE user_id = ?", (user_id,))
     conn.execute("DELETE FROM analysis_whatsapp_sends WHERE user_id = ?", (user_id,))
     conn.execute("DELETE FROM analyses WHERE user_id = ?", (user_id,))
+    conn.execute("DELETE FROM hotel_invites WHERE created_by = ?", (user_id,))
+    hotel_ids = [int(r["hotel_id"]) for r in conn.execute("SELECT hotel_id FROM hotel_members WHERE user_id = ?", (user_id,)).fetchall()]
+    conn.execute("DELETE FROM hotel_members WHERE user_id = ?", (user_id,))
+    for hid in hotel_ids:
+        if not conn.execute("SELECT 1 FROM hotel_members WHERE hotel_id = ?", (hid,)).fetchone():
+            conn.execute("DELETE FROM hotel_invites WHERE hotel_id = ?", (hid,))
+            conn.execute("DELETE FROM hotels WHERE id = ?", (hid,))
     conn.execute("DELETE FROM user_sessions WHERE user_id = ?", (user_id,))
     conn.execute("DELETE FROM password_resets WHERE user_id = ?", (user_id,))
     conn.execute("DELETE FROM login_tokens WHERE user_id = ?", (user_id,))

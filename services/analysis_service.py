@@ -20,6 +20,7 @@ from services.analysis_core import (
     summarize_reports,
     user_row_as_dict,
 )
+from services.hotel_pullso import get_current_hotel_id
 from services.share_service import public_share_base_url
 
 
@@ -61,8 +62,16 @@ async def run_web_analyze(request: Request, business_context: str, files: List[U
         analysis = call_openai(summary, combined_business_context, hotel_context, plan_for_model)
         n = summary["reports_detected"]
         title = f"Lectura comercial · {n} fuente{'s' if n != 1 else ''} · {datetime.now().strftime('%d/%m/%Y %H:%M')}"
+        session_hotel = get_current_hotel_id(request, int(user["id"]))
         analysis_id, share_token = save_analysis(
-            user["id"], title, effective, summary, analysis, files, reserved_run_log_id=reserved_run_log_id
+            user["id"],
+            title,
+            effective,
+            summary,
+            analysis,
+            files,
+            reserved_run_log_id=reserved_run_log_id,
+            hotel_id=session_hotel,
         )
         reserved_run_log_id = None
         created_at = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")[:19].replace("T", " ")

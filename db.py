@@ -288,3 +288,66 @@ def init_db():
             "CREATE INDEX IF NOT EXISTS idx_analysis_wa_sends_lookup "
             "ON analysis_whatsapp_sends(user_id, analysis_id, phone_e164, created_at)"
         )
+
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS hotels (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                slug TEXT NOT NULL UNIQUE,
+                display_name TEXT NOT NULL,
+                pullso_whatsapp_to TEXT,
+                pullso_whatsapp_opt_in INTEGER NOT NULL DEFAULT 0,
+                pullso_whatsapp_opt_in_at TEXT,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS hotel_members (
+                hotel_id INTEGER NOT NULL,
+                user_id INTEGER NOT NULL,
+                role TEXT NOT NULL DEFAULT 'user',
+                PRIMARY KEY (hotel_id, user_id),
+                FOREIGN KEY (hotel_id) REFERENCES hotels(id),
+                FOREIGN KEY (user_id) REFERENCES users(id)
+            );
+            """
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_hotel_members_user ON hotel_members(user_id)"
+        )
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS hotel_invites (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                hotel_id INTEGER NOT NULL,
+                email_norm TEXT NOT NULL,
+                role TEXT NOT NULL DEFAULT 'user',
+                token_hash TEXT NOT NULL UNIQUE,
+                expires_at TEXT NOT NULL,
+                accepted_at TEXT,
+                created_by INTEGER NOT NULL,
+                created_at TEXT NOT NULL,
+                FOREIGN KEY (hotel_id) REFERENCES hotels(id),
+                FOREIGN KEY (created_by) REFERENCES users(id)
+            );
+            """
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_hotel_invites_hotel_email ON hotel_invites(hotel_id, email_norm)"
+        )
+        try:
+            conn.execute("ALTER TABLE analyses ADD COLUMN hotel_id INTEGER REFERENCES hotels(id)")
+        except sqlite3.OperationalError:
+            pass
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_analyses_hotel_id ON analyses(hotel_id)"
+        )
+        try:
+            from services.hotel_pullso import migrate_legacy_users_to_hotels
+
+            migrate_legacy_users_to_hotels(conn)
+        except Exception:
+            pass

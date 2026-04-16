@@ -178,6 +178,12 @@ def establish_web_session(request: Request, user_id: int) -> int:
         session_id = cur.lastrowid
     request.session["user_id"] = user_id
     request.session["session_id"] = session_id
+    try:
+        from services.hotel_pullso import ensure_default_hotel_session
+
+        ensure_default_hotel_session(request, user_id)
+    except Exception:
+        pass
     return session_id
 
 

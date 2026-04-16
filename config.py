@@ -240,7 +240,7 @@ def _bounded_int_env(name: str, default: int, lo: int, hi: int) -> int:
 
 
 # Límite de destinatarios por usuario y anti-spam (mismo análisis + mismo número).
-PULLSO_WHATSAPP_MAX_RECIPIENTS = _bounded_int_env("PULLSO_WHATSAPP_MAX_RECIPIENTS", 10, 1, 20)
+PULLSO_WHATSAPP_MAX_RECIPIENTS = _bounded_int_env("PULLSO_WHATSAPP_MAX_RECIPIENTS", 3, 1, 20)
 PULLSO_WHATSAPP_COOLDOWN_SECONDS = _bounded_int_env("PULLSO_WHATSAPP_COOLDOWN_SECONDS", 3600, 60, 86400)
 
 

@@ -1830,14 +1830,22 @@ def save_analysis(
     analysis: Dict[str, Any],
     files: List[UploadFile],
     reserved_run_log_id: Optional[int] = None,
+    hotel_id: Optional[int] = None,
 ) -> Tuple[int, str]:
     created_at = now_iso()
     share_token = secrets.token_urlsafe(24)
     with db() as conn:
+        hid = hotel_id
+        if hid is None:
+            r = conn.execute(
+                "SELECT hotel_id FROM hotel_members WHERE user_id = ? ORDER BY hotel_id LIMIT 1",
+                (user_id,),
+            ).fetchone()
+            hid = int(r["hotel_id"]) if r else None
         cur = conn.execute(
             """
-            INSERT INTO analyses (user_id, title, plan_at_analysis, file_count, days_covered, summary_json, analysis_json, created_at, share_token)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO analyses (user_id, title, plan_at_analysis, file_count, days_covered, summary_json, analysis_json, created_at, share_token, hotel_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 user_id,
@@ -1849,6 +1857,7 @@ def save_analysis(
                 json.dumps(analysis, ensure_ascii=False),
                 created_at,
                 share_token,
+                hid,
             ),
         )
         analysis_id = cur.lastrowid

@@ -96,9 +96,21 @@ from plan_entitlements import _get, get_effective_plan, get_paid_plan, manual_ac
 from plans import max_upload_files_for_plan, plan_label
 from services.analysis_core import MIN_BUSINESS_CONTEXT_LEN, upload_eligibility
 from starlette.middleware.sessions import SessionMiddleware
-from seo_helpers import noindex_page_seo
+from seo_helpers import absolute_url, noindex_page_seo
 from templating import templates
 from time_utils import now_iso
+from email_smtp import send_hotel_invite_email
+from services.hotel_pullso import (
+    HOTEL_WHATSAPP_MAX_NUMBERS,
+    accept_hotel_invite_token_with_hotel,
+    create_hotel_invite,
+    ensure_default_hotel_session,
+    get_current_hotel_id,
+    list_hotels_for_user,
+    load_hotel_row,
+    save_hotel_whatsapp_settings,
+    user_is_hotel_admin,
+)
 from services.pullso_whatsapp_user_delivery import recipients_list_from_user_column, save_user_whatsapp_settings
 
 # Campos de contexto hotelero que enriquecen lecturas (excluye correo y plan).
@@ -314,9 +326,31 @@ def account_page(request: Request):
     paid = get_paid_plan(user)
     profile_filled, profile_total = _profile_enrichment_counts(user)
     whatsapp_notice = request.session.pop("account_whatsapp_notice", None)
-    wa_digits = recipients_list_from_user_column(user["pullso_whatsapp_to"])
-    whatsapp_recipients_text = "\n".join(f"+{d}" for d in wa_digits)
-    whatsapp_opt_in = bool(int(user["pullso_whatsapp_opt_in"] or 0))
+    invite_notice = request.session.pop("account_invite_notice", None)
+    uid = int(user["id"])
+    ensure_default_hotel_session(request, uid)
+    hid = get_current_hotel_id(request, uid)
+    hotel = load_hotel_row(hid) if hid else None
+    hotels_switch = [
+        {
+            "id": int(r["id"]),
+            "slug": r["slug"],
+            "display_name": r["display_name"],
+            "member_role": (r["member_role"] or "").strip(),
+        }
+        for r in list_hotels_for_user(uid)
+    ]
+    is_hotel_admin_ctx = user_is_hotel_admin(uid, hid) if hid else False
+    if hotel:
+        wa_digits = recipients_list_from_user_column(hotel["pullso_whatsapp_to"])
+        whatsapp_recipients_text = "\n".join(f"+{d}" for d in wa_digits)
+        whatsapp_opt_in = bool(int(hotel["pullso_whatsapp_opt_in"] or 0))
+        current_hotel_label = f"{hotel['display_name']} ({hotel['slug']})"
+    else:
+        wa_digits = recipients_list_from_user_column(user["pullso_whatsapp_to"])
+        whatsapp_recipients_text = "\n".join(f"+{d}" for d in wa_digits)
+        whatsapp_opt_in = bool(int(user["pullso_whatsapp_opt_in"] or 0))
+        current_hotel_label = None
     kapso_whatsapp_template_configured = bool((KAPSO_WHATSAPP_UTILITY_TEMPLATE_NAME or "").strip())
     return templates.TemplateResponse("account.html", {
         "request": request,
@@ -341,9 +375,15 @@ def account_page(request: Request):
         "profile_filled": profile_filled,
         "profile_total": profile_total,
         "whatsapp_notice": whatsapp_notice,
+        "invite_notice": invite_notice,
         "whatsapp_recipients_text": whatsapp_recipients_text,
         "whatsapp_opt_in": whatsapp_opt_in,
         "kapso_whatsapp_template_configured": kapso_whatsapp_template_configured,
+        "current_hotel_id": hid,
+        "current_hotel_label": current_hotel_label,
+        "hotels_switch": hotels_switch,
+        "is_hotel_admin_ctx": is_hotel_admin_ctx,
+        "hotel_wa_max": HOTEL_WHATSAPP_MAX_NUMBERS,
         **_seo,
     })
 
@@ -359,11 +399,105 @@ def account_whatsapp_save(
     if onboarding_pending(user):
         return RedirectResponse(url_path("/onboarding"), status_code=303)
     opt_in = (pullso_whatsapp_opt_in or "").strip() == "1"
-    err = save_user_whatsapp_settings(int(user["id"]), recipients_text, opt_in)
-    if err:
-        request.session["account_whatsapp_notice"] = {"kind": "error", "code": err}
+    uid = int(user["id"])
+    ensure_default_hotel_session(request, uid)
+    hid = get_current_hotel_id(request, uid)
+    if hid:
+        err = save_hotel_whatsapp_settings(hid, uid, recipients_text, opt_in)
+        if err == "forbidden":
+            request.session["account_whatsapp_notice"] = {"kind": "error", "code": "forbidden"}
+        elif err:
+            request.session["account_whatsapp_notice"] = {"kind": "error", "code": err}
+        else:
+            request.session["account_whatsapp_notice"] = {"kind": "ok"}
     else:
-        request.session["account_whatsapp_notice"] = {"kind": "ok"}
+        err = save_user_whatsapp_settings(uid, recipients_text, opt_in)
+        if err:
+            request.session["account_whatsapp_notice"] = {"kind": "error", "code": err}
+        else:
+            request.session["account_whatsapp_notice"] = {"kind": "ok"}
+    return RedirectResponse(url_path("/app/account"), status_code=303)
+
+
+@app.post("/app/account/hotel/switch")
+def account_hotel_switch(request: Request, hotel_id: str = Form(...)):
+    user = require_user(request)
+    if onboarding_pending(user):
+        return RedirectResponse(url_path("/onboarding"), status_code=303)
+    try:
+        hid = int((hotel_id or "").strip())
+    except ValueError:
+        return RedirectResponse(url_path("/app/account"), status_code=303)
+    uid = int(user["id"])
+    with db() as conn:
+        ok = conn.execute(
+            "SELECT 1 FROM hotel_members WHERE user_id = ? AND hotel_id = ?",
+            (uid, hid),
+        ).fetchone()
+    if ok:
+        request.session["current_hotel_id"] = hid
+    return RedirectResponse(url_path("/app/account"), status_code=303)
+
+
+@app.post("/app/account/hotel/invite")
+def account_hotel_invite(
+    request: Request,
+    invite_email: str = Form(""),
+    invite_role: str = Form("user"),
+):
+    user = require_user(request)
+    if onboarding_pending(user):
+        return RedirectResponse(url_path("/onboarding"), status_code=303)
+    uid = int(user["id"])
+    ensure_default_hotel_session(request, uid)
+    hid = get_current_hotel_id(request, uid)
+    if not hid or not user_is_hotel_admin(uid, hid):
+        request.session["account_invite_notice"] = {"kind": "error", "code": "forbidden"}
+        return RedirectResponse(url_path("/app/account"), status_code=303)
+    raw_tok, ierr = create_hotel_invite(
+        hotel_id=hid,
+        inviter_user_id=uid,
+        invitee_email=invite_email,
+        role=invite_role,
+    )
+    if ierr:
+        request.session["account_invite_notice"] = {"kind": "error", "code": ierr}
+        return RedirectResponse(url_path("/app/account"), status_code=303)
+    join_path = f"{url_path('/app/hotel/join')}?token={quote((raw_tok or '').strip(), safe='')}"
+    join_url = absolute_url(join_path)
+    hrow = load_hotel_row(hid)
+    label = (hrow["display_name"] if hrow else "") or "Pullso"
+    inviter = (user["contact_name"] or user["email"] or "").strip()
+    if send_hotel_invite_email(
+        to_email=invite_email.strip(),
+        join_url=join_url,
+        hotel_display_name=str(label),
+        inviter_name=inviter,
+        role_label=str(invite_role or "user").strip().lower(),
+    ):
+        request.session["account_invite_notice"] = {"kind": "ok"}
+    else:
+        request.session["account_invite_notice"] = {"kind": "error", "code": "smtp"}
+    return RedirectResponse(url_path("/app/account"), status_code=303)
+
+
+@app.get("/app/hotel/join")
+def hotel_join_landing(request: Request, token: str = ""):
+    user = require_user(request)
+    if onboarding_pending(user):
+        return RedirectResponse(url_path("/onboarding"), status_code=303)
+    code, hid = accept_hotel_invite_token_with_hotel(token, int(user["id"]), str(user["email"] or ""))
+    if code == "ok" and hid:
+        request.session["current_hotel_id"] = hid
+        request.session["account_invite_notice"] = {"kind": "ok", "code": "joined"}
+    elif code == "email_mismatch":
+        request.session["account_invite_notice"] = {"kind": "error", "code": "email_mismatch"}
+    elif code == "expired":
+        request.session["account_invite_notice"] = {"kind": "error", "code": "expired"}
+    elif code == "used":
+        request.session["account_invite_notice"] = {"kind": "error", "code": "used"}
+    else:
+        request.session["account_invite_notice"] = {"kind": "error", "code": "invalid"}
     return RedirectResponse(url_path("/app/account"), status_code=303)
 
 

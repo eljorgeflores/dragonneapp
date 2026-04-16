@@ -57,6 +57,113 @@ def _reset_ttl_label_es(hours: int) -> str:
     return "1 hora" if hours == 1 else f"{hours} horas"
 
 
+def _email_href(url: str) -> str:
+    """Escapa una URL para usarla de forma segura en atributos href/src."""
+    return escape((url or "").strip(), quote=True)
+
+
+def _pullso_auth_email_shell_html(
+    *,
+    preheader_plain: str,
+    heading_plain: str,
+    intro_safe_html: str,
+    primary_href: str,
+    primary_cta_label_plain: str,
+    after_cta_safe_html: str,
+    footer_safe_html: str,
+) -> str:
+    """
+    Plantilla HTML para correos transaccionales (magic link, recuperación).
+    Tablas + estilos en línea para buena compatibilidad con Gmail, Apple Mail, Outlook.
+    """
+    ph = escape((preheader_plain or "").strip())
+    h1 = escape((heading_plain or "").strip())
+    cta = escape((primary_cta_label_plain or "").strip())
+    href = _email_href(primary_href)
+    logo_src = _email_href(absolute_url("/static/branding/pullso-logo.png"))
+    site_href = _email_href(absolute_url("/"))
+    # Paleta alineada con static/styles.css (--text, acentos Dragonne / Pullso)
+    bg = "#ececec"
+    card = "#ffffff"
+    text = "#343434"
+    muted = "#6b7280"
+    accent = "#f07e07"
+    accent_soft = "#fef3e2"
+    border = "#e5e5e5"
+    return f"""<!DOCTYPE html>
+<html lang="es" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>{h1}</title>
+</head>
+<body style="margin:0;padding:0;background-color:{bg};">
+<span style="display:none!important;visibility:hidden;mso-hide:all;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">
+{ph}
+</span>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:{bg};">
+<tr>
+<td align="center" style="padding:28px 16px;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:560px;">
+<tr>
+<td style="background-color:{card};border-radius:16px;border:1px solid {border};overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,0.06);">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+<tr>
+<td style="height:4px;background-color:{accent};font-size:0;line-height:0;">&nbsp;</td>
+</tr>
+<tr>
+<td style="padding:28px 28px 8px;text-align:center;">
+<a href="{site_href}" style="text-decoration:none;display:inline-block;">
+<img src="{logo_src}" width="160" alt="Pullso" style="display:block;margin:0 auto;width:160px;max-width:100%;height:auto;border:0;outline:none;text-decoration:none;" />
+</a>
+</td>
+</tr>
+<tr>
+<td style="padding:8px 28px 4px;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+<h1 style="margin:0 0 12px;font-size:22px;line-height:1.25;font-weight:800;letter-spacing:-0.02em;color:{text};text-align:center;">
+{h1}
+</h1>
+<div style="font-size:16px;line-height:1.55;color:{text};">
+{intro_safe_html}
+</div>
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:24px auto 0;">
+<tr>
+<td align="center" bgcolor="{accent}" style="border-radius:10px;">
+<a href="{href}" style="display:inline-block;padding:14px 32px;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:10px;">
+{cta}
+</a>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td style="padding:8px 28px 28px;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;line-height:1.55;color:{text};">
+{after_cta_safe_html}
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:20px 0 0;">
+<tr>
+<td style="border-top:1px solid {border};font-size:0;line-height:0;height:1px;">&nbsp;</td>
+</tr>
+</table>
+<div style="margin-top:18px;padding:12px 14px;background-color:{accent_soft};border-radius:10px;font-size:13px;line-height:1.5;color:{muted};">
+{footer_safe_html}
+</div>
+<p style="margin:20px 0 0;font-size:12px;line-height:1.45;color:{muted};text-align:center;">
+Un producto <strong style="color:{text};">DRAGONNÉ</strong>
+</p>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</body>
+</html>"""
+
+
 _RESEND_API_URL = "https://api.resend.com/emails"
 
 
@@ -199,9 +306,11 @@ Si el enlace anterior no abre en tu correo (algunos programas cortan la direcci�
 
 {reset_link_fallback}
 """
-        alt_html = f"""<p>Si el enlace anterior no funciona (algunos correos cortan la dirección), copia y pega esto en el navegador:</p>
-<p><a href="{reset_link_fallback}">Abrir restablecimiento (enlace alternativo)</a></p>
-<p class="muted" style="font-size:0.85em;word-break:break-all;">{reset_link_fallback}</p>"""
+        rf_h = _email_href(reset_link_fallback)
+        rf_t = escape(reset_link_fallback)
+        alt_html = f"""<p style="margin:0 0 10px;font-size:14px;line-height:1.5;color:#6b7280;">Si el botón no abre o el enlace llegó cortado, prueba el enlace alternativo o copia la dirección en el navegador:</p>
+<p style="margin:0 0 8px;"><a href="{rf_h}" style="color:#f07e07;font-weight:700;text-decoration:none;">Abrir restablecimiento (enlace alternativo) →</a></p>
+<p style="margin:0;padding:10px 12px;background:#f9fafb;border-radius:8px;font-size:12px;line-height:1.45;word-break:break-all;color:#64748b;font-family:ui-monospace,monospace;">{rf_t}</p>"""
     subject = "Recuperar contraseña — Pullso"
     text = f"""Hola,
 
@@ -216,12 +325,18 @@ Si no pediste esto, ignora este correo.
 —
 Pullso
 """
-    html = f"""<p>Hola,</p>
-<p>Alguien pidió restablecer la contraseña de tu cuenta en Pullso.</p>
-<p><a href="{reset_link}">Haz clic aquí para elegir una nueva contraseña</a> (válido {ttl_es}).</p>
-{alt_html}
-<p>Si no pediste esto, ignora este correo.</p>
-<p>—<br>Pullso</p>"""
+    intro_html = f"""<p style="margin:0 0 12px;">Hola,</p>
+<p style="margin:0 0 12px;">Alguien solicitó restablecer la contraseña de tu cuenta en <strong>Pullso</strong>. El enlace caduca en <strong>{escape(ttl_es)}</strong>.</p>"""
+    html = _pullso_auth_email_shell_html(
+        preheader_plain=f"Pullso: restablecer contraseña (válido {ttl_es}).",
+        heading_plain="Nueva contraseña",
+        intro_safe_html=intro_html,
+        primary_href=reset_link,
+        primary_cta_label_plain="Elegir nueva contraseña",
+        after_cta_safe_html=alt_html
+        or '<p style="margin:0;font-size:13px;line-height:1.5;color:#6b7280;">Si no ves el botón, abre este correo en otro dispositivo o revisa la carpeta de spam.</p>',
+        footer_safe_html="Si <strong>no fuiste tú</strong>, ignora este correo: tu contraseña actual seguirá vigente.",
+    )
 
     _rp = config.resend_sender_plausible()
     resend_key = bool(config.RESEND_API_KEY)
@@ -357,9 +472,11 @@ Si el enlace anterior no abre en tu correo, copia y pega esta dirección en el n
 
 {magic_link_fallback}
 """
-        alt_html = f"""<p>Si el enlace anterior no funciona, copia y pega esto en el navegador:</p>
-<p><a href="{magic_link_fallback}">Abrir acceso (enlace alternativo)</a></p>
-<p class="muted" style="font-size:0.85em;word-break:break-all;">{magic_link_fallback}</p>"""
+        mf_h = _email_href(magic_link_fallback)
+        mf_t = escape(magic_link_fallback)
+        alt_html = f"""<p style="margin:0 0 10px;font-size:14px;line-height:1.5;color:#6b7280;">Si el botón no responde o el enlace llegó incompleto, usa el enlace alternativo o copia la dirección:</p>
+<p style="margin:0 0 8px;"><a href="{mf_h}" style="color:#f07e07;font-weight:700;text-decoration:none;">Abrir acceso (enlace alternativo) →</a></p>
+<p style="margin:0;padding:10px 12px;background:#f9fafb;border-radius:8px;font-size:12px;line-height:1.45;word-break:break-all;color:#64748b;font-family:ui-monospace,monospace;">{mf_t}</p>"""
     subject = "Tu enlace para entrar — Pullso"
     text = f"""Hola,
 
@@ -372,12 +489,18 @@ Si no pediste este acceso, ignora este correo.
 —
 Pullso
 """
-    html = f"""<p>Hola,</p>
-<p>Usa este enlace para entrar a tu cuenta en <strong>Pullso</strong> (válido {ttl_label}).</p>
-<p><a href="{magic_link}">Entrar ahora</a></p>
-{alt_html}
-<p>Si no pediste este acceso, ignora este correo.</p>
-<p>—<br>Pullso</p>"""
+    intro_html = f"""<p style="margin:0 0 12px;">Hola,</p>
+<p style="margin:0 0 12px;">Usa el botón de abajo para entrar a <strong>Pullso</strong>. El enlace es válido durante <strong>{escape(ttl_label)}</strong> y solo puede usarse una vez.</p>"""
+    html = _pullso_auth_email_shell_html(
+        preheader_plain=f"Pullso: tu enlace para entrar (válido {ttl_label}).",
+        heading_plain="Entrar a tu cuenta",
+        intro_safe_html=intro_html,
+        primary_href=magic_link,
+        primary_cta_label_plain="Entrar ahora",
+        after_cta_safe_html=alt_html
+        or '<p style="margin:0;font-size:13px;line-height:1.5;color:#6b7280;">¿No ves el botón? Revisa spam o abre el correo en el navegador web de Gmail / Outlook.</p>',
+        footer_safe_html="Si <strong>no pediste</strong> este acceso, ignora el mensaje. Nadie puede entrar sin el enlace.",
+    )
 
     _rp = config.resend_sender_plausible()
     resend_key = bool(config.RESEND_API_KEY)
@@ -513,6 +636,61 @@ Pullso
             exc,
             exc_info=True,
         )
+        return False
+
+
+def send_hotel_invite_email(
+    *,
+    to_email: str,
+    join_url: str,
+    hotel_display_name: str,
+    inviter_name: str,
+    role_label: str,
+) -> bool:
+    """Invitación a equipo del hotel (Pullso); enlace con token de un solo uso."""
+    if (
+        not config.SMTP_HOST
+        or not config.SMTP_USER
+        or not config.SMTP_PASSWORD
+    ):
+        return False
+    em = (to_email or "").strip()
+    if not em:
+        return False
+    hotel_l = (hotel_display_name or "Hotel").strip() or "Hotel"
+    inv = (inviter_name or "Un compañero").strip()
+    role_es = "administrador" if (role_label or "").strip().lower() == "admin" else "usuario"
+    subject = f"Invitación al equipo de {hotel_l} — Pullso"
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = config.EMAIL_FROM
+    msg["To"] = em
+    text = f"""Hola,
+
+{inv} te invitó a unirte al equipo de «{hotel_l}» en Pullso con rol de {role_es}.
+
+Abre este enlace (caduca en unos días) iniciando sesión con esta misma dirección de correo ({em}):
+
+{join_url}
+
+Si no esperabas esta invitación, ignora este mensaje.
+
+—
+Pullso
+"""
+    safe_url = escape((join_url or "").strip(), quote=True)
+    html = f"""<p>Hola,</p>
+<p><strong>{escape(inv)}</strong> te invitó al equipo de <strong>{escape(hotel_l)}</strong> en Pullso (rol: {escape(role_es)}).</p>
+<p><a href="{safe_url}">Aceptar invitación</a></p>
+<p class="muted">Debes iniciar sesión con <strong>{escape(em)}</strong>. El enlace caduca en unos días.</p>
+<p>—<br>Pullso</p>"""
+    msg.attach(MIMEText(text, "plain", "utf-8"))
+    msg.attach(MIMEText(html, "html", "utf-8"))
+    try:
+        _sendmail([em], msg.as_string())
+        return True
+    except Exception as exc:
+        _log.warning("Falló envío invitación hotel Pullso: %s", exc, exc_info=True)
         return False
 
 

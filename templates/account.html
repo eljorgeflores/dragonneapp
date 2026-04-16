@@ -133,22 +133,72 @@
       {% if whatsapp_notice.kind == 'ok' %}
         Preferencias de WhatsApp guardadas.
       {% elif whatsapp_notice.code == 'too_many' %}
-        Demasiados números. Reduce la lista (máximo 10 por ahora).
+        Demasiados números. Como máximo {{ hotel_wa_max | default(3) }} por hotel.
       {% elif whatsapp_notice.code == 'invalid_phone' %}
         Algún número no es válido. Usa formato internacional (E.164), por ejemplo +529981234567.
       {% elif whatsapp_notice.code == 'empty_recipients' %}
         Marcaste recibir mensajes pero no hay números. Añade al menos uno o desmarca el consentimiento.
+      {% elif whatsapp_notice.code == 'forbidden' %}
+        Solo un administrador del hotel puede cambiar los números de WhatsApp del brief.
       {% else %}
         No se pudieron guardar los datos de WhatsApp. Revisa los números e inténtalo de nuevo.
       {% endif %}
     </p>
     {% endif %}
 
+    {% if invite_notice %}
+    <p class="account-notice account-page-alert muted small" role="status">
+      {% if invite_notice.kind == 'ok' and invite_notice.code == 'joined' %}
+        Te uniste al hotel correctamente.
+      {% elif invite_notice.kind == 'ok' %}
+        Invitación enviada por correo.
+      {% elif invite_notice.code == 'forbidden' %}
+        No tienes permiso para enviar invitaciones.
+      {% elif invite_notice.code == 'smtp' %}
+        No se pudo enviar el correo. Revisa la configuración SMTP del servidor o inténtalo más tarde.
+      {% elif invite_notice.code == 'email_mismatch' %}
+        Debes iniciar sesión con el mismo correo al que se envió la invitación.
+      {% elif invite_notice.code == 'expired' %}
+        El enlace de invitación caducó. Pide una nueva al administrador.
+      {% elif invite_notice.code == 'used' %}
+        Esta invitación ya se usó o no es válida.
+      {% elif invite_notice.code == 'invalid_email' %}
+        Revisa el correo de la persona invitada.
+      {% else %}
+        No se pudo completar la invitación o el enlace no es válido.
+      {% endif %}
+    </p>
+    {% endif %}
+
+    {% if hotels_switch and hotels_switch|length > 0 %}
+    <section class="account-section light-card" aria-labelledby="accountHotelCtxHeading">
+      <h2 id="accountHotelCtxHeading" class="account-section-title">Hotel activo</h2>
+      <p class="muted small" style="margin-top:0.35rem;line-height:1.55">
+        Las lecturas nuevas y el WhatsApp del brief se asocian al hotel seleccionado.
+        {% if current_hotel_label %}<strong>{{ current_hotel_label }}</strong>{% endif %}
+      </p>
+      {% if hotels_switch|length > 1 %}
+      <form method="post" action="{{ url_path('/app/account/hotel/switch') }}" class="account-hotel-switch" style="margin-top:0.75rem;display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center">
+        <label for="hotelSwitchSelect" class="chat-composer-label" style="margin:0">Cambiar hotel</label>
+        <select id="hotelSwitchSelect" name="hotel_id" class="chat-composer-field" style="max-width:22rem">
+          {% for h in hotels_switch %}
+          <option value="{{ h.id }}" {% if current_hotel_id == h.id %}selected{% endif %}>{{ h.display_name }} ({{ h.slug }}) — {{ h.member_role }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-secondary btn-sm">Usar este hotel</button>
+      </form>
+      {% endif %}
+    </section>
+    {% endif %}
+
     <section class="account-section light-card" aria-labelledby="accountWaHeading">
       <h2 id="accountWaHeading" class="account-section-title">WhatsApp (diagnóstico)</h2>
       <p class="muted small" style="margin-top:0.35rem;line-height:1.55">
-        Indica los móviles que deben recibir el resumen por WhatsApp (formato internacional, uno por línea).
+        Indica los móviles que deben recibir el resumen por WhatsApp (formato internacional, uno por línea; máximo {{ hotel_wa_max | default(3) }} por hotel).
         Pullso envía desde su número oficial; necesitamos tu consentimiento explícito.
+        {% if current_hotel_id and not is_hotel_admin_ctx %}
+        <strong>Nota:</strong> solo un administrador del hotel puede editar esta lista; puedes ver los números configurados.
+        {% endif %}
         {% if not kapso_whatsapp_template_configured %}
         <strong>Nota:</strong> en el servidor aún no está definido un template aprobado para reabrir conversaciones fuera de la ventana de 24h
         (<code>KAPSO_WHATSAPP_UTILITY_TEMPLATE_NAME</code>).
@@ -157,15 +207,40 @@
       <form method="post" action="{{ url_path('/app/account/whatsapp') }}" class="account-wa-form" style="margin-top:1rem">
         <div style="margin-bottom:0.75rem">
           <label for="waRecipients" class="chat-composer-label">Números destino</label>
-          <textarea id="waRecipients" name="recipients_text" class="chat-composer-field" rows="4" placeholder="+529981234567&#10;+5215511122233">{{ whatsapp_recipients_text }}</textarea>
+          <textarea id="waRecipients" name="recipients_text" class="chat-composer-field" rows="4" placeholder="+529981234567&#10;+5215511122233" {% if current_hotel_id and not is_hotel_admin_ctx %}readonly aria-readonly="true"{% endif %}>{{ whatsapp_recipients_text }}</textarea>
         </div>
-        <label class="account-wa-opt" style="display:flex;gap:0.5rem;align-items:flex-start;margin-bottom:1rem;cursor:pointer">
-          <input type="checkbox" name="pullso_whatsapp_opt_in" value="1" {% if whatsapp_opt_in %}checked{% endif %} style="margin-top:0.2rem" />
+        <label class="account-wa-opt" style="display:flex;gap:0.5rem;align-items:flex-start;margin-bottom:1rem;cursor:{% if current_hotel_id and not is_hotel_admin_ctx %}default{% else %}pointer{% endif %}">
+          <input type="checkbox" name="pullso_whatsapp_opt_in" value="1" {% if whatsapp_opt_in %}checked{% endif %} {% if current_hotel_id and not is_hotel_admin_ctx %}disabled{% endif %} style="margin-top:0.2rem" />
           <span class="small">Autorizo a Pullso a enviarme mensajes de WhatsApp con diagnósticos y lecturas comerciales a los números indicados. Puedo retirar este consentimiento cuando quiera desmarcando esta casilla y guardando.</span>
         </label>
+        {% if not current_hotel_id or is_hotel_admin_ctx %}
         <button type="submit" class="btn btn-secondary btn-sm">Guardar WhatsApp</button>
+        {% endif %}
       </form>
     </section>
+
+    {% if current_hotel_id and is_hotel_admin_ctx %}
+    <section class="account-section light-card" aria-labelledby="accountInviteHeading">
+      <h2 id="accountInviteHeading" class="account-section-title">Invitar al equipo</h2>
+      <p class="muted small" style="margin-top:0.35rem;line-height:1.55">
+        Enviamos un enlace por correo. La persona debe registrarse o iniciar sesión con <strong>el mismo correo</strong> que indiques aquí.
+      </p>
+      <form method="post" action="{{ url_path('/app/account/hotel/invite') }}" style="margin-top:1rem;display:flex;flex-wrap:wrap;gap:0.75rem;align-items:flex-end">
+        <div>
+          <label for="inviteEmail" class="chat-composer-label">Correo</label>
+          <input id="inviteEmail" type="email" name="invite_email" class="chat-composer-field" required autocomplete="email" style="min-width:16rem" />
+        </div>
+        <div>
+          <label for="inviteRole" class="chat-composer-label">Rol</label>
+          <select id="inviteRole" name="invite_role" class="chat-composer-field">
+            <option value="user">Usuario (solo lectura WhatsApp)</option>
+            <option value="admin">Administrador</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-secondary btn-sm">Enviar invitación</button>
+      </form>
+    </section>
+    {% endif %}
 
     <section class="account-section light-card account-section--billing">
       <h2 class="account-section-title">Facturación y planes</h2>

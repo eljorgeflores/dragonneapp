@@ -53,9 +53,9 @@ def _insert_minimal_analysis(user_id: int) -> int:
             """
             INSERT INTO analyses (
                 user_id, title, plan_at_analysis, file_count, days_covered,
-                summary_json, analysis_json, created_at, share_token
+                summary_json, analysis_json, created_at, share_token, hotel_id
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL)
             """,
             (
                 user_id,

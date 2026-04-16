@@ -248,23 +248,51 @@ def send_diagnosis_whatsapp_for_analysis(user_id: int, analysis_id: int) -> List
         user = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
         if not user:
             raise HTTPException(status_code=404, detail="Usuario no encontrado.")
-        if not int(user["pullso_whatsapp_opt_in"] or 0):
-            raise HTTPException(
-                status_code=400,
-                detail="Activa el consentimiento y guarda al menos un número en Mi cuenta → WhatsApp.",
-            )
-        phones = recipients_list_from_user_column(user["pullso_whatsapp_to"])
-        if not phones:
-            raise HTTPException(
-                status_code=400,
-                detail="Configura al menos un número de WhatsApp en Mi cuenta.",
-            )
         row = conn.execute(
             "SELECT * FROM analyses WHERE id = ? AND user_id = ?",
             (analysis_id, user_id),
         ).fetchone()
         if not row:
             raise HTTPException(status_code=404, detail="Lectura no encontrada.")
+        hid_raw = row["hotel_id"] if "hotel_id" in row.keys() else None
+        hid: Optional[int] = None
+        if hid_raw is not None:
+            try:
+                hid = int(hid_raw)
+            except (TypeError, ValueError):
+                hid = None
+        if hid is not None and hid > 0:
+            if not conn.execute(
+                "SELECT 1 FROM hotel_members WHERE hotel_id = ? AND user_id = ?",
+                (hid, user_id),
+            ).fetchone():
+                raise HTTPException(status_code=403, detail="No tienes acceso a WhatsApp de este hotel para esta lectura.")
+            hrow = conn.execute("SELECT * FROM hotels WHERE id = ?", (hid,)).fetchone()
+            if not hrow:
+                raise HTTPException(status_code=404, detail="Hotel no encontrado.")
+            if not int(hrow["pullso_whatsapp_opt_in"] or 0):
+                raise HTTPException(
+                    status_code=400,
+                    detail="Activa el consentimiento y guarda al menos un número en Mi cuenta → WhatsApp (hotel actual).",
+                )
+            phones = recipients_list_from_user_column(hrow["pullso_whatsapp_to"])
+            if not phones:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Configura al menos un número de WhatsApp en Mi cuenta para el hotel de esta lectura.",
+                )
+        else:
+            if not int(user["pullso_whatsapp_opt_in"] or 0):
+                raise HTTPException(
+                    status_code=400,
+                    detail="Activa el consentimiento y guarda al menos un número en Mi cuenta → WhatsApp.",
+                )
+            phones = recipients_list_from_user_column(user["pullso_whatsapp_to"])
+            if not phones:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Configura al menos un número de WhatsApp en Mi cuenta.",
+                )
         analysis = json.loads(row["analysis_json"])
         title = row["title"] or ""
         share_tok = _ensure_share_token(conn, analysis_id, user_id)
