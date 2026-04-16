@@ -93,6 +93,36 @@ class SendTextRequest(BaseModel):
     preview_url: bool = Field(False, description="Si True, habilita previsualización de URLs (si aplica).")
 
 
+class SendTemplateRequest(BaseModel):
+    to: str = Field(
+        ...,
+        min_length=5,
+        max_length=32,
+        description="Número destino en E.164 (con + opcional). Ej: +529981864670.",
+    )
+    name: str = Field(
+        ...,
+        min_length=1,
+        max_length=512,
+        description="Nombre del template aprobado (Meta). Ej: hello_world o pullso_brief_ping.",
+    )
+    language: str = Field(
+        "en_US",
+        min_length=2,
+        max_length=16,
+        description="Código de idioma del template (p. ej. en_US, es_MX).",
+    )
+    # Por ahora solo soportamos templates sin variables (o con variables vacías).
+
+
+def _normalize_e164_or_raise(to_raw: str) -> str:
+    t = (to_raw or "").strip()
+    t = t[1:] if t.startswith("+") else t
+    if not t.isdigit() or len(t) < 10:
+        raise HTTPException(status_code=400, detail="Número 'to' inválido. Usa E.164 (p. ej. +52999...).")
+    return t
+
+
 @router.post("/api/v1/whatsapp/send-text", summary="Enviar un WhatsApp (texto) vía Kapso", tags=["API v1"])
 def api_send_whatsapp_text(
     payload: SendTextRequest,
@@ -110,10 +140,7 @@ def api_send_whatsapp_text(
     if not base:
         raise HTTPException(status_code=500, detail="Falta KAPSO_WHATSAPP_BASE_URL en el servidor.")
 
-    to_raw = (payload.to or "").strip()
-    to_norm = to_raw[1:] if to_raw.startswith("+") else to_raw
-    if not to_norm.isdigit() or len(to_norm) < 10:
-        raise HTTPException(status_code=400, detail="Número 'to' inválido. Usa E.164 (p. ej. +52999...).")
+    to_norm = _normalize_e164_or_raise(payload.to)
 
     url = f"{base}/{KAPSO_PHONE_NUMBER_ID}/messages"
     body: Dict[str, Any] = {
@@ -141,6 +168,60 @@ def api_send_whatsapp_text(
         raise
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"No se pudo enviar por Kapso: {type(exc).__name__}")
+
+    return {"ok": True, "kapso": data}
+
+
+@router.post("/api/v1/whatsapp/send-template", summary="Enviar un WhatsApp (template) vía Kapso", tags=["API v1"])
+def api_send_whatsapp_template(
+    payload: SendTemplateRequest,
+    _user=Depends(get_api_user),
+):
+    """
+    Envía un template aprobado por Meta.
+    Útil para salir del bloqueo de la ventana de 24 horas (no-template messages).
+    """
+    if not KAPSO_API_KEY:
+        raise HTTPException(status_code=500, detail="Falta KAPSO_API_KEY en el servidor.")
+    if not KAPSO_PHONE_NUMBER_ID:
+        raise HTTPException(status_code=500, detail="Falta KAPSO_PHONE_NUMBER_ID en el servidor.")
+    base = (KAPSO_WHATSAPP_BASE_URL or "").strip().rstrip("/")
+    if not base:
+        raise HTTPException(status_code=500, detail="Falta KAPSO_WHATSAPP_BASE_URL en el servidor.")
+
+    to_norm = _normalize_e164_or_raise(payload.to)
+    name = (payload.name or "").strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="Template 'name' faltante.")
+    lang = (payload.language or "").strip() or "en_US"
+
+    url = f"{base}/{KAPSO_PHONE_NUMBER_ID}/messages"
+    body: Dict[str, Any] = {
+        "messaging_product": "whatsapp",
+        "recipient_type": "individual",
+        "to": to_norm,
+        "type": "template",
+        "template": {
+            "name": name,
+            "language": {"code": lang},
+        },
+    }
+
+    try:
+        with httpx.Client(timeout=15.0) as client:
+            r = client.post(url, headers={"X-API-Key": KAPSO_API_KEY}, json=body)
+        if r.status_code >= 400:
+            detail: Optional[str] = None
+            try:
+                detail = r.text[:1200]
+            except Exception:
+                detail = None
+            raise HTTPException(status_code=502, detail=f"Kapso error {r.status_code}: {detail or 'sin detalle'}")
+        data = r.json()
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"No se pudo enviar template por Kapso: {type(exc).__name__}")
 
     return {"ok": True, "kapso": data}
 
