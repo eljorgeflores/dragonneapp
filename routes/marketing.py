@@ -496,6 +496,8 @@ def _sitemap_entries():
         ("/hotels", "weekly", "0.88"),
         ("/hoteles/ventas", "monthly", "0.82"),
         ("/hotels/sales", "monthly", "0.82"),
+        ("/hoteles/revenue-management-fraccional", "monthly", "0.82"),
+        ("/hotels/fractional-revenue-management", "monthly", "0.82"),
         ("/consultoria/startups", "weekly", "0.88"),
         ("/consultoria/smbs", "weekly", "0.88"),
         ("/consultoria/medios", "weekly", "0.88"),
@@ -691,6 +693,8 @@ DRAGONNÉ es consultoría estratégica (startups, SMBs, hospitalidad) y el produ
 - {u}{url_path("/consulting")} — consulting (EN)
 - {u}{url_path("/hoteles")} — consultoría hospitalidad (ES)
 - {u}{url_path("/hotels")} — hospitality consulting (EN)
+- {u}{url_path("/hoteles/revenue-management-fraccional")} — Revenue Management fraccional (ES)
+- {u}{url_path("/hotels/fractional-revenue-management")} — fractional revenue management (EN)
 - {u}{url_path("/consultoria/startups")} — consultoría startups
 - {u}{url_path("/consultoria/smbs")} — consultoría SMBs
 - {u}{url_path("/consultoria/medios")} — posicionamiento en medios

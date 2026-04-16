@@ -1,5 +1,6 @@
 {# Hospitality — layout refinado premium; copy desde vertical_landings_content #}
 {% set vl_sales_url = url_path('/hoteles/ventas') if lang == 'es' else url_path('/hotels/sales') %}
+{% set vl_rm_url = url_path('/hoteles/revenue-management-fraccional') if lang == 'es' else url_path('/hotels/fractional-revenue-management') %}
 <main id="main" class="vl-h">
 <style>
   /* Ancho útil y safe area en móvil (todas las bandas con .cpc) */
@@ -547,6 +548,15 @@
     .vl-h-hero-funnel__inner{padding:18px 18px 18px 22px}
     .vl-h-hero-funnel__row .cp-btn{flex:1;min-width:min(100%,200px);justify-content:center}
   }
+  .vl-h-hero-funnel__tertiary{margin:16px 0 0}
+  @media (min-width:880px){
+    .vl-h-hero-funnel__tertiary{text-align:right}
+  }
+  .vl-h-hero-funnel__tertiary a{
+    display:inline-block;font-size:.82rem;font-weight:650;letter-spacing:.02em;color:#1a1a1a;text-decoration:none;
+    border-bottom:1px solid rgba(240,126,7,.42);padding-bottom:2px
+  }
+  .vl-h-hero-funnel__tertiary a:hover{color:var(--accent)}
 </style>
 
   <section class="cp-hero-wrap vl-h-hero-shell" id="top">
@@ -625,6 +635,9 @@
             <a class="cp-btn cp-btn-primary" href="{{ url_path('/hoteles/diagnostico') if lang == 'es' else url_path('/hotels/diagnosis') }}">{{ v.diag_cta_open }}</a>
             <a class="cp-btn cp-btn-outline" href="{{ vl_sales_url }}">{{ v.vl_cta_hero_deck }}</a>
           </div>
+          <p class="vl-h-hero-funnel__tertiary">
+            <a href="{{ vl_rm_url }}">{% if lang == 'en' %}Fractional Revenue Management for hotels{% else %}Revenue Management fraccional para hoteles{% endif %} →</a>
+          </p>
         </div>
       </div>
     </div>
@@ -786,12 +799,17 @@
           {% endfor %}
         </div>
       </div>
-      <div class="vl-h-cta-box" id="cta-final">
+        <div class="vl-h-cta-box" id="cta-final">
         <h2>{{ v.final_cta_title }}</h2>
         <p>{{ v.final_cta_lead }}</p>
         <div class="cp-cta-buttons">
           <a class="cp-btn cp-btn-primary" href="{{ calendar_url }}" target="_blank" rel="noopener noreferrer">{{ v.get('final_cta_btn_primary', t.cta_book_demo) }}</a>
-          <a class="cp-btn cp-btn-outline" href="{{ lead_anchor }}">{{ v.get('final_cta_btn_secondary', t.cta_apply) }}</a>
+          <a
+            class="cp-btn cp-btn-outline"
+            href="{{ v.get('final_cta_btn_secondary_href', url_path('/consultoria/contacto') if lang == 'es' else lead_anchor) }}"
+          >
+            {{ v.get('final_cta_btn_secondary', 'Escríbenos' if lang == 'es' else t.cta_apply) }}
+          </a>
         </div>
       </div>
     </div>

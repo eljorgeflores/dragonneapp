@@ -24,9 +24,13 @@ from seo_helpers import absolute_url, breadcrumb_list_node, graph_consulting_lan
 from services.hospitality_diagnosis_compute import compute_hospitality_diagnosis
 from templating import templates
 from hospitality_problem_deck_i18n import get_hospitality_problem_deck_copy
+from fractional_revenue_deck_i18n import get_fractional_revenue_deck_copy
 from vertical_landings_content import VERTICAL_SLUGS, calendar_url, get_vertical_landing_copy
 
 router = APIRouter(tags=["consulting_parent"])
+
+
+_HOSPITALITY_CAL_URL = "https://cal.com/jorge-dragonne-hospitality/30min"
 
 
 def _consulting_translations():
@@ -214,7 +218,15 @@ def render_hospitality_problem_deck_page(request: Request, lang: str):
     """Landing tipo diapositivas (sales deck) para hospitalidad: /hoteles/ventas, /hotels/sales."""
     if lang not in ("es", "en"):
         lang = "es"
-    d = get_hospitality_problem_deck_copy(lang)
+    d = {
+        **get_hospitality_problem_deck_copy(lang),
+        "nav_rm_frac_url": url_path(
+            "/hoteles/revenue-management-fraccional" if lang == "es" else "/hotels/fractional-revenue-management"
+        ),
+        "nav_rm_frac_label": (
+            "Revenue Management fraccional" if lang == "es" else "Fractional Revenue Management"
+        ),
+    }
     v = get_vertical_landing_copy("hospitality", lang)
     ctx = marketing_page_context()
     path_es = "/hoteles/ventas"
@@ -254,13 +266,92 @@ def render_hospitality_problem_deck_page(request: Request, lang: str):
             "t": t,
             "d": d,
             "v": v,
-            "calendar_url": calendar_url(),
+            "calendar_url": _HOSPITALITY_CAL_URL,
             "meta_title": d["meta_title"],
             "meta_description": d["meta_description"],
             "meta_keywords": (
                 "Dragonné, hotel independiente, revenue, consultoría hospitalidad, tiempo, talento, competencia"
                 if lang == "es"
                 else "Dragonné, independent hotel, revenue, hospitality consulting, time, talent, competition"
+            ),
+            "canonical_url": canonical_url,
+            "robots_meta": "index, follow",
+            "og_title": d["meta_title"],
+            "og_description": d["meta_description"],
+            "og_image": og_image,
+            "og_locale": og_locale,
+            "og_locale_alternate": og_locale_alternate,
+            "twitter_title": d["meta_title"],
+            "twitter_description": d["meta_description"],
+            "html_lang": html_lang,
+            "hreflang_alternates": hreflang_alternates,
+            "structured_data": structured,
+            "og_image_alt": f"DRAGONNÉ — {d['breadcrumb_name']}",
+        },
+    )
+
+
+def render_fractional_revenue_deck_page(request: Request, lang: str):
+    """Landing tipo diapositivas para Revenue Management fraccional."""
+    if lang not in ("es", "en"):
+        lang = "es"
+    cal = _HOSPITALITY_CAL_URL
+    d = {
+        **get_fractional_revenue_deck_copy(lang),
+        "nav_back_url": url_path("/hoteles" if lang == "es" else "/hotels"),
+        "lang_url_es": url_path("/hoteles/revenue-management-fraccional"),
+        "lang_url_en": url_path("/hotels/fractional-revenue-management"),
+        "close_primary_href": cal,
+        "close_secondary_href": url_path("/consultoria/contacto" if lang == "es" else "/consulting/contact"),
+        "nav_deck_sales_url": url_path("/hoteles/ventas" if lang == "es" else "/hotels/sales"),
+        "nav_deck_sales_label": "Presentación comercial" if lang == "es" else "Commercial deck",
+        "floating_cta_href": cal,
+    }
+    v = get_vertical_landing_copy("hospitality", lang)
+    ctx = marketing_page_context()
+    path_es = "/hoteles/revenue-management-fraccional"
+    path_en = "/hotels/fractional-revenue-management"
+    canonical_url = absolute_url(path_es if lang == "es" else path_en)
+    structured = {
+        "@context": "https://schema.org",
+        "@graph": [
+            organization_node(),
+            breadcrumb_list_node(
+                [
+                    ("Inicio" if lang == "es" else "Home", absolute_url("/consultoria" if lang == "es" else "/consulting")),
+                    (d["breadcrumb_name"], canonical_url),
+                ]
+            ),
+        ],
+    }
+    hreflang_alternates = [
+        {"hreflang": "es", "href": absolute_url(path_es)},
+        {"hreflang": "en", "href": absolute_url(path_en)},
+        {"hreflang": "x-default", "href": absolute_url(path_es)},
+    ]
+    html_lang = "es-MX" if lang == "es" else "en"
+    og_locale = "es_MX" if lang == "es" else "en_US"
+    og_locale_alternate = "en_US" if lang == "es" else "es_MX"
+    og_image = absolute_url("/static/branding/meta-logo.png")
+    trans = _consulting_translations()
+    raw_t = trans.get(lang) or trans.get("es")
+    t = _DefaultT(raw_t) if raw_t else _DefaultT()
+    return templates.TemplateResponse(
+        "hospitality_problem_deck.html",
+        {
+            "request": request,
+            **ctx,
+            "lang": lang,
+            "t": t,
+            "d": d,
+            "v": v,
+            "calendar_url": _HOSPITALITY_CAL_URL,
+            "meta_title": d["meta_title"],
+            "meta_description": d["meta_description"],
+            "meta_keywords": (
+                "revenue management fraccional, hoteles, pricing dinámico, ADR, RevPAR, mix de canales, Dragonné"
+                if lang == "es"
+                else "fractional revenue management, hotels, dynamic pricing, ADR, RevPAR, channel mix, Dragonné"
             ),
             "canonical_url": canonical_url,
             "robots_meta": "index, follow",
@@ -321,6 +412,7 @@ def render_vertical_landing_page(request: Request, lang: str, slug: str):
     og_locale = "es_MX" if lang == "es" else "en_US"
     og_locale_alternate = "en_US" if lang == "es" else "es_MX"
     html_lang = "es-MX" if lang == "es" else "en"
+    cal_url = _HOSPITALITY_CAL_URL if slug == "hospitality" else calendar_url()
     return templates.TemplateResponse(
         "vertical_landing.html",
         {
@@ -332,7 +424,7 @@ def render_vertical_landing_page(request: Request, lang: str, slug: str):
             "vertical_slug": slug,
             "consulting_home": consulting_home,
             "lead_anchor": url_path("/consultoria/contacto") if lang == "es" else url_path("/consulting/contact"),
-            "calendar_url": calendar_url(),
+            "calendar_url": cal_url,
             "meta_title": meta_title,
             "meta_description": meta_description,
             "meta_keywords": (
@@ -396,6 +488,16 @@ def hospitality_sales_deck_en(request: Request):
     return render_hospitality_problem_deck_page(request, "en")
 
 
+@router.get("/hoteles/revenue-management-fraccional", response_class=HTMLResponse)
+def hospitality_fractional_revenue_deck_es(request: Request):
+    return render_fractional_revenue_deck_page(request, "es")
+
+
+@router.get("/hotels/fractional-revenue-management", response_class=HTMLResponse)
+def hospitality_fractional_revenue_deck_en(request: Request):
+    return render_fractional_revenue_deck_page(request, "en")
+
+
 def render_hospitality_diagnosis_page(request: Request, lang: str):
     """Landing de diagnóstico gratuito (lead gen): /hoteles/diagnostico, /hotels/diagnosis."""
     if lang not in ("es", "en"):
@@ -454,7 +556,7 @@ def render_hospitality_diagnosis_page(request: Request, lang: str):
             "t": t,
             "v": v,
             "d": d,
-            "calendar_url": calendar_url(),
+            "calendar_url": _HOSPITALITY_CAL_URL,
             "consulting_home": consulting_home,
             "hotels_home": hotels_home,
             "consulting_nav_prefix": consulting_home,
@@ -794,7 +896,7 @@ async def _hospitality_diagnosis_submit(request: Request, lang: str) -> JSONResp
         )
     disclaimer = v["diag_disclaimer"]
     context_line = _hospitality_diag_email_context_line(lang, hotel_location, cat_display)
-    meet_url = calendar_url()
+    meet_url = _HOSPITALITY_CAL_URL
     now = datetime.now(timezone.utc).isoformat()
     store = {
         **payload,

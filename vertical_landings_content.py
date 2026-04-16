@@ -274,7 +274,7 @@ _PAGES: dict[str, dict[str, dict]] = {
                 "A partir de ahí podemos evaluar encaje, prioridades y siguiente paso."
             ),
             "final_cta_btn_primary": "Agendar reunión",
-            "final_cta_btn_secondary": "Contacto por escrito",
+            "final_cta_btn_secondary": "Escríbenos",
         },
         "en": {
             "meta_title": "Hospitality consulting · independent & boutique hotels | DRAGONNÉ",
@@ -526,7 +526,7 @@ _PAGES: dict[str, dict[str, dict]] = {
                 "From there we can assess fit, priorities, and next steps."
             ),
             "final_cta_btn_primary": "Book a meeting",
-            "final_cta_btn_secondary": "Contact in writing",
+            "final_cta_btn_secondary": "Write to us",
         },
     },
     "startups": {

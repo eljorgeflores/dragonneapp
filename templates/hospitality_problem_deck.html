@@ -187,15 +187,51 @@
     border-top:1px solid rgba(240,126,7,.12);
   }
   .hpd-slide--lead{
-    background:linear-gradient(180deg,#f4f5f7 0%,#eceef2 100%);
+    background:
+      radial-gradient(ellipse 42% 28% at 50% 52%,rgba(240,126,7,.08),transparent 70%),
+      radial-gradient(ellipse 28% 18% at 50% 50%,rgba(246,169,5,.06),transparent 72%),
+      linear-gradient(180deg,#f4f5f7 0%,#eceef2 100%);
     color:#1a1a1a;
     min-height:min(100dvh,max-content);
     padding-bottom:80px;
   }
   .hpd-slide__inner--form{max-width:min(480px,100%)}
-  .hpd-slide__inner--contact{max-width:min(520px,100%);text-align:center}
+  .hpd-slide__inner--contact{max-width:min(720px,100%);text-align:center}
   .hpd-contact-end{padding:8px 0 12px}
-  .hpd-title--contact{margin:0 0 14px;font-size:clamp(1.65rem,4vw,2.35rem)}
+  .hpd-contact-panel{
+    position:relative;
+    max-width:min(620px,100%);
+    margin:0 auto;
+    padding:30px 28px 28px;
+    border-radius:24px;
+    border:1px solid rgba(52,52,52,.08);
+    background:linear-gradient(165deg,rgba(255,255,255,.94) 0%,rgba(249,250,252,.98) 100%);
+    box-shadow:
+      0 18px 50px rgba(18,22,40,.08),
+      0 0 0 1px rgba(255,255,255,.72) inset;
+  }
+  .hpd-contact-panel::before{
+    content:"";
+    position:absolute;inset:0;
+    border-radius:24px;
+    pointer-events:none;
+    background:linear-gradient(180deg,rgba(246,169,5,.08),transparent 34%);
+    opacity:.9;
+  }
+  .hpd-contact-panel > *{position:relative;z-index:1}
+  .hpd-contact-kicker{
+    margin:0 0 10px;
+    font-size:.68rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--hpd-orange);
+  }
+  .hpd-title--contact{margin:0 0 12px;font-size:clamp(1.65rem,4vw,2.35rem)}
+  .hpd-contact-copy{
+    margin:0 auto 20px;
+    max-width:30ch;
+    font-size:1rem;
+    line-height:1.58;
+    color:var(--hpd-muted-dark);
+  }
   .hpd-contact-email{
     display:inline-block;font-size:clamp(1.1rem,2.4vw,1.35rem);font-weight:800;
     color:var(--hpd-orange);text-decoration:none;letter-spacing:.02em;
@@ -203,6 +239,45 @@
     background:rgba(240,126,7,.06);
   }
   .hpd-contact-email:hover{background:rgba(240,126,7,.12)}
+  .hpd-contact-signature{
+    margin-top:18px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    justify-content:center;
+  }
+  .hpd-contact-signature__avatar{
+    width:42px;
+    height:42px;
+    border-radius:999px;
+    overflow:hidden;
+    flex-shrink:0;
+    border:1px solid rgba(240,126,7,.28);
+    box-shadow:0 4px 14px rgba(240,126,7,.18);
+  }
+  .hpd-contact-signature__avatar img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+  }
+  .hpd-contact-signature__meta{
+    font-size:.82rem;
+    line-height:1.4;
+    color:var(--hpd-muted-dark);
+    text-align:left;
+  }
+  .hpd-contact-signature__name{
+    font-weight:650;
+    color:#1a1a1a;
+  }
+  .hpd-contact-signature__role{
+    opacity:.85;
+  }
+  .hpd-contact-actions{
+    display:flex;justify-content:center;gap:12px;flex-wrap:wrap;
+    margin:22px 0 0;
+  }
   .hpd-title--form{font-size:clamp(1.45rem,3.5vw,2rem);margin-bottom:12px}
   .hpd-form-lead{margin:0 0 22px;font-size:.95rem;line-height:1.55;color:var(--hpd-muted-dark)}
   .hpd-title{
@@ -399,6 +474,9 @@
     .hpd-title{font-size:clamp(1.55rem,7vw,2.4rem)}
     .hpd-actions{flex-direction:column;align-items:stretch}
     .hpd-actions .hpd-btn{width:100%;justify-content:center}
+    .hpd-contact-panel{padding:24px 18px 22px;border-radius:20px}
+    .hpd-contact-actions{flex-direction:column;align-items:stretch}
+    .hpd-contact-actions .hpd-btn{width:100%}
   }
   @media (prefers-reduced-motion:reduce){
     .hpd-slide--hero .hpd-title,.hpd-step-badge,.hpd-chip,.hpd-scroll{animation:none!important}
@@ -529,12 +607,18 @@
     <img src="{{ url_prefix }}/static/branding/dragonne-logo-white-header.png?v=6" alt="DRAGONNÉ" width="280" height="45" loading="eager" decoding="async" />
   </a>
   <nav class="hpd-top__mid" aria-label="{% if lang == 'en' %}Main{% else %}Principal{% endif %}">
-    <a href="{{ url_path('/hoteles') if lang == 'es' else url_path('/hotels') }}">{{ d.nav_back_hotels }}</a>
+    <a href="{{ d.get('nav_back_url', url_path('/hoteles') if lang == 'es' else url_path('/hotels')) }}">{{ d.nav_back_hotels }}</a>
+    {% if d.get('nav_deck_sales_url') %}
+    <a href="{{ d.nav_deck_sales_url }}">{{ d.nav_deck_sales_label }}</a>
+    {% endif %}
+    {% if d.get('nav_rm_frac_url') %}
+    <a href="{{ d.nav_rm_frac_url }}">{{ d.nav_rm_frac_label }}</a>
+    {% endif %}
     <a href="{{ calendar_url }}" target="_blank" rel="noopener noreferrer">{{ d.nav_schedule_meeting }}</a>
   </nav>
   <div class="hpd-top__lang" aria-label="{% if lang == 'en' %}Language{% else %}Idioma{% endif %}">
-    <a href="{{ url_path('/hotels/sales') }}" hreflang="en" class="{% if lang == 'en' %}is-active{% endif %}">{{ d.nav_lang_en }}</a>
-    <a href="{{ url_path('/hoteles/ventas') }}" hreflang="es" class="{% if lang == 'es' %}is-active{% endif %}">{{ d.nav_lang_es }}</a>
+    <a href="{{ d.get('lang_url_en', url_path('/hotels/sales')) }}" hreflang="en" class="{% if lang == 'en' %}is-active{% endif %}">{{ d.nav_lang_en }}</a>
+    <a href="{{ d.get('lang_url_es', url_path('/hoteles/ventas')) }}" hreflang="es" class="{% if lang == 'es' %}is-active{% endif %}">{{ d.nav_lang_es }}</a>
   </div>
 </header>
 
@@ -578,6 +662,28 @@
       <circle cx="8.5" cy="10" r="1.6" fill="currentColor"/>
       <path fill="none" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round" d="M21 15l-5-4-3 3-2-2-4 4"/>
     </symbol>
+    <symbol id="hpd-ic-hotel" viewBox="0 0 24 24">
+      <path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" d="M5 20V6.5A1.5 1.5 0 0 1 6.5 5h8A1.5 1.5 0 0 1 16 6.5V20"/>
+      <path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" d="M16 9.5h2.5A1.5 1.5 0 0 1 20 11v9"/>
+      <path fill="none" stroke="currentColor" stroke-width="1.4" d="M8 8.5h1.5M11.5 8.5H13M8 11.5h1.5M11.5 11.5H13"/>
+      <path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M3.5 20.5h17"/>
+    </symbol>
+    <symbol id="hpd-ic-boutique" viewBox="0 0 24 24">
+      <path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" d="M4 10.5h16V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/>
+      <path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" d="M6 10.5 7.5 6h9L18 10.5"/>
+      <path fill="none" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" d="M9 14h6M12 14v6"/>
+    </symbol>
+    <symbol id="hpd-ic-operators" viewBox="0 0 24 24">
+      <circle cx="6" cy="8" r="2" fill="none" stroke="currentColor" stroke-width="1.55"/>
+      <circle cx="18" cy="8" r="2" fill="none" stroke="currentColor" stroke-width="1.55"/>
+      <circle cx="12" cy="16" r="2" fill="none" stroke="currentColor" stroke-width="1.55"/>
+      <path fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" d="M7.7 9.2 10.3 14M16.3 9.2 13.7 14M8.5 8h7"/>
+    </symbol>
+    <symbol id="hpd-ic-management" viewBox="0 0 24 24">
+      <path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" d="M4 18.5h16V6H4z"/>
+      <path fill="none" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round" d="M7 15l3-3 2.5 2.5L17 10"/>
+      <path fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" d="M17 10h-2.8M17 10v2.8"/>
+    </symbol>
   </svg>
 
   {% for s in d.slides %}
@@ -605,8 +711,40 @@
       {% endif %}
       {% if variant == 'lead' %}
       <div class="hpd-contact-end">
-        <h2 class="hpd-title hpd-title--contact">{{ d.contact_title }}</h2>
-        <a class="hpd-contact-email" href="mailto:{{ d.contact_email }}">{{ d.contact_email }}</a>
+        <div class="hpd-contact-panel">
+          <p class="hpd-contact-kicker">{{ d.get('contact_kicker', 'Conversación inicial') }}</p>
+          <h2 class="hpd-title hpd-title--contact">{{ d.contact_title }}</h2>
+          {% if d.get('contact_copy') %}
+          <p class="hpd-contact-copy">{{ d.contact_copy }}</p>
+          {% endif %}
+          <a class="hpd-contact-email" href="mailto:{{ d.contact_email }}">{{ d.contact_email }}</a>
+          {% if d.get('contact_signature_name') and d.get('contact_signature_avatar') %}
+          <div class="hpd-contact-signature">
+            <div class="hpd-contact-signature__avatar" aria-hidden="true">
+              <img src="{{ url_prefix }}{{ d.contact_signature_avatar }}" alt="" loading="lazy" decoding="async" />
+            </div>
+            <div class="hpd-contact-signature__meta">
+              <div class="hpd-contact-signature__name">{{ d.contact_signature_name }}</div>
+              {% if d.get('contact_signature_role') %}
+              <div class="hpd-contact-signature__role">{{ d.contact_signature_role }}</div>
+              {% endif %}
+            </div>
+          </div>
+          {% endif %}
+          <div class="hpd-contact-actions hpd-no-print">
+            <a class="hpd-btn hpd-btn--primary" href="{{ calendar_url }}" target="_blank" rel="noopener noreferrer">{{ d.get('contact_primary_label', d.cta_calendar) }}</a>
+            <a
+              class="hpd-btn hpd-btn--ghost"
+              href="{{ d.get('contact_secondary_href', url_path('/consultoria/contacto') if lang == 'es' else 'mailto:' ~ d.contact_email) }}"
+            >
+              {% if d.get('contact_secondary_label') %}
+                {{ d.contact_secondary_label }}
+              {% else %}
+                {% if lang == 'es' %}Escríbenos{% else %}{{ d.cta_contact }}{% endif %}
+              {% endif %}
+            </a>
+          </div>
+        </div>
       </div>
       {% else %}
       {% if s.title_lines is defined %}
@@ -659,8 +797,20 @@
       {% endif %}
       {% if variant == 'close' %}
       <div class="hpd-actions">
-        <button type="button" class="hpd-btn hpd-btn--primary hpd-no-print" id="hpd-print">{{ d.cta_pdf }}</button>
-        <a class="hpd-btn hpd-btn--ghost hpd-no-print" href="{{ calendar_url }}" target="_blank" rel="noopener noreferrer">{{ d.cta_calendar }}</a>
+        {% if d.get('close_primary_mode') == 'link' %}
+        <a
+          class="hpd-btn hpd-btn--primary hpd-no-print"
+          href="{{ d.get('close_primary_href', calendar_url) }}"
+          {% if d.get('close_primary_target', '_blank') == '_blank' %}target="_blank" rel="noopener noreferrer"{% endif %}
+        >{{ d.get('close_primary_label', d.cta_calendar) }}</a>
+        {% else %}
+        <button type="button" class="hpd-btn hpd-btn--primary hpd-no-print" id="hpd-print">{{ d.get('close_primary_label', d.cta_pdf) }}</button>
+        {% endif %}
+        <a
+          class="hpd-btn hpd-btn--ghost hpd-no-print"
+          href="{{ d.get('close_secondary_href', calendar_url) }}"
+          {% if d.get('close_secondary_target', '_blank') == '_blank' %}target="_blank" rel="noopener noreferrer"{% endif %}
+        >{{ d.get('close_secondary_label', d.cta_calendar) }}</a>
       </div>
       {% endif %}
       {% endif %}
@@ -672,7 +822,13 @@
   {% endfor %}
 </main>
 
-<a class="hpd-diag-fab hpd-no-print" href="{{ url_path('/hoteles/diagnostico') if lang == 'es' else url_path('/hotels/diagnosis') }}">{{ v.diag_cta_open }}</a>
+<a
+  class="hpd-diag-fab hpd-no-print"
+  href="{{ d.get('floating_cta_href', url_path('/hoteles/diagnostico') if lang == 'es' else url_path('/hotels/diagnosis')) }}"
+  {% if d.get('floating_cta_target', '_self') == '_blank' %}target="_blank" rel="noopener noreferrer"{% endif %}
+>
+  {{ d.get('floating_cta_label', v.diag_cta_open) }}
+</a>
 
 <footer class="hpd-footer">
   <p>{{ d.footer_note }} <a href="{{ url_path('/consultoria') if lang == 'es' else url_path('/consulting') }}">dragonne.co</a></p>
