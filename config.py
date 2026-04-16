@@ -213,6 +213,19 @@ def password_reset_email_delivery_configured() -> bool:
     return smtp_ok or resend_ok
 
 
+# --- Pullso Brief: WhatsApp (Kapso Meta Proxy API) ---
+# Kapso Project API key (recomendado: header X-API-Key al llamar a Kapso).
+KAPSO_API_KEY = _normalize_api_secret(os.getenv("KAPSO_API_KEY", ""))
+# WhatsApp Business Phone Number ID (Kapso/Meta) desde el cual se envían mensajes.
+KAPSO_PHONE_NUMBER_ID = (os.getenv("KAPSO_PHONE_NUMBER_ID") or "").strip()
+# Token de verificación del webhook (challenge GET) para /kapso/whatsapp/webhook.
+KAPSO_WEBHOOK_VERIFY_TOKEN = _normalize_api_secret(os.getenv("KAPSO_WEBHOOK_VERIFY_TOKEN", ""))
+# Secreto para verificar firma HMAC (Kapso "events" webhooks): header X-Webhook-Signature.
+KAPSO_WEBHOOK_SECRET = _normalize_api_secret(os.getenv("KAPSO_WEBHOOK_SECRET", ""))
+# Base URL del proxy Meta/WhatsApp en Kapso.
+KAPSO_WHATSAPP_BASE_URL = (os.getenv("KAPSO_WHATSAPP_BASE_URL") or "https://api.kapso.ai/meta/whatsapp/v24.0").strip().rstrip("/")
+
+
 # Caducidad del enlace de restablecimiento (debe coincidir con textos de correo y UI)
 PASSWORD_RESET_TOKEN_TTL_HOURS = max(1, int(os.getenv("PASSWORD_RESET_TOKEN_TTL_HOURS", "1")))
 

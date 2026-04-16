@@ -105,6 +105,8 @@ def init_db():
             "hotel_google_business_url",
             "hotel_expedia_url",
             "hotel_booking_url",
+            # Pullso Brief: número destino en WhatsApp (E.164, p. ej. +52999...)
+            "pullso_whatsapp_to",
             "manual_plan_override",
             "manual_plan_expires_at",
             "manual_plan_note",

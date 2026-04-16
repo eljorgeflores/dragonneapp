@@ -423,6 +423,7 @@ from routes.auth import router as auth_router
 from routes.billing import router as billing_router
 from routes.consulting import router as consulting_router
 from routes.legal import router as legal_router
+from routes.kapso_whatsapp import router as kapso_whatsapp_router
 from routes.marketing import router as marketing_router
 from routes.revenue_report_preview import router as revenue_report_preview_router
 
@@ -435,6 +436,7 @@ app.include_router(consulting_router)
 app.include_router(admin_router)
 app.include_router(analysis_router)
 app.include_router(revenue_report_preview_router)
+app.include_router(kapso_whatsapp_router)
 
 
 @app.get("/health")
@@ -467,6 +469,7 @@ def health_config(smtp_probe: bool = Query(False)):
         "resend_sender_plausible": resend_sender_plausible(),
         "password_reset_email_delivery_configured": password_reset_email_delivery_configured(),
         "url_prefix_configured": bool(URL_PREFIX),
+        "kapso_configured": bool((os.getenv("KAPSO_API_KEY") or "").strip()) and bool((os.getenv("KAPSO_PHONE_NUMBER_ID") or "").strip()),
     }
     if smtp_probe:
         out["smtp_tcp_reachable"] = smtp_host_tcp_reachable()
