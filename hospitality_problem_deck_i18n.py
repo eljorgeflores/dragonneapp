@@ -22,11 +22,23 @@ _COPY = {
         "nav_lang_es": "ES",
         "nav_back_hotels": "Volver a Hotelería",
         "nav_schedule_meeting": "Agendar reunión",
-        "contact_title": "Contáctanos",
-        "contact_email": "hefzi@dragonne.co",
+        "contact_title": "Hablemos",
+        "contact_email": "jorge@dragonne.co",
+        "contact_kicker": "Siguiente paso",
+        "contact_copy": (
+            "Si esto hizo sentido para tu hotel, conversemos sobre alcance, ritmo de trabajo y si el modelo fraccional "
+            "realmente encaja con tu propiedad."
+        ),
+        "contact_primary_label": "Agendar reunión",
+        "contact_secondary_label": "Escríbenos",
+        "contact_secondary_href": "",  # se resuelve a /consultoria/contacto en la plantilla para ES
         "cta_calendar": "Agendar reunión",
         "cta_pdf": "Descargar PDF",
-        "cta_contact": "Que nos contacten",
+        "cta_contact": "Contáctanos",
+        "contact_signature_name": "Jorge Flores",
+        "contact_signature_role": "Head of Hospitality",
+        "contact_signature_email": "jorge@dragonne.co",
+        "contact_signature_avatar": "/static/team/jorge-flores.jpg",
         "footer_note": "DRAGONNÉ · consultoría estratégica para propiedades y equipos hoteleros.",
         "slides": [
             {
@@ -202,11 +214,11 @@ _COPY = {
         "nav_lang_es": "ES",
         "nav_back_hotels": "Back to Hospitality",
         "nav_schedule_meeting": "Schedule a meeting",
-        "contact_title": "Contact us",
-        "contact_email": "hefzi@dragonne.co",
+        "contact_title": "Let's talk",
+        "contact_email": "jorge@dragonne.co",
         "cta_calendar": "Book a meeting",
         "cta_pdf": "Download PDF",
-        "cta_contact": "Request a callback",
+        "cta_contact": "Contact us",
         "footer_note": "DRAGONNÉ · strategy consulting for hotel teams and owners.",
         "slides": [
             {

@@ -38,7 +38,7 @@ _PAGES: dict[str, dict[str, dict]] = {
                 "viabilidad y la preapertura hasta el día a día del hotel."
             ),
             "cta_primary_label": "Agendar reunión",
-            "cta_secondary_label": "Escribirnos",
+            "cta_secondary_label": "Hablemos",
             "problem_deck_link_label": "Presentación →",
             "sales_deck_popup_label": "¿Encaja con tu hotel?",
             "sales_deck_popup_aria": "Abrir la presentación comercial y ver si encaja con tu hotel",

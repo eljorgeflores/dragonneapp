@@ -35,18 +35,18 @@ _COPY = {
         "contact_secondary_href": "mailto:hefzi@dragonne.co?subject=Revenue%20Management%20fraccional",
         "cta_calendar": "Agendar reunión",
         "cta_pdf": "Descargar PDF",
-        "cta_contact": "Solicitar información",
-        "close_primary_mode": "link",
-        "close_primary_label": "Agendar reunión",
-        "close_primary_target": "_blank",
-        "close_secondary_label": "Hablemos",
+        "cta_contact": "Contáctanos",
+        # Slide de cierre: mismo patrón que el deck de ventas
+        # Botón primario: descarga/impresión (PDF)
+        # Botón secundario: contáctanos (formulario consultoría)
+        "close_secondary_label": "Contáctanos",
         "close_secondary_target": "_self",
         "floating_cta_label": "Agendar reunión",
         "floating_cta_href": "",  # se sobreescribe con la URL de Cal.com en routes/consulting.py
         "floating_cta_target": "_blank",
         "footer_note": "DRAGONNÉ · criterio comercial y revenue para equipos hoteleros.",
         "contact_signature_name": "Jorge Flores",
-        "contact_signature_role": "Head of Hospitality · DRAGONNÉ",
+        "contact_signature_role": "Head of Hospitality",
         "contact_signature_email": "jorge@dragonne.co",
         "contact_signature_avatar": "/static/team/jorge-flores.jpg",
         "slides": [
@@ -214,8 +214,8 @@ _COPY = {
             {"variant": "lead", "kicker": "", "title": ""},
             {
                 "variant": "close",
-                "kicker": "Conversación",
-                "title": "Si tu hotel no necesita una estructura completa, pero sí necesita Revenue Management, esto puede tener mucho sentido.",
+                "kicker": "Empecemos",
+                "title": "Descargar o agendar reunión",
             },
         ],
     },
@@ -236,11 +236,11 @@ _COPY = {
         "contact_email": "hefzi@dragonne.co",
         "cta_calendar": "Book a meeting",
         "cta_pdf": "Download PDF",
-        "cta_contact": "Request information",
-        "close_primary_mode": "link",
-        "close_primary_label": "Book a meeting",
-        "close_primary_target": "_blank",
-        "close_secondary_label": "Request information",
+        "cta_contact": "Contact us",
+        # Closing slide: same pattern as sales deck
+        # Primary button: download/print PDF
+        # Secondary button: contact form (consulting)
+        "close_secondary_label": "Contact us",
         "close_secondary_target": "_self",
         "floating_cta_label": "Book a meeting",
         "floating_cta_href": "",  # overridden with Cal.com in routes/consulting.py
@@ -397,8 +397,8 @@ _COPY = {
             {"variant": "lead", "kicker": "", "title": ""},
             {
                 "variant": "close",
-                "kicker": "Closing",
-                "title": "If your hotel does not need a full structure, but it does need commercial strategy, this service may fit.",
+                "kicker": "Let's begin",
+                "title": "Download or book a meeting",
             },
         ],
     },
