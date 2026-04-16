@@ -25,6 +25,57 @@ from time_utils import now_iso
 
 _E164_BODY = re.compile(r"^[1-9]\d{9,14}$")
 
+# Prefijos para UI (valor = dígitos sin +). Orden importa en split (más largos primero).
+_KNOWN_DIAL_PREFIXES = (
+    "521",
+    "52",
+    "593",
+    "598",
+    "591",
+    "595",
+    "597",
+    "54",
+    "56",
+    "57",
+    "58",
+    "51",
+    "34",
+    "502",
+    "503",
+    "504",
+    "505",
+    "506",
+    "507",
+    "1",
+)
+
+# Opciones de <select> (valor, etiqueta) — LATAM + US + ES frecuentes.
+WA_PREFIX_SELECT_OPTIONS: List[Tuple[str, str]] = [
+    ("52", "México (+52)"),
+    ("521", "México móvil (+521)"),
+    ("1", "Estados Unidos / Canadá (+1)"),
+    ("34", "España (+34)"),
+    ("54", "Argentina (+54)"),
+    ("56", "Chile (+56)"),
+    ("57", "Colombia (+57)"),
+    ("51", "Perú (+51)"),
+    ("593", "Ecuador (+593)"),
+    ("598", "Uruguay (+598)"),
+    ("58", "Venezuela (+58)"),
+    ("591", "Bolivia (+591)"),
+    ("595", "Paraguay (+595)"),
+    ("597", "Surinam (+597)"),
+    ("502", "Guatemala (+502)"),
+    ("503", "El Salvador (+503)"),
+    ("504", "Honduras (+504)"),
+    ("505", "Nicaragua (+505)"),
+    ("506", "Costa Rica (+506)"),
+    ("507", "Panamá (+507)"),
+    ("", "Otro (escribe el número completo con país)"),
+]
+
+PULLSO_WA_UI_SLOTS = 3
+
 
 def normalize_e164_digits(raw: str) -> Optional[str]:
     """Devuelve dígitos sin '+' (formato Cloud API) o None si inválido."""
@@ -53,8 +104,24 @@ def parse_recipients_input(text: str) -> List[str]:
     return parts
 
 
+def _raw_recipient_entries_from_json_list(data: list) -> List[Dict[str, str]]:
+    out: List[Dict[str, str]] = []
+    for x in data:
+        if isinstance(x, dict):
+            name = str(x.get("name") or "").strip()[:80]
+            raw_phone = x.get("phone") if "phone" in x else x.get("e164")
+            d = normalize_e164_digits(str(raw_phone or ""))
+            if d:
+                out.append({"name": name, "phone": d})
+        else:
+            d = normalize_e164_digits(str(x))
+            if d:
+                out.append({"name": "", "phone": d})
+    return out
+
+
 def recipients_list_from_user_column(blob: Optional[str]) -> List[str]:
-    """Lee users.pullso_whatsapp_to: JSON array o un solo número legacy."""
+    """Lee users/hotels pullso_whatsapp_to: JSON array de strings, objetos {name, phone} o un solo número legacy."""
     if blob is None:
         return []
     s = str(blob).strip()
@@ -64,16 +131,104 @@ def recipients_list_from_user_column(blob: Optional[str]) -> List[str]:
         try:
             data = json.loads(s)
             if isinstance(data, list):
-                out: List[str] = []
-                for x in data:
-                    d = normalize_e164_digits(str(x))
-                    if d:
-                        out.append(d)
-                return out
+                return [e["phone"] for e in _raw_recipient_entries_from_json_list(data)]
         except (json.JSONDecodeError, TypeError):
             return []
     d = normalize_e164_digits(s)
     return [d] if d else []
+
+
+def split_e164_prefix_and_national(digits: str) -> Tuple[str, str]:
+    """Separa prefijo internacional conocido del resto (para inputs de cuenta)."""
+    d = re.sub(r"\D", "", digits or "")
+    if not d:
+        return "", ""
+    for p in sorted(_KNOWN_DIAL_PREFIXES, key=len, reverse=True):
+        if d.startswith(p):
+            return p, d[len(p) :]
+    return "", d
+
+
+def recipients_ui_slots_from_blob(blob: Optional[str], max_slots: int = PULLSO_WA_UI_SLOTS) -> List[Dict[str, str]]:
+    """
+    Hasta max_slots filas para formulario: name, prefix, national (solo dígitos nacionales sin prefijo repetido).
+    """
+    entries: List[Dict[str, str]] = []
+    if blob:
+        s = str(blob).strip()
+        if s.startswith("["):
+            try:
+                data = json.loads(s)
+                if isinstance(data, list):
+                    entries = _raw_recipient_entries_from_json_list(data)
+            except (json.JSONDecodeError, TypeError):
+                entries = []
+        else:
+            d = normalize_e164_digits(s)
+            if d:
+                entries = [{"name": "", "phone": d}]
+    rows: List[Dict[str, str]] = []
+    for e in entries[:max_slots]:
+        pr, nat = split_e164_prefix_and_national(e.get("phone") or "")
+        rows.append(
+            {
+                "name": (e.get("name") or "")[:80],
+                "prefix": pr,
+                "national": nat,
+            }
+        )
+    while len(rows) < max_slots:
+        rows.append({"name": "", "prefix": "52", "national": ""})
+    return rows[:max_slots]
+
+
+def combine_prefix_and_national_to_digits(prefix: str, national: str) -> Optional[str]:
+    """Concatena prefijo (dígitos) + número local (dígitos) y valida E.164."""
+    nat = re.sub(r"\D", "", national or "")
+    if not nat:
+        return None
+    pd = re.sub(r"\D", "", prefix or "")
+    combined = pd + nat if pd else nat
+    return normalize_e164_digits(combined)
+
+
+def validate_wa_slots_and_build_blob(
+    slots: List[Dict[str, str]],
+    max_recipients: int,
+) -> Tuple[Optional[str], Optional[str]]:
+    """
+    Valida filas {name, prefix, national} y genera JSON [{name, phone}, ...] con phone en dígitos E.164.
+    Retorna (blob_json, error_code) con error_code None si OK.
+    """
+    intent_rows = 0
+    for s in slots:
+        nat_digits = re.sub(r"\D", "", str(s.get("national") or ""))
+        pref_digits = re.sub(r"\D", "", str(s.get("prefix") or ""))
+        if nat_digits or pref_digits:
+            intent_rows += 1
+    if intent_rows > max_recipients:
+        return None, "too_many"
+
+    cleaned: List[Dict[str, str]] = []
+    seen_phones: set = set()
+    for s in slots[:max_recipients]:
+        name = (s.get("name") or "").strip()[:80]
+        prefix_raw = str(s.get("prefix") or "").strip()
+        national_raw = str(s.get("national") or "").strip()
+        nat_digits = re.sub(r"\D", "", national_raw)
+        pref_digits = re.sub(r"\D", "", prefix_raw)
+        if not nat_digits and not pref_digits:
+            continue
+        digits = combine_prefix_and_national_to_digits(prefix_raw, national_raw)
+        if not digits:
+            return None, "invalid_phone"
+        if digits in seen_phones:
+            continue
+        seen_phones.add(digits)
+        cleaned.append({"name": name, "phone": digits})
+    if not cleaned:
+        return None, "empty_recipients"
+    return json.dumps(cleaned, ensure_ascii=False), None
 
 
 def recipients_blob_for_storage(phones_digits: List[str]) -> Optional[str]:
@@ -112,10 +267,10 @@ def validate_recipients_input(text: str) -> Tuple[Optional[List[str]], Optional[
     return out, None
 
 
-def save_user_whatsapp_settings(user_id: int, recipients_text: str, opt_in: bool) -> Optional[str]:
+def save_user_whatsapp_settings(user_id: int, slots: List[Dict[str, str]], opt_in: bool) -> Optional[str]:
     """
-    Persiste opt-in y lista JSON en users.pullso_whatsapp_to.
-    Retorna código de error o None si OK.
+    Persiste opt-in y JSON [{name, phone}, ...] en users.pullso_whatsapp_to.
+    slots: filas con keys name, prefix, national (como en el formulario de cuenta).
     """
     if not opt_in:
         with db() as conn:
@@ -128,14 +283,14 @@ def save_user_whatsapp_settings(user_id: int, recipients_text: str, opt_in: bool
                 (now_iso(), user_id),
             )
         return None
-    digits, err = validate_recipients_input(recipients_text)
+    cap = min(PULLSO_WHATSAPP_MAX_RECIPIENTS, PULLSO_WA_UI_SLOTS)
+    blob, err = validate_wa_slots_and_build_blob(slots, cap)
     if err == "too_many":
         return "too_many"
     if err == "invalid_phone":
         return "invalid_phone"
-    if not digits:
+    if err == "empty_recipients" or not blob:
         return "empty_recipients"
-    blob = recipients_blob_for_storage(digits)
     with db() as conn:
         conn.execute(
             """

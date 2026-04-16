@@ -345,6 +345,14 @@ button, input, textarea { font: inherit; }
   box-shadow: 0 0 0 3px rgba(240,126,7,.18);
 }
 /* Pullso Brief (cuenta): copy comercial + hilo simulado detrás del blur */
+.account-pullso-brief-eyebrow {
+  margin: 0.35rem 0 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent-primary-dark);
+}
 .account-pullso-brief-lead {
   margin: 0.4rem 0 0;
   font-size: 1.02rem;
@@ -352,6 +360,64 @@ button, input, textarea { font: inherit; }
   font-weight: 600;
   color: var(--text);
   max-width: 42rem;
+}
+.account-pullso-brief-sub {
+  margin-top: 0.55rem;
+  max-width: 44rem;
+}
+.account-wa-form--slots {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.account-wa-slot {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1rem 1.1rem 1.15rem;
+  background: rgba(255, 255, 255, 0.65);
+}
+.account-wa-slot-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
+}
+.account-wa-slot-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  background: rgba(240, 126, 7, 0.12);
+  color: var(--accent-primary-dark);
+}
+.account-wa-slot-heading {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+.account-wa-slot-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+}
+@media (max-width: 720px) {
+  .account-wa-slot-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.account-wa-subcard {
+  padding: 0.85rem 1rem;
+  margin: 0;
+  border-radius: calc(var(--radius) - 2px);
+}
+.account-wa-subhint {
+  margin: 0.35rem 0 0;
+  font-size: 0.72rem;
+  line-height: 1.45;
 }
 .account-pullso-brief-hint {
   display: block;

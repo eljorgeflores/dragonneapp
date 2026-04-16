@@ -8,7 +8,8 @@ import uuid
 from fastapi.testclient import TestClient
 
 from app import app, db
-from services.hotel_pullso import create_hotel_invite, save_hotel_whatsapp_settings
+from services.hotel_pullso import HOTEL_WHATSAPP_MAX_NUMBERS, create_hotel_invite, save_hotel_whatsapp_settings
+from services.pullso_whatsapp_user_delivery import validate_wa_slots_and_build_blob
 
 client = TestClient(app)
 
@@ -159,14 +160,26 @@ def test_hotel_invite_wrong_email_does_not_gain_membership():
         assert m is None
 
 
-def test_save_hotel_whatsapp_rejects_four_numbers():
-    """Máximo tres destinatarios E.164 por hotel."""
-    email_a = _unique_email("hotel-wa-max")
+def test_validate_wa_slots_rejects_more_than_three_intended_recipients():
+    """No se admiten más de tres filas con número (aunque vengan en la petición)."""
+    slots = [
+        {"name": "", "prefix": "52", "national": "9811111111"},
+        {"name": "", "prefix": "52", "national": "9822222222"},
+        {"name": "", "prefix": "52", "national": "9833333333"},
+        {"name": "", "prefix": "52", "national": "9844444444"},
+    ]
+    _, err = validate_wa_slots_and_build_blob(slots, HOTEL_WHATSAPP_MAX_NUMBERS)
+    assert err == "too_many"
+
+
+def test_save_hotel_whatsapp_accepts_named_slots():
+    """Tres destinatarios con prefijo + nacional se guardan sin error."""
+    email_a = _unique_email("hotel-wa-slots")
     pwd = "password123"
     _signup(email_a, pwd)
     client.post(
         "/onboarding",
-        data=_onboarding_payload(f"Hotel Wa {uuid.uuid4().hex[:6]}"),
+        data=_onboarding_payload(f"Hotel WaS {uuid.uuid4().hex[:6]}"),
         follow_redirects=True,
     )
     uid_a = _user_id(email_a)
@@ -182,6 +195,10 @@ def test_save_hotel_whatsapp_rejects_four_numbers():
         assert row is not None
         hid = int(row["hotel_id"])
 
-    recipients = "+5299811111111\n+5299822222222\n+5299833333333\n+5299844444444"
-    err = save_hotel_whatsapp_settings(hid, uid_a, recipients, True)
-    assert err == "too_many"
+    slots = [
+        {"name": "Revenue", "prefix": "52", "national": "5511112222"},
+        {"name": "", "prefix": "52", "national": "9983334455"},
+        {"name": "", "prefix": "", "national": ""},
+    ]
+    err = save_hotel_whatsapp_settings(hid, uid_a, slots, True)
+    assert err is None

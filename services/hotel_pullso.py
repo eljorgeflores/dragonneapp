@@ -215,33 +215,12 @@ def sync_hotels_after_onboarding(request: Request, user_id: int) -> None:
         )
 
 
-def validate_hotel_recipients(text: str) -> Tuple[Optional[List[str]], Optional[str]]:
-    from services.pullso_whatsapp_user_delivery import (
-        normalize_e164_digits,
-        parse_recipients_input,
-        recipients_blob_for_storage,
-    )
+def save_hotel_whatsapp_settings(
+    hotel_id: int, user_id: int, slots: List[Dict[str, str]], opt_in: bool
+) -> Optional[str]:
+    """Persiste WhatsApp del hotel (JSON con nombre + teléfono); solo admin del hotel."""
+    from services.pullso_whatsapp_user_delivery import validate_wa_slots_and_build_blob
 
-    parts = parse_recipients_input(text)
-    if len(parts) > HOTEL_WHATSAPP_MAX_NUMBERS:
-        return None, "too_many"
-    digits_list: List[str] = []
-    for p in parts:
-        d = normalize_e164_digits(p)
-        if not d:
-            return None, "invalid_phone"
-        digits_list.append(d)
-    out: List[str] = []
-    seen = set()
-    for d in digits_list:
-        if d not in seen:
-            seen.add(d)
-            out.append(d)
-    return out, None
-
-
-def save_hotel_whatsapp_settings(hotel_id: int, user_id: int, recipients_text: str, opt_in: bool) -> Optional[str]:
-    """Persiste WhatsApp del hotel; solo admin del hotel."""
     if not user_is_hotel_admin(user_id, hotel_id):
         return "forbidden"
     if not opt_in:
@@ -254,14 +233,13 @@ def save_hotel_whatsapp_settings(hotel_id: int, user_id: int, recipients_text: s
                 (now_iso(), hotel_id),
             )
         return None
-    digits, err = validate_hotel_recipients(recipients_text)
+    blob, err = validate_wa_slots_and_build_blob(slots, HOTEL_WHATSAPP_MAX_NUMBERS)
     if err == "too_many":
         return "too_many"
     if err == "invalid_phone":
         return "invalid_phone"
-    if not digits:
+    if err == "empty_recipients" or not blob:
         return "empty_recipients"
-    blob = recipients_blob_for_storage(digits)
     with db() as conn:
         conn.execute(
             """

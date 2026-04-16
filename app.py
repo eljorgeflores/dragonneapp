@@ -116,7 +116,11 @@ from services.hotel_pullso import (
     save_hotel_whatsapp_settings,
     user_is_hotel_admin,
 )
-from services.pullso_whatsapp_user_delivery import recipients_list_from_user_column, save_user_whatsapp_settings
+from services.pullso_whatsapp_user_delivery import (
+    WA_PREFIX_SELECT_OPTIONS,
+    recipients_ui_slots_from_blob,
+    save_user_whatsapp_settings,
+)
 
 # Campos de contexto hotelero que enriquecen lecturas (excluye correo y plan).
 _PROFILE_ENRICHMENT_FIELDS = (
@@ -347,13 +351,11 @@ def account_page(request: Request):
     ]
     is_hotel_admin_ctx = user_is_hotel_admin(uid, hid) if hid else False
     if hotel:
-        wa_digits = recipients_list_from_user_column(hotel["pullso_whatsapp_to"])
-        whatsapp_recipients_text = "\n".join(f"+{d}" for d in wa_digits)
+        wa_slots = recipients_ui_slots_from_blob(hotel["pullso_whatsapp_to"])
         whatsapp_opt_in = bool(int(hotel["pullso_whatsapp_opt_in"] or 0))
         current_hotel_label = f"{hotel['display_name']} ({hotel['slug']})"
     else:
-        wa_digits = recipients_list_from_user_column(user["pullso_whatsapp_to"])
-        whatsapp_recipients_text = "\n".join(f"+{d}" for d in wa_digits)
+        wa_slots = recipients_ui_slots_from_blob(user["pullso_whatsapp_to"])
         whatsapp_opt_in = bool(int(user["pullso_whatsapp_opt_in"] or 0))
         current_hotel_label = None
     brief_wa = pullso_brief_whatsapp_entitled(user)
@@ -381,7 +383,8 @@ def account_page(request: Request):
         "profile_total": profile_total,
         "whatsapp_notice": whatsapp_notice,
         "invite_notice": invite_notice,
-        "whatsapp_recipients_text": whatsapp_recipients_text,
+        "wa_slots": wa_slots,
+        "wa_prefix_options": WA_PREFIX_SELECT_OPTIONS,
         "whatsapp_opt_in": whatsapp_opt_in,
         "pullso_brief_whatsapp_unlocked": brief_wa,
         "current_hotel_id": hid,
@@ -396,8 +399,16 @@ def account_page(request: Request):
 @app.post("/app/account/whatsapp")
 def account_whatsapp_save(
     request: Request,
-    recipients_text: str = Form(""),
     pullso_whatsapp_opt_in: str = Form(""),
+    wa_name_1: str = Form(""),
+    wa_prefix_1: str = Form(""),
+    wa_national_1: str = Form(""),
+    wa_name_2: str = Form(""),
+    wa_prefix_2: str = Form(""),
+    wa_national_2: str = Form(""),
+    wa_name_3: str = Form(""),
+    wa_prefix_3: str = Form(""),
+    wa_national_3: str = Form(""),
 ):
     """Guarda destinatarios WhatsApp y consentimiento (opt-in / opt-out)."""
     user = require_user(request)
@@ -407,11 +418,16 @@ def account_whatsapp_save(
         request.session["account_whatsapp_notice"] = {"kind": "error", "code": "plan_locked"}
         return RedirectResponse(url_path("/app/account"), status_code=303)
     opt_in = (pullso_whatsapp_opt_in or "").strip() == "1"
+    wa_slots_post = [
+        {"name": wa_name_1, "prefix": wa_prefix_1, "national": wa_national_1},
+        {"name": wa_name_2, "prefix": wa_prefix_2, "national": wa_national_2},
+        {"name": wa_name_3, "prefix": wa_prefix_3, "national": wa_national_3},
+    ]
     uid = int(user["id"])
     ensure_default_hotel_session(request, uid)
     hid = get_current_hotel_id(request, uid)
     if hid:
-        err = save_hotel_whatsapp_settings(hid, uid, recipients_text, opt_in)
+        err = save_hotel_whatsapp_settings(hid, uid, wa_slots_post, opt_in)
         if err == "forbidden":
             request.session["account_whatsapp_notice"] = {"kind": "error", "code": "forbidden"}
         elif err:
@@ -419,7 +435,7 @@ def account_whatsapp_save(
         else:
             request.session["account_whatsapp_notice"] = {"kind": "ok"}
     else:
-        err = save_user_whatsapp_settings(uid, recipients_text, opt_in)
+        err = save_user_whatsapp_settings(uid, wa_slots_post, opt_in)
         if err:
             request.session["account_whatsapp_notice"] = {"kind": "error", "code": err}
         else:

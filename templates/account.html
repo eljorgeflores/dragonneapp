@@ -198,26 +198,53 @@
     {% if pullso_brief_whatsapp_unlocked %}
     <section class="account-section light-card account-pullso-brief" aria-labelledby="accountWaHeading">
       <h2 id="accountWaHeading" class="account-section-title">Pullso Brief · WhatsApp</h2>
+      <p class="account-pullso-brief-eyebrow">Del tablero al móvil del equipo, sin fricción</p>
       <p class="account-pullso-brief-lead">
-        Recibe la lectura directa en WhatsApp: resumen ejecutivo, señales clave y enlace al tablero para decidir al momento o compartir con revenue, comercial y dirección.
+        Cuando cierras una lectura, <strong>Pullso Brief</strong> la envía por WhatsApp: mensaje con el resumen y el enlace al tablero en solo lectura. Sirve para que dirección, revenue o comercial reaccionen al momento, sin rearmar correos ni pedir capturas.
       </p>
-      <p class="muted small" style="margin-top:0.5rem;line-height:1.6">
-        Añade hasta {{ hotel_wa_max | default(3) }} móviles en formato internacional (uno por línea). Los envíos salen desde el número oficial de Pullso; activa el consentimiento para encender el canal.
+      <p class="muted small account-pullso-brief-sub">
+        Configura hasta <strong>{{ hotel_wa_max | default(3) }}</strong> destinatarios. Pon un <strong>nombre</strong> (cómo los verá el equipo) y el <strong>móvil</strong> con prefijo del país. Los mensajes salen desde el número oficial de Pullso.
         {% if current_hotel_id and not is_hotel_admin_ctx %}
-        <span class="account-pullso-brief-hint">Solo un administrador del hotel puede editar los números; aquí ves la configuración actual.</span>
+        <span class="account-pullso-brief-hint">Solo un administrador del hotel puede editar destinatarios; aquí ves la configuración actual.</span>
         {% endif %}
       </p>
-      <form method="post" action="{{ url_path('/app/account/whatsapp') }}" class="account-wa-form" style="margin-top:1rem">
-        <div style="margin-bottom:0.75rem">
-          <label for="waRecipients" class="chat-composer-label">Equipos y móviles que reciben el Brief</label>
-          <textarea id="waRecipients" name="recipients_text" class="chat-composer-field" rows="4" placeholder="+529981234567&#10;+5215511122233" {% if current_hotel_id and not is_hotel_admin_ctx %}readonly aria-readonly="true"{% endif %}>{{ whatsapp_recipients_text }}</textarea>
+      <form method="post" action="{{ url_path('/app/account/whatsapp') }}" class="account-wa-form account-wa-form--slots" style="margin-top:1rem">
+        {% for slot in wa_slots %}
+        {% set idx = loop.index %}
+        <div class="account-wa-slot" data-slot="{{ idx }}">
+          <div class="account-wa-slot-header">
+            <span class="account-wa-slot-num" aria-hidden="true">{{ idx }}</span>
+            <span class="account-wa-slot-heading">Destinatario {{ idx }}</span>
+          </div>
+          <div class="account-wa-slot-grid">
+            <div class="account-wa-subcard light-card">
+              <label class="chat-composer-label" for="wa_name_{{ idx }}">Nombre o rol</label>
+              <input id="wa_name_{{ idx }}" type="text" name="wa_name_{{ idx }}" class="chat-composer-field" maxlength="80" autocomplete="name" placeholder="p. ej. Dirección, Revenue, Gerente general" value="{{ slot.name }}" {% if current_hotel_id and not is_hotel_admin_ctx %}readonly{% endif %} />
+              <p class="muted small account-wa-subhint" style="font-size:0.72rem">Opcional. Ayuda a que el equipo sepa quién recibe cada línea.</p>
+            </div>
+            <div class="account-wa-subcard light-card">
+              <label class="chat-composer-label" for="wa_prefix_{{ idx }}">Prefijo país</label>
+              {% if current_hotel_id and not is_hotel_admin_ctx %}
+              <input type="hidden" name="wa_prefix_{{ idx }}" value="{{ slot.prefix }}" />
+              {% endif %}
+              <select id="wa_prefix_{{ idx }}" name="wa_prefix_{{ idx }}" class="chat-composer-field" {% if current_hotel_id and not is_hotel_admin_ctx %}disabled{% endif %}>
+                {% for val, lab in wa_prefix_options %}
+                <option value="{{ val }}" {% if slot.prefix == val %}selected{% endif %}>{{ lab }}</option>
+                {% endfor %}
+              </select>
+              <label class="chat-composer-label" for="wa_national_{{ idx }}" style="margin-top:0.65rem">Número móvil</label>
+              <input id="wa_national_{{ idx }}" type="tel" name="wa_national_{{ idx }}" class="chat-composer-field" inputmode="numeric" autocomplete="tel-national" placeholder="Sin el prefijo repetido (ej. 9981234567)" value="{{ slot.national }}" {% if current_hotel_id and not is_hotel_admin_ctx %}readonly{% endif %} />
+              <p class="muted small account-wa-subhint" style="font-size:0.72rem">Si elegiste «Otro», escribe el número completo con código de país.</p>
+            </div>
+          </div>
         </div>
-        <label class="account-wa-opt" style="display:flex;gap:0.5rem;align-items:flex-start;margin-bottom:1rem;cursor:{% if current_hotel_id and not is_hotel_admin_ctx %}default{% else %}pointer{% endif %}">
+        {% endfor %}
+        <label class="account-wa-opt" style="display:flex;gap:0.5rem;align-items:flex-start;margin:1rem 0;cursor:{% if current_hotel_id and not is_hotel_admin_ctx %}default{% else %}pointer{% endif %}">
           <input type="checkbox" name="pullso_whatsapp_opt_in" value="1" {% if whatsapp_opt_in %}checked{% endif %} {% if current_hotel_id and not is_hotel_admin_ctx %}disabled{% endif %} style="margin-top:0.2rem" />
-          <span class="small">Autorizo a Pullso a enviarme por WhatsApp mensajes con lecturas comerciales y enlaces al tablero en los números indicados. Puedo retirar este consentimiento cuando quiera desmarcando y guardando.</span>
+          <span class="small">Autorizo a Pullso a enviar por WhatsApp mensajes con lecturas comerciales y enlaces al tablero a los destinatarios indicados. Puedo retirar este consentimiento cuando quiera desmarcando y guardando.</span>
         </label>
         {% if not current_hotel_id or is_hotel_admin_ctx %}
-        <button type="submit" class="btn btn-secondary btn-sm">Guardar Brief en WhatsApp</button>
+        <button type="submit" class="btn btn-secondary btn-sm">Guardar destinatarios</button>
         {% endif %}
       </form>
     </section>
