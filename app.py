@@ -42,7 +42,6 @@ from config import (
     STRIPE_PUBLISHABLE_KEY,
     STRIPE_SECRET_KEY,
     STRIPE_WEBHOOK_SECRET,
-    KAPSO_WHATSAPP_UTILITY_TEMPLATE_NAME,
     internal_path,
     password_reset_email_delivery_configured,
     resend_sender_plausible,
@@ -92,7 +91,13 @@ from fastapi import FastAPI, Form, HTTPException, Query, Request
 from fastapi.exception_handlers import http_exception_handler as default_http_exception_handler
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from plan_entitlements import _get, get_effective_plan, get_paid_plan, manual_access_notice_for_account
+from plan_entitlements import (
+    _get,
+    get_effective_plan,
+    get_paid_plan,
+    manual_access_notice_for_account,
+    pullso_brief_whatsapp_entitled,
+)
 from plans import max_upload_files_for_plan, plan_label
 from services.analysis_core import MIN_BUSINESS_CONTEXT_LEN, upload_eligibility
 from starlette.middleware.sessions import SessionMiddleware
@@ -351,7 +356,7 @@ def account_page(request: Request):
         whatsapp_recipients_text = "\n".join(f"+{d}" for d in wa_digits)
         whatsapp_opt_in = bool(int(user["pullso_whatsapp_opt_in"] or 0))
         current_hotel_label = None
-    kapso_whatsapp_template_configured = bool((KAPSO_WHATSAPP_UTILITY_TEMPLATE_NAME or "").strip())
+    brief_wa = pullso_brief_whatsapp_entitled(user)
     return templates.TemplateResponse("account.html", {
         "request": request,
         "user": user,
@@ -378,7 +383,7 @@ def account_page(request: Request):
         "invite_notice": invite_notice,
         "whatsapp_recipients_text": whatsapp_recipients_text,
         "whatsapp_opt_in": whatsapp_opt_in,
-        "kapso_whatsapp_template_configured": kapso_whatsapp_template_configured,
+        "pullso_brief_whatsapp_unlocked": brief_wa,
         "current_hotel_id": hid,
         "current_hotel_label": current_hotel_label,
         "hotels_switch": hotels_switch,
@@ -398,6 +403,9 @@ def account_whatsapp_save(
     user = require_user(request)
     if onboarding_pending(user):
         return RedirectResponse(url_path("/onboarding"), status_code=303)
+    if not pullso_brief_whatsapp_entitled(user):
+        request.session["account_whatsapp_notice"] = {"kind": "error", "code": "plan_locked"}
+        return RedirectResponse(url_path("/app/account"), status_code=303)
     opt_in = (pullso_whatsapp_opt_in or "").strip() == "1"
     uid = int(user["id"])
     ensure_default_hotel_session(request, uid)
@@ -448,6 +456,9 @@ def account_hotel_invite(
     user = require_user(request)
     if onboarding_pending(user):
         return RedirectResponse(url_path("/onboarding"), status_code=303)
+    if not pullso_brief_whatsapp_entitled(user):
+        request.session["account_invite_notice"] = {"kind": "error", "code": "plan_locked"}
+        return RedirectResponse(url_path("/app/account"), status_code=303)
     uid = int(user["id"])
     ensure_default_hotel_session(request, uid)
     hid = get_current_hotel_id(request, uid)
@@ -536,6 +547,7 @@ def dashboard(request: Request):
         })
     eligibility = upload_eligibility(user)
     eff = get_effective_plan(user)
+    brief_wa = pullso_brief_whatsapp_entitled(user)
     plan_days_unlimited = eff == "free_trial"
     plan_days_limit = (
         None
@@ -576,6 +588,7 @@ def dashboard(request: Request):
         "contact_email": eligibility["contact_email"],
         "smtp_configured": bool(SMTP_HOST and SMTP_USER and SMTP_PASSWORD),
         "min_business_context_len": MIN_BUSINESS_CONTEXT_LEN,
+        "pullso_brief_whatsapp_unlocked": brief_wa,
         **_seo,
     })
 

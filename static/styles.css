@@ -344,6 +344,68 @@ button, input, textarea { font: inherit; }
   background: rgba(240,126,7,.85);
   box-shadow: 0 0 0 3px rgba(240,126,7,.18);
 }
+/* Pullso Brief (cuenta): copy comercial + hilo simulado detrás del blur */
+.account-pullso-brief-lead {
+  margin: 0.4rem 0 0;
+  font-size: 1.02rem;
+  line-height: 1.55;
+  font-weight: 600;
+  color: var(--text);
+  max-width: 42rem;
+}
+.account-pullso-brief-hint {
+  display: block;
+  margin-top: 0.5rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+.pullso-brief-fake-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 4px 12px;
+  max-width: 420px;
+  margin: 0 auto;
+}
+.pullso-brief-fake-row {
+  display: flex;
+  justify-content: flex-start;
+}
+.pullso-brief-fake-row--out {
+  justify-content: flex-end;
+}
+.pullso-brief-fake-bubble {
+  display: inline-block;
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 13px;
+  line-height: 1.45;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+.pullso-brief-fake-bubble--in {
+  background: #fff;
+  border: 1px solid var(--line);
+  color: var(--muted);
+}
+.pullso-brief-fake-bubble--out {
+  background: linear-gradient(135deg, rgba(37, 211, 102, 0.2), rgba(37, 211, 102, 0.08));
+  border: 1px solid rgba(37, 211, 102, 0.35);
+  color: var(--text);
+}
+.account-pullso-brief-locked {
+  margin-bottom: 20px;
+}
+.account-pullso-brief-locked .section-head .account-section-title {
+  font-size: 1.15rem;
+}
+.account-pullso-brief-locked-cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
 .integrations-logos {
   display: grid;
   grid-template-columns: repeat(6, 1fr);

@@ -4,7 +4,7 @@
 {% block body %}
 {% set _user_label = user.contact_name or user.email or 'Usuario' %}
 {% set _user_initial = (_user_label[0] if _user_label else '?')|upper %}
-<div class="app-shell" id="appShell" data-app-url="{{ app_url or '' }}" data-max-files="{{ max_files_per_analysis }}" data-plan="{{ effective_plan }}">
+<div class="app-shell" id="appShell" data-app-url="{{ app_url or '' }}" data-max-files="{{ max_files_per_analysis }}" data-plan="{{ effective_plan }}" data-pullso-brief-wa="{% if pullso_brief_whatsapp_unlocked %}1{% else %}0{% endif %}">
   <header class="app-topbar">
     <div class="app-topbar-inner">
       <a href="{{ url_path('/app') }}" class="brand-link app-brand-link" aria-label="Pullso — Nueva lectura">
@@ -339,7 +339,7 @@
         {% if smtp_configured %}
         <button type="button" class="btn btn-secondary btn-sm" id="serverEmailShareBtn" disabled title="Envío del enlace desde el servidor (SMTP)">Enviar enlace (correo)</button>
         {% endif %}
-        <button type="button" class="btn btn-secondary btn-sm" id="whatsappDiagnosisBtn" disabled title="Envía un resumen de esta lectura por WhatsApp (Mi cuenta)">Enviar diagnóstico por WhatsApp</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="whatsappDiagnosisBtn" disabled {% if pullso_brief_whatsapp_unlocked %}title="Envía el resumen de esta lectura por WhatsApp (Pullso Brief)"{% else %}title="Pullso Brief por WhatsApp: incluido en Pro y Pro+. Abre Mi cuenta para subir de plan."{% endif %}>{% if pullso_brief_whatsapp_unlocked %}Enviar por WhatsApp{% else %}WhatsApp (Pro){% endif %}</button>
       </div>
       <p id="shareFeedback" class="share-feedback muted small hidden" role="status" aria-live="polite"></p>
     </div>

@@ -7,6 +7,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from admin_ops import delete_analysis_by_id
 from auth_session import require_user
 from db import db
+from plan_entitlements import pullso_brief_whatsapp_entitled
 from services.analysis_service import run_web_analyze
 from services.pullso_whatsapp_user_delivery import send_diagnosis_whatsapp_for_analysis
 from services.pdf_service import streaming_pdf_response_for_owned_analysis
@@ -72,6 +73,14 @@ def analysis_pdf(request: Request, analysis_id: int):
 def analysis_whatsapp_diagnosis(request: Request, analysis_id: int):
     """Envía el diagnóstico de la lectura por WhatsApp (Kapso) a los números configurados en Mi cuenta."""
     user = require_user(request)
+    if not pullso_brief_whatsapp_entitled(user):
+        return JSONResponse(
+            {
+                "ok": False,
+                "error": "Pullso Brief por WhatsApp está incluido en Pro y Pro+. Sube de plan en Mi cuenta para activarlo.",
+            },
+            status_code=402,
+        )
     try:
         results = send_diagnosis_whatsapp_for_analysis(int(user["id"]), int(analysis_id))
     except HTTPException as exc:

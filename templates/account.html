@@ -140,6 +140,8 @@
         Marcaste recibir mensajes pero no hay números. Añade al menos uno o desmarca el consentimiento.
       {% elif whatsapp_notice.code == 'forbidden' %}
         Solo un administrador del hotel puede cambiar los números de WhatsApp del brief.
+      {% elif whatsapp_notice.code == 'plan_locked' %}
+        Pullso Brief por WhatsApp forma parte de Pro y Pro+. Elige un plan más abajo para activarlo.
       {% else %}
         No se pudieron guardar los datos de WhatsApp. Revisa los números e inténtalo de nuevo.
       {% endif %}
@@ -154,6 +156,8 @@
         Invitación enviada por correo.
       {% elif invite_notice.code == 'forbidden' %}
         No tienes permiso para enviar invitaciones.
+      {% elif invite_notice.code == 'plan_locked' %}
+        Las invitaciones al equipo con Pullso Brief están incluidas en Pro y Pro+.
       {% elif invite_notice.code == 'smtp' %}
         No se pudo enviar el correo. Revisa la configuración SMTP del servidor o inténtalo más tarde.
       {% elif invite_notice.code == 'email_mismatch' %}
@@ -174,7 +178,7 @@
     <section class="account-section light-card" aria-labelledby="accountHotelCtxHeading">
       <h2 id="accountHotelCtxHeading" class="account-section-title">Hotel activo</h2>
       <p class="muted small" style="margin-top:0.35rem;line-height:1.55">
-        Las lecturas nuevas y el WhatsApp del brief se asocian al hotel seleccionado.
+        Las lecturas nuevas se asocian al hotel seleccionado{% if pullso_brief_whatsapp_unlocked %}; Pullso Brief (WhatsApp) también sigue al hotel activo{% endif %}.
         {% if current_hotel_label %}<strong>{{ current_hotel_label }}</strong>{% endif %}
       </p>
       {% if hotels_switch|length > 1 %}
@@ -191,30 +195,29 @@
     </section>
     {% endif %}
 
-    <section class="account-section light-card" aria-labelledby="accountWaHeading">
-      <h2 id="accountWaHeading" class="account-section-title">WhatsApp (diagnóstico)</h2>
-      <p class="muted small" style="margin-top:0.35rem;line-height:1.55">
-        Indica los móviles que deben recibir el resumen por WhatsApp (formato internacional, uno por línea; máximo {{ hotel_wa_max | default(3) }} por hotel).
-        Pullso envía desde su número oficial; necesitamos tu consentimiento explícito.
+    {% if pullso_brief_whatsapp_unlocked %}
+    <section class="account-section light-card account-pullso-brief" aria-labelledby="accountWaHeading">
+      <h2 id="accountWaHeading" class="account-section-title">Pullso Brief · WhatsApp</h2>
+      <p class="account-pullso-brief-lead">
+        Recibe la lectura directa en WhatsApp: resumen ejecutivo, señales clave y enlace al tablero para decidir al momento o compartir con revenue, comercial y dirección.
+      </p>
+      <p class="muted small" style="margin-top:0.5rem;line-height:1.6">
+        Añade hasta {{ hotel_wa_max | default(3) }} móviles en formato internacional (uno por línea). Los envíos salen desde el número oficial de Pullso; activa el consentimiento para encender el canal.
         {% if current_hotel_id and not is_hotel_admin_ctx %}
-        <strong>Nota:</strong> solo un administrador del hotel puede editar esta lista; puedes ver los números configurados.
-        {% endif %}
-        {% if not kapso_whatsapp_template_configured %}
-        <strong>Nota:</strong> en el servidor aún no está definido un template aprobado para reabrir conversaciones fuera de la ventana de 24h
-        (<code>KAPSO_WHATSAPP_UTILITY_TEMPLATE_NAME</code>).
+        <span class="account-pullso-brief-hint">Solo un administrador del hotel puede editar los números; aquí ves la configuración actual.</span>
         {% endif %}
       </p>
       <form method="post" action="{{ url_path('/app/account/whatsapp') }}" class="account-wa-form" style="margin-top:1rem">
         <div style="margin-bottom:0.75rem">
-          <label for="waRecipients" class="chat-composer-label">Números destino</label>
+          <label for="waRecipients" class="chat-composer-label">Equipos y móviles que reciben el Brief</label>
           <textarea id="waRecipients" name="recipients_text" class="chat-composer-field" rows="4" placeholder="+529981234567&#10;+5215511122233" {% if current_hotel_id and not is_hotel_admin_ctx %}readonly aria-readonly="true"{% endif %}>{{ whatsapp_recipients_text }}</textarea>
         </div>
         <label class="account-wa-opt" style="display:flex;gap:0.5rem;align-items:flex-start;margin-bottom:1rem;cursor:{% if current_hotel_id and not is_hotel_admin_ctx %}default{% else %}pointer{% endif %}">
           <input type="checkbox" name="pullso_whatsapp_opt_in" value="1" {% if whatsapp_opt_in %}checked{% endif %} {% if current_hotel_id and not is_hotel_admin_ctx %}disabled{% endif %} style="margin-top:0.2rem" />
-          <span class="small">Autorizo a Pullso a enviarme mensajes de WhatsApp con diagnósticos y lecturas comerciales a los números indicados. Puedo retirar este consentimiento cuando quiera desmarcando esta casilla y guardando.</span>
+          <span class="small">Autorizo a Pullso a enviarme por WhatsApp mensajes con lecturas comerciales y enlaces al tablero en los números indicados. Puedo retirar este consentimiento cuando quiera desmarcando y guardando.</span>
         </label>
         {% if not current_hotel_id or is_hotel_admin_ctx %}
-        <button type="submit" class="btn btn-secondary btn-sm">Guardar WhatsApp</button>
+        <button type="submit" class="btn btn-secondary btn-sm">Guardar Brief en WhatsApp</button>
         {% endif %}
       </form>
     </section>
@@ -239,6 +242,47 @@
         </div>
         <button type="submit" class="btn btn-secondary btn-sm">Enviar invitación</button>
       </form>
+    </section>
+    {% endif %}
+
+    {% else %}
+    <section class="integrations-card light-card integrations-card--locked account-pullso-brief-locked" aria-labelledby="accountBriefLockedHeading">
+      <div class="section-head">
+        <div>
+          <h2 id="accountBriefLockedHeading" class="account-section-title" style="margin:0">Pullso Brief · WhatsApp</h2>
+          <p class="muted integrations-card-lead" style="margin-top:0.35rem">Tu lectura comercial, en el móvil del equipo — listo para decidir o reenviar.</p>
+        </div>
+        <div class="integrations-lock-pill">
+          <span class="integrations-lock-dot"></span>
+          <span>Módulo bloqueado</span>
+          <button type="button" class="integrations-help" aria-label="Más información sobre Pullso Brief" title="Pullso Brief entrega el resumen de cada lectura por WhatsApp y permite invitar a tu equipo por hotel. Está incluido en los planes Pro y Pro+; el plan gratuito se centra en generar lecturas en el panel.">?</button>
+        </div>
+      </div>
+      <p class="muted small" style="margin:0 0 12px;line-height:1.55">
+        Activa Pro o Pro+ para recibir cada Pullso en WhatsApp, compartir con revenue y dirección sin fricción, y gestionar invitaciones por hotel.
+      </p>
+      <div class="integrations-card__blurred-wrap">
+        <div class="integrations-card__blurred">
+          <div class="pullso-brief-fake-thread" aria-hidden="true">
+            <div class="pullso-brief-fake-row">
+              <span class="pullso-brief-fake-bubble pullso-brief-fake-bubble--in">Lectura lista · mix canal vs. ADR</span>
+            </div>
+            <div class="pullso-brief-fake-row pullso-brief-fake-row--out">
+              <span class="pullso-brief-fake-bubble pullso-brief-fake-bubble--out">Gracias — lo reenvío a dirección</span>
+            </div>
+            <div class="pullso-brief-fake-row">
+              <span class="pullso-brief-fake-bubble pullso-brief-fake-bubble--in">Tablero (solo lectura): pullso.app/…</span>
+            </div>
+          </div>
+        </div>
+        <div class="integrations-lock-icon" aria-hidden="true">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+      </div>
+      <div class="account-pullso-brief-locked-cta">
+        <a href="#account-plans-upgrade" class="btn btn-primary btn-sm">Ver planes Pro y Pro+</a>
+        <span class="muted small">Incluye envío por WhatsApp e invitaciones por hotel.</span>
+      </div>
     </section>
     {% endif %}
 
@@ -275,7 +319,7 @@
         <p class="muted small account-billing-footnote">Pagos procesados de forma segura por un proveedor certificado PCI.</p>
       </div>
 
-      <details class="account-plans-collapsible">
+      <details class="account-plans-collapsible" id="account-plans-upgrade">
         <summary class="account-plans-collapsible-summary">
           <span class="account-plans-collapsible-belt" aria-hidden="true"></span>
           <div class="account-plans-collapsible-summary-row">
@@ -301,6 +345,7 @@
                 <li>Hasta {{ pro_90_max_files }} archivos por corrida</li>
                 <li>Hasta {{ pro_90_max_analyses }} análisis guardados a la vez</li>
                 <li>Hasta {{ pro_90_reports_per_month }} lecturas nuevas por mes (UTC); el cupo mensual no se restablece borrando una lectura</li>
+                <li><strong>Pullso Brief:</strong> lectura en WhatsApp + invitaciones por hotel</li>
               </ul>
               {% if paid_plan == 'free' %}
               <button type="button" class="btn btn-secondary full account-upgrade-btn" data-billing-cycle="monthly" data-plan-tier="pro" aria-label="Continuar al pago del plan Pro, {{ monthly_price }} USD al mes">Conocer más</button>
@@ -318,6 +363,7 @@
                 <li>Hasta {{ pro_180_max_files }} archivos por corrida</li>
                 <li>Hasta {{ pro_plus_max_analyses }} análisis guardados a la vez</li>
                 <li>Hasta {{ pro_plus_reports_per_month }} lecturas nuevas por mes (UTC); el cupo mensual no se restablece borrando una lectura</li>
+                <li><strong>Pullso Brief:</strong> lectura en WhatsApp + invitaciones por hotel</li>
               </ul>
               {% if paid_plan == 'pro_plus' %}
               <span class="pill pill-pro-plus">Tu plan actual</span>

@@ -34,6 +34,7 @@ from plan_entitlements import (
     get_paid_plan,
     manual_override_is_configured,
     plan_for_openai_model,
+    pullso_brief_whatsapp_entitled,
     stored_manual_override_plan,
 )
 from plans import max_upload_files_for_plan
@@ -572,3 +573,18 @@ def test_enforce_plan_matches_get_effective_plan_for_same_user_row():
     user_effective_free = {**user, "manual_plan_override": None}
     with pytest.raises(HTTPException):
         enforce_plan(user_effective_free, summary)
+
+
+def test_pullso_brief_whatsapp_entitled_pro_and_trial():
+    """Brief por WhatsApp: excluye solo plan efectivo free; incluye Pro, Pro+ y prueba extendida."""
+    assert pullso_brief_whatsapp_entitled({"plan": "free"}) is False
+    assert pullso_brief_whatsapp_entitled({"plan": "pro"}) is True
+    assert pullso_brief_whatsapp_entitled({"plan": "pro_plus"}) is True
+    assert pullso_brief_whatsapp_entitled({"plan": "free_trial"}) is True
+
+
+def test_pullso_brief_whatsapp_entitled_free_trial_override_full_access():
+    """Facturación free + override manual free_trial → plan efectivo free_trial → Brief habilitado."""
+    u = {"plan": "free", "manual_plan_override": "free_trial", "manual_plan_expires_at": None}
+    assert get_effective_plan(u) == "free_trial"
+    assert pullso_brief_whatsapp_entitled(u) is True

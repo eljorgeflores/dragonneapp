@@ -202,3 +202,14 @@ def manual_access_notice_for_account(user: UserLike) -> Optional[dict]:
         "body": f"Tu cuenta tiene acceso {label} concedido por el equipo (acceso manual).",
         "detail": "Sin fecha de caducidad.",
     }
+
+
+def pullso_brief_whatsapp_entitled(user: UserLike) -> bool:
+    """
+    Pullso Brief (WhatsApp desde el panel, equipo por hotel): no está en el plan gratuito base.
+
+    Queda habilitado con el plan efectivo Pro, Pro+ o **prueba extendida** (`free_trial`): esa prueba
+    debe comportarse como acceso completo al producto (mismos módulos que pago), no como plan free.
+    """
+    p = normalize_product_plan(get_effective_plan(user))
+    return p in ("pro", "pro_plus", "free_trial")

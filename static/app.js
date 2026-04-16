@@ -45,6 +45,8 @@ const copyShareBtn = document.getElementById('copyShareBtn');
 const emailShareBtn = document.getElementById('emailShareBtn');
 const serverEmailShareBtn = document.getElementById('serverEmailShareBtn');
 const whatsappDiagnosisBtn = document.getElementById('whatsappDiagnosisBtn');
+const pullsoBriefWaEnabled =
+  appShell && String(appShell.dataset.pullsoBriefWa || '').trim() === '1';
 const shareFeedback = document.getElementById('shareFeedback');
 let currentAnalysisId = null;
 let currentShareUrl = null;
@@ -704,7 +706,7 @@ function setShareControlsEnabled(on) {
   if (copyShareBtn) copyShareBtn.disabled = !on;
   if (emailShareBtn) emailShareBtn.disabled = !on;
   if (serverEmailShareBtn) serverEmailShareBtn.disabled = !on;
-  if (whatsappDiagnosisBtn) whatsappDiagnosisBtn.disabled = !on;
+  if (whatsappDiagnosisBtn) whatsappDiagnosisBtn.disabled = !on || !pullsoBriefWaEnabled;
   if (!on && shareFeedback) {
     shareFeedback.classList.add('hidden');
     shareFeedback.textContent = '';
@@ -1019,6 +1021,7 @@ if (emailShareBtn) {
 
 if (whatsappDiagnosisBtn) {
   whatsappDiagnosisBtn.addEventListener('click', async () => {
+    if (!pullsoBriefWaEnabled) return;
     if (!currentAnalysisId) return;
     shareFeedback?.classList.add('hidden');
     const original = whatsappDiagnosisBtn.textContent;

@@ -62,9 +62,29 @@ def _email_href(url: str) -> str:
     return escape((url or "").strip(), quote=True)
 
 
+def _email_auth_fallback_section_html(*, link_href: str, link_label_plain: str, url_visible: str) -> str:
+    """Bloque HTML reutilizable: enlace alternativo + URL monoespaciada (URLs sin escapar; se escapan aquí)."""
+    lh = _email_href(link_href)
+    ll = escape((link_label_plain or "").strip())
+    uv = escape(url_visible)
+    return f"""<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:0;border-collapse:collapse;">
+<tr>
+<td style="padding:20px 18px 18px;background-color:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;">
+<p style="margin:0 0 4px;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">Plan B</p>
+<p style="margin:0 0 14px;font-size:14px;line-height:1.55;color:#475569;">Si el botón no abre o el enlace llegó cortado, usa el enlace alternativo o copia la dirección completa.</p>
+<p style="margin:0 0 14px;">
+<a href="{lh}" style="display:inline-block;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;font-weight:700;color:#f07e07;text-decoration:none;">{ll} →</a>
+</p>
+<p style="margin:0;padding:12px 14px;background-color:#ffffff;border:1px solid #e2e8f0;border-radius:10px;font-size:11px;line-height:1.5;word-break:break-all;color:#64748b;font-family:ui-monospace,SFMono-Regular,'Cascadia Code','Segoe UI Mono',Consolas,monospace;">{uv}</p>
+</td>
+</tr>
+</table>"""
+
+
 def _pullso_auth_email_shell_html(
     *,
     preheader_plain: str,
+    eyebrow_plain: str | None = None,
     heading_plain: str,
     intro_safe_html: str,
     primary_href: str,
@@ -77,25 +97,34 @@ def _pullso_auth_email_shell_html(
     Tablas + estilos en línea para buena compatibilidad con Gmail, Apple Mail, Outlook.
     """
     ph = escape((preheader_plain or "").strip())
+    eb_raw = (eyebrow_plain or "").strip()
+    eb_html = (
+        f"""<p style="margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:#f07e07;text-align:center;">{escape(eb_raw)}</p>"""
+        if eb_raw
+        else ""
+    )
     h1 = escape((heading_plain or "").strip())
     cta = escape((primary_cta_label_plain or "").strip())
     href = _email_href(primary_href)
-    logo_src = _email_href(absolute_url("/static/branding/pullso-logo.png"))
     site_href = _email_href(absolute_url("/"))
-    # Paleta alineada con static/styles.css (--text, acentos Dragonne / Pullso)
-    bg = "#ececec"
+    logo_src = _email_href(absolute_url("/static/branding/pullso-logo-email.png"))
+    bg = "#e8eaef"
     card = "#ffffff"
-    text = "#343434"
-    muted = "#6b7280"
+    text = "#1e293b"
+    muted = "#64748b"
     accent = "#f07e07"
-    accent_soft = "#fef3e2"
-    border = "#e5e5e5"
+    accent_hi = "#f6a905"
+    accent_soft = "#fff7ed"
+    border = "#e2e8f0"
     return f"""<!DOCTYPE html>
-<html lang="es" xmlns="http://www.w3.org/1999/xhtml">
+<html lang="es" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="x-apple-disable-message-reformatting" />
+<meta name="format-detection" content="telephone=no,date=no,address=no,email=no" />
 <title>{h1}</title>
+<!--[if mso]><style type="text/css">body, table, td {{font-family: Arial, Helvetica, sans-serif !important;}}</style><![endif]-->
 </head>
 <body style="margin:0;padding:0;background-color:{bg};">
 <span style="display:none!important;visibility:hidden;mso-hide:all;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">
@@ -103,54 +132,61 @@ def _pullso_auth_email_shell_html(
 </span>
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:{bg};">
 <tr>
-<td align="center" style="padding:28px 16px;">
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:560px;">
+<td align="center" style="padding:36px 18px 48px;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:520px;">
 <tr>
-<td style="background-color:{card};border-radius:16px;border:1px solid {border};overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,0.06);">
+<td style="background-color:{card};border-radius:20px;border:1px solid {border};overflow:hidden;box-shadow:0 4px 6px -1px rgba(15,23,42,0.06),0 20px 40px -12px rgba(15,23,42,0.12);">
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
 <tr>
-<td style="height:4px;background-color:{accent};font-size:0;line-height:0;">&nbsp;</td>
+<td height="5" style="height:5px;line-height:5px;font-size:0;background:linear-gradient(90deg,{accent_hi} 0%,{accent} 55%,#d96d00 100%);background-color:{accent};">&nbsp;</td>
 </tr>
 <tr>
-<td style="padding:28px 28px 8px;text-align:center;">
-<a href="{site_href}" style="text-decoration:none;display:inline-block;">
-<img src="{logo_src}" width="160" alt="Pullso" style="display:block;margin:0 auto;width:160px;max-width:100%;height:auto;border:0;outline:none;text-decoration:none;" />
+<td bgcolor="#0a0a0a" style="background-color:#0a0a0a;background:linear-gradient(180deg,#141414 0%,#0a0a0a 100%);padding:28px 24px 26px;text-align:center;">
+<a href="{site_href}" style="text-decoration:none;display:inline-block;" aria-label="Pullso — inicio">
+<img src="{logo_src}" width="232" alt="Pullso" style="display:block;margin:0 auto;width:232px;max-width:90%;height:auto;border:0;outline:none;text-decoration:none;" />
 </a>
+<p style="margin:18px 0 0;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:12px;line-height:1.45;color:#94a3b8;letter-spacing:0.02em;">Confirma que eres tú con el botón de abajo</p>
 </td>
 </tr>
 <tr>
-<td style="padding:8px 28px 4px;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-<h1 style="margin:0 0 12px;font-size:22px;line-height:1.25;font-weight:800;letter-spacing:-0.02em;color:{text};text-align:center;">
+<td style="padding:32px 32px 8px;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+{eb_html}
+<h1 style="margin:0 0 14px;font-size:26px;line-height:1.2;font-weight:800;letter-spacing:-0.03em;color:{text};text-align:center;">
 {h1}
 </h1>
-<div style="font-size:16px;line-height:1.55;color:{text};">
+<div style="font-size:16px;line-height:1.65;color:{text};">
 {intro_safe_html}
 </div>
-<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:24px auto 0;">
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin:28px auto 0;border-collapse:collapse;">
 <tr>
-<td align="center" bgcolor="{accent}" style="border-radius:10px;">
-<a href="{href}" style="display:inline-block;padding:14px 32px;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:10px;">
+<td align="center" bgcolor="{accent}" style="border-radius:12px;box-shadow:0 4px 14px rgba(240,126,7,0.38);">
+<a href="{href}" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:16px 40px;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:17px;font-weight:700;letter-spacing:0.01em;color:#ffffff;text-decoration:none;border-radius:12px;text-shadow:0 1px 0 rgba(0,0,0,0.12);">
 {cta}
 </a>
 </td>
 </tr>
 </table>
+<p style="margin:14px 0 0;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:12px;line-height:1.45;color:{muted};text-align:center;">Un solo clic · enlace personal e intransferible</p>
 </td>
 </tr>
 <tr>
-<td style="padding:8px 28px 28px;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;line-height:1.55;color:{text};">
+<td style="padding:4px 32px 32px;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;line-height:1.6;color:{text};">
 {after_cta_safe_html}
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:20px 0 0;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:26px 0 0;border-collapse:collapse;">
 <tr>
 <td style="border-top:1px solid {border};font-size:0;line-height:0;height:1px;">&nbsp;</td>
 </tr>
 </table>
-<div style="margin-top:18px;padding:12px 14px;background-color:{accent_soft};border-radius:10px;font-size:13px;line-height:1.5;color:{muted};">
-{footer_safe_html}
-</div>
-<p style="margin:20px 0 0;font-size:12px;line-height:1.45;color:{muted};text-align:center;">
-Un producto <strong style="color:{text};">DRAGONNÉ</strong>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:22px 0 0;border-collapse:collapse;">
+<tr>
+<td style="padding:16px 18px;background-color:{accent_soft};border-left:4px solid {accent};border-radius:0 12px 12px 0;">
+<p style="margin:0;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;line-height:1.55;color:#9a3412;">
+<span style="font-size:16px;line-height:1;vertical-align:-2px;margin-right:6px;">✓</span> {footer_safe_html}
 </p>
+</td>
+</tr>
+</table>
+<p style="margin:22px 0 0;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:11px;line-height:1.5;color:#94a3b8;text-align:center;">Mensaje automático de Pullso · no respondas a este correo</p>
 </td>
 </tr>
 </table>
@@ -306,11 +342,11 @@ Si el enlace anterior no abre en tu correo (algunos programas cortan la direcci�
 
 {reset_link_fallback}
 """
-        rf_h = _email_href(reset_link_fallback)
-        rf_t = escape(reset_link_fallback)
-        alt_html = f"""<p style="margin:0 0 10px;font-size:14px;line-height:1.5;color:#6b7280;">Si el botón no abre o el enlace llegó cortado, prueba el enlace alternativo o copia la dirección en el navegador:</p>
-<p style="margin:0 0 8px;"><a href="{rf_h}" style="color:#f07e07;font-weight:700;text-decoration:none;">Abrir restablecimiento (enlace alternativo) →</a></p>
-<p style="margin:0;padding:10px 12px;background:#f9fafb;border-radius:8px;font-size:12px;line-height:1.45;word-break:break-all;color:#64748b;font-family:ui-monospace,monospace;">{rf_t}</p>"""
+        alt_html = _email_auth_fallback_section_html(
+            link_href=reset_link_fallback,
+            link_label_plain="Abrir restablecimiento (enlace alternativo)",
+            url_visible=reset_link_fallback,
+        )
     subject = "Recuperar contraseña — Pullso"
     text = f"""Hola,
 
@@ -325,17 +361,18 @@ Si no pediste esto, ignora este correo.
 —
 Pullso
 """
-    intro_html = f"""<p style="margin:0 0 12px;">Hola,</p>
-<p style="margin:0 0 12px;">Alguien solicitó restablecer la contraseña de tu cuenta en <strong>Pullso</strong>. El enlace caduca en <strong>{escape(ttl_es)}</strong>.</p>"""
+    intro_html = f"""<p style="margin:0 0 14px;font-size:17px;font-weight:600;color:#334155;">Hola,</p>
+<p style="margin:0;">Recibimos una solicitud para <strong>cambiar la contraseña</strong> de tu cuenta en <strong>Pullso</strong>. El enlace caduca en <strong>{escape(ttl_es)}</strong>.</p>"""
     html = _pullso_auth_email_shell_html(
         preheader_plain=f"Pullso: restablecer contraseña (válido {ttl_es}).",
+        eyebrow_plain="Recuperación de cuenta",
         heading_plain="Nueva contraseña",
         intro_safe_html=intro_html,
         primary_href=reset_link,
         primary_cta_label_plain="Elegir nueva contraseña",
         after_cta_safe_html=alt_html
-        or '<p style="margin:0;font-size:13px;line-height:1.5;color:#6b7280;">Si no ves el botón, abre este correo en otro dispositivo o revisa la carpeta de spam.</p>',
-        footer_safe_html="Si <strong>no fuiste tú</strong>, ignora este correo: tu contraseña actual seguirá vigente.",
+        or '<p style="margin:0;padding:14px 16px;text-align:center;font-size:14px;line-height:1.55;color:#64748b;">¿No ves el botón? Prueba <strong style="color:#334155;">abrir el correo en la vista web</strong> o revisa la carpeta de spam.</p>',
+        footer_safe_html="Si <strong>no fuiste tú</strong>, ignora este mensaje: tu contraseña actual no cambia.",
     )
 
     _rp = config.resend_sender_plausible()
@@ -472,11 +509,11 @@ Si el enlace anterior no abre en tu correo, copia y pega esta dirección en el n
 
 {magic_link_fallback}
 """
-        mf_h = _email_href(magic_link_fallback)
-        mf_t = escape(magic_link_fallback)
-        alt_html = f"""<p style="margin:0 0 10px;font-size:14px;line-height:1.5;color:#6b7280;">Si el botón no responde o el enlace llegó incompleto, usa el enlace alternativo o copia la dirección:</p>
-<p style="margin:0 0 8px;"><a href="{mf_h}" style="color:#f07e07;font-weight:700;text-decoration:none;">Abrir acceso (enlace alternativo) →</a></p>
-<p style="margin:0;padding:10px 12px;background:#f9fafb;border-radius:8px;font-size:12px;line-height:1.45;word-break:break-all;color:#64748b;font-family:ui-monospace,monospace;">{mf_t}</p>"""
+        alt_html = _email_auth_fallback_section_html(
+            link_href=magic_link_fallback,
+            link_label_plain="Abrir acceso (enlace alternativo)",
+            url_visible=magic_link_fallback,
+        )
     subject = "Tu enlace para entrar — Pullso"
     text = f"""Hola,
 
@@ -489,17 +526,18 @@ Si no pediste este acceso, ignora este correo.
 —
 Pullso
 """
-    intro_html = f"""<p style="margin:0 0 12px;">Hola,</p>
-<p style="margin:0 0 12px;">Usa el botón de abajo para entrar a <strong>Pullso</strong>. El enlace es válido durante <strong>{escape(ttl_label)}</strong> y solo puede usarse una vez.</p>"""
+    intro_html = f"""<p style="margin:0 0 14px;font-size:17px;font-weight:600;color:#334155;">Hola,</p>
+<p style="margin:0;">Aquí tienes tu acceso a <strong>Pullso</strong>. El enlace vale <strong>{escape(ttl_label)}</strong> y <strong>solo se puede usar una vez</strong> por seguridad.</p>"""
     html = _pullso_auth_email_shell_html(
         preheader_plain=f"Pullso: tu enlace para entrar (válido {ttl_label}).",
+        eyebrow_plain="Acceso con enlace",
         heading_plain="Entrar a tu cuenta",
         intro_safe_html=intro_html,
         primary_href=magic_link,
         primary_cta_label_plain="Entrar ahora",
         after_cta_safe_html=alt_html
-        or '<p style="margin:0;font-size:13px;line-height:1.5;color:#6b7280;">¿No ves el botón? Revisa spam o abre el correo en el navegador web de Gmail / Outlook.</p>',
-        footer_safe_html="Si <strong>no pediste</strong> este acceso, ignora el mensaje. Nadie puede entrar sin el enlace.",
+        or '<p style="margin:0;padding:14px 16px;text-align:center;font-size:14px;line-height:1.55;color:#64748b;">¿No ves el botón? Abre el correo en la <strong style="color:#334155;">vista web</strong> o mira en spam.</p>',
+        footer_safe_html="Si <strong>no pediste</strong> este acceso, ignora el mensaje. Sin el enlace, nadie entra a tu cuenta.",
     )
 
     _rp = config.resend_sender_plausible()
