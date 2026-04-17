@@ -201,26 +201,26 @@
         <header class="account-wa-module-head">
           <div class="account-wa-module-head-main">
             <h2 id="accountWaHeading" class="account-section-title account-wa-module-title">Pullso Brief · WhatsApp</h2>
-            <p class="account-wa-module-kicker">Del tablero al móvil del equipo</p>
+            <p class="account-wa-module-kicker">Distribución del resumen por WhatsApp</p>
             <p class="account-wa-module-lead muted">
-              Al cerrar una lectura enviamos por WhatsApp el resumen y el enlace al tablero en solo lectura, desde el número oficial de Pullso.
+              Cuando la lectura queda generada en el panel, Pullso puede notificar por WhatsApp la síntesis y el enlace al tablero asociado en solo lectura. El envío se origina en nuestro número corporativo verificado; aquí registra los móviles del equipo que deben recibir esa notificación.
             </p>
           </div>
           <dl class="account-wa-module-facts" aria-label="Resumen del módulo">
             <div class="account-wa-module-fact">
               <dt>Destinatarios</dt>
-              <dd>Hasta {{ hotel_wa_max | default(3) }} líneas</dd>
+              <dd>Hasta {{ hotel_wa_max | default(3) }} números por configuración</dd>
             </div>
             <div class="account-wa-module-fact">
-              <dt>Saludo</dt>
-              <dd>Nombre opcional por línea</dd>
+              <dt>Identificación</dt>
+              <dd>Nombre o rol opcional (aparece en el saludo del mensaje)</dd>
             </div>
           </dl>
         </header>
         {% if current_hotel_id and not is_hotel_admin_ctx %}
         <p class="account-wa-readonly-banner muted small" role="status">Solo un administrador del hotel puede editar destinatarios. Aquí ves la configuración actual.</p>
         {% endif %}
-        <p class="account-wa-module-hint muted small" id="accountWaFieldHints">El nombre personaliza el saludo del mensaje. Si eliges «Otro» en país, escribe el número completo con prefijo internacional.</p>
+        <p class="account-wa-module-hint muted small" id="accountWaFieldHints">El nombre o rol es opcional y se usa en el saludo del WhatsApp. Si el país es «Otro», indique el número completo en formato internacional (incluido prefijo).</p>
 
         <form method="post" action="{{ url_path('/app/account/whatsapp') }}" class="account-wa-form account-wa-form--slots" aria-describedby="accountWaFieldHints">
           <div class="account-wa-recipient-stack">
@@ -330,16 +330,16 @@
       <div class="section-head">
         <div>
           <h2 id="accountBriefLockedHeading" class="account-section-title" style="margin:0">Pullso Brief · WhatsApp</h2>
-          <p class="muted integrations-card-lead" style="margin-top:0.35rem">Tu lectura comercial, en el móvil del equipo — listo para decidir o reenviar.</p>
+          <p class="muted integrations-card-lead" style="margin-top:0.35rem">Notificación por WhatsApp de la síntesis y del tablero en solo lectura, con gestión de destinatarios por hotel.</p>
         </div>
         <div class="integrations-lock-pill">
           <span class="integrations-lock-dot"></span>
           <span>Módulo bloqueado</span>
-          <button type="button" class="integrations-help" aria-label="Más información sobre Pullso Brief" title="Pullso Brief entrega el resumen de cada lectura por WhatsApp y permite invitar a tu equipo por hotel. Está incluido en los planes Pro y Pro+; el plan gratuito se centra en generar lecturas en el panel.">?</button>
+          <button type="button" class="integrations-help" aria-label="Más información sobre Pullso Brief" title="Pullso Brief envía por WhatsApp la síntesis de cada lectura y el enlace al tablero en solo lectura; en Pro y Pro+ puede configurar destinatarios e invitaciones por hotel. El plan gratuito se limita a la generación de lecturas en el panel.">?</button>
         </div>
       </div>
       <p class="muted small" style="margin:0 0 12px;line-height:1.55">
-        Activa Pro o Pro+ para recibir cada Pullso en WhatsApp, compartir con revenue y dirección sin fricción, y gestionar invitaciones por hotel.
+        Los planes Pro y Pro+ incluyen el envío del resumen por WhatsApp, la definición de destinatarios por propiedad y las invitaciones al equipo con acceso al brief.
       </p>
       <div class="integrations-card__blurred-wrap">
         <div class="integrations-card__blurred">

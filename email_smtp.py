@@ -141,11 +141,11 @@ def _pullso_auth_email_shell_html(
 <td height="5" style="height:5px;line-height:5px;font-size:0;background:linear-gradient(90deg,{accent_hi} 0%,{accent} 55%,#d96d00 100%);background-color:{accent};">&nbsp;</td>
 </tr>
 <tr>
-<td bgcolor="#0a0a0a" style="background-color:#0a0a0a;background:linear-gradient(180deg,#141414 0%,#0a0a0a 100%);padding:28px 24px 26px;text-align:center;">
+<td bgcolor="{card}" style="background-color:{card};padding:26px 24px 22px;text-align:center;border-bottom:1px solid {border};">
 <a href="{site_href}" style="text-decoration:none;display:inline-block;" aria-label="Pullso — inicio">
-<img src="{logo_src}" width="232" alt="Pullso" style="display:block;margin:0 auto;width:232px;max-width:90%;height:auto;border:0;outline:none;text-decoration:none;" />
+<img src="{logo_src}" width="200" alt="Pullso" style="display:block;margin:0 auto;width:200px;max-width:88%;height:auto;border:0;outline:none;text-decoration:none;" />
 </a>
-<p style="margin:18px 0 0;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:12px;line-height:1.45;color:#94a3b8;letter-spacing:0.02em;">Confirma que eres tú con el botón de abajo</p>
+<p style="margin:16px 0 0;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:12px;line-height:1.45;color:{muted};letter-spacing:0.02em;">Confirma que eres tú con el botón de abajo</p>
 </td>
 </tr>
 <tr>
