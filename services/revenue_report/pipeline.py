@@ -4,6 +4,8 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, Tuple
 
+from services.summary_profile_enrich import build_hotel_context_for_analysis
+
 from .fallback import legacy_to_revenue_report
 from .openai_generate import generate_revenue_report_via_openai, should_skip_openai_for_revenue_report
 from .schema_util import validate_revenue_report, validation_errors
@@ -12,17 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 def build_hotel_context_from_user(user: Dict[str, Any]) -> Dict[str, Any]:
-    return {
-        "hotel_nombre": user.get("hotel_name") or "",
-        "hotel_tamano": user.get("hotel_size") or "",
-        "hotel_categoria": user.get("hotel_category") or "",
-        "hotel_ubicacion": user.get("hotel_location") or "",
-        "hotel_estrellas": user.get("hotel_stars") or 0,
-        "hotel_ubicacion_destino": user.get("hotel_location_context") or "",
-        "hotel_pms": user.get("hotel_pms") or "",
-        "hotel_channel_manager": user.get("hotel_channel_manager") or "",
-        "hotel_booking_engine": user.get("hotel_booking_engine") or "",
-    }
+    return build_hotel_context_for_analysis(user)
 
 
 def build_revenue_report_document(

@@ -118,6 +118,10 @@
             <dd>{% if user.hotel_expedia_url %}<a href="{{ user.hotel_expedia_url }}" target="_blank" rel="noopener">Ver listado</a>{% else %}—{% endif %}</dd>
             <dt>Booking.com</dt>
             <dd>{% if user.hotel_booking_url %}<a href="{{ user.hotel_booking_url }}" target="_blank" rel="noopener">Ver listado</a>{% else %}—{% endif %}</dd>
+            <dt>Habitaciones (perfil)</dt>
+            <dd>{% if user.hotel_room_count %}{{ user.hotel_room_count }}{% else %}—{% endif %}</dd>
+            <dt>Comisiones OTA (referencia)</dt>
+            <dd>{% if user.hotel_ota_commissions_json %}<code style="font-size:0.85em;word-break:break-all">{{ user.hotel_ota_commissions_json }}</code>{% else %}—{% endif %}</dd>
             <dt>Plan actual</dt>
             <dd><span class="pill {% if effective_plan == 'pro' %}pill-pro{% endif %}{% if effective_plan == 'pro_plus' %} pill-pro-plus{% endif %}{% if effective_plan == 'free_trial' %} pill-free-trial{% endif %}">Plan {{ plan_label }}</span></dd>
           </dl>

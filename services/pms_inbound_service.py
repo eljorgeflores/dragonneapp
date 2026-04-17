@@ -30,6 +30,7 @@ from services.analysis_core import (
     user_row_as_dict,
 )
 from services.hotel_pullso import user_is_hotel_admin
+from services.summary_profile_enrich import build_hotel_context_for_analysis, enrich_summary_with_hotel_profile
 from time_utils import now_iso
 
 _log = logging.getLogger(__name__)
@@ -411,25 +412,11 @@ def _process_inbound_core(
     reserved_run_log_id: Optional[int] = None
     try:
         summary = summarize_reports(files)
+        hotel_context = build_hotel_context_for_analysis(user)
+        enrich_summary_with_hotel_profile(summary, hotel_context)
         enforce_plan(user, summary)
         effective = get_effective_plan(user)
         reserved_run_log_id = reserve_monthly_generation_or_raise(uid, effective)
-
-        hotel_context = {
-            "hotel_nombre": user["hotel_name"],
-            "hotel_tamano": user["hotel_size"] or "",
-            "hotel_categoria": user["hotel_category"] or "",
-            "hotel_ubicacion": user["hotel_location"] or "",
-            "hotel_estrellas": user.get("hotel_stars") or 0,
-            "hotel_ubicacion_destino": user.get("hotel_location_context") or "",
-            "hotel_pms": user.get("hotel_pms") or "",
-            "hotel_channel_manager": user.get("hotel_channel_manager") or "",
-            "hotel_booking_engine": user.get("hotel_booking_engine") or "",
-            "hotel_tech_other": user.get("hotel_tech_other") or "",
-            "hotel_google_business_url": user.get("hotel_google_business_url") or "",
-            "hotel_expedia_url": user.get("hotel_expedia_url") or "",
-            "hotel_booking_url": user.get("hotel_booking_url") or "",
-        }
         plan_for_model = plan_for_openai_model(effective)
         analysis = call_openai(summary, combined_business_context, hotel_context, plan_for_model)
         vendor = str(route["pms_vendor"] or "").strip() or "pms"

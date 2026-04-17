@@ -711,6 +711,8 @@ def onboarding(
     hotel_google_business_url: str = Form(""),
     hotel_expedia_url: str = Form(""),
     hotel_booking_url: str = Form(""),
+    hotel_room_count: str = Form(""),
+    hotel_ota_commissions_json: str = Form(""),
 ):
     user = get_current_user(request)
     if not user:
@@ -734,6 +736,45 @@ def onboarding(
     gmb_url = hotel_google_business_url.strip() or None
     expedia_url = hotel_expedia_url.strip() or None
     booking_url = hotel_booking_url.strip() or None
+    room_db = None
+    trc = (hotel_room_count or "").strip()
+    if trc:
+        try:
+            ri = int(trc)
+            if 1 <= ri <= 5000:
+                room_db = ri
+        except ValueError:
+            room_db = None
+    comm_raw = (hotel_ota_commissions_json or "").strip() or None
+    if comm_raw:
+        try:
+            parsed = json.loads(comm_raw)
+            if not isinstance(parsed, dict):
+                return templates.TemplateResponse(
+                    "onboarding.html",
+                    {
+                        "request": request,
+                        "error": "Las comisiones OTA deben ser un objeto JSON (clave → porcentaje), por ejemplo {\"booking\":15,\"expedia\":20}.",
+                        "user": user,
+                        "editing": not onboarding_pending(user),
+                        **_ONBOARDING_SEO,
+                    },
+                    status_code=400,
+                )
+        except json.JSONDecodeError:
+            return templates.TemplateResponse(
+                "onboarding.html",
+                {
+                    "request": request,
+                    "error": "JSON inválido en comisiones OTA. Revisa comillas y números.",
+                    "user": user,
+                    "editing": not onboarding_pending(user),
+                    **_ONBOARDING_SEO,
+                },
+                status_code=400,
+            )
+    else:
+        comm_raw = None
     if not hotel_name or not contact_name:
         return templates.TemplateResponse(
             "onboarding.html",
@@ -765,11 +806,30 @@ def onboarding(
             hotel_stars = ?, hotel_location_context = ?,
             hotel_pms = ?, hotel_channel_manager = ?, hotel_booking_engine = ?, hotel_tech_other = ?,
             hotel_google_business_url = ?, hotel_expedia_url = ?, hotel_booking_url = ?,
+            hotel_room_count = ?, hotel_ota_commissions_json = ?,
             updated_at = ?
             WHERE id = ?
             """,
-            (hotel_name, contact_name, hotel_size, hotel_category, hotel_location, stars_int, location_ctx,
-             pms, channel_mgr, booking_eng, tech_other, gmb_url, expedia_url, booking_url, now_iso(), user["id"]),
+            (
+                hotel_name,
+                contact_name,
+                hotel_size,
+                hotel_category,
+                hotel_location,
+                stars_int,
+                location_ctx,
+                pms,
+                channel_mgr,
+                booking_eng,
+                tech_other,
+                gmb_url,
+                expedia_url,
+                booking_url,
+                room_db,
+                comm_raw,
+                now_iso(),
+                user["id"],
+            ),
         )
     try:
         from services.hotel_pullso import sync_hotels_after_onboarding

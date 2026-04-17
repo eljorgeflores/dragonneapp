@@ -45,6 +45,7 @@ def generate_revenue_report_via_openai(
             "Usa cover.hotel_name desde contexto_hotel.hotel_nombre si aplica. "
             "cover.report_date en formato YYYY-MM-DD usando metadata.created_at si viene. "
             "cover.period_label debe reflejar el rango temporal del resumen de datos cuando sea posible. "
+            "Si resumen_datos.lectura_operativa existe, incorpóralo en hallazgos y KPIs (ocupación proxy, margen por canal con comisiones del perfil). "
             "prepared_by: Dragonné."
         ),
         "contexto_hotel": hotel_context,

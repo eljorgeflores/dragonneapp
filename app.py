@@ -145,6 +145,8 @@ _PROFILE_ENRICHMENT_FIELDS = (
     "hotel_google_business_url",
     "hotel_expedia_url",
     "hotel_booking_url",
+    "hotel_room_count",
+    "hotel_ota_commissions_json",
 )
 
 

@@ -21,6 +21,7 @@ from services.analysis_core import (
     summarize_reports,
     user_row_as_dict,
 )
+from services.summary_profile_enrich import build_hotel_context_for_analysis, enrich_summary_with_hotel_profile
 from services.pdf_service import streaming_pdf_response_for_owned_analysis
 from services.share_service import public_share_base_url
 
@@ -67,24 +68,11 @@ async def api_analyze(
     try:
         combined_business_context = require_business_context(business_context)
         summary = summarize_reports(files)
+        hotel_context = build_hotel_context_for_analysis(user)
+        enrich_summary_with_hotel_profile(summary, hotel_context)
         enforce_plan(user, summary)
         effective = get_effective_plan(user)
         reserved_run_log_id = reserve_monthly_generation_or_raise(user["id"], effective)
-        hotel_context = {
-            "hotel_nombre": user["hotel_name"],
-            "hotel_tamano": user["hotel_size"] or "",
-            "hotel_categoria": user["hotel_category"] or "",
-            "hotel_ubicacion": user["hotel_location"] or "",
-            "hotel_estrellas": user.get("hotel_stars") or 0,
-            "hotel_ubicacion_destino": user.get("hotel_location_context") or "",
-            "hotel_pms": user.get("hotel_pms") or "",
-            "hotel_channel_manager": user.get("hotel_channel_manager") or "",
-            "hotel_booking_engine": user.get("hotel_booking_engine") or "",
-            "hotel_tech_other": user.get("hotel_tech_other") or "",
-            "hotel_google_business_url": user.get("hotel_google_business_url") or "",
-            "hotel_expedia_url": user.get("hotel_expedia_url") or "",
-            "hotel_booking_url": user.get("hotel_booking_url") or "",
-        }
         plan_for_model = plan_for_openai_model(effective)
         analysis = call_openai(summary, combined_business_context, hotel_context, plan_for_model)
         nrep = summary["reports_detected"]

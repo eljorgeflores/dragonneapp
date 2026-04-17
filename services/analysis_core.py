@@ -61,6 +61,7 @@ DATE_ALIASES = [
     "stay_date", "date", "business_date", "checkin", "check_in", "arrival", "arrival_date",
     "checkout", "check_out", "departure", "departure_date", "booking_date", "created_at",
     "reservation_date", "travel_date", "occupancy_date", "fecha", "fecha_noche", "dia",
+    "entrada", "salida", "llegada",
 ]
 REVENUE_ALIASES = [
     "net_room_revenue", "room_revenue", "revenue", "revenue_net", "net_revenue", "total_revenue",
@@ -246,10 +247,28 @@ def find_col(columns: List[str], aliases: List[str]) -> Optional[str]:
     return None
 
 
+_DATE_HEADER_HINT = re.compile(
+    r"(fecha|\bdate\b|\bd[ií]as?\b|entrada|salida|llegada|check[-_\s]?in|check[-_\s]?out)",
+    re.IGNORECASE,
+)
+
+
 def _has_date_header(columns: Any) -> bool:
-    """True si las columnas parecen encabezado de datos (tienen Fecha/Día/Date)."""
-    lower = [str(c).lower() for c in columns]
-    return any("fecha" in c or "date" in c or "día" in c or "dia" in c for c in lower)
+    """
+    True si las columnas parecen encabezado de datos con fechas o estancias.
+
+    Importante: no usar el subcadena «dia» suelto (p. ej. coincide con «Diaz» en nombres
+    cuando Excel usa una fila de datos como cabecera).
+    """
+    if columns is None:
+        return False
+    for c in columns:
+        t = str(c).strip()
+        if not t:
+            continue
+        if _DATE_HEADER_HINT.search(t):
+            return True
+    return False
 
 
 # Palabras típicas en exportaciones PMS / channel (puntuación de fila candidata a encabezado)
@@ -958,6 +977,10 @@ def _infer_sheet_compute(sheet_name: str, df: pd.DataFrame) -> Dict[str, Any]:
         "adr": find_col(norm_cols, ADR_ALIASES),
         "taxes": find_col(norm_cols, TAX_ALIASES),
     }
+    # Columna «N» (noches) típica en listas de llegadas PMS; no va en ROOM_NIGHTS_ALIASES porque
+    # la heurística «alias in col» chocaría con nombres como «interno».
+    if mappings["room_nights"] is None and "n" in norm_cols:
+        mappings["room_nights"] = "n"
 
     date_candidates: List[str] = []
     for col in norm_cols:
@@ -980,8 +1003,14 @@ def _infer_sheet_compute(sheet_name: str, df: pd.DataFrame) -> Dict[str, Any]:
             except Exception as e:
                 warnings.append(f"Columna «{col}» (fecha heurística): omitida ({type(e).__name__}).")
 
-    checkin_col = next((c for c in date_candidates if any(x in c for x in ["checkin", "check_in", "arrival"])), None)
-    checkout_col = next((c for c in date_candidates if any(x in c for x in ["checkout", "check_out", "departure"])), None)
+    checkin_col = next(
+        (c for c in date_candidates if any(x in c for x in ["checkin", "check_in", "arrival", "entrada", "llegada"])),
+        None,
+    )
+    checkout_col = next(
+        (c for c in date_candidates if any(x in c for x in ["checkout", "check_out", "departure", "salida"])),
+        None,
+    )
     stay_col = next((c for c in date_candidates if any(x in c for x in ["stay", "business_date", "occupancy"])), None) or checkin_col
     booking_col = next((c for c in date_candidates if any(x in c for x in ["booking", "created", "reservation_date"])), None)
 
@@ -1418,9 +1447,9 @@ Eres DRAGONNÉ, consultor senior en revenue management, distribución y e-commer
 
 Recibirás un JSON con:
 - plan: "free_30", "pro_90" o "pro_180".
-- contexto_hotel: objeto con hotel_nombre, hotel_tamano, hotel_categoria, hotel_ubicacion, hotel_estrellas, hotel_ubicacion_destino; además (opcionales): hotel_pms, hotel_channel_manager, hotel_booking_engine, hotel_tech_other (stack tecnológico), hotel_google_business_url, hotel_expedia_url, hotel_booking_url (enlaces de presencia online). Úsalo SIEMPRE para personalizar.
+- contexto_hotel: objeto con hotel_nombre, hotel_tamano, hotel_categoria, hotel_ubicacion, hotel_estrellas, hotel_ubicacion_destino; además (opcionales): hotel_pms, hotel_channel_manager, hotel_booking_engine, hotel_tech_other (stack tecnológico), hotel_google_business_url, hotel_expedia_url, hotel_booking_url (enlaces de presencia online); y si el usuario los configuró: hotel_habitaciones_fisicas (número de llaves) y hotel_comisiones_ota_pct_referencia (mapa clave→% de comisión de referencia). Úsalo SIEMPRE para personalizar.
 - contexto_negocio: qué le preocupa al usuario.
-- resumen: lectura estructurada de reportes exportados desde PMS / channel / motor (CSV/Excel), incluyendo métricas por canal, días cubiertos y fechas.
+- resumen: lectura estructurada de reportes exportados desde PMS / channel / motor (CSV/Excel), incluyendo métricas por canal, días cubiertos y fechas. Puede incluir lectura_operativa: bloque calculado en backend con ocupación proxy, agregados de room nights/ingreso y estimaciones de margen por canal usando el perfil de inventario y comisiones (son referencias, no contabilidad oficial).
 
 Objetivo: que un gerente general o director comercial entienda la foto en pocos minutos y que un revenue manager tenga decisiones concretas sobre tarifa, canales y costo de distribución.
 
@@ -1434,8 +1463,8 @@ Reglas analíticas (cómo leer los datos):
    - Mezcla de canales: canal directo vs OTAs, dependencia de 1–2 agencias, canales con mucho volumen pero ADR o margen neto claramente más bajo.
    - Pricing y ADR: diferencias de tarifa entre canales para las mismas fechas, entre semana vs fin de semana, y entre tipos de día (p.ej. noches con eventos/local demand drivers si las detectas).
    - Ritmo y distribución en el tiempo: qué días de la semana cargan la ocupación (¿solo viernes-sábado?, ¿se cae domingo-jueves?), tendencias dentro del rango (primer tercio vs último tercio).
-   - Coste de distribución: cuando haya comisiones o % estimados, habla de margen neto y no solo de revenue bruto; si no hay comisiones, dilo y explica por qué sería clave tenerlas.
-   - Riesgos y oportunidades de inventario: noches con poca demanda donde tiene sentido empujar volumen, y noches fuertes donde conviene proteger tarifa y mix directo.
+   - Coste de distribución: cuando haya comisiones o % estimados, habla de margen neto y no solo de revenue bruto; si no hay comisiones, dilo y explica por qué sería clave tenerlas. Si viene resumen.lectura_operativa.margen_por_canal_comision_perfil, úsalo para comparar canales en términos de ingreso neto estimado (aclara que los % salen del perfil del hotel).
+   - Riesgos y oportunidades de inventario: noches con poca demanda donde tiene sentido empujar volumen, y noches fuertes donde conviene proteger tarifa y mix directo. Si existe resumen.lectura_operativa.estimaciones.ocupacion_proxy_pct y hotel_habitaciones_fisicas, comenta ocupación aproximada versus capacidad y las limitaciones del cálculo (rango de fechas del export, filas omitidas, etc.).
 5) Cuando veas patrones interesantes, dilo explícitamente. Ejemplos de redacción:
    - “Tu ocupación se concentra casi solo en viernes y sábado; de domingo a jueves el hotel funciona a media máquina.”
    - “Booking.com te aporta la mayor producción, pero a un ADR un 12–15% más bajo que el resto de tus canales en las mismas fechas; eso está erosionando margen.”
@@ -1461,6 +1490,7 @@ Planes y señal de upgrade:
    - "pro_90" y "pro_180": además de la foto actual, compara dentro del rango primeros días vs últimos (por ejemplo, primer tercio vs último tercio) y marca en hallazgos_prioritarios cualquier cambio de tendencia relevante (mix de canal, ADR, margen, cancelaciones). Usa también recomendaciones_accionables para proponer cómo reaccionar a esos cambios.
 15) Señal de upgrade: si con más días o más reportes la lectura sería mucho más fuerte, dilo con tacto y con un ejemplo concreto (ej. "comparar este trimestre con el mismo periodo del año pasado").
 16) No prometas sincronización API en tiempo real con el PMS: las lecturas se basan en exports adjuntos (incluidos envíos por reporte programado por correo en planes de pago), no en conectores en vivo.
+17) Si viene resumen.lectura_operativa, intégralo en el diagnóstico (no lo ignores): prioriza sus cifras como “vista rápida” y cruza con el detalle por hoja del resumen; si contradice al export, explica la posible causa (cabeceras, fechas, duplicados, cortes de rango).
 
 Devuelve SIEMPRE exclusivamente el JSON con el esquema especificado por el backend, sin texto adicional.
 """.strip()
@@ -1484,7 +1514,12 @@ def call_openai(summary: Dict[str, Any], business_context: str, hotel_context: D
                     "text": json.dumps({
                         "plan": plan,
                         "contexto_hotel": hotel_context,
-                        "uso_contexto_hotel": "Usa siempre contexto_hotel (nombre, tipo de propiedad/tamaño, categoría, ubicación) para redactar resumen_ejecutivo y recomendaciones_accionables de forma específica a este hotel.",
+                        "uso_contexto_hotel": (
+                            "Usa siempre contexto_hotel (nombre, tipo de propiedad/tamaño, categoría, ubicación, estrellas, stack y URLs) "
+                            "para redactar resumen_ejecutivo y recomendaciones_accionables de forma específica a este hotel. "
+                            "Si contexto_hotel incluye hotel_habitaciones_fisicas y/o hotel_comisiones_ota_pct_referencia, "
+                            "úsalos junto con resumen.lectura_operativa (si existe) para ocupación proxy y margen estimado por canal."
+                        ),
                         "contexto_negocio": business_context or "Sin notas de contexto de negocio del usuario.",
                         "resumen": summary,
                     }, ensure_ascii=False),

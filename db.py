@@ -130,6 +130,14 @@ def init_db():
                 conn.execute(f"ALTER TABLE users ADD COLUMN {legal_col} TEXT")
             except sqlite3.OperationalError:
                 pass
+        try:
+            conn.execute("ALTER TABLE users ADD COLUMN hotel_room_count INTEGER")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            conn.execute("ALTER TABLE users ADD COLUMN hotel_ota_commissions_json TEXT")
+        except sqlite3.OperationalError:
+            pass
 
         try:
             conn.execute("ALTER TABLE analyses ADD COLUMN share_token TEXT")

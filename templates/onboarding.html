@@ -100,6 +100,20 @@
         <input type="url" name="hotel_booking_url" placeholder="https://www.booking.com/..." value="{{ user.hotel_booking_url or '' }}" />
       </div>
 
+      <h3 class="onboarding-section-label">Referencia revenue (opcional)</h3>
+      <p class="muted small full-span" style="margin-top:0; margin-bottom:10px">
+        Sirve para estimar ocupación proxy y margen después de comisiones en tus lecturas. Puedes dejarlo vacío y completarlo después en «Editar perfil».
+      </p>
+      <div>
+        <label>Habitaciones físicas (llaves)</label>
+        <input type="number" name="hotel_room_count" min="1" max="5000" step="1" placeholder="Ej. 40" value="{{ user.hotel_room_count or '' }}" />
+      </div>
+      <div class="full-span">
+        <label>Comisiones OTA de referencia (%)</label>
+        <textarea name="hotel_ota_commissions_json" rows="3" style="width:100%;max-width:640px;resize:vertical;padding:10px 12px;border-radius:8px;border:1px solid var(--line, #ccc);font:inherit" placeholder='JSON, ej. {"booking":15,"expedia":20,"airbnb":18,"default":16}'>{{ user.hotel_ota_commissions_json or '' }}</textarea>
+        <p class="muted small" style="margin-top:6px">Claves en minúsculas; el sistema intenta hacer coincidir el nombre del canal del export con estas claves. «default» aplica si no hay match.</p>
+      </div>
+
       <div class="full-span">
         <button class="btn btn-primary full" type="submit">{% if editing %}Guardar cambios{% else %}Continuar al panel{% endif %}</button>
       </div>
