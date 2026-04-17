@@ -96,6 +96,7 @@ from plan_entitlements import (
     get_effective_plan,
     get_paid_plan,
     manual_access_notice_for_account,
+    pms_scheduled_reports_entitled,
     pullso_brief_whatsapp_entitled,
 )
 from plans import max_upload_files_for_plan, plan_label
@@ -120,6 +121,12 @@ from services.pullso_whatsapp_user_delivery import (
     WA_PREFIX_SELECT_OPTIONS,
     recipients_ui_slots_from_blob,
     save_user_whatsapp_settings,
+)
+from services.pms_inbound_service import (
+    PMS_VENDOR_CHOICES,
+    ensure_route_for_hotel,
+    inbound_address_for_token,
+    plan_usage_hints,
 )
 
 # Campos de contexto hotelero que enriquecen lecturas (excluye correo y plan).
@@ -564,6 +571,22 @@ def dashboard(request: Request):
     eligibility = upload_eligibility(user)
     eff = get_effective_plan(user)
     brief_wa = pullso_brief_whatsapp_entitled(user)
+    pms_unlocked = pms_scheduled_reports_entitled(user)
+    pms_inbound_email = ""
+    pms_vendor_selected = ""
+    pms_notify_whatsapp = True
+    pms_plan_hints: dict = {}
+    pms_inbox_error = ""
+    if pms_unlocked:
+        hid = get_current_hotel_id(request, int(user["id"]))
+        try:
+            prow = ensure_route_for_hotel(int(user["id"]), hid)
+            pms_inbound_email = inbound_address_for_token(str(prow["token"]))
+            pms_vendor_selected = str(prow["pms_vendor"] or "")
+            pms_notify_whatsapp = bool(int(prow["notify_whatsapp"] or 0))
+            pms_plan_hints = plan_usage_hints(eff)
+        except ValueError as exc:
+            pms_inbox_error = str(exc)
     plan_days_unlimited = eff == "free_trial"
     plan_days_limit = (
         None
@@ -605,6 +628,13 @@ def dashboard(request: Request):
         "smtp_configured": bool(SMTP_HOST and SMTP_USER and SMTP_PASSWORD),
         "min_business_context_len": MIN_BUSINESS_CONTEXT_LEN,
         "pullso_brief_whatsapp_unlocked": brief_wa,
+        "pms_automation_unlocked": pms_unlocked,
+        "pms_inbound_email": pms_inbound_email,
+        "pms_vendor_selected": pms_vendor_selected,
+        "pms_notify_whatsapp": pms_notify_whatsapp,
+        "pms_plan_hints": pms_plan_hints,
+        "pms_vendor_choices": PMS_VENDOR_CHOICES,
+        "pms_inbox_error": pms_inbox_error,
         **_seo,
     })
 
@@ -619,6 +649,7 @@ from routes.legal import router as legal_router
 from routes.kapso_whatsapp import router as kapso_whatsapp_router
 from routes.marketing import router as marketing_router
 from routes.revenue_report_preview import router as revenue_report_preview_router
+from routes.pms_inbound import router as pms_inbound_router
 
 app.include_router(api_v1_router)
 app.include_router(billing_router)
@@ -630,6 +661,7 @@ app.include_router(admin_router)
 app.include_router(analysis_router)
 app.include_router(revenue_report_preview_router)
 app.include_router(kapso_whatsapp_router)
+app.include_router(pms_inbound_router)
 
 
 @app.get("/health")
@@ -663,6 +695,7 @@ def health_config(smtp_probe: bool = Query(False)):
         "password_reset_email_delivery_configured": password_reset_email_delivery_configured(),
         "url_prefix_configured": bool(URL_PREFIX),
         "kapso_configured": bool((os.getenv("KAPSO_API_KEY") or "").strip()) and bool((os.getenv("KAPSO_PHONE_NUMBER_ID") or "").strip()),
+        "pms_inbound_webhook_configured": bool((os.getenv("PMS_INBOUND_WEBHOOK_SECRET") or "").strip()),
     }
     if smtp_probe:
         out["smtp_tcp_reachable"] = smtp_host_tcp_reachable()

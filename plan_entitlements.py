@@ -204,6 +204,15 @@ def manual_access_notice_for_account(user: UserLike) -> Optional[dict]:
     }
 
 
+def pms_scheduled_reports_entitled(user: UserLike) -> bool:
+    """
+    Reportes programados por correo desde el PMS (inbox único + webhook).
+    Alineado a planes de pago con lecturas ampliadas: Pro, Pro+ y prueba extendida (mismo producto que WhatsApp).
+    """
+    p = normalize_product_plan(get_effective_plan(user))
+    return p in ("pro", "pro_plus", "free_trial")
+
+
 def pullso_brief_whatsapp_entitled(user: UserLike) -> bool:
     """
     Pullso Brief (WhatsApp desde el panel, equipo por hotel): no está en el plan gratuito base.

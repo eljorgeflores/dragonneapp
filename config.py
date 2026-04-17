@@ -228,6 +228,11 @@ KAPSO_WHATSAPP_BASE_URL = (os.getenv("KAPSO_WHATSAPP_BASE_URL") or "https://api.
 # Template Utility aprobado en Meta (para reabrir conversación fuera de ventana de 24h).
 KAPSO_WHATSAPP_UTILITY_TEMPLATE_NAME = (os.getenv("KAPSO_WHATSAPP_UTILITY_TEMPLATE_NAME") or "").strip()
 KAPSO_WHATSAPP_UTILITY_TEMPLATE_LANGUAGE = (os.getenv("KAPSO_WHATSAPP_UTILITY_TEMPLATE_LANGUAGE") or "es_MX").strip()
+
+# Reportes programados desde PMS: correo único por cuenta + POST del proveedor de correo (p. ej. Postmark Inbound).
+# El dominio debe existir en DNS/MX y apuntar al proveedor que reenvía al webhook (ver routes/pms_inbound.py).
+PMS_INBOUND_EMAIL_DOMAIN = (os.getenv("PMS_INBOUND_EMAIL_DOMAIN") or "reports.dragonne.co").strip().lower().lstrip("@")
+PMS_INBOUND_WEBHOOK_SECRET = _normalize_api_secret(os.getenv("PMS_INBOUND_WEBHOOK_SECRET", ""))
 def _bounded_int_env(name: str, default: int, lo: int, hi: int) -> int:
     raw = (os.getenv(name) or "").strip()
     if not raw:

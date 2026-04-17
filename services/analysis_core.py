@@ -1460,7 +1460,7 @@ Planes y señal de upgrade:
    - "free_30": trata el caso como diagnóstico rápido sobre un máximo de 30 días; prioriza quick wins y, si faltan periodos para tener contexto, explícalo en la señal de upgrade.
    - "pro_90" y "pro_180": además de la foto actual, compara dentro del rango primeros días vs últimos (por ejemplo, primer tercio vs último tercio) y marca en hallazgos_prioritarios cualquier cambio de tendencia relevante (mix de canal, ADR, margen, cancelaciones). Usa también recomendaciones_accionables para proponer cómo reaccionar a esos cambios.
 15) Señal de upgrade: si con más días o más reportes la lectura sería mucho más fuerte, dilo con tacto y con un ejemplo concreto (ej. "comparar este trimestre con el mismo periodo del año pasado").
-16) Las integraciones directas con PMS (Mews, Cloudbeds, Little Hotelier) están pensadas como "Próximamente"; no prometas nada distinto a eso.
+16) No prometas sincronización API en tiempo real con el PMS: las lecturas se basan en exports adjuntos (incluidos envíos por reporte programado por correo en planes de pago), no en conectores en vivo.
 
 Devuelve SIEMPRE exclusivamente el JSON con el esquema especificado por el backend, sin texto adicional.
 """.strip()

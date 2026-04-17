@@ -351,3 +351,55 @@ def init_db():
             migrate_legacy_users_to_hotels(conn)
         except Exception:
             pass
+
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS pms_inbound_routes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                hotel_id INTEGER,
+                token TEXT NOT NULL UNIQUE,
+                pms_vendor TEXT NOT NULL DEFAULT '',
+                notify_whatsapp INTEGER NOT NULL DEFAULT 1,
+                last_analysis_id INTEGER,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES users(id),
+                FOREIGN KEY (hotel_id) REFERENCES hotels(id),
+                FOREIGN KEY (last_analysis_id) REFERENCES analyses(id)
+            );
+            """
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_pms_inbound_routes_user ON pms_inbound_routes(user_id)"
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_pms_inbound_user_hotel ON pms_inbound_routes(user_id, hotel_id)"
+        )
+        # Una inbox por (usuario, hotel): rellenar hotel_id heredado y deduplicar.
+        try:
+            conn.execute(
+                """
+                UPDATE pms_inbound_routes SET hotel_id = (
+                    SELECT hm.hotel_id FROM hotel_members hm
+                    WHERE hm.user_id = pms_inbound_routes.user_id
+                    ORDER BY hm.hotel_id LIMIT 1
+                )
+                WHERE hotel_id IS NULL
+                AND EXISTS (
+                    SELECT 1 FROM hotel_members hm2 WHERE hm2.user_id = pms_inbound_routes.user_id
+                )
+                """
+            )
+        except sqlite3.OperationalError:
+            pass
+        try:
+            conn.execute(
+                """
+                DELETE FROM pms_inbound_routes WHERE rowid NOT IN (
+                    SELECT MIN(rowid) FROM pms_inbound_routes GROUP BY user_id, hotel_id
+                )
+                """
+            )
+        except sqlite3.OperationalError:
+            pass

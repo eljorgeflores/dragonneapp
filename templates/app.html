@@ -285,34 +285,149 @@
     </div>
   </main>
 
-  <section class="integrations-card light-card integrations-card--locked" aria-label="Conectar DRAGONNÉ a tu stack tecnológico">
+  <section class="integrations-card light-card {% if not pms_automation_unlocked %}integrations-card--locked{% endif %}" id="pmsAutomationRoot" aria-label="Reportes programados desde tu PMS">
     <div class="section-head">
       <div>
-        <h2>Conectar PMS / Channel</h2>
-        <p class="muted integrations-card-lead">Sincronización en tiempo real — próximamente.</p>
+        <h2>Reportes programados (PMS por correo)</h2>
+        {% if pms_automation_unlocked %}
+        <p class="muted integrations-card-lead">Correo <strong>único por hotel</strong> (el que ves corresponde al <strong>hotel activo</strong> en tu sesión). Pégalo en “reportes programados” del PMS de esa propiedad. Si gestionas varios hoteles, cambia de hotel en el panel y copia el otro correo. Cada adjunto válido genera una lectura; opcionalmente enviamos el Pullso Brief por WhatsApp.</p>
+        {% else %}
+        <p class="muted integrations-card-lead">Incluido en <strong>Pro</strong> y <strong>Pro+</strong>: recibe exports del PMS por correo y conviértelos en lecturas automáticas con comparación contra la corrida anterior.</p>
+        {% endif %}
       </div>
+      {% if pms_automation_unlocked %}
+      <span class="integrations-active-pill"><span class="integrations-active-dot"></span> Activo en tu plan</span>
+      {% else %}
       <div class="integrations-lock-pill">
         <span class="integrations-lock-dot"></span>
-        <span>Módulo bloqueado</span>
-        <button type="button" class="integrations-help" aria-label="Más información sobre este módulo" title="Este módulo estará disponible muy pronto. Podrás conectar DRAGONNÉ a tu PMS y channel manager para recibir recomendaciones accionables en tiempo real desde el asistente inteligente.">?</button>
+        <span>Plan Pro o superior</span>
+        <button type="button" class="integrations-help" aria-label="Más información" title="Activa Pro o Pro+ para obtener un correo único y enlazar reportes programados del PMS con Pullso.">?</button>
+      </div>
+      {% endif %}
+    </div>
+
+    {% if pms_automation_unlocked %}
+    <div class="pms-automation-body">
+      {% if pms_inbox_error %}
+      <p class="pms-inbox-error" role="alert">{{ pms_inbox_error }}</p>
+      {% endif %}
+      <div class="pms-automation-grid">
+        <div class="pms-automation-col">
+          <h3 class="pms-automation-h">1. Correo Pullso de este hotel</h3>
+          <p class="muted small">Debe ser el <strong>destinatario</strong> del reporte programado en el PMS de <strong>esta</strong> propiedad. El dominio <code>reports.dragonne.co</code> y el webhook los configuran Postmark + Render (ver guía del equipo).</p>
+          <div class="pms-email-box" id="pmsInboundEmailBox">{{ pms_inbound_email or "—" }}</div>
+          <button type="button" class="btn btn-secondary btn-sm" id="pmsCopyEmailBtn">Copiar correo</button>
+          <p id="pmsCopyEmailFeedback" class="muted small pms-inline-feedback hidden" role="status"></p>
+        </div>
+        <div class="pms-automation-col">
+          <h3 class="pms-automation-h">2. Tu PMS</h3>
+          <form id="pmsAutomationForm" class="pms-automation-form">
+            <label for="pmsVendorSelect" class="pms-label">Selecciona tu sistema</label>
+            <select id="pmsVendorSelect" name="pms_vendor" class="pms-select" aria-label="PMS o channel">
+              {% for vid, vlabel in pms_vendor_choices %}
+              <option value="{{ vid }}" {% if pms_vendor_selected == vid %}selected{% endif %}>{{ vlabel }}</option>
+              {% endfor %}
+            </select>
+            <label class="pms-check">
+              <input type="checkbox" name="notify_whatsapp" value="1" {% if pms_notify_whatsapp %}checked{% endif %} />
+              Tras cada lectura automática, enviar <strong>Pullso Brief</strong> por WhatsApp (misma configuración que en Mi cuenta).
+            </label>
+            <button type="submit" class="btn btn-primary btn-sm" id="pmsSaveBtn">Guardar</button>
+            <p id="pmsFormStatus" class="muted small hidden" role="status"></p>
+          </form>
+        </div>
+      </div>
+
+      <div class="pms-automation-limits light-inset">
+        <h3 class="pms-automation-h">Límites según tu plan (para programar bien el PMS)</h3>
+        <p class="muted small">{{ pms_plan_hints.schedule_hint }}</p>
+        <ul class="pms-ideal-reports clean-list clean-list--compact">
+          <li><strong>Por reserva</strong> (mix canal, ADR por fuente, pick-up con fecha de reserva + llegada).</li>
+          <li><strong>Diario / producción</strong> (tendencia de ingresos o noches, semana vs fin de semana).</li>
+          <li><strong>Mismo layout cada vez</strong> para que la comparación con la lectura previa detecte tendencias, picos y cambios de participación.</li>
+        </ul>
+      </div>
+
+      <div class="integrations-logos integrations-logos--inline" aria-hidden="true">
+        <div class="integration-logo" title="Mews"><img src="{{ url_prefix }}/static/branding/integrations/mews.svg" alt="" /></div>
+        <div class="integration-logo" title="Cloudbeds"><img src="{{ url_prefix }}/static/branding/integrations/cloudbeds.svg" alt="" /></div>
+        <div class="integration-logo" title="SiteMinder"><img src="{{ url_prefix }}/static/branding/integrations/siteminder.svg" alt="" /></div>
+        <div class="integration-logo" title="Little Hotelier"><img src="{{ url_prefix }}/static/branding/integrations/littlehotelier.svg" alt="" /></div>
+        <div class="integration-logo" title="Yanolja"><img src="{{ url_prefix }}/static/branding/integrations/yanolja.svg" alt="" /></div>
+        <div class="integration-logo" title="Shiji"><img src="{{ url_prefix }}/static/branding/integrations/shiji.svg" alt="" /></div>
       </div>
     </div>
+    {% else %}
     <div class="integrations-card__blurred-wrap">
       <div class="integrations-card__blurred">
         <div class="integrations-logos">
-      <div class="integration-logo integration-logo--locked" title="Mews — próximamente"><img src="/static/branding/integrations/mews.svg" alt="Mews" /></div>
-      <div class="integration-logo integration-logo--locked" title="Cloudbeds — próximamente"><img src="/static/branding/integrations/cloudbeds.svg" alt="Cloudbeds" /></div>
-      <div class="integration-logo integration-logo--locked" title="SiteMinder — próximamente"><img src="/static/branding/integrations/siteminder.svg" alt="SiteMinder" /></div>
-      <div class="integration-logo integration-logo--locked" title="Little Hotelier — próximamente"><img src="/static/branding/integrations/littlehotelier.svg" alt="Little Hotelier" /></div>
-      <div class="integration-logo integration-logo--locked" title="Yanolja — próximamente"><img src="/static/branding/integrations/yanolja.svg" alt="Yanolja" /></div>
-      <div class="integration-logo integration-logo--locked" title="Shiji — próximamente"><img src="/static/branding/integrations/shiji.svg" alt="Shiji" /></div>
+      <div class="integration-logo integration-logo--locked" title="Mews"><img src="{{ url_prefix }}/static/branding/integrations/mews.svg" alt="Mews" /></div>
+      <div class="integration-logo integration-logo--locked" title="Cloudbeds"><img src="{{ url_prefix }}/static/branding/integrations/cloudbeds.svg" alt="Cloudbeds" /></div>
+      <div class="integration-logo integration-logo--locked" title="SiteMinder"><img src="{{ url_prefix }}/static/branding/integrations/siteminder.svg" alt="SiteMinder" /></div>
+      <div class="integration-logo integration-logo--locked" title="Little Hotelier"><img src="{{ url_prefix }}/static/branding/integrations/littlehotelier.svg" alt="Little Hotelier" /></div>
+      <div class="integration-logo integration-logo--locked" title="Yanolja"><img src="{{ url_prefix }}/static/branding/integrations/yanolja.svg" alt="Yanolja" /></div>
+      <div class="integration-logo integration-logo--locked" title="Shiji"><img src="{{ url_prefix }}/static/branding/integrations/shiji.svg" alt="Shiji" /></div>
         </div>
       </div>
       <div class="integrations-lock-icon" aria-hidden="true">
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
       </div>
     </div>
+    {% endif %}
   </section>
+  {% if pms_automation_unlocked %}
+  <script>
+  (function () {
+    var px = (document.body.getAttribute('data-url-prefix') || '').trim();
+    var form = document.getElementById('pmsAutomationForm');
+    var statusEl = document.getElementById('pmsFormStatus');
+    var emailBox = document.getElementById('pmsInboundEmailBox');
+    var copyBtn = document.getElementById('pmsCopyEmailBtn');
+    var copyFb = document.getElementById('pmsCopyEmailFeedback');
+    function show(el, msg, ok) {
+      if (!el) return;
+      el.textContent = msg;
+      el.classList.remove('hidden');
+      el.style.color = ok ? '' : '#b45309';
+    }
+    if (copyBtn && emailBox) {
+      copyBtn.addEventListener('click', function () {
+        var t = (emailBox.textContent || '').trim();
+        if (!t) return;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(t).then(function () {
+            show(copyFb, 'Copiado al portapapeles.', true);
+          }).catch(function () {
+            show(copyFb, 'No se pudo copiar; selecciona el texto manualmente.', false);
+          });
+        } else {
+          show(copyFb, 'Selecciona el correo y copia con el teclado.', false);
+        }
+      });
+    }
+    if (form) {
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var fd = new FormData(form);
+        if (!fd.get('notify_whatsapp')) fd.set('notify_whatsapp', '0');
+        fetch(px + '/app/pms-automation/configure', { method: 'POST', body: fd, credentials: 'same-origin' })
+          .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+          .then(function (x) {
+            if (x.ok && x.j && x.j.ok) {
+              show(statusEl, 'Guardado. El correo de inbox no cambia salvo que regeneremos tu ruta desde soporte.', true);
+              if (x.j.inbound_email && emailBox) emailBox.textContent = x.j.inbound_email;
+            } else {
+              show(statusEl, (x.j && x.j.detail) || (x.j && x.j.error) || 'No se pudo guardar.', false);
+            }
+          })
+          .catch(function () {
+            show(statusEl, 'Error de red. Intenta de nuevo.', false);
+          });
+      });
+    }
+  })();
+  </script>
+  {% endif %}
 
   <section class="results-card results-card-tablero light-card hidden" id="resultsCard">
     <div class="result-hero hidden" id="resultHero" aria-live="polite">
