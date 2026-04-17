@@ -142,6 +142,8 @@
         Solo un administrador del hotel puede cambiar los números de WhatsApp del brief.
       {% elif whatsapp_notice.code == 'plan_locked' %}
         Pullso Brief por WhatsApp forma parte de Pro y Pro+. Elige un plan más abajo para activarlo.
+      {% elif whatsapp_notice.code == 'consent_required' %}
+        Para guardar números debes marcar la casilla de autorización al final del formulario.
       {% else %}
         No se pudieron guardar los datos de WhatsApp. Revisa los números e inténtalo de nuevo.
       {% endif %}
@@ -291,6 +293,7 @@
                 />
                 <span class="account-wa-consent__text">Autorizo a Pullso a enviar por WhatsApp mensajes con lecturas comerciales y enlaces al tablero a los destinatarios indicados. Puedo retirar el consentimiento desmarcando y guardando.</span>
               </label>
+              <p class="account-wa-consent-footnote muted small">Sin marcar esta casilla no se guardan los números (aunque los hayas escrito arriba).</p>
             </div>
             {% if not current_hotel_id or is_hotel_admin_ctx %}
             <div class="account-wa-footer__actions">

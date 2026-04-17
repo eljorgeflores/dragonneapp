@@ -3,13 +3,17 @@ Integración Pullso: invitación a hotel por token y aceptación en /app/hotel/j
 """
 from __future__ import annotations
 
+import json
 import uuid
 
 from fastapi.testclient import TestClient
 
 from app import app, db
 from services.hotel_pullso import HOTEL_WHATSAPP_MAX_NUMBERS, create_hotel_invite, save_hotel_whatsapp_settings
-from services.pullso_whatsapp_user_delivery import validate_wa_slots_and_build_blob
+from services.pullso_whatsapp_user_delivery import (
+    combine_prefix_and_national_to_digits,
+    validate_wa_slots_and_build_blob,
+)
 
 client = TestClient(app)
 
@@ -160,6 +164,25 @@ def test_hotel_invite_wrong_email_does_not_gain_membership():
         assert m is None
 
 
+def test_validate_wa_slots_accepts_one_number_with_other_rows_only_country_prefix():
+    """Las filas sin móvil no deben invalidar el guardado (el prefijo del <select> siempre se envía)."""
+    slots = [
+        {"name": "", "prefix": "52", "national": "9981234567"},
+        {"name": "", "prefix": "52", "national": ""},
+        {"name": "", "prefix": "52", "national": ""},
+    ]
+    blob, err = validate_wa_slots_and_build_blob(slots, HOTEL_WHATSAPP_MAX_NUMBERS)
+    assert err is None
+    assert blob is not None
+    data = json.loads(blob)
+    assert len(data) == 1
+    assert data[0]["phone"] == "529981234567"
+
+
+def test_combine_prefix_dedupes_when_national_includes_country_code():
+    assert combine_prefix_and_national_to_digits("52", "529981234567") == "529981234567"
+
+
 def test_validate_wa_slots_rejects_more_than_three_intended_recipients():
     """No se admiten más de tres filas con número (aunque vengan en la petición)."""
     slots = [
@@ -202,3 +225,34 @@ def test_save_hotel_whatsapp_accepts_named_slots():
     ]
     err = save_hotel_whatsapp_settings(hid, uid_a, slots, True)
     assert err is None
+
+
+def test_save_hotel_whatsapp_without_opt_in_but_with_number_returns_consent_required():
+    email_a = _unique_email("hotel-wa-consent")
+    pwd = "password123"
+    _signup(email_a, pwd)
+    client.post(
+        "/onboarding",
+        data=_onboarding_payload(f"Hotel WaC {uuid.uuid4().hex[:6]}"),
+        follow_redirects=True,
+    )
+    uid_a = _user_id(email_a)
+    with db() as conn:
+        row = conn.execute(
+            """
+            SELECT hotel_id FROM hotel_members
+            WHERE user_id = ? AND role = 'admin'
+            ORDER BY hotel_id LIMIT 1
+            """,
+            (uid_a,),
+        ).fetchone()
+        assert row is not None
+        hid = int(row["hotel_id"])
+
+    slots = [
+        {"name": "", "prefix": "52", "national": "9987654321"},
+        {"name": "", "prefix": "52", "national": ""},
+        {"name": "", "prefix": "52", "national": ""},
+    ]
+    err = save_hotel_whatsapp_settings(hid, uid_a, slots, False)
+    assert err == "consent_required"

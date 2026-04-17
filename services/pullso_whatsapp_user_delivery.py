@@ -248,8 +248,19 @@ def combine_prefix_and_national_to_digits(prefix: str, national: str) -> Optiona
     if not nat:
         return None
     pd = re.sub(r"\D", "", prefix or "")
+    # Si pegaron el número ya con código de país y el prefijo del formulario se repite, no duplicar.
+    if pd and nat.startswith(pd) and len(nat) > len(pd):
+        nat = nat[len(pd) :]
     combined = pd + nat if pd else nat
     return normalize_e164_digits(combined)
+
+
+def wa_slots_have_any_national_digits(slots: List[Dict[str, str]]) -> bool:
+    """True si alguna fila tiene dígitos en el campo nacional (ignora solo prefijo del <select>)."""
+    for s in slots:
+        if re.sub(r"\D", "", str(s.get("national") or "")):
+            return True
+    return False
 
 
 def validate_wa_slots_and_build_blob(
@@ -260,11 +271,11 @@ def validate_wa_slots_and_build_blob(
     Valida filas {name, prefix, national} y genera JSON [{name, phone}, ...] con phone en dígitos E.164.
     Retorna (blob_json, error_code) con error_code None si OK.
     """
+    # Solo cuentan filas con número nacional: el <select> de país manda prefijo aunque el campo móvil esté vacío.
     intent_rows = 0
     for s in slots:
         nat_digits = re.sub(r"\D", "", str(s.get("national") or ""))
-        pref_digits = re.sub(r"\D", "", str(s.get("prefix") or ""))
-        if nat_digits or pref_digits:
+        if nat_digits:
             intent_rows += 1
     if intent_rows > max_recipients:
         return None, "too_many"
@@ -276,8 +287,7 @@ def validate_wa_slots_and_build_blob(
         prefix_raw = str(s.get("prefix") or "").strip()
         national_raw = str(s.get("national") or "").strip()
         nat_digits = re.sub(r"\D", "", national_raw)
-        pref_digits = re.sub(r"\D", "", prefix_raw)
-        if not nat_digits and not pref_digits:
+        if not nat_digits:
             continue
         digits = combine_prefix_and_national_to_digits(prefix_raw, national_raw)
         if not digits:
@@ -333,6 +343,8 @@ def save_user_whatsapp_settings(user_id: int, slots: List[Dict[str, str]], opt_i
     slots: filas con keys name, prefix, national (como en el formulario de cuenta).
     """
     if not opt_in:
+        if wa_slots_have_any_national_digits(slots):
+            return "consent_required"
         with db() as conn:
             conn.execute(
                 """

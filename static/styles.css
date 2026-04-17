@@ -716,6 +716,11 @@ button, input, textarea { font: inherit; }
   line-height: 1.55;
   color: #475569;
 }
+.account-wa-consent-footnote {
+  margin: 10px 0 0;
+  padding-left: 30px;
+  line-height: 1.45;
+}
 .account-wa-footer__actions {
   display: flex;
   flex-wrap: wrap;

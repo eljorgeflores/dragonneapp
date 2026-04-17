@@ -219,11 +219,16 @@ def save_hotel_whatsapp_settings(
     hotel_id: int, user_id: int, slots: List[Dict[str, str]], opt_in: bool
 ) -> Optional[str]:
     """Persiste WhatsApp del hotel (JSON con nombre + teléfono); solo admin del hotel."""
-    from services.pullso_whatsapp_user_delivery import validate_wa_slots_and_build_blob
+    from services.pullso_whatsapp_user_delivery import (
+        validate_wa_slots_and_build_blob,
+        wa_slots_have_any_national_digits,
+    )
 
     if not user_is_hotel_admin(user_id, hotel_id):
         return "forbidden"
     if not opt_in:
+        if wa_slots_have_any_national_digits(slots):
+            return "consent_required"
         with db() as conn:
             conn.execute(
                 """
