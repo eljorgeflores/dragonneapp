@@ -583,6 +583,9 @@ def dashboard(request: Request):
             prow = ensure_route_for_hotel(int(user["id"]), hid)
             pms_inbound_email = inbound_address_for_token(str(prow["token"]))
             pms_vendor_selected = str(prow["pms_vendor"] or "")
+            _pms_allowed = {k for k, _ in PMS_VENDOR_CHOICES}
+            if pms_vendor_selected not in _pms_allowed:
+                pms_vendor_selected = "mews"
             pms_notify_whatsapp = bool(int(prow["notify_whatsapp"] or 0))
             pms_plan_hints = plan_usage_hints(eff)
         except ValueError as exc:

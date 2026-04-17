@@ -41,9 +41,6 @@ PMS_VENDOR_CHOICES: Tuple[Tuple[str, str], ...] = (
     ("littlehotelier", "Little Hotelier"),
     ("yanolja", "Yanolja"),
     ("shiji", "Shiji"),
-    ("opera", "Oracle Opera / OHIP"),
-    ("protel", "Protel"),
-    ("other", "Otro / varios"),
 )
 
 PMS_LOCAL_PREFIX = "pms."
@@ -267,7 +264,7 @@ def update_route_settings(
     allowed = {k for k, _ in PMS_VENDOR_CHOICES}
     pv = (pms_vendor or "").strip().lower()
     if pv not in allowed:
-        pv = "other"
+        pv = "mews"
     with db() as conn:
         if hotel_id is None or int(hotel_id) <= 0:
             raise HTTPException(status_code=400, detail="Selecciona un hotel en el panel (sesión actual).")

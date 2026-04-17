@@ -121,7 +121,7 @@ def pms_automation_status(request: Request):
 @router.post("/app/pms-automation/configure")
 def pms_automation_configure(
     request: Request,
-    pms_vendor: str = Form("other"),
+    pms_vendor: str = Form("mews"),
     notify_whatsapp: str = Form("1"),
 ):
     user = require_user(request)
