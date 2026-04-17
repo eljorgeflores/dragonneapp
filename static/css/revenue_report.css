@@ -752,3 +752,45 @@ body {
     margin-bottom: 12px;
   }
 }
+
+/* ——— Bloque datos derivados (perfil + export) ——— */
+.sheet-derived {
+  border-left: 3px solid var(--accent-dim);
+  padding-left: 14px;
+  margin-top: 4mm;
+}
+
+.sheet-derived .derived-note {
+  font-size: 9pt;
+  color: var(--muted);
+  margin: 0 0 14px;
+  max-width: 52em;
+}
+
+.sheet-derived .derived-line {
+  font-size: 10pt;
+  color: var(--ink-soft);
+  margin: 0 0 10px;
+}
+
+.sheet-derived .derived-kv {
+  font-weight: 500;
+}
+
+.sheet-derived .muted-inline {
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 9pt;
+}
+
+.sheet-derived .derived-method {
+  margin: 14px 0 0;
+  padding-left: 1.1em;
+  font-size: 8.5pt;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.sheet-derived .derived-table-wrap {
+  margin-top: 12px;
+}

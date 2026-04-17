@@ -2,6 +2,7 @@
 import json
 import logging
 import os
+from typing import List, Optional
 from urllib.parse import quote, urlparse
 
 from fastapi import APIRouter, Form, Query, Request
@@ -42,7 +43,21 @@ from seo_helpers import noindex_page_seo
 from templating import templates
 from time_utils import now_iso
 
+from services.ota_commission_form import (
+    build_ota_commissions_json,
+    rows_for_ota_commission_template,
+    rows_from_post_lists,
+)
+
 _log = logging.getLogger(__name__)
+
+
+def _commission_rows_for_user_row(user) -> list:
+    try:
+        raw = user["hotel_ota_commissions_json"]
+    except (KeyError, TypeError, IndexError):
+        raw = None
+    return rows_for_ota_commission_template(raw)
 
 router = APIRouter(tags=["auth"])
 
@@ -685,12 +700,15 @@ def onboarding_page(request: Request):
     user = get_current_user(request)
     if not user:
         return RedirectResponse(url_path("/login"), status_code=303)
+    cr = _commission_rows_for_user_row(user)
     if not onboarding_pending(user):
         return templates.TemplateResponse(
-            "onboarding.html", {"request": request, "error": None, "user": user, "editing": True, **_ONBOARDING_SEO}
+            "onboarding.html",
+            {"request": request, "error": None, "user": user, "editing": True, "commission_rows": cr, **_ONBOARDING_SEO},
         )
     return templates.TemplateResponse(
-        "onboarding.html", {"request": request, "error": None, "user": user, "editing": False, **_ONBOARDING_SEO}
+        "onboarding.html",
+        {"request": request, "error": None, "user": user, "editing": False, "commission_rows": cr, **_ONBOARDING_SEO},
     )
 
 
@@ -712,7 +730,8 @@ def onboarding(
     hotel_expedia_url: str = Form(""),
     hotel_booking_url: str = Form(""),
     hotel_room_count: str = Form(""),
-    hotel_ota_commissions_json: str = Form(""),
+    ota_commission_channel: Optional[List[str]] = Form(None),
+    ota_commission_pct: Optional[List[str]] = Form(None),
 ):
     user = get_current_user(request)
     if not user:
@@ -745,36 +764,22 @@ def onboarding(
                 room_db = ri
         except ValueError:
             room_db = None
-    comm_raw = (hotel_ota_commissions_json or "").strip() or None
-    if comm_raw:
-        try:
-            parsed = json.loads(comm_raw)
-            if not isinstance(parsed, dict):
-                return templates.TemplateResponse(
-                    "onboarding.html",
-                    {
-                        "request": request,
-                        "error": "Las comisiones OTA deben ser un objeto JSON (clave → porcentaje), por ejemplo {\"booking\":15,\"expedia\":20}.",
-                        "user": user,
-                        "editing": not onboarding_pending(user),
-                        **_ONBOARDING_SEO,
-                    },
-                    status_code=400,
-                )
-        except json.JSONDecodeError:
-            return templates.TemplateResponse(
-                "onboarding.html",
-                {
-                    "request": request,
-                    "error": "JSON inválido en comisiones OTA. Revisa comillas y números.",
-                    "user": user,
-                    "editing": not onboarding_pending(user),
-                    **_ONBOARDING_SEO,
-                },
-                status_code=400,
-            )
-    else:
-        comm_raw = None
+    ch_list = list(ota_commission_channel or [])
+    pc_list = list(ota_commission_pct or [])
+    comm_raw, comm_err = build_ota_commissions_json(ch_list, pc_list)
+    if comm_err:
+        return templates.TemplateResponse(
+            "onboarding.html",
+            {
+                "request": request,
+                "error": comm_err,
+                "user": user,
+                "editing": not onboarding_pending(user),
+                "commission_rows": rows_from_post_lists(ch_list, pc_list),
+                **_ONBOARDING_SEO,
+            },
+            status_code=400,
+        )
     if not hotel_name or not contact_name:
         return templates.TemplateResponse(
             "onboarding.html",
@@ -783,6 +788,7 @@ def onboarding(
                 "error": "Nombre del hotel y contacto son obligatorios.",
                 "user": user,
                 "editing": False,
+                "commission_rows": rows_from_post_lists(ch_list, pc_list),
                 **_ONBOARDING_SEO,
             },
             status_code=400,
@@ -795,6 +801,7 @@ def onboarding(
                 "error": "Indica el tamaño y la categoría de tu hotel para personalizar las recomendaciones.",
                 "user": user,
                 "editing": False,
+                "commission_rows": rows_from_post_lists(ch_list, pc_list),
                 **_ONBOARDING_SEO,
             },
             status_code=400,

@@ -1445,6 +1445,142 @@ input:focus, textarea:focus {
   margin-bottom: 16px;
   text-align: center;
 }
+/* Onboarding — filas OTA (UX alineada al diagnóstico hospitalidad) */
+.auth-shell .auth-form .onb-ota-commission-block {
+  text-align: left;
+}
+.auth-shell .auth-form .onb-ota-block-title {
+  text-align: center;
+}
+.auth-shell .auth-form .onb-ota-block-lead {
+  text-align: center;
+  margin-top: 4px;
+  margin-bottom: 12px;
+  max-width: 42rem;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.45;
+}
+.auth-shell .auth-form .onb-ota-block-lead a {
+  color: var(--accent-primary-strong);
+  font-weight: 600;
+  text-decoration: none;
+}
+.auth-shell .auth-form .onb-ota-block-lead a:hover {
+  text-decoration: underline;
+}
+.auth-shell .auth-form .onb-ota-card {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 14px 14px 12px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: linear-gradient(180deg, #fafbfc 0%, #fff 48%);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+.auth-shell .auth-form .onb-ota-rows {
+  margin-bottom: 4px;
+}
+.auth-shell .auth-form .onb-ota-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  margin-bottom: 10px;
+}
+.auth-shell .auth-form .onb-ota-cells {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 1fr minmax(76px, 92px);
+  gap: 10px;
+}
+.auth-shell .auth-form .onb-ota-field {
+  min-width: 0;
+  text-align: left;
+}
+.auth-shell .auth-form .onb-ota-cell-label {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+.auth-shell .auth-form .onb-ota-field .onb-ota-channel,
+.auth-shell .auth-form .onb-ota-field .onb-ota-pct {
+  width: 100%;
+  text-align: left;
+}
+.auth-shell .auth-form .onb-ota-field--pct .onb-ota-pct {
+  text-align: center;
+}
+.auth-shell .auth-form .onb-ota-rm {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #b45309;
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+.auth-shell .auth-form .onb-ota-rm:hover {
+  border-color: rgba(240, 126, 7, 0.45);
+  color: #9a3412;
+  background: #fffbeb;
+}
+.auth-shell .auth-form .onb-ota-rm[hidden] {
+  visibility: hidden;
+  pointer-events: none;
+}
+.auth-shell .auth-form .onb-ota-add {
+  margin-top: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px dashed #d1d5db;
+  background: transparent;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.auth-shell .auth-form .onb-ota-add:hover:not(:disabled) {
+  border-color: var(--accent-primary-strong);
+  color: var(--accent-primary-strong);
+}
+.auth-shell .auth-form .onb-ota-add:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.auth-shell .auth-form .onb-ota-foot {
+  text-align: center;
+  margin-top: 10px;
+  margin-bottom: 0;
+  max-width: 42rem;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.45;
+}
+@media (max-width: 520px) {
+  .auth-shell .auth-form .onb-ota-cells {
+    grid-template-columns: 1fr minmax(64px, 80px);
+    gap: 8px;
+  }
+  .auth-shell .auth-form .onb-ota-row {
+    gap: 8px;
+  }
+}
 .auth-shell .auth-card-subtitle {
   font-size: 0.9375rem;
   line-height: 1.55;

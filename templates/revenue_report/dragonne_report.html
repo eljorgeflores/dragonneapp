@@ -76,6 +76,7 @@
         {% endfor %}
       </div>
 
+      {% if show_executive_highlights %}
       <div class="highlights-head">
         <span class="eyebrow eyebrow-light">Lecturas inmediatas</span>
       </div>
@@ -87,9 +88,74 @@
         </article>
         {% endfor %}
       </div>
+      {% endif %}
     </section>
 
+    {% if show_lectura_operativa %}
+    <section class="sheet sheet-derived">
+      <div class="section-head">
+        <span class="eyebrow">Datos derivados</span>
+        <h2 class="title-serif">Perfil + export (cálculos automáticos)</h2>
+      </div>
+      <p class="muted-paragraph derived-note">Estimaciones desde tu inventario y comisiones de referencia en el perfil, cruzadas con el parseo del archivo. No sustituyen contabilidad ni PMS.</p>
+      {% if lectura_operativa.inventario_habitaciones_perfil %}
+      <p class="derived-line"><strong>Habitaciones físicas (perfil):</strong> {{ lectura_operativa.inventario_habitaciones_perfil }}</p>
+      {% endif %}
+      {% if lectura_operativa.comisiones_referencia_pct %}
+      <p class="derived-line"><strong>Comisiones de referencia (%):</strong>
+        {% for k, v in lectura_operativa.comisiones_referencia_pct.items() %}
+        <span class="derived-kv">{{ k }}: {{ v }}%</span>{% if not loop.last %} · {% endif %}
+        {% endfor %}
+      </p>
+      {% endif %}
+      {% set est = lectura_operativa.estimaciones or {} %}
+      {% if est.room_nights_agregadas_export is defined and est.room_nights_agregadas_export %}
+      <p class="derived-line"><strong>Room nights (export):</strong> {{ est.room_nights_agregadas_export }}</p>
+      {% endif %}
+      {% if est.ingreso_bruto_agregado_export is defined and est.ingreso_bruto_agregado_export %}
+      <p class="derived-line"><strong>Ingreso bruto agregado (export):</strong> {{ est.ingreso_bruto_agregado_export }}</p>
+      {% endif %}
+      {% if est.ocupacion_proxy_pct is defined %}
+      <p class="derived-line"><strong>Ocupación proxy (%):</strong> {{ est.ocupacion_proxy_pct }} <span class="muted-inline">(capacidad teórica: {{ est.capacidad_room_nights_teorica_rango | default('—') }} RN)</span></p>
+      {% endif %}
+      {% if est.margen_por_canal_comision_perfil %}
+      <div class="table-wrap derived-table-wrap">
+        <table class="table-editorial">
+          <thead>
+            <tr>
+              <th scope="col">Canal</th>
+              <th scope="col">Ingreso bruto</th>
+              <th scope="col">% comisión</th>
+              <th scope="col">Comisión est.</th>
+              <th scope="col">Neto est.</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in est.margen_por_canal_comision_perfil %}
+            <tr>
+              <td class="td-metric">{{ row.canal }}</td>
+              <td class="td-value">{{ row.ingreso_bruto_export }}</td>
+              <td class="td-read">{{ row.pct_comision_perfil }}</td>
+              <td class="td-value">{{ row.comision_estimada }}</td>
+              <td class="td-value">{{ row.ingreso_neto_estimado }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+      {% if lectura_operativa.metodologia %}
+      <ul class="derived-method">
+        {% for line in lectura_operativa.metodologia %}
+        <li>{{ line }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </section>
+    {% endif %}
+
     {# ——— Hallazgos modulares ——— #}
+    {% if show_key_findings %}
     <section class="sheet">
       <div class="section-head">
         <span class="eyebrow">Diagnóstico</span>
@@ -127,15 +193,16 @@
       </article>
       {% endfor %}
     </section>
+    {% endif %}
 
     {# ——— Anomalías ——— #}
+    {% if show_anomalies %}
     <section class="sheet">
       <div class="section-head">
         <span class="eyebrow">Señales</span>
         <h2 class="title-serif">Anomalías y alertas analíticas</h2>
       </div>
 
-      {% if report.anomalies %}
       {% for a in report.anomalies %}
       <article class="anomaly-callout">
         <div class="callout-rule {% if a.severity == 'high' %}sev-high{% elif a.severity == 'medium' %}sev-med{% else %}sev-low{% endif %}"></div>
@@ -167,12 +234,11 @@
         </div>
       </article>
       {% endfor %}
-      {% else %}
-      <p class="muted-paragraph">Sin anomalías destacadas en los datos analizados.</p>
-      {% endif %}
     </section>
+    {% endif %}
 
     {# ——— Tabla KPI editorial ——— #}
+    {% if show_kpi_table %}
     <section class="sheet">
       <div class="section-head">
         <span class="eyebrow">Métricas</span>
@@ -190,7 +256,7 @@
             </tr>
           </thead>
           <tbody>
-            {% for k in report.kpi_table %}
+            {% for k in kpi_table_filtered %}
             <tr>
               <td class="td-metric">{{ k.metric }}</td>
               <td class="td-value">{{ k.value }}</td>
@@ -210,8 +276,10 @@
         </table>
       </div>
     </section>
+    {% endif %}
 
     {# ——— Recomendaciones ——— #}
+    {% if show_strategic_recommendations %}
     <section class="sheet">
       <div class="section-head">
         <span class="eyebrow">Palancas</span>
@@ -238,8 +306,10 @@
       </article>
       {% endfor %}
     </section>
+    {% endif %}
 
     {# ——— Plan 30-60-90 ——— #}
+    {% if show_plan_30_60_90 %}
     <section class="sheet">
       <div class="section-head">
         <span class="eyebrow">Horizonte</span>
@@ -270,8 +340,10 @@
         </div>
       </div>
     </section>
+    {% endif %}
 
     {# ——— Reportes adicionales ——— #}
+    {% if show_additional_reports %}
     <section class="sheet">
       <div class="section-head">
         <span class="eyebrow">Datos</span>
@@ -286,8 +358,10 @@
         {% endfor %}
       </div>
     </section>
+    {% endif %}
 
     {# ——— Siguientes pasos ——— #}
+    {% if show_next_steps %}
     <section class="sheet sheet-compact">
       <div class="section-head">
         <span class="eyebrow">Operación</span>
@@ -297,6 +371,7 @@
         {% for s in report.next_steps %}<li>{{ s }}</li>{% endfor %}
       </ol>
     </section>
+    {% endif %}
 
     {# ——— Cierre estratégico ——— #}
     <section class="sheet sheet-closure">

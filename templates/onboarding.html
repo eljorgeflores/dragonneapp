@@ -108,11 +108,98 @@
         <label>Habitaciones físicas (llaves)</label>
         <input type="number" name="hotel_room_count" min="1" max="5000" step="1" placeholder="Ej. 40" value="{{ user.hotel_room_count or '' }}" />
       </div>
-      <div class="full-span">
-        <label>Comisiones OTA de referencia (%)</label>
-        <textarea name="hotel_ota_commissions_json" rows="3" style="width:100%;max-width:640px;resize:vertical;padding:10px 12px;border-radius:8px;border:1px solid var(--line, #ccc);font:inherit" placeholder='JSON, ej. {"booking":15,"expedia":20,"airbnb":18,"default":16}'>{{ user.hotel_ota_commissions_json or '' }}</textarea>
-        <p class="muted small" style="margin-top:6px">Claves en minúsculas; el sistema intenta hacer coincidir el nombre del canal del export con estas claves. «default» aplica si no hay match.</p>
+      <div class="full-span onb-ota-commission-block">
+        <label class="onb-ota-block-title">OTAs y comisiones (%)</label>
+        <p class="muted small onb-ota-block-lead">
+          Por cada canal: nombre aproximado y comisión que pagas (como en el <a href="https://dragonne.co/hoteles/diagnostico" target="_blank" rel="noopener noreferrer">diagnóstico gratuito</a>). Las filas vacías se ignoran; es opcional.
+        </p>
+        <div class="onb-ota-card" id="onb-ota-card">
+          <div id="onb-ota-rows" class="onb-ota-rows">
+            {% for row in commission_rows %}
+            <div class="onb-ota-row" data-onb-ota-row>
+              <div class="onb-ota-cells">
+                <div class="onb-ota-field">
+                  <span class="onb-ota-cell-label">Canal</span>
+                  <input
+                    class="onb-ota-channel"
+                    type="text"
+                    name="ota_commission_channel"
+                    autocomplete="off"
+                    value="{{ row.channel | e }}"
+                    placeholder="{{ row.hint_c | e }}"
+                  />
+                </div>
+                <div class="onb-ota-field onb-ota-field--pct">
+                  <span class="onb-ota-cell-label">%</span>
+                  <input
+                    class="onb-ota-pct"
+                    type="text"
+                    name="ota_commission_pct"
+                    inputmode="decimal"
+                    autocomplete="off"
+                    value="{{ row.pct | e }}"
+                    placeholder="{{ row.hint_p | e }}"
+                  />
+                </div>
+              </div>
+              <button type="button" class="onb-ota-rm" data-onb-ota-remove aria-label="Quitar fila">×</button>
+            </div>
+            {% endfor %}
+          </div>
+          <button type="button" class="onb-ota-add" id="onb-ota-add">Añadir canal</button>
+        </div>
+        <p class="muted small onb-ota-foot">
+          Normalizamos el nombre del canal para cruzarlo con tus exportes. Si añades una fila con canal «default», cubre canales sin coincidencia exacta.
+        </p>
       </div>
+      <script>
+        (function () {
+          var wrap = document.getElementById("onb-ota-rows");
+          var addBtn = document.getElementById("onb-ota-add");
+          var maxRows = 12;
+          function rowCount() {
+            return wrap ? wrap.querySelectorAll("[data-onb-ota-row]").length : 0;
+          }
+          function syncRemove() {
+            if (!wrap) return;
+            var rows = wrap.querySelectorAll("[data-onb-ota-row]");
+            var n = rows.length;
+            rows.forEach(function (row) {
+              var btn = row.querySelector("[data-onb-ota-remove]");
+              if (btn) btn.hidden = n <= 1;
+            });
+            if (addBtn) addBtn.disabled = n >= maxRows;
+          }
+          if (wrap) {
+            wrap.addEventListener("click", function (ev) {
+              var rm = ev.target.closest && ev.target.closest("[data-onb-ota-remove]");
+              if (!rm) return;
+              var row = rm.closest("[data-onb-ota-row]");
+              if (!row || rowCount() <= 1) return;
+              row.remove();
+              syncRemove();
+            });
+          }
+          if (addBtn && wrap) {
+            addBtn.addEventListener("click", function () {
+              if (rowCount() >= maxRows) return;
+              var first = wrap.querySelector("[data-onb-ota-row]");
+              if (!first) return;
+              var clone = first.cloneNode(true);
+              clone.querySelectorAll("input").forEach(function (inp) {
+                inp.value = "";
+              });
+              var ch = clone.querySelector(".onb-ota-channel");
+              var pc = clone.querySelector(".onb-ota-pct");
+              if (ch) ch.placeholder = "Canal (ej. Despegar)";
+              if (pc) pc.placeholder = "0–100";
+              wrap.appendChild(clone);
+              syncRemove();
+            });
+          }
+          syncRemove();
+        })();
+      </script>
 
       <div class="full-span">
         <button class="btn btn-primary full" type="submit">{% if editing %}Guardar cambios{% else %}Continuar al panel{% endif %}</button>

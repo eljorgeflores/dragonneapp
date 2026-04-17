@@ -6,7 +6,7 @@ from typing import Any, Dict, List
 
 
 def derive_executive_highlights(report: Dict[str, Any]) -> List[str]:
-    """Tres bullets de apertura: frases del resumen o implicaciones de hallazgos."""
+    """Bullets de apertura (0–3): frases del resumen o implicaciones de hallazgos; sin relleno genérico."""
     summary = (report.get("executive_summary") or "").strip()
     parts = [
         s.strip()
@@ -23,8 +23,6 @@ def derive_executive_highlights(report: Dict[str, Any]) -> List[str]:
         line = (f.get("business_implication") or f.get("title") or "").strip()
         if line:
             out.append(line)
-    while len(out) < 3:
-        out.append("Profundizar con datos de canal, paridad y pickup por fecha de llegada.")
     return out[:3]
 
 

@@ -318,7 +318,14 @@ def streaming_pdf_response_for_owned_analysis(user: sqlite3.Row, analysis_id: in
             from services.revenue_report.render_pdf import revenue_report_html_to_pdf_bytes
 
             doc, source = build_revenue_report_document(user_dict, dict(row), summary, analysis, "")
-            pdf_bytes = revenue_report_html_to_pdf_bytes(doc, {"pdf_source": source, "analysis_id": analysis_id})
+            pdf_bytes = revenue_report_html_to_pdf_bytes(
+                doc,
+                {
+                    "pdf_source": source,
+                    "analysis_id": analysis_id,
+                    "lectura_operativa": summary.get("lectura_operativa"),
+                },
+            )
             buffer = io.BytesIO(pdf_bytes)
             buffer.seek(0)
         except Exception as e:

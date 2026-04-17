@@ -13,6 +13,7 @@ from reportlab.platypus import PageBreak, Paragraph, SimpleDocTemplate, Spacer, 
 from config import BASE_DIR
 
 from .display_util import derive_closing_strategic_implication, derive_executive_highlights
+from .section_visibility import compute_revenue_report_sections, filter_executive_highlights
 
 PAGE_W, PAGE_H = A4
 MARGIN = 17 * mm
@@ -60,7 +61,7 @@ def _logo_path_light() -> str | None:
     return str(p2) if p2.is_file() else None
 
 
-def build_revenue_pdf_bytes(report: Dict[str, Any]) -> bytes:
+def build_revenue_pdf_bytes(report: Dict[str, Any], extra: Dict[str, Any] | None = None) -> bytes:
     buffer = io.BytesIO()
     styles = getSampleStyleSheet()
 
@@ -129,8 +130,11 @@ def build_revenue_pdf_bytes(report: Dict[str, Any]) -> bytes:
         fontName="Helvetica",
     )
 
+    extra = extra or {}
     cov = report.get("cover") or {}
-    highlights = derive_executive_highlights(report)
+    lectura = extra.get("lectura_operativa")
+    sections = compute_revenue_report_sections(report, lectura)
+    highlights = filter_executive_highlights(derive_executive_highlights(report))
     closing = derive_closing_strategic_implication(report)
 
     def on_cover(canvas, doc):
@@ -268,85 +272,160 @@ def build_revenue_pdf_bytes(report: Dict[str, Any]) -> bytes:
     story.append(lede_tbl)
     story.append(Spacer(1, 5 * mm))
 
-    story.append(Paragraph("LECTURAS INMEDIATAS", eyebrow))
-    hl_w = (PAGE_W - 2 * MARGIN - 16) / 3
-    hl_cells = []
-    for i, h in enumerate(highlights[:3]):
-        num = Paragraph(
-            f'<font size="18" color="#e07820"><b>0{i + 1}</b></font>',
-            ParagraphStyle("HN", parent=styles["Normal"], fontName="Helvetica-Bold"),
-        )
-        txt = _p(h, body_tight)
-        hl_cells.append(Table([[num], [txt]], colWidths=[hl_w - 8]))
-    for t in hl_cells:
-        t.setStyle(
-            TableStyle(
-                [
-                    ("BACKGROUND", (0, 0), (-1, -1), PAPER),
-                    ("BOX", (0, 0), (-1, -1), 0.25, RULE),
-                    ("LEFTPADDING", (0, 0), (-1, -1), 8),
-                    ("RIGHTPADDING", (0, 0), (-1, -1), 8),
-                    ("TOPPADDING", (0, 0), (-1, -1), 8),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
-                ]
+    if highlights:
+        story.append(Paragraph("LECTURAS INMEDIATAS", eyebrow))
+        hl_w = (PAGE_W - 2 * MARGIN - 16) / 3
+        hl_cells = []
+        for i, h in enumerate(highlights[:3]):
+            num = Paragraph(
+                f'<font size="18" color="#e07820"><b>0{i + 1}</b></font>',
+                ParagraphStyle("HN", parent=styles["Normal"], fontName="Helvetica-Bold"),
+            )
+            txt = _p(h, body_tight)
+            hl_cells.append(Table([[num], [txt]], colWidths=[hl_w - 8]))
+        for t in hl_cells:
+            t.setStyle(
+                TableStyle(
+                    [
+                        ("BACKGROUND", (0, 0), (-1, -1), PAPER),
+                        ("BOX", (0, 0), (-1, -1), 0.25, RULE),
+                        ("LEFTPADDING", (0, 0), (-1, -1), 8),
+                        ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+                        ("TOPPADDING", (0, 0), (-1, -1), 8),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                    ]
+                )
+            )
+        hl_row = Table([hl_cells], colWidths=[hl_w, hl_w, hl_w])
+        hl_row.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("LEFTPADDING", (0, 0), (-1, -1), 0)]))
+        story.append(hl_row)
+        story.append(Spacer(1, 8 * mm))
+
+    if sections.get("show_lectura_operativa") and sections.get("lectura_operativa"):
+        lo = sections["lectura_operativa"]
+        story.append(Paragraph("DATOS DERIVADOS", eyebrow))
+        story.append(Paragraph("Perfil + export (cálculos automáticos)", h2_serif))
+        story.append(
+            _p(
+                "Estimaciones desde inventario y comisiones de referencia en el perfil, cruzadas con el parseo del archivo. "
+                "No sustituyen contabilidad ni PMS.",
+                small,
             )
         )
-    hl_row = Table([hl_cells], colWidths=[hl_w, hl_w, hl_w])
-    hl_row.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("LEFTPADDING", (0, 0), (-1, -1), 0)]))
-    story.append(hl_row)
-    story.append(Spacer(1, 8 * mm))
-
-    story.append(Paragraph("DIAGNÓSTICO", eyebrow))
-    story.append(Paragraph("Hallazgos clave", h2_serif))
-    for f in report.get("key_findings") or []:
-        imp = f.get("impact", "")
-        pill = f"Impacto · {_badge(imp)}"
-        title = (f.get("title") or "").replace("&", "&amp;").replace("<", "&lt;")
-        diag = (f.get("diagnosis") or "").replace("&", "&amp;").replace("<", "&lt;")
-        impl = (f.get("business_implication") or "").replace("&", "&amp;").replace("<", "&lt;")
-        act = (f.get("recommended_action") or "").replace("&", "&amp;").replace("<", "&lt;")
-        left_html = (
-            f'<font size="7" color="#e07820"><b>{pill}</b></font><br/><br/>'
-            f"<b><font size='12'>{title}</font></b><br/><br/>"
-            f"<font size='6.5' color='#6b6560'><b>DIAGNÓSTICO</b></font><br/>"
-            f"{diag.replace(chr(10), '<br/>')}"
-        )
-        right_html = (
-            f"<font size='6.5' color='#e07820'><b>POR QUÉ IMPORTA</b></font><br/>"
-            f"{impl.replace(chr(10), '<br/>')}<br/><br/>"
-            f"<font size='6.5' color='#6b6560'><b>ACCIÓN RECOMENDADA</b></font><br/>"
-            f"{act.replace(chr(10), '<br/>')}"
-        )
-        rw = PAGE_W - 2 * MARGIN
-        lw = rw * 0.52
-        row = Table(
-            [[_p(left_html, body_tight), _p(right_html, body_tight)]],
-            colWidths=[lw, rw - lw - 1],
-        )
-        row.setStyle(
-            TableStyle(
-                [
-                    ("BACKGROUND", (0, 0), (0, -1), PAPER),
-                    ("BACKGROUND", (1, 0), (1, -1), SIDEBAR),
-                    ("BOX", (0, 0), (-1, -1), 0.25, RULE),
-                    ("LINEBEFORE", (1, 0), (1, -1), 0.25, RULE),
-                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                    ("LEFTPADDING", (0, 0), (-1, -1), 10),
-                    ("RIGHTPADDING", (0, 0), (-1, -1), 10),
-                    ("TOPPADDING", (0, 0), (-1, -1), 10),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
-                ]
+        story.append(Spacer(1, 2 * mm))
+        if lo.get("inventario_habitaciones_perfil"):
+            story.append(
+                _p(f"<b>Habitaciones físicas (perfil):</b> {lo['inventario_habitaciones_perfil']}", body_tight)
             )
-        )
-        story.append(row)
-        story.append(Spacer(1, 4 * mm))
+        cr = lo.get("comisiones_referencia_pct")
+        if isinstance(cr, dict) and cr:
+            story.append(_p(f"<b>Comisiones de referencia (%):</b> {cr}", body_tight))
+        est = lo.get("estimaciones") or {}
+        if est.get("room_nights_agregadas_export"):
+            story.append(_p(f"<b>Room nights (export):</b> {est['room_nights_agregadas_export']}", body_tight))
+        if est.get("ingreso_bruto_agregado_export"):
+            story.append(_p(f"<b>Ingreso bruto agregado:</b> {est['ingreso_bruto_agregado_export']}", body_tight))
+        if "ocupacion_proxy_pct" in est:
+            cap = est.get("capacidad_room_nights_teorica_rango", "—")
+            story.append(
+                _p(
+                    f"<b>Ocupación proxy (%):</b> {est['ocupacion_proxy_pct']} "
+                    f"<font size='8' color='#6b6560'>(capacidad teórica: {cap} RN)</font>",
+                    body_tight,
+                )
+            )
+        mrows = est.get("margen_por_canal_comision_perfil") or []
+        if mrows:
+            mdata: List[List[Any]] = [
+                [
+                    Paragraph("<b>Canal</b>", label),
+                    Paragraph("<b>Ingreso</b>", label),
+                    Paragraph("<b>% com.</b>", label),
+                    Paragraph("<b>Comisión</b>", label),
+                    Paragraph("<b>Neto est.</b>", label),
+                ]
+            ]
+            for row in mrows:
+                if not isinstance(row, dict):
+                    continue
+                mdata.append(
+                    [
+                        Paragraph(str(row.get("canal", "")), body_tight),
+                        Paragraph(str(row.get("ingreso_bruto_export", "")), body_tight),
+                        Paragraph(str(row.get("pct_comision_perfil", "")), body_tight),
+                        Paragraph(str(row.get("comision_estimada", "")), body_tight),
+                        Paragraph(str(row.get("ingreso_neto_estimado", "")), body_tight),
+                    ]
+                )
+            tw = PAGE_W - 2 * MARGIN
+            mt = Table(mdata, colWidths=[tw * 0.28, tw * 0.2, tw * 0.14, tw * 0.18, tw * 0.2])
+            mt.setStyle(
+                TableStyle(
+                    [
+                        ("LINEBELOW", (0, 0), (-1, 0), 1, INK),
+                        ("LINEBELOW", (0, 1), (-1, -1), 0.25, RULE_HAIR),
+                        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                        ("TOPPADDING", (0, 0), (-1, -1), 6),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                    ]
+                )
+            )
+            story.append(mt)
+        for line in lo.get("metodologia") or []:
+            if line:
+                story.append(_p(f"• {line}", small))
+        story.append(Spacer(1, 6 * mm))
 
-    story.append(Paragraph("SEÑALES", eyebrow))
-    story.append(Paragraph("Anomalías y alertas analíticas", h2_serif))
-    an = report.get("anomalies") or []
-    if not an:
-        story.append(_p("Sin anomalías destacadas.", small))
-    else:
+    if sections.get("show_key_findings"):
+        story.append(Paragraph("DIAGNÓSTICO", eyebrow))
+        story.append(Paragraph("Hallazgos clave", h2_serif))
+        for f in report.get("key_findings") or []:
+            imp = f.get("impact", "")
+            pill = f"Impacto · {_badge(imp)}"
+            title = (f.get("title") or "").replace("&", "&amp;").replace("<", "&lt;")
+            diag = (f.get("diagnosis") or "").replace("&", "&amp;").replace("<", "&lt;")
+            impl = (f.get("business_implication") or "").replace("&", "&amp;").replace("<", "&lt;")
+            act = (f.get("recommended_action") or "").replace("&", "&amp;").replace("<", "&lt;")
+            left_html = (
+                f'<font size="7" color="#e07820"><b>{pill}</b></font><br/><br/>'
+                f"<b><font size='12'>{title}</font></b><br/><br/>"
+                f"<font size='6.5' color='#6b6560'><b>DIAGNÓSTICO</b></font><br/>"
+                f"{diag.replace(chr(10), '<br/>')}"
+            )
+            right_html = (
+                f"<font size='6.5' color='#e07820'><b>POR QUÉ IMPORTA</b></font><br/>"
+                f"{impl.replace(chr(10), '<br/>')}<br/><br/>"
+                f"<font size='6.5' color='#6b6560'><b>ACCIÓN RECOMENDADA</b></font><br/>"
+                f"{act.replace(chr(10), '<br/>')}"
+            )
+            rw = PAGE_W - 2 * MARGIN
+            lw = rw * 0.52
+            row = Table(
+                [[_p(left_html, body_tight), _p(right_html, body_tight)]],
+                colWidths=[lw, rw - lw - 1],
+            )
+            row.setStyle(
+                TableStyle(
+                    [
+                        ("BACKGROUND", (0, 0), (0, -1), PAPER),
+                        ("BACKGROUND", (1, 0), (1, -1), SIDEBAR),
+                        ("BOX", (0, 0), (-1, -1), 0.25, RULE),
+                        ("LINEBEFORE", (1, 0), (1, -1), 0.25, RULE),
+                        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                        ("LEFTPADDING", (0, 0), (-1, -1), 10),
+                        ("RIGHTPADDING", (0, 0), (-1, -1), 10),
+                        ("TOPPADDING", (0, 0), (-1, -1), 10),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
+                    ]
+                )
+            )
+            story.append(row)
+            story.append(Spacer(1, 4 * mm))
+
+    if sections.get("show_anomalies"):
+        story.append(Paragraph("SEÑALES", eyebrow))
+        story.append(Paragraph("Anomalías y alertas analíticas", h2_serif))
+        an = report.get("anomalies") or []
         for a in an:
             sev = a.get("severity", "")
             color = colors.HexColor("#9a3412") if sev == "high" else colors.HexColor("#a16207") if sev == "medium" else MUTED
@@ -387,127 +466,132 @@ def build_revenue_pdf_bytes(report: Dict[str, Any]) -> bytes:
             story.append(wrap)
             story.append(Spacer(1, 3 * mm))
 
-    story.append(Paragraph("MÉTRICAS", eyebrow))
-    story.append(Paragraph("Lectura ejecutiva por KPI", h2_serif))
-    rows: List[List[Any]] = [
-        [
-            Paragraph("<b>Indicador</b>", label),
-            Paragraph("<b>Valor</b>", label),
-            Paragraph("<b>Lectura</b>", label),
-            Paragraph("<b>Atención</b>", label),
+    if sections.get("show_kpi_table"):
+        story.append(Paragraph("MÉTRICAS", eyebrow))
+        story.append(Paragraph("Lectura ejecutiva por KPI", h2_serif))
+        rows = [
+            [
+                Paragraph("<b>Indicador</b>", label),
+                Paragraph("<b>Valor</b>", label),
+                Paragraph("<b>Lectura</b>", label),
+                Paragraph("<b>Atención</b>", label),
+            ]
         ]
-    ]
-    for k in report.get("kpi_table") or []:
-        rows.append(
-            [
-                Paragraph(f"<b>{k.get('metric', '')}</b>", body_tight),
-                Paragraph(f"<b>{k.get('value', '')}</b>", body_tight),
-                _p(k.get("executive_read", ""), body_tight),
-                Paragraph(_badge(k.get("attention_level", "")), small),
-            ]
-        )
-    tw = PAGE_W - 2 * MARGIN
-    kt = Table(rows, colWidths=[tw * 0.28, tw * 0.14, tw * 0.44, tw * 0.14])
-    kt.setStyle(
-        TableStyle(
-            [
-                ("LINEBELOW", (0, 0), (-1, 0), 1.5, INK),
-                ("LINEBELOW", (0, 1), (-1, -1), 0.25, RULE_HAIR),
-                ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                ("TOPPADDING", (0, 0), (-1, -1), 8),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
-                ("LEFTPADDING", (0, 0), (-1, -1), 0),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 6),
-            ]
-        )
-    )
-    story.append(kt)
-    story.append(Spacer(1, 6 * mm))
-
-    story.append(Paragraph("PALANCAS", eyebrow))
-    story.append(Paragraph("Recomendaciones estratégicas", h2_serif))
-    for r in report.get("strategic_recommendations") or []:
-        pr = r.get("priority", "")
-        story.append(
-            Paragraph(
-                f'<font size="7" color="#e07820"><b>Prioridad · {_badge(pr)}</b></font>',
-                body_tight,
+        for k in sections.get("kpi_table_filtered") or []:
+            rows.append(
+                [
+                    Paragraph(f"<b>{k.get('metric', '')}</b>", body_tight),
+                    Paragraph(f"<b>{k.get('value', '')}</b>", body_tight),
+                    _p(k.get("executive_read", ""), body_tight),
+                    Paragraph(_badge(k.get("attention_level", "")), small),
+                ]
             )
-        )
-        story.append(Paragraph(f"<b>{r.get('title', '')}</b>", ParagraphStyle("RT", parent=body, fontSize=11, fontName="Helvetica-Bold")))
-        story.append(_p(r.get("action", ""), body_tight))
-        impact_box = Table(
-            [[Paragraph("<b>Impacto esperado</b>", label), _p(r.get("expected_impact", ""), body_tight)]],
-            colWidths=[PAGE_W - 2 * MARGIN],
-        )
-        impact_box.setStyle(
+        tw = PAGE_W - 2 * MARGIN
+        kt = Table(rows, colWidths=[tw * 0.28, tw * 0.14, tw * 0.44, tw * 0.14])
+        kt.setStyle(
             TableStyle(
                 [
-                    ("BACKGROUND", (0, 0), (-1, -1), PAPER),
-                    ("BOX", (0, 0), (-1, -1), 0.25, RULE),
-                    ("LEFTPADDING", (0, 0), (-1, -1), 10),
-                    ("RIGHTPADDING", (0, 0), (-1, -1), 10),
+                    ("LINEBELOW", (0, 0), (-1, 0), 1.5, INK),
+                    ("LINEBELOW", (0, 1), (-1, -1), 0.25, RULE_HAIR),
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
                     ("TOPPADDING", (0, 0), (-1, -1), 8),
                     ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 6),
                 ]
             )
         )
-        story.append(impact_box)
-        story.append(Spacer(1, 4 * mm))
+        story.append(kt)
+        story.append(Spacer(1, 6 * mm))
 
-    story.append(Paragraph("HORIZONTE", eyebrow))
-    story.append(Paragraph("Plan 30 · 60 · 90 días", h2_serif))
-    plan = report.get("plan_30_60_90") or {}
-    cw = (PAGE_W - 2 * MARGIN - 16) / 3
-
-    def _plan_col(days: List[str], num: str, subtitle: str) -> Table:
-        head = Paragraph(
-            f'<font size="26" color="white"><b>{num}</b></font>',
-            ParagraphStyle("PH", parent=styles["Normal"], fontName="Helvetica-Bold"),
-        )
-        sub = Paragraph(
-            f'<font size="7" color="#e07820"><b>{subtitle}</b></font>',
-            ParagraphStyle("PS", parent=styles["Normal"], fontName="Helvetica-Bold"),
-        )
-        bullets = "<br/>".join(f"• {x}" for x in (days or [])[:12]) or "—"
-        bod = _p(bullets, body_tight)
-        inner = Table([[head], [sub], [bod]], colWidths=[cw - 10])
-        inner.setStyle(
-            TableStyle(
-                [
-                    ("BACKGROUND", (0, 0), (0, 0), INK),
-                    ("TOPPADDING", (0, 0), (0, 0), 10),
-                    ("BOTTOMPADDING", (0, 0), (0, 0), 4),
-                    ("LEFTPADDING", (0, 0), (-1, -1), 8),
-                    ("RIGHTPADDING", (0, 0), (-1, -1), 8),
-                    ("LINEBELOW", (0, 1), (0, 1), 0.25, RULE_HAIR),
-                    ("TOPPADDING", (0, 2), (0, 2), 8),
-                ]
+    if sections.get("show_strategic_recommendations"):
+        story.append(Paragraph("PALANCAS", eyebrow))
+        story.append(Paragraph("Recomendaciones estratégicas", h2_serif))
+        for r in report.get("strategic_recommendations") or []:
+            pr = r.get("priority", "")
+            story.append(
+                Paragraph(
+                    f'<font size="7" color="#e07820"><b>Prioridad · {_badge(pr)}</b></font>',
+                    body_tight,
+                )
             )
-        )
-        outer = Table([[inner]], colWidths=[cw])
-        outer.setStyle(TableStyle([("BOX", (0, 0), (-1, -1), 0.25, RULE), ("BACKGROUND", (0, 0), (-1, -1), PAPER)]))
-        return outer
+            story.append(Paragraph(f"<b>{r.get('title', '')}</b>", ParagraphStyle("RT", parent=body, fontSize=11, fontName="Helvetica-Bold")))
+            story.append(_p(r.get("action", ""), body_tight))
+            impact_box = Table(
+                [[Paragraph("<b>Impacto esperado</b>", label), _p(r.get("expected_impact", ""), body_tight)]],
+                colWidths=[PAGE_W - 2 * MARGIN],
+            )
+            impact_box.setStyle(
+                TableStyle(
+                    [
+                        ("BACKGROUND", (0, 0), (-1, -1), PAPER),
+                        ("BOX", (0, 0), (-1, -1), 0.25, RULE),
+                        ("LEFTPADDING", (0, 0), (-1, -1), 10),
+                        ("RIGHTPADDING", (0, 0), (-1, -1), 10),
+                        ("TOPPADDING", (0, 0), (-1, -1), 8),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                    ]
+                )
+            )
+            story.append(impact_box)
+            story.append(Spacer(1, 4 * mm))
 
-    p30 = _plan_col(plan.get("days_30") or [], "30", "DÍAS — FUNDAMENTOS")
-    p60 = _plan_col(plan.get("days_60") or [], "60", "DÍAS — MEDICIÓN")
-    p90 = _plan_col(plan.get("days_90") or [], "90", "DÍAS — ESCALA")
-    pdeck = Table([[p30, p60, p90]], colWidths=[cw, cw, cw])
-    pdeck.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP")]))
-    story.append(pdeck)
-    story.append(Spacer(1, 6 * mm))
+    if sections.get("show_plan_30_60_90"):
+        story.append(Paragraph("HORIZONTE", eyebrow))
+        story.append(Paragraph("Plan 30 · 60 · 90 días", h2_serif))
+        plan = report.get("plan_30_60_90") or {}
+        cw = (PAGE_W - 2 * MARGIN - 16) / 3
 
-    story.append(Paragraph("DATOS", eyebrow))
-    story.append(Paragraph("Reportes adicionales recomendados", h2_serif))
-    for ar in report.get("additional_reports_needed") or []:
-        story.append(Paragraph(f"<b>{ar.get('report_name', '')}</b>", ParagraphStyle("AR", parent=body, fontName="Helvetica-Bold")))
-        story.append(_p(ar.get("why_it_is_needed", ""), small))
-        story.append(Spacer(1, 2 * mm))
+        def _plan_col(days: List[str], num: str, subtitle: str) -> Table:
+            head = Paragraph(
+                f'<font size="26" color="white"><b>{num}</b></font>',
+                ParagraphStyle("PH", parent=styles["Normal"], fontName="Helvetica-Bold"),
+            )
+            sub = Paragraph(
+                f'<font size="7" color="#e07820"><b>{subtitle}</b></font>',
+                ParagraphStyle("PS", parent=styles["Normal"], fontName="Helvetica-Bold"),
+            )
+            bullets = "<br/>".join(f"• {x}" for x in (days or [])[:12]) or "—"
+            bod = _p(bullets, body_tight)
+            inner = Table([[head], [sub], [bod]], colWidths=[cw - 10])
+            inner.setStyle(
+                TableStyle(
+                    [
+                        ("BACKGROUND", (0, 0), (0, 0), INK),
+                        ("TOPPADDING", (0, 0), (0, 0), 10),
+                        ("BOTTOMPADDING", (0, 0), (0, 0), 4),
+                        ("LEFTPADDING", (0, 0), (-1, -1), 8),
+                        ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+                        ("LINEBELOW", (0, 1), (0, 1), 0.25, RULE_HAIR),
+                        ("TOPPADDING", (0, 2), (0, 2), 8),
+                    ]
+                )
+            )
+            outer = Table([[inner]], colWidths=[cw])
+            outer.setStyle(TableStyle([("BOX", (0, 0), (-1, -1), 0.25, RULE), ("BACKGROUND", (0, 0), (-1, -1), PAPER)]))
+            return outer
 
-    story.append(Paragraph("OPERACIÓN", eyebrow))
-    story.append(Paragraph("Siguientes pasos", h2_serif))
-    for i, s in enumerate(report.get("next_steps") or [], start=1):
-        story.append(_p(f"{i}. {s}", body))
+        p30 = _plan_col(plan.get("days_30") or [], "30", "DÍAS — FUNDAMENTOS")
+        p60 = _plan_col(plan.get("days_60") or [], "60", "DÍAS — MEDICIÓN")
+        p90 = _plan_col(plan.get("days_90") or [], "90", "DÍAS — ESCALA")
+        pdeck = Table([[p30, p60, p90]], colWidths=[cw, cw, cw])
+        pdeck.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP")]))
+        story.append(pdeck)
+        story.append(Spacer(1, 6 * mm))
+
+    if sections.get("show_additional_reports"):
+        story.append(Paragraph("DATOS", eyebrow))
+        story.append(Paragraph("Reportes adicionales recomendados", h2_serif))
+        for ar in report.get("additional_reports_needed") or []:
+            story.append(Paragraph(f"<b>{ar.get('report_name', '')}</b>", ParagraphStyle("AR", parent=body, fontName="Helvetica-Bold")))
+            story.append(_p(ar.get("why_it_is_needed", ""), small))
+            story.append(Spacer(1, 2 * mm))
+
+    if sections.get("show_next_steps"):
+        story.append(Paragraph("OPERACIÓN", eyebrow))
+        story.append(Paragraph("Siguientes pasos", h2_serif))
+        for i, s in enumerate(report.get("next_steps") or [], start=1):
+            story.append(_p(f"{i}. {s}", body))
 
     story.append(Spacer(1, 8 * mm))
     closure_tbl = Table(

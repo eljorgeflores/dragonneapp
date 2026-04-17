@@ -34,7 +34,7 @@ def revenue_report_html_to_pdf_bytes(report: Dict[str, Any], extra: Dict[str, An
             logger.warning("xhtml2pdf falló, usando ReportLab: %s", e)
     from services.revenue_report.render_pdf_canvas import build_revenue_pdf_bytes
 
-    return build_revenue_pdf_bytes(report)
+    return build_revenue_pdf_bytes(report, extra)
 
 
 def _pdf_via_xhtml2pdf(report: Dict[str, Any], extra: Dict[str, Any]) -> bytes:
