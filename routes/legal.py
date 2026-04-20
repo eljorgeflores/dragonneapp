@@ -5,7 +5,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 
 from config import LEGAL_DOCS_VERSION, url_path
-from seo_helpers import absolute_url
+from seo_helpers import OG_CORPORATE_MISC, absolute_url
 from templating import templates
 
 router = APIRouter(tags=["legal"])
@@ -23,6 +23,8 @@ def _legal_seo(path: str, title: str, description: str) -> dict:
         "twitter_title": title,
         "twitter_description": description,
         "html_lang": "es-MX",
+        "og_image": absolute_url(OG_CORPORATE_MISC),
+        "og_image_alt": title,
     }
 
 

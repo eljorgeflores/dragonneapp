@@ -10,6 +10,30 @@ from typing import Any
 from config import APP_URL, url_path
 
 DEFAULT_OG_IMAGE_PATH = "/static/branding/og-social-preview.png"
+OG_HOSPITALITY_RM_ES = "/static/branding/og-hospitality-fractional-rm-es.png"
+OG_HOSPITALITY_RM_EN = "/static/branding/og-hospitality-fractional-rm-en.png"
+OG_HOSPITALITY_DECK_ES = "/static/branding/og-hospitality-deck-es.png"
+OG_HOSPITALITY_DECK_EN = "/static/branding/og-hospitality-deck-en.png"
+OG_HOSPITALITY_VERTICAL_ES = "/static/branding/og-hospitality-vertical-es.png"
+OG_HOSPITALITY_VERTICAL_EN = "/static/branding/og-hospitality-vertical-en.png"
+OG_HOSPITALITY_DIAGNOSIS_ES = "/static/branding/og-hospitality-diagnosis-es.png"
+OG_HOSPITALITY_DIAGNOSIS_EN = "/static/branding/og-hospitality-diagnosis-en.png"
+OG_PULLSO_PRODUCT = "/static/branding/og-pullso.png"
+OG_PULLSO_DEMO = "/static/branding/og-pullso-demo.png"
+OG_CORPORATE_MISC = "/static/branding/og-corporate-misc.png"
+OG_PULLSO_BRIEF = "/static/branding/og-pullso-brief.png"
+OG_PULLSO_MVP_ES = "/static/branding/og-pullso-mvp.png"
+OG_PULLSO_MVP_EN = "/static/branding/og-pullso-mvp-en.png"
+OG_VERTICAL_FILENAMES: dict[tuple[str, str], str] = {
+    ("hospitality", "es"): "og-hospitality-vertical-es.png",
+    ("hospitality", "en"): "og-hospitality-vertical-en.png",
+    ("startups", "es"): "og-vertical-startups-es.png",
+    ("startups", "en"): "og-vertical-startups-en.png",
+    ("smbs", "es"): "og-vertical-smbs-es.png",
+    ("smbs", "en"): "og-vertical-smbs-en.png",
+    ("medios", "es"): "og-vertical-medios-es.png",
+    ("medios", "en"): "og-vertical-medios-en.png",
+}
 BRAND_LOGO_PATH = "/static/branding/dragonne-wordmark.png"
 BRAND_LEGAL_NAME = "DRAGONNÉ"
 CONTACT_EMAIL_PUBLIC = "jorge@dragonne.co"
@@ -25,6 +49,13 @@ def absolute_url(route: str) -> str:
 
 def default_og_image_absolute() -> str:
     return absolute_url(DEFAULT_OG_IMAGE_PATH)
+
+
+def consulting_vertical_og_absolute(slug: str, lang: str) -> str:
+    """URL absoluta de OG para verticales /consultoria/{slug}, /consulting/{slug} y /hoteles."""
+    lc = "es" if lang != "en" else "en"
+    fname = OG_VERTICAL_FILENAMES.get((slug, lc), "og-social-preview.png")
+    return absolute_url(f"/static/branding/{fname}")
 
 
 def brand_logo_absolute() -> str:

@@ -20,7 +20,21 @@ from db import db
 from email_smtp import send_consulting_lead_email, send_hospitality_diagnosis_report
 import hospitality_diagnosis_i18n as hd_i18n
 from marketing_context import marketing_page_context
-from seo_helpers import absolute_url, breadcrumb_list_node, graph_consulting_lang, graph_homepage, organization_node
+from seo_helpers import (
+    OG_HOSPITALITY_DECK_EN,
+    OG_HOSPITALITY_DECK_ES,
+    OG_HOSPITALITY_DIAGNOSIS_EN,
+    OG_HOSPITALITY_DIAGNOSIS_ES,
+    OG_HOSPITALITY_RM_EN,
+    OG_HOSPITALITY_RM_ES,
+    absolute_url,
+    breadcrumb_list_node,
+    consulting_vertical_og_absolute,
+    default_og_image_absolute,
+    graph_consulting_lang,
+    graph_homepage,
+    organization_node,
+)
 from services.hospitality_diagnosis_compute import compute_hospitality_diagnosis
 from templating import templates
 from hospitality_problem_deck_i18n import get_hospitality_problem_deck_copy
@@ -158,6 +172,7 @@ def render_consulting_landing(
             "html_lang": html_lang,
             "hreflang_alternates": hreflang_alternates,
             "structured_data": structured,
+            "og_image": default_og_image_absolute(),
         },
     )
 
@@ -210,6 +225,7 @@ def render_consulting_contact_form(request: Request, lang: str = "es"):
             "twitter_description": meta_description,
             "html_lang": html_lang,
             "hreflang_alternates": hreflang_alternates,
+            "og_image": default_og_image_absolute(),
         },
     )
 
@@ -253,7 +269,8 @@ def render_hospitality_problem_deck_page(request: Request, lang: str):
     html_lang = "es-MX" if lang == "es" else "en"
     og_locale = "es_MX" if lang == "es" else "en_US"
     og_locale_alternate = "en_US" if lang == "es" else "es_MX"
-    og_image = absolute_url("/static/branding/meta-logo.png")
+    og_path = OG_HOSPITALITY_DECK_ES if lang == "es" else OG_HOSPITALITY_DECK_EN
+    og_image = absolute_url(og_path)
     trans = _consulting_translations()
     raw_t = trans.get(lang) or trans.get("es")
     t = _DefaultT(raw_t) if raw_t else _DefaultT()
@@ -332,7 +349,8 @@ def render_fractional_revenue_deck_page(request: Request, lang: str):
     html_lang = "es-MX" if lang == "es" else "en"
     og_locale = "es_MX" if lang == "es" else "en_US"
     og_locale_alternate = "en_US" if lang == "es" else "es_MX"
-    og_image = absolute_url("/static/branding/meta-logo.png")
+    og_path = OG_HOSPITALITY_RM_ES if lang == "es" else OG_HOSPITALITY_RM_EN
+    og_image = absolute_url(og_path)
     trans = _consulting_translations()
     raw_t = trans.get(lang) or trans.get("es")
     t = _DefaultT(raw_t) if raw_t else _DefaultT()
@@ -413,6 +431,7 @@ def render_vertical_landing_page(request: Request, lang: str, slug: str):
     og_locale_alternate = "en_US" if lang == "es" else "es_MX"
     html_lang = "es-MX" if lang == "es" else "en"
     cal_url = _HOSPITALITY_CAL_URL if slug == "hospitality" else calendar_url()
+    og_image = consulting_vertical_og_absolute(slug, lang)
     return templates.TemplateResponse(
         "vertical_landing.html",
         {
@@ -436,6 +455,7 @@ def render_vertical_landing_page(request: Request, lang: str, slug: str):
             "robots_meta": "index, follow",
             "og_title": meta_title,
             "og_description": meta_description,
+            "og_image": og_image,
             "og_image_alt": f"{v['breadcrumb_name']} — DRAGONNÉ",
             "og_locale": og_locale,
             "og_locale_alternate": og_locale_alternate,
@@ -547,6 +567,8 @@ def render_hospitality_diagnosis_page(request: Request, lang: str):
     # Copy vive en Python (hospitality_diagnosis_i18n); sin recarga del proceso el HTML queda viejo.
     # Evita además que el navegador cachee esta página durante iteraciones de copy.
     _no_store = {"Cache-Control": "no-store, max-age=0", "Pragma": "no-cache"}
+    og_path = OG_HOSPITALITY_DIAGNOSIS_ES if lang == "es" else OG_HOSPITALITY_DIAGNOSIS_EN
+    og_image = absolute_url(og_path)
     return templates.TemplateResponse(
         "hospitality_diagnosis.html",
         {
@@ -574,6 +596,7 @@ def render_hospitality_diagnosis_page(request: Request, lang: str):
             "robots_meta": "index, follow",
             "og_title": d["meta_title"],
             "og_description": d["meta_description"],
+            "og_image": og_image,
             "og_locale": og_locale,
             "og_locale_alternate": og_locale_alternate,
             "twitter_title": d["meta_title"],

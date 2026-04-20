@@ -36,11 +36,13 @@
   <meta property="og:url" content="{{ canonical_url }}" />
   {% elif app_url %}<meta property="og:url" content="{% block og_url %}{{ app_url }}{% endblock %}" />{% endif %}
   {% block og_image %}
-  {% set _og = og_image if (og_image is defined and og_image) else (app_url ~ '/static/branding/og-social-preview.png') %}
+  {% set _og = og_image if (og_image is defined and og_image) else default_og_image_absolute() %}
+  {% set _og_w = og_image_width if (og_image_width is defined and og_image_width) else 1200 %}
+  {% set _og_h = og_image_height if (og_image_height is defined and og_image_height) else 630 %}
   {% if _og %}
   <meta property="og:image" content="{{ _og }}" />
-  <meta property="og:image:width" content="1200" />
-  <meta property="og:image:height" content="630" />
+  <meta property="og:image:width" content="{{ _og_w }}" />
+  <meta property="og:image:height" content="{{ _og_h }}" />
   <meta property="og:image:alt" content="{% if og_image_alt is defined and og_image_alt %}{{ og_image_alt }}{% else %}{% block og_image_alt %}DRAGONNÉ — isotipo y titular: We connect your vision with the talent that makes it real{% endblock %}{% endif %}" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="{% if twitter_title is defined and twitter_title %}{{ twitter_title }}{% elif og_title is defined and og_title %}{{ og_title }}{% else %}DRAGONNÉ{% endif %}" />

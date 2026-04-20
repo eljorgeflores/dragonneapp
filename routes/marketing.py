@@ -17,8 +17,15 @@ from routes.consulting import render_consulting_landing
 from seo_helpers import (
     BRAND_LEGAL_NAME,
     CONTACT_EMAIL_PUBLIC,
+    OG_CORPORATE_MISC,
+    OG_PULLSO_BRIEF,
+    OG_PULLSO_DEMO,
+    OG_PULLSO_MVP_EN,
+    OG_PULLSO_MVP_ES,
+    OG_PULLSO_PRODUCT,
     absolute_url,
     breadcrumb_list_node,
+    default_og_image_absolute,
     graph_pullso_vertical,
     noindex_page_seo,
     organization_node,
@@ -480,6 +487,7 @@ def _pullsobrief_page_bundle(request: Request, locale: str):
         seo["og_locale_alternate"] = "es_MX"
     else:
         seo["og_locale_alternate"] = "en_US"
+    seo["og_image"] = absolute_url(OG_PULLSO_BRIEF)
     return {
         "request": request,
         **marketing_page_context(),
@@ -565,6 +573,8 @@ def pullso_public_page(request: Request):
         "twitter_description": "Análisis accionable sobre reportes de PMS y channel manager.",
         "html_lang": "es-MX",
         "structured_data": structured,
+        "og_image": absolute_url(OG_PULLSO_PRODUCT),
+        "og_image_alt": "Pullso by DRAGONNÉ — inteligencia de revenue para equipos hoteleros",
     }
     return templates.TemplateResponse("marketing.html", {"request": request, **ctx, **seo})
 
@@ -607,6 +617,8 @@ def precios_page(request: Request):
         "twitter_description": "Gratis, Pro y Pro+ alineados a tu operación.",
         "html_lang": "es-MX",
         "structured_data": structured,
+        "og_image": absolute_url(OG_PULLSO_PRODUCT),
+        "og_image_alt": "Precios Pullso by DRAGONNÉ — planes para equipos hoteleros",
     }
     return templates.TemplateResponse("precios.html", {"request": request, **marketing_page_context(), **seo})
 
@@ -621,6 +633,8 @@ def api_docs_page(request: Request):
     desc = "Documentación orientativa de la API DRAGONNÉ para integraciones con autenticación por clave."
     ctx = noindex_page_seo("/api", "Documentación API — DRAGONNÉ", desc)
     ctx["meta_keywords"] = "DRAGONNÉ, API, hotel, análisis"
+    ctx["og_image"] = default_og_image_absolute()
+    ctx["og_image_alt"] = "DRAGONNÉ — documentación API"
     return templates.TemplateResponse("api_docs.html", {"request": request, **ctx})
 
 
@@ -738,6 +752,8 @@ def mockup_analisis(request: Request):
         "twitter_description": "Mockup del tablero de análisis hotelero.",
         "html_lang": "es-MX",
         "structured_data": structured,
+        "og_image": absolute_url(OG_PULLSO_DEMO),
+        "og_image_alt": "Demo del analizador Pullso — KPIs y lectura comercial de ejemplo",
     }
     return templates.TemplateResponse("mockup_analisis.html", {"request": request, **seo})
 
@@ -763,6 +779,8 @@ def nosotros_page(request: Request):
         "og_description": "Consultoría y tecnología para hospitalidad y empresas en crecimiento.",
         "html_lang": "es-MX",
         "structured_data": structured,
+        "og_image": absolute_url(OG_CORPORATE_MISC),
+        "og_image_alt": "Nosotros — DRAGONNÉ, consultoría y producto Pullso",
     }
     return templates.TemplateResponse(
         "public_stub.html",
@@ -835,6 +853,8 @@ def faq_page(request: Request):
         "og_description": "Preguntas frecuentes sobre producto y consultoría.",
         "html_lang": "es-MX",
         "structured_data": structured,
+        "og_image": absolute_url(OG_CORPORATE_MISC),
+        "og_image_alt": "Preguntas frecuentes — DRAGONNÉ y Pullso",
     }
     return templates.TemplateResponse("public_faq.html", {"request": request, **seo})
 
@@ -860,6 +880,8 @@ def servicios_page(request: Request):
         "og_description": "Consultoría estratégica y software Pullso para revenue hotelero.",
         "html_lang": "es-MX",
         "structured_data": structured,
+        "og_image": absolute_url(OG_CORPORATE_MISC),
+        "og_image_alt": "Servicios — DRAGONNÉ y Pullso",
     }
     return templates.TemplateResponse("public_servicios.html", {"request": request, **seo})
 
@@ -1049,6 +1071,8 @@ def _pullso_mvp_home_preview_response(request: Request, *, lang: str):
         "twitter_description": meta_description,
         "html_lang": html_lang,
         "structured_data": structured,
+        "og_image": absolute_url(OG_PULLSO_MVP_ES if lang == "es" else OG_PULLSO_MVP_EN),
+        "og_image_alt": meta_title,
     }
     _poster = (
         (os.getenv("PULLSO_MVP_HERO_DEMO_VIDEO_POSTER_URL") or os.getenv("PULLSO_YC_HERO_DEMO_VIDEO_POSTER_URL") or "")
