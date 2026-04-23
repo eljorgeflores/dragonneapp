@@ -1,7 +1,15 @@
 {% extends "base.html" %}
-{% block body_class %}hpd{% endblock %}
+{% block body_class %}hpd{% if request.query_params.get('pdf') == '1' %} hpd--pdf{% endif %}{% endblock %}
 {% block head_extra %}
 <style>
+  /* Modo PDF (headless): limpia overlays y slide de cierre. */
+  body.hpd.hpd--pdf .hpd-top,
+  body.hpd.hpd--pdf .hpd-progress,
+  body.hpd.hpd--pdf .hpd-diag-fab,
+  body.hpd.hpd--pdf .hpd-scroll,
+  body.hpd.hpd--pdf .hpd-footer{display:none!important}
+  body.hpd.hpd--pdf .hpd-main{padding-top:0!important}
+
   .hpd .float-contact{display:none}
   .hpd{
     --hpd-gold:#f6a905;
@@ -548,9 +556,15 @@
       padding:12mm 14mm!important;
       position:relative;
     }
-    .hpd-slide:last-of-type{
-      page-break-after:auto;
-      break-after:auto;
+    /* Evita blank page final (marcado por JS al imprimir). */
+    .hpd-print-last{
+      page-break-after:auto!important;
+      break-after:auto!important;
+    }
+    /* Headless print-to-pdf no ejecuta el click handler; el penúltimo section suele ser el último imprimible (el último es close oculto). */
+    .hpd-slide:nth-last-of-type(2){
+      page-break-after:auto!important;
+      break-after:auto!important;
     }
     .hpd-slide__inner,
     .hpd-slide__inner--wide,
@@ -708,8 +722,10 @@
     </symbol>
   </svg>
 
+  {% set _is_pdf = (request.query_params.get('pdf') == '1') %}
   {% for s in d.slides %}
   {% set variant = s.variant %}
+  {% if not (_is_pdf and variant == 'close') %}
   <section
     class="hpd-slide {% if variant == 'hero' %}hpd-slide--hero{% elif variant == 'light' %}hpd-slide--light{% elif variant == 'dark' %}hpd-slide--dark{% elif variant == 'services' %}hpd-slide--services{% elif variant == 'close' %}hpd-slide--close{% elif variant == 'lead' %}hpd-slide--lead{% else %}hpd-slide--cta{% endif %}"
     data-hpd-slide="{{ loop.index0 }}"
@@ -834,6 +850,7 @@
     <p class="hpd-scroll" aria-hidden="true">{{ d.scroll_hint }}</p>
     {% endif %}
   </section>
+  {% endif %}
   {% endfor %}
 </main>
 
@@ -897,6 +914,13 @@
     var prev=printBtn.textContent;
     printBtn.disabled=true;
     printBtn.textContent=({% if lang == 'en' %}'Preparing PDF…'{% else %}'Preparando PDF…'{% endif %});
+    /* Marca la última slide imprimible para evitar una hoja en blanco al final. */
+    try{
+      slides.forEach(function(s){s.classList.remove('hpd-print-last');});
+      var printable=[].slice.call(document.querySelectorAll('.hpd-slide:not(.hpd-slide--close)'));
+      var last=printable[printable.length-1];
+      if(last) last.classList.add('hpd-print-last');
+    }catch(e){}
     Promise.all([_hpdWaitForFonts(),_hpdWaitForImages()]).then(function(){
       requestAnimationFrame(function(){
         requestAnimationFrame(function(){
