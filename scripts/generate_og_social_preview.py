@@ -321,6 +321,18 @@ def main() -> None:
             "dragonne",
         ),
         OgCardSpec(
+            "og-social-media-management-es.png",
+            "Hospitalidad · DRAGONNÉ",
+            ("Social Media Management", "& Content Creation"),
+            "dragonne",
+        ),
+        OgCardSpec(
+            "og-social-media-management-en.png",
+            "Hospitality · DRAGONNÉ",
+            ("Social Media Management", "& Content Creation"),
+            "dragonne",
+        ),
+        OgCardSpec(
             "og-pullso.png",
             "Producto hotelero",
             ("Pullso by DRAGONNÉ", "Inteligencia de revenue para equipos"),

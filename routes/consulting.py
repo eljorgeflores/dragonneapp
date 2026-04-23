@@ -27,6 +27,8 @@ from seo_helpers import (
     OG_HOSPITALITY_DIAGNOSIS_ES,
     OG_HOSPITALITY_RM_EN,
     OG_HOSPITALITY_RM_ES,
+    OG_SOCIAL_MEDIA_MGMT_EN,
+    OG_SOCIAL_MEDIA_MGMT_ES,
     absolute_url,
     breadcrumb_list_node,
     consulting_vertical_og_absolute,
@@ -39,6 +41,7 @@ from services.hospitality_diagnosis_compute import compute_hospitality_diagnosis
 from templating import templates
 from hospitality_problem_deck_i18n import get_hospitality_problem_deck_copy
 from fractional_revenue_deck_i18n import get_fractional_revenue_deck_copy
+from social_media_package_deck_i18n import get_social_media_package_deck_copy
 from vertical_landings_content import VERTICAL_SLUGS, calendar_url, get_vertical_landing_copy
 
 router = APIRouter(tags=["consulting_parent"])
@@ -388,6 +391,82 @@ def render_fractional_revenue_deck_page(request: Request, lang: str):
     )
 
 
+def render_social_media_package_deck_page(request: Request, lang: str):
+    """Landing tipo diapositivas: Social Media Management (página independiente)."""
+    if lang not in ("es", "en"):
+        lang = "es"
+    cal = _HOSPITALITY_CAL_URL
+    base = get_social_media_package_deck_copy(lang)
+    d = {
+        **base,
+        "hpd_standalone": True,
+        "hpd_hide_lang": False,
+        "nav_back_url": url_path("/hoteles" if lang == "es" else "/hotels"),
+        "nav_back_hotels": "Volver a Hotelería" if lang == "es" else "Back to Hospitality",
+        "nav_deck_sales_url": url_path("/hoteles/ventas" if lang == "es" else "/hotels/sales"),
+        "nav_deck_sales_label": "Presentación comercial" if lang == "es" else "Commercial deck",
+        "lang_url_es": url_path("/social-media-management"),
+        "lang_url_en": url_path("/social-media-management-en"),
+        "floating_cta_href": cal,
+        "close_secondary_href": base["contact_secondary_href"],
+        "close_secondary_target": "_self",
+    }
+    v = get_vertical_landing_copy("hospitality", lang)
+    ctx = marketing_page_context()
+    path_es = "/social-media-management"
+    path_en = "/social-media-management-en"
+    path = path_es if lang == "es" else path_en
+    canonical_url = absolute_url(path)
+    structured = {
+        "@context": "https://schema.org",
+        "@graph": [
+            organization_node(),
+            breadcrumb_list_node([(d["breadcrumb_name"], canonical_url)]),
+        ],
+    }
+    hreflang_alternates = [
+        {"hreflang": "es", "href": absolute_url(path_es)},
+        {"hreflang": "en", "href": absolute_url(path_en)},
+        {"hreflang": "x-default", "href": absolute_url(path_es)},
+    ]
+    trans = _consulting_translations()
+    raw_t = trans.get(lang) or trans.get("es")
+    t = _DefaultT(raw_t) if raw_t else _DefaultT()
+    og_path = OG_SOCIAL_MEDIA_MGMT_ES if lang == "es" else OG_SOCIAL_MEDIA_MGMT_EN
+    og_image = absolute_url(og_path)
+    return templates.TemplateResponse(
+        "hospitality_problem_deck.html",
+        {
+            "request": request,
+            **ctx,
+            "lang": lang,
+            "t": t,
+            "d": d,
+            "v": v,
+            "calendar_url": cal,
+            "meta_title": d["meta_title"],
+            "meta_description": d["meta_description"],
+            "meta_keywords": (
+                "gestión de redes sociales, community management, contenido para Instagram, reels, "
+                "carruseles, reporte redes sociales, Dragonné"
+            ),
+            "canonical_url": canonical_url,
+            "robots_meta": "index, follow",
+            "og_title": d["meta_title"],
+            "og_description": d["meta_description"],
+            "og_image": og_image,
+            "og_locale": "es_MX" if lang == "es" else "en_US",
+            "og_locale_alternate": "en_US" if lang == "es" else "es_MX",
+            "twitter_title": d["meta_title"],
+            "twitter_description": d["meta_description"],
+            "html_lang": "es-MX" if lang == "es" else "en",
+            "hreflang_alternates": hreflang_alternates,
+            "structured_data": structured,
+            "og_image_alt": f"DRAGONNÉ — {d['breadcrumb_name']}",
+        },
+    )
+
+
 def render_vertical_landing_page(request: Request, lang: str, slug: str):
     """Landing de vertical DRAGONNÉ (consultoría): /consultoria/{slug} y /consulting/{slug}."""
     if lang not in ("es", "en"):
@@ -516,6 +595,21 @@ def hospitality_fractional_revenue_deck_es(request: Request):
 @router.get("/hotels/fractional-revenue-management", response_class=HTMLResponse)
 def hospitality_fractional_revenue_deck_en(request: Request):
     return render_fractional_revenue_deck_page(request, "en")
+
+
+@router.get("/social-media-management", response_class=HTMLResponse)
+def social_media_management_landing(request: Request):
+    return render_social_media_package_deck_page(request, "es")
+
+
+@router.get("/social-media-management-en", response_class=HTMLResponse)
+def social_media_management_landing_en(request: Request):
+    return render_social_media_package_deck_page(request, "en")
+
+
+@router.get("/paquete-gestion-redes-sociales", response_class=HTMLResponse)
+def social_media_management_legacy_redirect():
+    return RedirectResponse(url_path("/social-media-management"), status_code=301)
 
 
 def render_hospitality_diagnosis_page(request: Request, lang: str):
