@@ -535,8 +535,9 @@
       flex-direction:column!important;
       justify-content:center!important;
       align-items:center!important;
-      min-height:100vh!important;
-      min-height:100dvh!important;
+      /* En impresión, vh/dvh varía por motor; amarra a A4 horizontal (210mm alto). */
+      height:210mm!important;
+      min-height:210mm!important;
       width:100%!important;
       box-sizing:border-box!important;
       scroll-snap-align:none!important;
@@ -871,8 +872,44 @@
     },{rootMargin:'-42% 0px -42% 0px',threshold:0});
     slides.forEach(function(s){obs.observe(s);});
   }
+  function _hpdWaitForImages(){
+    var imgs=[].slice.call(document.images||[]);
+    if(!imgs.length)return Promise.resolve();
+    return Promise.all(imgs.map(function(img){
+      if(img.complete && img.naturalWidth>0)return Promise.resolve();
+      return new Promise(function(res){
+        var done=false;
+        function finish(){ if(done) return; done=true; res(); }
+        img.addEventListener('load',finish,{once:true});
+        img.addEventListener('error',finish,{once:true});
+        setTimeout(finish,1500);
+      });
+    })).then(function(){});
+  }
+  function _hpdWaitForFonts(){
+    try{
+      if(document.fonts && document.fonts.ready) return document.fonts.ready;
+    }catch(e){}
+    return Promise.resolve();
+  }
   var printBtn=document.getElementById('hpd-print');
-  if(printBtn)printBtn.addEventListener('click',function(){window.print();});
+  if(printBtn)printBtn.addEventListener('click',function(){
+    var prev=printBtn.textContent;
+    printBtn.disabled=true;
+    printBtn.textContent=({% if lang == 'en' %}'Preparing PDF…'{% else %}'Preparando PDF…'{% endif %});
+    Promise.all([_hpdWaitForFonts(),_hpdWaitForImages()]).then(function(){
+      requestAnimationFrame(function(){
+        requestAnimationFrame(function(){
+          window.print();
+        });
+      });
+    }).finally(function(){
+      setTimeout(function(){
+        printBtn.disabled=false;
+        printBtn.textContent=prev;
+      },600);
+    });
+  });
 })();
 </script>
 {% endblock %}
