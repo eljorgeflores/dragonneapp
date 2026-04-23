@@ -397,6 +397,11 @@ def render_social_media_package_deck_page(request: Request, lang: str):
         lang = "es"
     cal = _HOSPITALITY_CAL_URL
     base = get_social_media_package_deck_copy(lang)
+    pdf_href = (
+        url_path("/static/exports/Dragonne-social-media-management-content-ES.pdf")
+        if lang == "es"
+        else url_path("/static/exports/Dragonne-social-media-management-content-EN.pdf")
+    )
     d = {
         **base,
         "hpd_standalone": True,
@@ -410,6 +415,11 @@ def render_social_media_package_deck_page(request: Request, lang: str):
         "floating_cta_href": cal,
         "close_secondary_href": base["contact_secondary_href"],
         "close_secondary_target": "_self",
+        # En esta landing, el botón "Descargar PDF" debe bajar el archivo, no abrir impresión.
+        "close_primary_mode": "link",
+        "close_primary_label": base.get("cta_pdf", "Descargar PDF"),
+        "close_primary_href": pdf_href,
+        "close_primary_target": "_self",
     }
     v = get_vertical_landing_copy("hospitality", lang)
     ctx = marketing_page_context()
