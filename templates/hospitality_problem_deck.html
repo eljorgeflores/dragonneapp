@@ -633,6 +633,9 @@
     {% if d.get('nav_rm_frac_url') %}
     <a href="{{ d.nav_rm_frac_url }}">{{ d.nav_rm_frac_label }}</a>
     {% endif %}
+    {% if d.get('nav_social_media_url') %}
+    <a href="{{ d.nav_social_media_url }}">{{ d.nav_social_media_label }}</a>
+    {% endif %}
     <a href="{{ calendar_url }}" target="_blank" rel="noopener noreferrer">{{ d.nav_schedule_meeting }}</a>
   </nav>
   {% if not d.get('hpd_hide_lang') %}

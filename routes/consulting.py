@@ -245,6 +245,8 @@ def render_hospitality_problem_deck_page(request: Request, lang: str):
         "nav_rm_frac_label": (
             "Revenue Management fraccional" if lang == "es" else "Fractional Revenue Management"
         ),
+        "nav_social_media_url": url_path("/social-media-management" if lang == "es" else "/social-media-management-en"),
+        "nav_social_media_label": "Social Media Management",
     }
     v = get_vertical_landing_copy("hospitality", lang)
     ctx = marketing_page_context()
@@ -325,6 +327,8 @@ def render_fractional_revenue_deck_page(request: Request, lang: str):
         "close_secondary_href": url_path("/consultoria/contacto" if lang == "es" else "/consulting/contact"),
         "nav_deck_sales_url": url_path("/hoteles/ventas" if lang == "es" else "/hotels/sales"),
         "nav_deck_sales_label": "Presentación comercial" if lang == "es" else "Commercial deck",
+        "nav_social_media_url": url_path("/social-media-management" if lang == "es" else "/social-media-management-en"),
+        "nav_social_media_label": "Social Media Management",
         "floating_cta_href": cal,
     }
     v = get_vertical_landing_copy("hospitality", lang)
