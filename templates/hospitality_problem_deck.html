@@ -55,6 +55,50 @@
     opacity:1;
   }
   body.hpd .hpd-top__mid{display:flex;align-items:center;gap:18px;flex-wrap:wrap;justify-content:center;flex:1}
+  /* Dropdown "Servicios" (barra superior de decks) */
+  body.hpd .hpd-top__svc{position:relative}
+  body.hpd details.hpd-top__svc{display:inline-flex;align-items:center}
+  body.hpd details.hpd-top__svc > summary{
+    list-style:none;cursor:pointer;
+    color:rgba(255,255,255,.88);
+    font-size:.8125rem;font-weight:600;
+    padding:6px 10px;border-radius:999px;
+    border:1px solid rgba(255,255,255,.10);
+    background:rgba(255,255,255,.04);
+    user-select:none;
+  }
+  body.hpd details.hpd-top__svc > summary::-webkit-details-marker{display:none}
+  body.hpd details.hpd-top__svc > summary:hover{color:#fff;border-color:rgba(246,169,5,.38)}
+  body.hpd details.hpd-top__svc[open] > summary{
+    color:#fff;
+    border-color:rgba(246,169,5,.46);
+    background:rgba(246,169,5,.10);
+  }
+  body.hpd .hpd-top__svc-menu{
+    position:absolute;left:0;top:calc(100% + 10px);min-width:260px;z-index:140;
+    border-radius:14px;
+    border:1px solid rgba(255,255,255,.12);
+    background:rgba(12,12,14,.92);
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    box-shadow:0 18px 52px rgba(0,0,0,.35);
+    padding:10px;
+  }
+  body.hpd .hpd-top__svc-menu a{
+    display:flex;align-items:center;gap:10px;
+    padding:10px 10px;border-radius:12px;
+    color:rgba(255,255,255,.86);
+    text-decoration:none;
+    font-size:.8125rem;font-weight:600;
+    white-space:nowrap;
+  }
+  body.hpd .hpd-top__svc-menu a:hover{color:#fff;background:rgba(255,255,255,.06)}
+  body.hpd .hpd-top__svc-sep{height:1px;margin:6px 8px;background:rgba(255,255,255,.10)}
+  body.hpd .hpd-top__svc-kicker{
+    margin:2px 8px 6px;
+    font-size:.62rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+    color:rgba(255,255,255,.45)
+  }
   body.hpd .hpd-top__lang{flex-shrink:0}
   body.hpd .hpd-top__lang{display:flex;gap:6px}
   body.hpd .hpd-top__lang a{
@@ -334,6 +378,8 @@
   }
   @media (min-width:780px){
     .hpd-card-grid--2{grid-template-columns:repeat(2,1fr);gap:16px}
+    /* Para slides con 3 tarjetas: evita hueco (3 en fila). */
+    .hpd-card-grid--3{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
   }
   .hpd-card{
     position:relative;display:flex;gap:14px;align-items:flex-start;
@@ -598,6 +644,11 @@
       gap:12px!important;
       margin-top:16px!important;
     }
+    .hpd-card-grid--3{
+      grid-template-columns:repeat(3,minmax(0,1fr))!important;
+      gap:10px!important;
+      margin-top:16px!important;
+    }
     .hpd-card{
       break-inside:avoid!important;
       page-break-inside:avoid!important;
@@ -644,13 +695,33 @@
     {% if d.get('nav_deck_sales_url') %}
     <a href="{{ d.nav_deck_sales_url }}">{{ d.nav_deck_sales_label }}</a>
     {% endif %}
-    {% if d.get('nav_rm_frac_url') %}
-    <a href="{{ d.nav_rm_frac_url }}">{{ d.nav_rm_frac_label }}</a>
+    {% set _has_services = (d.get('nav_rm_frac_url') or d.get('nav_social_media_url')) %}
+    {% if _has_services %}
+    <details class="hpd-top__svc">
+      <summary>{% if lang == 'en' %}Services{% else %}Servicios{% endif %}</summary>
+      <div class="hpd-top__svc-menu" role="menu" aria-label="{% if lang == 'en' %}Services{% else %}Servicios{% endif %}">
+        <p class="hpd-top__svc-kicker">{% if lang == 'en' %}Hospitality{% else %}Hotelería{% endif %}</p>
+        {% if d.get('nav_rm_frac_url') %}
+        <a href="{{ d.nav_rm_frac_url }}" role="menuitem">{{ d.nav_rm_frac_label }}</a>
+        {% endif %}
+        {% if d.get('nav_social_media_url') %}
+        <a href="{{ d.nav_social_media_url }}" role="menuitem">{{ d.nav_social_media_label }}</a>
+        {% endif %}
+        {% if d.get('nav_paid_media_url') %}
+        <a href="{{ d.nav_paid_media_url }}" role="menuitem">{{ d.nav_paid_media_label }}</a>
+        {% endif %}
+        <div class="hpd-top__svc-sep" role="separator" aria-hidden="true"></div>
+        <a href="{{ url_path('/hoteles/diagnostico') if lang == 'es' else url_path('/hotels/diagnosis') }}" role="menuitem">{% if lang == 'en' %}Free diagnosis{% else %}Diagnóstico gratis{% endif %}</a>
+      </div>
+    </details>
     {% endif %}
-    {% if d.get('nav_social_media_url') %}
-    <a href="{{ d.nav_social_media_url }}">{{ d.nav_social_media_label }}</a>
-    {% endif %}
+    {# Diagnóstico siempre visible en el header (ventas + servicios) #}
+    <a href="{{ url_path('/hoteles/diagnostico') if lang == 'es' else url_path('/hotels/diagnosis') }}">
+      {% if lang == 'en' %}Free diagnosis{% else %}Diagnóstico gratis{% endif %}
+    </a>
+    {% if not d.get('hpd_hide_nav_schedule') %}
     <a href="{{ calendar_url }}" target="_blank" rel="noopener noreferrer">{{ d.nav_schedule_meeting }}</a>
+    {% endif %}
   </nav>
   {% if not d.get('hpd_hide_lang') %}
   <div class="hpd-top__lang" aria-label="{% if lang == 'en' %}Language{% else %}Idioma{% endif %}">
@@ -824,7 +895,7 @@
       {% if s.bullets is defined %}
         {% set first_b = s.bullets[0] %}
         {% if first_b is mapping %}
-        <ul class="hpd-card-grid hpd-card-grid--2" role="list">
+        <ul class="hpd-card-grid {% if s.bullets|length == 3 %}hpd-card-grid--3{% else %}hpd-card-grid--2{% endif %}" role="list">
           {% for b in s.bullets %}
           <li class="hpd-card" role="listitem">
             <div class="hpd-card__icon-wrap">
@@ -872,6 +943,7 @@
   {% endfor %}
 </main>
 
+{% if d.get('show_floating_diag', True) %}
 <a
   class="hpd-diag-fab hpd-no-print"
   href="{{ d.get('floating_cta_href', url_path('/hoteles/diagnostico') if lang == 'es' else url_path('/hotels/diagnosis')) }}"
@@ -879,6 +951,7 @@
 >
   {{ d.get('floating_cta_label', v.diag_cta_open) }}
 </a>
+{% endif %}
 
 <footer class="hpd-footer">
   <p>{{ d.footer_note }} {% if d.get('hpd_standalone') %}<span class="hpd-footer-domain">dragonne.co</span>{% else %}<a href="{{ url_path('/consultoria') if lang == 'es' else url_path('/consulting') }}">dragonne.co</a>{% endif %}</p>

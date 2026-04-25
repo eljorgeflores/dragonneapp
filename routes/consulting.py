@@ -29,6 +29,8 @@ from seo_helpers import (
     OG_HOSPITALITY_RM_ES,
     OG_SOCIAL_MEDIA_MGMT_EN,
     OG_SOCIAL_MEDIA_MGMT_ES,
+    OG_PAID_MEDIA_MGMT_EN,
+    OG_PAID_MEDIA_MGMT_ES,
     absolute_url,
     breadcrumb_list_node,
     consulting_vertical_og_absolute,
@@ -42,6 +44,7 @@ from templating import templates
 from hospitality_problem_deck_i18n import get_hospitality_problem_deck_copy
 from fractional_revenue_deck_i18n import get_fractional_revenue_deck_copy
 from social_media_package_deck_i18n import get_social_media_package_deck_copy
+from paid_media_package_deck_i18n import get_paid_media_package_deck_copy
 from vertical_landings_content import VERTICAL_SLUGS, calendar_url, get_vertical_landing_copy
 
 router = APIRouter(tags=["consulting_parent"])
@@ -253,6 +256,12 @@ def render_hospitality_problem_deck_page(request: Request, lang: str):
         ),
         "nav_social_media_url": url_path("/social-media-management" if lang == "es" else "/social-media-management-en"),
         "nav_social_media_label": "Social Media Management",
+        "nav_paid_media_url": url_path("/paid-media-management" if lang == "es" else "/paid-media-management-en"),
+        "nav_paid_media_label": "Paid Media Management",
+        # En esta landing: no mostramos "Agendar reunión" en el header ni el botón flotante,
+        # porque ya existe CTA/contacto al final del deck.
+        "hpd_hide_nav_schedule": True,
+        "show_floating_diag": False,
         "close_primary_mode": "link",
         "close_primary_label": base.get("cta_pdf", "Descargar PDF"),
         "close_primary_href": pdf_href,
@@ -351,9 +360,13 @@ def render_fractional_revenue_deck_page(request: Request, lang: str):
         ),
         "close_secondary_href": url_path("/consultoria/contacto" if lang == "es" else "/consulting/contact"),
         "nav_deck_sales_url": url_path("/hoteles/ventas" if lang == "es" else "/hotels/sales"),
-        "nav_deck_sales_label": "Presentación comercial" if lang == "es" else "Commercial deck",
+        "nav_deck_sales_label": "Qué hacemos" if lang == "es" else "What we do",
         "nav_social_media_url": url_path("/social-media-management" if lang == "es" else "/social-media-management-en"),
         "nav_social_media_label": "Social Media Management",
+        "nav_paid_media_url": url_path("/paid-media-management" if lang == "es" else "/paid-media-management-en"),
+        "nav_paid_media_label": "Paid Media Management",
+        # La agenda vive en el botón flotante y al final del deck, no en el header.
+        "hpd_hide_nav_schedule": True,
         "floating_cta_href": cal,
     }
     v = get_vertical_landing_copy("hospitality", lang)
@@ -438,9 +451,21 @@ def render_social_media_package_deck_page(request: Request, lang: str):
         "nav_back_url": url_path("/hoteles" if lang == "es" else "/hotels"),
         "nav_back_hotels": "Volver a Hotelería" if lang == "es" else "Back to Hospitality",
         "nav_deck_sales_url": url_path("/hoteles/ventas" if lang == "es" else "/hotels/sales"),
-        "nav_deck_sales_label": "Presentación comercial" if lang == "es" else "Commercial deck",
+        "nav_deck_sales_label": "Qué hacemos" if lang == "es" else "What we do",
+        # Mantener el set de servicios consistente en el header (RM + Social),
+        # aunque entres directo a esta landing.
+        "nav_rm_frac_url": url_path(
+            "/hoteles/revenue-management-fraccional" if lang == "es" else "/hotels/fractional-revenue-management"
+        ),
+        "nav_rm_frac_label": (
+            "Revenue Management fraccional" if lang == "es" else "Fractional Revenue Management"
+        ),
+        "nav_paid_media_url": url_path("/paid-media-management" if lang == "es" else "/paid-media-management-en"),
+        "nav_paid_media_label": "Paid Media Management",
         "lang_url_es": url_path("/social-media-management"),
         "lang_url_en": url_path("/social-media-management-en"),
+        # La agenda vive en el botón flotante y al final del deck, no en el header.
+        "hpd_hide_nav_schedule": True,
         "floating_cta_href": cal,
         "close_secondary_href": base["contact_secondary_href"],
         "close_secondary_target": "_self",
@@ -493,6 +518,108 @@ def render_social_media_package_deck_page(request: Request, lang: str):
             "meta_keywords": (
                 "gestión de redes sociales, community management, contenido para Instagram, reels, "
                 "carruseles, reporte redes sociales, Dragonné"
+            ),
+            "canonical_url": canonical_url,
+            "robots_meta": "index, follow",
+            "og_title": d["meta_title"],
+            "og_description": d["meta_description"],
+            "og_image": og_image,
+            "og_locale": "es_MX" if lang == "es" else "en_US",
+            "og_locale_alternate": "en_US" if lang == "es" else "es_MX",
+            "twitter_title": d["meta_title"],
+            "twitter_description": d["meta_description"],
+            "html_lang": "es-MX" if lang == "es" else "en",
+            "hreflang_alternates": hreflang_alternates,
+            "structured_data": structured,
+            "og_image_alt": f"DRAGONNÉ — {d['breadcrumb_name']}",
+        },
+    )
+
+
+def render_paid_media_package_deck_page(request: Request, lang: str):
+    """Landing tipo diapositivas: Paid Media Management (Meta Ads + Google Ads)."""
+    if lang not in ("es", "en"):
+        lang = "es"
+    cal = _HOSPITALITY_CAL_URL
+    base = get_paid_media_package_deck_copy(lang)
+    pdf_href = (
+        url_path("/static/exports/Dragonne-paid-media-management-ES.pdf")
+        if lang == "es"
+        else url_path("/static/exports/Dragonne-paid-media-management-EN.pdf")
+    )
+    d = {
+        **base,
+        "hpd_standalone": True,
+        "hpd_hide_lang": False,
+        "nav_back_url": url_path("/hoteles" if lang == "es" else "/hotels"),
+        "nav_back_hotels": "Volver a Hotelería" if lang == "es" else "Back to Hospitality",
+        "nav_deck_sales_url": url_path("/hoteles/ventas" if lang == "es" else "/hotels/sales"),
+        "nav_deck_sales_label": "Qué hacemos" if lang == "es" else "What we do",
+        "nav_rm_frac_url": url_path(
+            "/hoteles/revenue-management-fraccional" if lang == "es" else "/hotels/fractional-revenue-management"
+        ),
+        "nav_rm_frac_label": (
+            "Revenue Management fraccional" if lang == "es" else "Fractional Revenue Management"
+        ),
+        "nav_social_media_url": url_path("/social-media-management" if lang == "es" else "/social-media-management-en"),
+        "nav_social_media_label": "Social Media Management",
+        "lang_url_es": url_path("/paid-media-management"),
+        "lang_url_en": url_path("/paid-media-management-en"),
+        # La agenda vive en el botón flotante y al final del deck, no en el header.
+        "hpd_hide_nav_schedule": True,
+        "floating_cta_href": cal,
+        "close_secondary_href": base["contact_secondary_href"],
+        "close_secondary_target": "_self",
+        # Botón primario: descarga el PDF.
+        "close_primary_mode": "link",
+        "close_primary_label": base.get("cta_pdf", "Descargar PDF"),
+        "close_primary_href": pdf_href,
+        "close_primary_target": "_self",
+        "close_primary_download": (
+            "Dragonne-paid-media-management-ES.pdf"
+            if lang == "es"
+            else "Dragonne-paid-media-management-EN.pdf"
+        ),
+    }
+    v = get_vertical_landing_copy("hospitality", lang)
+    ctx = marketing_page_context()
+    path_es = "/paid-media-management"
+    path_en = "/paid-media-management-en"
+    path = path_es if lang == "es" else path_en
+    canonical_url = absolute_url(path)
+    structured = {
+        "@context": "https://schema.org",
+        "@graph": [
+            organization_node(),
+            breadcrumb_list_node([(d["breadcrumb_name"], canonical_url)]),
+        ],
+    }
+    hreflang_alternates = [
+        {"hreflang": "es", "href": absolute_url(path_es)},
+        {"hreflang": "en", "href": absolute_url(path_en)},
+        {"hreflang": "x-default", "href": absolute_url(path_es)},
+    ]
+    og_path = OG_PAID_MEDIA_MGMT_ES if lang == "es" else OG_PAID_MEDIA_MGMT_EN
+    og_image = absolute_url(og_path)
+    trans = _consulting_translations()
+    raw_t = trans.get(lang) or trans.get("es")
+    t = _DefaultT(raw_t) if raw_t else _DefaultT()
+    return templates.TemplateResponse(
+        "hospitality_problem_deck.html",
+        {
+            "request": request,
+            **ctx,
+            "lang": lang,
+            "t": t,
+            "d": d,
+            "v": v,
+            "calendar_url": cal,
+            "meta_title": d["meta_title"],
+            "meta_description": d["meta_description"],
+            "meta_keywords": (
+                "pauta digital, meta ads, google ads, campañas, remarketing, hoteles, DRAGONNÉ"
+                if lang == "es"
+                else "paid media, meta ads, google ads, campaigns, remarketing, hotels, DRAGONNÉ"
             ),
             "canonical_url": canonical_url,
             "robots_meta": "index, follow",
@@ -649,6 +776,16 @@ def social_media_management_landing(request: Request):
 @router.get("/social-media-management-en", response_class=HTMLResponse)
 def social_media_management_landing_en(request: Request):
     return render_social_media_package_deck_page(request, "en")
+
+
+@router.get("/paid-media-management", response_class=HTMLResponse)
+def paid_media_management_landing(request: Request):
+    return render_paid_media_package_deck_page(request, "es")
+
+
+@router.get("/paid-media-management-en", response_class=HTMLResponse)
+def paid_media_management_landing_en(request: Request):
+    return render_paid_media_package_deck_page(request, "en")
 
 
 @router.get("/paquete-gestion-redes-sociales", response_class=HTMLResponse)

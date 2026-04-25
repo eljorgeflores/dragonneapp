@@ -3,12 +3,20 @@
 {% set _cal = calendar_url|default('https://calendar.google.com/calendar/appointments/schedules/AcZssZ387VmTo3CquOrVY76jpM5FK7oKH8yMolIRGL0PiAiY7nZwhr_maqZacHRTN3jy6Dgc-V53No5J?gv=true') %}
 {% set _lang_en = consulting_header_lang_en if consulting_header_lang_en is defined and consulting_header_lang_en else url_path('/consulting') %}
 {% set _lang_es = consulting_header_lang_es if consulting_header_lang_es is defined and consulting_header_lang_es else url_path('/consultoria') %}
+{% set _path = request.url.path if request is defined else '' %}
+{% set _is_hosp_vertical = (_path.startswith('/hoteles') or _path.startswith('/hotels')) %}
+{% set _hosp_home = url_path('/hoteles') if lang == 'es' else url_path('/hotels') %}
+{% set _hosp_sales = url_path('/hoteles/ventas') if lang == 'es' else url_path('/hotels/sales') %}
+{% set _hosp_rm = url_path('/hoteles/revenue-management-fraccional') if lang == 'es' else url_path('/hotels/fractional-revenue-management') %}
+{% set _hosp_social = url_path('/social-media-management') if lang == 'es' else url_path('/social-media-management-en') %}
+{% set _hosp_paid = url_path('/paid-media-management') if lang == 'es' else url_path('/paid-media-management-en') %}
+{% set _hosp_diag = url_path('/hoteles/diagnostico') if lang == 'es' else url_path('/hotels/diagnosis') %}
 <a href="#main" class="cp-skip">{% if lang == 'en' %}Skip to content{% else %}Saltar al contenido{% endif %}</a>
 <header class="cp-nav-wrap" id="cp-header">
   <input type="checkbox" id="cp-nav-toggle" class="cp-nav-toggle" aria-hidden="true" aria-label="{% if lang == 'en' %}Menu{% else %}Menú{% endif %}" />
   <div class="cp-nav">
     <div class="cp-nav-left">
-      <a href="{{ url_path('/consultoria') if lang == 'es' else url_path('/consulting') }}#top" class="cp-brand">
+      <a href="{% if _is_hosp_vertical %}{{ _hosp_home }}{% else %}{{ url_path('/consultoria') if lang == 'es' else url_path('/consulting') }}#top{% endif %}" class="cp-brand">
         <img src="{{ url_prefix }}/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" width="231" height="52" loading="eager" decoding="async" />
       </a>
       <div class="cp-lang">
@@ -17,6 +25,25 @@
       </div>
     </div>
     <nav class="cp-nav-links" aria-label="{% if lang == 'en' %}Main navigation{% else %}Navegación principal{% endif %}">
+      {% if _is_hosp_vertical %}
+      <a
+        href="{{ _hosp_sales }}"
+        {% if _path == '/hoteles/ventas' or _path == '/hotels/sales' %}aria-current="page"{% endif %}
+      >{% if lang == 'en' %}What we do{% else %}Qué hacemos{% endif %}</a>
+      <a
+        href="{{ _hosp_diag }}"
+        {% if _path == '/hoteles/diagnostico' or _path == '/hotels/diagnosis' %}aria-current="page"{% endif %}
+      >{% if lang == 'en' %}Free diagnosis{% else %}Diagnóstico gratis{% endif %}</a>
+      <div class="cp-nav-item" tabindex="-1">
+        <button type="button" class="cp-nav-dropdown-btn" aria-expanded="false" aria-haspopup="true">{% if lang == 'en' %}Services{% else %}Servicios{% endif %}</button>
+        <div class="cp-nav-sub" role="menu">
+          <span class="cp-nav-sub-group-title">{% if lang == 'en' %}Hospitality{% else %}Hotelería{% endif %}</span>
+          <a href="{{ _hosp_rm }}" role="menuitem" {% if _path == '/hoteles/revenue-management-fraccional' or _path == '/hotels/fractional-revenue-management' %}aria-current="page"{% endif %}>{% if lang == 'en' %}Fractional Revenue Management{% else %}Revenue Management fraccional{% endif %}</a>
+          <a href="{{ _hosp_social }}" role="menuitem" {% if _path == '/social-media-management' or _path == '/social-media-management-en' %}aria-current="page"{% endif %}>Social Media Management</a>
+          <a href="{{ _hosp_paid }}" role="menuitem" {% if _path == '/paid-media-management' or _path == '/paid-media-management-en' %}aria-current="page"{% endif %}>Paid Media Management</a>
+        </div>
+      </div>
+      {% else %}
       <div class="cp-nav-item" tabindex="-1">
         <button type="button" class="cp-nav-dropdown-btn" aria-expanded="false" aria-haspopup="true">{{ t.nav_verticals }}</button>
         <div class="cp-nav-sub" role="menu">
@@ -35,6 +62,7 @@
       <a href="{{ _pfx }}#palabras">{{ t.nav_testimonials }}</a>
       <a href="{{ _pfx }}#equipo">{{ t.nav_team }}</a>
       <a href="{{ _pfx }}#contacto">{{ t.nav_contact }}</a>
+      {% endif %}
     </nav>
     <div class="cp-nav-right">
       <div class="cp-actions">
@@ -46,6 +74,15 @@
     </label>
   </div>
   <div class="cp-nav-mobile">
+    {% if _is_hosp_vertical %}
+    <span class="cp-nav-mobile-subtitle">{% if lang == 'en' %}Hospitality{% else %}Hotelería{% endif %}</span>
+    <a href="{{ _hosp_sales }}">{% if lang == 'en' %}What we do{% else %}Qué hacemos{% endif %}</a>
+    <a href="{{ _hosp_diag }}">{% if lang == 'en' %}Free diagnosis{% else %}Diagnóstico gratis{% endif %}</a>
+    <span class="cp-nav-mobile-subtitle">{% if lang == 'en' %}Services{% else %}Servicios{% endif %}</span>
+    <a class="cp-nav-mobile-sub" href="{{ _hosp_rm }}">{% if lang == 'en' %}Fractional Revenue Management{% else %}Revenue Management fraccional{% endif %}</a>
+    <a class="cp-nav-mobile-sub" href="{{ _hosp_social }}">Social Media Management</a>
+    <a class="cp-nav-mobile-sub" href="{{ _hosp_paid }}">Paid Media Management</a>
+    {% else %}
     <span class="cp-nav-mobile-subtitle">{{ t.nav_verticals }}</span>
     <span class="cp-nav-mobile-subtitle">{{ t.vert_hosp }}</span>
     <a class="cp-nav-mobile-sub" href="{{ url_path('/hoteles') if lang == 'es' else url_path('/hotels') }}">{{ t.vert_hosp_tab_consulting }}</a>
@@ -58,6 +95,7 @@
     <a href="{{ _pfx }}#palabras">{{ t.nav_testimonials }}</a>
     <a href="{{ _pfx }}#equipo">{{ t.nav_team }}</a>
     <a href="{{ _pfx }}#contacto">{{ t.nav_contact }}</a>
+    {% endif %}
     <a class="cp-btn cp-btn-primary" href="{{ _cal }}" target="_blank" rel="noopener noreferrer">{{ t.cta_header_agendar }}</a>
   </div>
 </header>
