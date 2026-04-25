@@ -251,9 +251,7 @@ def render_hospitality_problem_deck_page(request: Request, lang: str):
         "nav_rm_frac_url": url_path(
             "/hoteles/revenue-management-fraccional" if lang == "es" else "/hotels/fractional-revenue-management"
         ),
-        "nav_rm_frac_label": (
-            "Revenue Management fraccional" if lang == "es" else "Fractional Revenue Management"
-        ),
+        "nav_rm_frac_label": "Revenue Management",
         "nav_social_media_url": url_path("/social-media-management" if lang == "es" else "/social-media-management-en"),
         "nav_social_media_label": "Social Media Management",
         "nav_paid_media_url": url_path("/paid-media-management" if lang == "es" else "/paid-media-management-en"),
@@ -457,9 +455,7 @@ def render_social_media_package_deck_page(request: Request, lang: str):
         "nav_rm_frac_url": url_path(
             "/hoteles/revenue-management-fraccional" if lang == "es" else "/hotels/fractional-revenue-management"
         ),
-        "nav_rm_frac_label": (
-            "Revenue Management fraccional" if lang == "es" else "Fractional Revenue Management"
-        ),
+        "nav_rm_frac_label": "Revenue Management",
         "nav_paid_media_url": url_path("/paid-media-management" if lang == "es" else "/paid-media-management-en"),
         "nav_paid_media_label": "Paid Media Management",
         "lang_url_es": url_path("/social-media-management"),
@@ -467,7 +463,9 @@ def render_social_media_package_deck_page(request: Request, lang: str):
         # La agenda vive en el botón flotante y al final del deck, no en el header.
         "hpd_hide_nav_schedule": True,
         "floating_cta_href": cal,
-        "close_secondary_href": base["contact_secondary_href"],
+        # En la slide final: "Contáctanos" debe llevar al contact form (no mailto).
+        "close_secondary_label": "Contáctanos" if lang == "es" else "Contact us",
+        "close_secondary_href": url_path("/consultoria/contacto" if lang == "es" else "/consulting/contact"),
         "close_secondary_target": "_self",
         # En esta landing, el botón "Descargar PDF" debe bajar el archivo, no abrir impresión.
         "close_primary_mode": "link",
@@ -558,9 +556,7 @@ def render_paid_media_package_deck_page(request: Request, lang: str):
         "nav_rm_frac_url": url_path(
             "/hoteles/revenue-management-fraccional" if lang == "es" else "/hotels/fractional-revenue-management"
         ),
-        "nav_rm_frac_label": (
-            "Revenue Management fraccional" if lang == "es" else "Fractional Revenue Management"
-        ),
+        "nav_rm_frac_label": "Revenue Management",
         "nav_social_media_url": url_path("/social-media-management" if lang == "es" else "/social-media-management-en"),
         "nav_social_media_label": "Social Media Management",
         "lang_url_es": url_path("/paid-media-management"),
@@ -568,7 +564,9 @@ def render_paid_media_package_deck_page(request: Request, lang: str):
         # La agenda vive en el botón flotante y al final del deck, no en el header.
         "hpd_hide_nav_schedule": True,
         "floating_cta_href": cal,
-        "close_secondary_href": base["contact_secondary_href"],
+        # En la slide final: "Contáctanos" debe llevar al contact form (no mailto).
+        "close_secondary_label": "Contáctanos" if lang == "es" else "Contact us",
+        "close_secondary_href": url_path("/consultoria/contacto" if lang == "es" else "/consulting/contact"),
         "close_secondary_target": "_self",
         # Botón primario: descarga el PDF.
         "close_primary_mode": "link",

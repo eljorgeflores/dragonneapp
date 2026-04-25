@@ -16,7 +16,7 @@
   <input type="checkbox" id="cp-nav-toggle" class="cp-nav-toggle" aria-hidden="true" aria-label="{% if lang == 'en' %}Menu{% else %}Menú{% endif %}" />
   <div class="cp-nav">
     <div class="cp-nav-left">
-      <a href="{% if _is_hosp_vertical %}{{ _hosp_home }}{% else %}{{ url_path('/consultoria') if lang == 'es' else url_path('/consulting') }}#top{% endif %}" class="cp-brand">
+      <a href="{% if _is_hosp_vertical %}{{ url_path('/') }}{% else %}{{ url_path('/consultoria') if lang == 'es' else url_path('/consulting') }}#top{% endif %}" class="cp-brand">
         <img src="{{ url_prefix }}/static/branding/dragonne-wordmark.png" alt="DRAGONNÉ" width="231" height="52" loading="eager" decoding="async" />
       </a>
       <div class="cp-lang">
@@ -38,7 +38,7 @@
         <button type="button" class="cp-nav-dropdown-btn" aria-expanded="false" aria-haspopup="true">{% if lang == 'en' %}Services{% else %}Servicios{% endif %}</button>
         <div class="cp-nav-sub" role="menu">
           <span class="cp-nav-sub-group-title">{% if lang == 'en' %}Hospitality{% else %}Hotelería{% endif %}</span>
-          <a href="{{ _hosp_rm }}" role="menuitem" {% if _path == '/hoteles/revenue-management-fraccional' or _path == '/hotels/fractional-revenue-management' %}aria-current="page"{% endif %}>{% if lang == 'en' %}Fractional Revenue Management{% else %}Revenue Management fraccional{% endif %}</a>
+          <a href="{{ _hosp_rm }}" role="menuitem" {% if _path == '/hoteles/revenue-management-fraccional' or _path == '/hotels/fractional-revenue-management' %}aria-current="page"{% endif %}>Revenue Management</a>
           <a href="{{ _hosp_social }}" role="menuitem" {% if _path == '/social-media-management' or _path == '/social-media-management-en' %}aria-current="page"{% endif %}>Social Media Management</a>
           <a href="{{ _hosp_paid }}" role="menuitem" {% if _path == '/paid-media-management' or _path == '/paid-media-management-en' %}aria-current="page"{% endif %}>Paid Media Management</a>
         </div>
@@ -79,7 +79,7 @@
     <a href="{{ _hosp_sales }}">{% if lang == 'en' %}What we do{% else %}Qué hacemos{% endif %}</a>
     <a href="{{ _hosp_diag }}">{% if lang == 'en' %}Free diagnosis{% else %}Diagnóstico gratis{% endif %}</a>
     <span class="cp-nav-mobile-subtitle">{% if lang == 'en' %}Services{% else %}Servicios{% endif %}</span>
-    <a class="cp-nav-mobile-sub" href="{{ _hosp_rm }}">{% if lang == 'en' %}Fractional Revenue Management{% else %}Revenue Management fraccional{% endif %}</a>
+    <a class="cp-nav-mobile-sub" href="{{ _hosp_rm }}">Revenue Management</a>
     <a class="cp-nav-mobile-sub" href="{{ _hosp_social }}">Social Media Management</a>
     <a class="cp-nav-mobile-sub" href="{{ _hosp_paid }}">Paid Media Management</a>
     {% else %}
