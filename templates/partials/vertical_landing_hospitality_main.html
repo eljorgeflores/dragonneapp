@@ -557,6 +557,30 @@
     border-bottom:1px solid rgba(240,126,7,.42);padding-bottom:2px
   }
   .vl-h-hero-funnel__tertiary a:hover{color:var(--accent)}
+
+  /* Hub de servicios (landings) dentro de /hoteles */
+  .vl-h-router{margin:18px 0 0}
+  .vl-h-router__kicker{margin:0 0 8px;font-size:.62rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  .vl-h-router__title{margin:0 0 14px;font-size:clamp(1.05rem,2.2vw,1.25rem);font-weight:800;letter-spacing:-.032em;line-height:1.2;color:var(--dark)}
+  .vl-h-router__grid{display:grid;gap:12px;grid-template-columns:1fr}
+  @media (min-width:640px){.vl-h-router__grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
+  @media (min-width:980px){.vl-h-router__grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}}
+  .vl-h-router__card{
+    position:relative;display:block;text-decoration:none;
+    border-radius:14px;padding:14px 14px 13px;
+    border:1px solid rgba(52,52,52,.09);
+    background:rgba(255,255,255,.72);
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    box-shadow:0 1px 0 rgba(255,255,255,.92) inset,0 10px 26px rgba(18,22,40,.06);
+    transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;
+    min-height:104px;
+  }
+  .vl-h-router__card:hover{transform:translateY(-1px);border-color:rgba(240,126,7,.22);box-shadow:0 16px 34px rgba(240,126,7,.08)}
+  .vl-h-router__card:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+  .vl-h-router__eyebrow{margin:0 0 6px;font-size:.62rem;font-weight:850;letter-spacing:.12em;text-transform:uppercase;color:rgba(52,52,52,.62)}
+  .vl-h-router__card h3{margin:0 0 6px;font-size:1rem;font-weight:800;letter-spacing:-.02em;line-height:1.2;color:var(--dark)}
+  .vl-h-router__card p{margin:0;font-size:.86rem;line-height:1.45;color:var(--muted);letter-spacing:-.01em}
 </style>
 
   <section class="cp-hero-wrap vl-h-hero-shell" id="top">
@@ -638,6 +662,34 @@
           <p class="vl-h-hero-funnel__tertiary">
             <a href="{{ vl_rm_url }}">{% if lang == 'en' %}Fractional Revenue Management for hotels{% else %}Revenue Management fraccional para hoteles{% endif %} →</a>
           </p>
+
+          {% set vl_social_url = url_path('/social-media-management') if lang == 'es' else url_path('/social-media-management-en') %}
+          <div class="vl-h-router" role="region" aria-label="{% if lang == 'en' %}Hospitality landing pages{% else %}Landings de hospitalidad{% endif %}">
+            <p class="vl-h-router__kicker">{% if lang == 'en' %}LANDINGS{% else %}LANDINGS{% endif %}</p>
+            <h3 class="vl-h-router__title">{% if lang == 'en' %}Choose your starting point{% else %}Elige tu punto de entrada{% endif %}</h3>
+            <div class="vl-h-router__grid">
+              <a class="vl-h-router__card" href="{{ vl_sales_url }}">
+                <p class="vl-h-router__eyebrow">{% if lang == 'en' %}Overview{% else %}Panorama{% endif %}</p>
+                <h3>{% if lang == 'en' %}Commercial deck{% else %}Presentación comercial{% endif %}</h3>
+                <p>{% if lang == 'en' %}A clear frame of margin, pace, and priorities.{% else %}Un marco claro de margen, ritmo y prioridades.{% endif %}</p>
+              </a>
+              <a class="vl-h-router__card" href="{{ vl_rm_url }}">
+                <p class="vl-h-router__eyebrow">{% if lang == 'en' %}Revenue{% else %}Revenue{% endif %}</p>
+                <h3>{% if lang == 'en' %}Fractional RM{% else %}RM fraccional{% endif %}</h3>
+                <p>{% if lang == 'en' %}Strategy and follow-up without adding full structure.{% else %}Estrategia y seguimiento sin cargar estructura completa.{% endif %}</p>
+              </a>
+              <a class="vl-h-router__card" href="{{ vl_social_url }}">
+                <p class="vl-h-router__eyebrow">{% if lang == 'en' %}Organic{% else %}Orgánico{% endif %}</p>
+                <h3>Social Media</h3>
+                <p>{% if lang == 'en' %}Operational rhythm for content, publishing and routing.{% else %}Ritmo de operación para contenido, publicación y reglas.{% endif %}</p>
+              </a>
+              <a class="vl-h-router__card" href="{{ url_path('/hoteles/diagnostico') if lang == 'es' else url_path('/hotels/diagnosis') }}">
+                <p class="vl-h-router__eyebrow">{% if lang == 'en' %}Free{% else %}Gratis{% endif %}</p>
+                <h3>{% if lang == 'en' %}Diagnosis{% else %}Diagnóstico{% endif %}</h3>
+                <p>{% if lang == 'en' %}A quick read: OTA commissions and direct upside.{% else %}Lectura rápida: comisiones OTAs y potencial en directo.{% endif %}</p>
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     </div>
