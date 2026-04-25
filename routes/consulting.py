@@ -237,8 +237,14 @@ def render_hospitality_problem_deck_page(request: Request, lang: str):
     """Landing tipo diapositivas (sales deck) para hospitalidad: /hoteles/ventas, /hotels/sales."""
     if lang not in ("es", "en"):
         lang = "es"
+    base = get_hospitality_problem_deck_copy(lang)
+    pdf_href = url_path(
+        "/static/exports/Dragonne-hospitality-sales-deck-ES.pdf"
+        if lang == "es"
+        else "/static/exports/Dragonne-hospitality-sales-deck-EN.pdf"
+    )
     d = {
-        **get_hospitality_problem_deck_copy(lang),
+        **base,
         "nav_rm_frac_url": url_path(
             "/hoteles/revenue-management-fraccional" if lang == "es" else "/hotels/fractional-revenue-management"
         ),
@@ -247,6 +253,13 @@ def render_hospitality_problem_deck_page(request: Request, lang: str):
         ),
         "nav_social_media_url": url_path("/social-media-management" if lang == "es" else "/social-media-management-en"),
         "nav_social_media_label": "Social Media Management",
+        "close_primary_mode": "link",
+        "close_primary_label": base.get("cta_pdf", "Descargar PDF"),
+        "close_primary_href": pdf_href,
+        "close_primary_target": "_self",
+        "close_primary_download": (
+            "Dragonne-hospitality-sales-deck-ES.pdf" if lang == "es" else "Dragonne-hospitality-sales-deck-EN.pdf"
+        ),
     }
     v = get_vertical_landing_copy("hospitality", lang)
     ctx = marketing_page_context()
@@ -318,12 +331,24 @@ def render_fractional_revenue_deck_page(request: Request, lang: str):
     if lang not in ("es", "en"):
         lang = "es"
     cal = _HOSPITALITY_CAL_URL
+    base = get_fractional_revenue_deck_copy(lang)
+    pdf_href = url_path(
+        "/static/exports/Dragonne-fractional-rm-deck-ES.pdf"
+        if lang == "es"
+        else "/static/exports/Dragonne-fractional-rm-deck-EN.pdf"
+    )
     d = {
-        **get_fractional_revenue_deck_copy(lang),
+        **base,
         "nav_back_url": url_path("/hoteles" if lang == "es" else "/hotels"),
         "lang_url_es": url_path("/hoteles/revenue-management-fraccional"),
         "lang_url_en": url_path("/hotels/fractional-revenue-management"),
-        "close_primary_href": cal,
+        "close_primary_mode": "link",
+        "close_primary_label": base.get("cta_pdf", "Descargar PDF"),
+        "close_primary_href": pdf_href,
+        "close_primary_target": "_self",
+        "close_primary_download": (
+            "Dragonne-fractional-rm-deck-ES.pdf" if lang == "es" else "Dragonne-fractional-rm-deck-EN.pdf"
+        ),
         "close_secondary_href": url_path("/consultoria/contacto" if lang == "es" else "/consulting/contact"),
         "nav_deck_sales_url": url_path("/hoteles/ventas" if lang == "es" else "/hotels/sales"),
         "nav_deck_sales_label": "Presentación comercial" if lang == "es" else "Commercial deck",
@@ -424,6 +449,11 @@ def render_social_media_package_deck_page(request: Request, lang: str):
         "close_primary_label": base.get("cta_pdf", "Descargar PDF"),
         "close_primary_href": pdf_href,
         "close_primary_target": "_self",
+        "close_primary_download": (
+            "Dragonne-social-media-management-content-ES.pdf"
+            if lang == "es"
+            else "Dragonne-social-media-management-content-EN.pdf"
+        ),
     }
     v = get_vertical_landing_copy("hospitality", lang)
     ctx = marketing_page_context()

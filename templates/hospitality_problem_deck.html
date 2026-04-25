@@ -835,6 +835,7 @@
         <a
           class="hpd-btn hpd-btn--primary hpd-no-print"
           href="{{ d.get('close_primary_href', calendar_url) }}"
+          {% if d.get('close_primary_download') %}download="{{ d.close_primary_download }}"{% endif %}
           {% if d.get('close_primary_target', '_blank') == '_blank' %}target="_blank" rel="noopener noreferrer"{% endif %}
         >{{ d.get('close_primary_label', d.cta_calendar) }}</a>
         {% else %}
