@@ -1,0 +1,254 @@
+/* The Circle — UI premium (onboarding + dashboard) */
+
+:root{
+  --c-bg: #0b0d12;
+  --c-card: rgba(255,255,255,.78);
+  --c-line: rgba(31,41,55,.12);
+  --c-text: #1f2937;
+  --c-muted: rgba(31,41,55,.68);
+  --c-brand: #f6a905;
+  --c-brand2:#f07e07;
+  --c-radius: 18px;
+  --c-shadow: 0 18px 60px rgba(0,0,0,.10);
+  --c-shadow2: 0 12px 30px rgba(0,0,0,.08);
+  --c-s1: 8px;
+  --c-s2: 16px;
+  --c-s3: 24px;
+  --c-s4: 32px;
+  --c-ease: cubic-bezier(.2,.9,.2,1);
+}
+
+.circle-shell{
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 28px 22px 60px;
+}
+
+.circle-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.circle-brand{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  font-family: "Outfit", system-ui, sans-serif;
+  font-weight: 800;
+  letter-spacing: -.02em;
+}
+.circle-brand img{height:18px; width:auto}
+
+.circle-actions{display:flex; gap: 10px; flex-wrap: wrap; align-items:center}
+
+.circle-card{
+  background: var(--c-card);
+  border: 1px solid var(--c-line);
+  border-radius: 22px;
+  box-shadow: var(--c-shadow);
+  backdrop-filter: saturate(160%) blur(10px);
+  -webkit-backdrop-filter: saturate(160%) blur(10px);
+}
+
+.circle-grid{
+  display:grid;
+  grid-template-columns: 1fr 340px;
+  gap: var(--c-s3);
+  align-items: start;
+}
+@media (max-width: 980px){
+  .circle-grid{grid-template-columns:1fr}
+}
+
+.circle-h1{
+  font-family: "Outfit", system-ui, sans-serif;
+  font-weight: 800;
+  letter-spacing: -.04em;
+  font-size: clamp(26px, 2.8vw, 36px);
+  margin: 0;
+}
+.circle-sub{
+  margin-top: 6px;
+  color: var(--c-muted);
+  line-height: 1.5;
+  font-weight: 600;
+}
+
+.circle-pill{
+  display:inline-flex;
+  align-items:center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(217,109,0,.22);
+  background: rgba(246,169,5,.12);
+  color: rgba(31,41,55,.86);
+  font-weight: 800;
+  font-size: 12px;
+}
+
+.circle-stepper{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  margin-top: 14px;
+}
+.circle-stepdot{
+  height: 30px;
+  width: 30px;
+  border-radius: 999px;
+  display:grid;
+  place-items:center;
+  border: 1px solid rgba(31,41,55,.14);
+  background: rgba(255,255,255,.70);
+  font-weight: 900;
+  color: rgba(31,41,55,.72);
+}
+.circle-stepdot.is-active{
+  border-color: rgba(217,109,0,.22);
+  background: rgba(246,169,5,.18);
+  color: rgba(31,41,55,.92);
+}
+.circle-stepline{height:1px; flex:1; background: rgba(31,41,55,.10)}
+
+.circle-panel{
+  padding: var(--c-s3);
+}
+
+.circle-form{
+  margin-top: var(--c-s2);
+  display:grid;
+  gap: 12px;
+}
+.circle-row2{display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px}
+@media (max-width: 720px){ .circle-row2{grid-template-columns:1fr} }
+
+.circle-field{display:flex; flex-direction:column; gap: 8px}
+.circle-label{font-size: 12px; font-weight: 800; color: rgba(31,41,55,.78)}
+.circle-input, .circle-select, .circle-textarea{
+  border: 1px solid rgba(31,41,55,.14);
+  border-radius: 14px;
+  padding: 12px 12px;
+  background: rgba(255,255,255,.82);
+  outline: none;
+  font: inherit;
+}
+.circle-textarea{resize: vertical}
+.circle-input:focus, .circle-select:focus, .circle-textarea:focus{
+  border-color: rgba(240,126,7,.55);
+  box-shadow: 0 0 0 4px rgba(246,169,5,.18);
+}
+
+.circle-chips{display:flex; flex-wrap: wrap; gap: 10px}
+.circle-chip{
+  display:inline-flex;
+  align-items:center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(31,41,55,.10);
+  background: rgba(255,255,255,.74);
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+  transition: transform 180ms var(--c-ease), box-shadow 180ms var(--c-ease), border-color 180ms var(--c-ease), background 180ms var(--c-ease);
+}
+.circle-chip:hover{transform: translateY(-1px); box-shadow: var(--c-shadow2); border-color: rgba(240,126,7,.18)}
+.circle-chip input{accent-color: var(--c-brand2)}
+.circle-chip:has(input:checked){
+  border-color: rgba(217,109,0,.24);
+  background: rgba(246,169,5,.14);
+}
+
+.circle-btn{
+  appearance:none;
+  border: 1px solid rgba(31,41,55,.12);
+  background: rgba(255,255,255,.86);
+  color: var(--c-text);
+  padding: 12px 14px;
+  border-radius: 14px;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap: 10px;
+  font-weight: 800;
+  font-size: 14px;
+  box-shadow: 0 1px 0 rgba(255,255,255,.7) inset;
+  transition: transform 180ms var(--c-ease), box-shadow 180ms var(--c-ease), filter 180ms var(--c-ease), background 180ms var(--c-ease), border-color 180ms var(--c-ease);
+}
+.circle-btn:hover{transform: translateY(-1px) scale(1.02); box-shadow: var(--c-shadow2); background: rgba(255,255,255,.96)}
+.circle-btn:active{transform: translateY(0) scale(.99)}
+.circle-btn-primary{
+  background: linear-gradient(135deg, var(--c-brand), var(--c-brand2));
+  border-color: rgba(217,109,0,.35);
+}
+.circle-btn-primary:hover{filter: saturate(1.05)}
+.circle-btn-ghost{background: rgba(255,255,255,.55)}
+
+.circle-form-actions{
+  display:flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.circle-side{
+  padding: var(--c-s3);
+  position: sticky;
+  top: 96px;
+}
+@media (max-width: 980px){ .circle-side{position:relative; top:auto} }
+
+.circle-k{
+  font-weight: 900;
+  font-size: 12px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: rgba(31,41,55,.55);
+}
+.circle-v{
+  margin-top: 8px;
+  font-weight: 900;
+  letter-spacing: -.02em;
+}
+.circle-note{
+  margin-top: 10px;
+  color: rgba(31,41,55,.70);
+  font-weight: 650;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.circle-empty{
+  margin-top: 14px;
+  border: 1px dashed rgba(31,41,55,.14);
+  border-radius: 16px;
+  padding: 14px;
+  background: rgba(255,255,255,.55);
+  color: rgba(31,41,55,.72);
+  font-weight: 650;
+}
+
+.circle-match{
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(31,41,55,.10);
+  background: rgba(255,255,255,.72);
+  transition: transform 180ms var(--c-ease), box-shadow 180ms var(--c-ease), border-color 180ms var(--c-ease);
+}
+.circle-match:hover{
+  transform: translateY(-2px);
+  box-shadow: var(--c-shadow2);
+  border-color: rgba(240,126,7,.16);
+}
+.circle-match-title{font-weight: 900; letter-spacing: -.02em}
+.circle-match-meta{margin-top: 4px; color: rgba(31,41,55,.70); font-weight: 650; font-size: 13px}
+.circle-match-row{margin-top: 10px; display:flex; gap: 10px; flex-wrap: wrap; align-items:center; justify-content: space-between}
+

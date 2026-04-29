@@ -655,6 +655,7 @@ from routes.kapso_whatsapp import router as kapso_whatsapp_router
 from routes.marketing import router as marketing_router
 from routes.revenue_report_preview import router as revenue_report_preview_router
 from routes.pms_inbound import router as pms_inbound_router
+from routes.circle import router as circle_router
 
 app.include_router(api_v1_router)
 app.include_router(billing_router)
@@ -667,6 +668,7 @@ app.include_router(analysis_router)
 app.include_router(revenue_report_preview_router)
 app.include_router(kapso_whatsapp_router)
 app.include_router(pms_inbound_router)
+app.include_router(circle_router)
 
 
 @app.get("/health")

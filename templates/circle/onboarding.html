@@ -1,0 +1,229 @@
+{% extends "circle/base_circle.html" %}
+
+{% block title %}Onboarding — The Circle{% endblock %}
+
+{% set steps = [
+  {"n":1,"t":"Básico"},
+  {"n":2,"t":"Experiencia"},
+  {"n":3,"t":"Especialidad"},
+  {"n":4,"t":"Herramientas"},
+  {"n":5,"t":"Disponibilidad"},
+  {"n":6,"t":"Bio"},
+  {"n":7,"t":"Verificación"}
+] %}
+
+{% block circle_body %}
+<div class="circle-shell">
+  <div class="circle-top">
+    <div class="circle-brand">
+      <span>The Circle</span>
+      <img src="{{ url_prefix }}/static/talent_network_mvp/pullso-logo.svg" alt="Pullso" />
+    </div>
+    <div class="circle-actions">
+      <span class="circle-pill">{{ status_label }}</span>
+      <form method="post" action="{{ url_path('/circle/logout') }}">
+        <button class="circle-btn circle-btn-ghost" type="submit">Salir</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="circle-card circle-panel">
+    <h1 class="circle-h1">Completa tu perfil</h1>
+    <div class="circle-sub">Paso {{ step }} de 7. Manténlo claro y escaneable.</div>
+
+    <div class="circle-stepper" aria-label="Progreso">
+      {% for s in steps %}
+        <div class="circle-stepdot {% if s.n == step %}is-active{% endif %}">{{ s.n }}</div>
+        {% if not loop.last %}<div class="circle-stepline" aria-hidden="true"></div>{% endif %}
+      {% endfor %}
+    </div>
+
+    {% if error %}
+      <div class="circle-empty" role="alert">{{ error }}</div>
+    {% endif %}
+
+    <form class="circle-form" method="post" action="{{ url_path('/circle/onboarding') }}">
+      <input type="hidden" name="step" value="{{ step }}" />
+      <input type="hidden" name="nav" value="next" />
+
+      {% if step == 1 %}
+        <div class="circle-row2">
+          <label class="circle-field">
+            <span class="circle-label">Nombre completo</span>
+            <input class="circle-input" name="full_name" required value="{{ profile.full_name or '' }}" placeholder="Nombre y apellido" autocomplete="name" />
+          </label>
+          <label class="circle-field">
+            <span class="circle-label">Email</span>
+            <input class="circle-input" value="{{ user.email }}" disabled />
+          </label>
+        </div>
+        <div class="circle-row2">
+          <label class="circle-field">
+            <span class="circle-label">Teléfono / WhatsApp</span>
+            <input class="circle-input" name="phone" value="{{ profile.phone or '' }}" placeholder="+52..." />
+          </label>
+          <label class="circle-field">
+            <span class="circle-label">Ciudad</span>
+            <input class="circle-input" name="city" value="{{ profile.city or '' }}" placeholder="CDMX" />
+          </label>
+        </div>
+        <label class="circle-field">
+          <span class="circle-label">País</span>
+          <input class="circle-input" name="country" value="{{ profile.country or '' }}" placeholder="México" />
+        </label>
+        <label class="circle-field">
+          <span class="circle-label">Foto de perfil (URL por ahora)</span>
+          <input class="circle-input" name="photo_url" value="{{ profile.photo_url or '' }}" placeholder="https://..." />
+        </label>
+
+      {% elif step == 2 %}
+        <div class="circle-row2">
+          <label class="circle-field">
+            <span class="circle-label">Años de experiencia</span>
+            <input class="circle-input" name="years_experience" inputmode="numeric" value="{{ profile.years_experience or '' }}" placeholder="5" />
+          </label>
+          <label class="circle-field">
+            <span class="circle-label">Puesto actual o último</span>
+            <input class="circle-input" name="current_role" value="{{ profile.current_role or '' }}" placeholder="Revenue Manager" />
+          </label>
+        </div>
+        <label class="circle-field">
+          <span class="circle-label">Tipo de hoteles con experiencia</span>
+          <div class="circle-chips">
+            {% for h in ["Boutique","Independiente","Urbano","Resort","Cadena","Lujo","Business hotel"] %}
+              <label class="circle-chip">
+                <input type="checkbox" name="hotel_types" value="{{ h }}" {% if h in hotel_types %}checked{% endif %} />
+                {{ h }}
+              </label>
+            {% endfor %}
+          </div>
+        </label>
+        <label class="circle-field">
+          <span class="circle-label">Propiedades gestionadas (aprox.)</span>
+          <input class="circle-input" name="properties_managed" inputmode="numeric" value="{{ profile.properties_managed or '' }}" placeholder="12" />
+        </label>
+
+      {% elif step == 3 %}
+        <label class="circle-field">
+          <span class="circle-label">Especialidad</span>
+          <div class="circle-chips">
+            {% for s in ["Pricing","Forecast","Pickup","Revenue Management","OTAs","Channel Manager","PMS","Google Hotel Ads","Distribución","Reportes comerciales","Paridad","Promociones","Auditoría comercial"] %}
+              <label class="circle-chip">
+                <input type="checkbox" name="specialties" value="{{ s }}" {% if s in specialties %}checked{% endif %} />
+                {{ s }}
+              </label>
+            {% endfor %}
+          </div>
+        </label>
+
+      {% elif step == 4 %}
+        <label class="circle-field">
+          <span class="circle-label">Herramientas que dominas</span>
+          <div class="circle-chips">
+            {% for t in ["Cloudbeds","SiteMinder","Duetto","Lighthouse","OTA Insight","PriceLabs","Booking.com Extranet","Expedia Partner Central","Google Analytics","Looker Studio","Excel / Google Sheets","Otro"] %}
+              <label class="circle-chip">
+                <input type="checkbox" name="tools" value="{{ t }}" {% if t in tools %}checked{% endif %} />
+                {{ t }}
+              </label>
+            {% endfor %}
+          </div>
+        </label>
+
+      {% elif step == 5 %}
+        <label class="circle-field">
+          <span class="circle-label">Modalidad</span>
+          <div class="circle-chips">
+            {% for dm in ["Remoto","Presencial","Híbrido"] %}
+              <label class="circle-chip">
+                <input type="checkbox" name="delivery_modes" value="{{ dm }}" {% if dm in delivery_modes %}checked{% endif %} />
+                {{ dm }}
+              </label>
+            {% endfor %}
+          </div>
+        </label>
+        <label class="circle-field">
+          <span class="circle-label">Modelo de trabajo</span>
+          <div class="circle-chips">
+            {% for wm in ["Por hora","Por alcance","Mensual"] %}
+              <label class="circle-chip">
+                <input type="checkbox" name="work_models" value="{{ wm }}" {% if wm in work_models %}checked{% endif %} />
+                {{ wm }}
+              </label>
+            {% endfor %}
+          </div>
+        </label>
+        <div class="circle-row2">
+          <label class="circle-field">
+            <span class="circle-label">Horas disponibles por semana</span>
+            <input class="circle-input" name="availability_hours" inputmode="numeric" value="{{ profile.availability_hours or '' }}" placeholder="10" />
+          </label>
+          <label class="circle-field">
+            <span class="circle-label">Tarifa por hora sugerida (MXN)</span>
+            <input class="circle-input" name="hourly_rate_mxn" inputmode="numeric" value="{{ profile.hourly_rate_mxn or '' }}" placeholder="800" />
+          </label>
+        </div>
+        <div class="circle-row2">
+          <label class="circle-field">
+            <span class="circle-label">Tarifa mensual sugerida (MXN)</span>
+            <input class="circle-input" name="monthly_rate_mxn" inputmode="numeric" value="{{ profile.monthly_rate_mxn or '' }}" placeholder="25000" />
+          </label>
+          <label class="circle-field">
+            <span class="circle-label">Idiomas</span>
+            <div class="circle-chips">
+              {% for lang in ["Español","Inglés","Portugués"] %}
+                <label class="circle-chip">
+                  <input type="checkbox" name="languages" value="{{ lang }}" {% if lang in languages %}checked{% endif %} />
+                  {{ lang }}
+                </label>
+              {% endfor %}
+            </div>
+          </label>
+        </div>
+
+      {% elif step == 6 %}
+        <label class="circle-field">
+          <span class="circle-label">Titular profesional corto</span>
+          <input class="circle-input" name="professional_title" value="{{ profile.professional_title or '' }}" placeholder="Revenue Manager con experiencia en hoteles boutique e independientes" />
+        </label>
+        <label class="circle-field">
+          <span class="circle-label">Bio breve</span>
+          <textarea class="circle-textarea" name="bio" rows="3" placeholder="Bio breve, 2 a 3 líneas.">{{ profile.bio or '' }}</textarea>
+        </label>
+        <label class="circle-field">
+          <span class="circle-label">Cómo ayudas a los hoteles</span>
+          <textarea class="circle-textarea" name="how_help" rows="3" placeholder="Ej. Pricing, distribución, reportes, acompañamiento comercial...">{{ profile.how_help or '' }}</textarea>
+        </label>
+        <label class="circle-field">
+          <span class="circle-label">Principales logros o resultados</span>
+          <textarea class="circle-textarea" name="highlights" rows="3" placeholder="Ej. mejoras en ADR, ocupación, rentabilidad...">{{ profile.highlights or '' }}</textarea>
+        </label>
+
+      {% elif step == 7 %}
+        <div class="circle-empty">
+          Revisa tu información y envía tu perfil a <strong>proceso de verificación</strong>.
+        </div>
+        <div class="circle-card" style="margin-top:14px; padding:16px">
+          <div class="circle-k">Resumen</div>
+          <div class="circle-note"><strong>{{ profile.full_name or '—' }}</strong> · {{ profile.current_role or 'Revenue Manager' }}</div>
+          <div class="circle-note">Hotel types: {{ hotel_types | join(', ') if hotel_types else '—' }}</div>
+          <div class="circle-note">Especialidad: {{ specialties | join(', ') if specialties else '—' }}</div>
+          <div class="circle-note">Herramientas: {{ tools | join(', ') if tools else '—' }}</div>
+          <div class="circle-note">Modelo: {{ work_models | join(', ') if work_models else '—' }}</div>
+        </div>
+      {% endif %}
+
+      <div class="circle-form-actions">
+        {% if step > 1 %}
+          <button class="circle-btn circle-btn-ghost" type="submit" onclick="this.form.nav.value='back'">Atrás</button>
+        {% endif %}
+        {% if step < 7 %}
+          <button class="circle-btn circle-btn-primary" type="submit" onclick="this.form.nav.value='next'">Continuar</button>
+        {% else %}
+          <button class="circle-btn circle-btn-primary" type="submit" onclick="this.form.nav.value='submit'">Enviar perfil a verificación</button>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+

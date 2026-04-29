@@ -1,0 +1,51 @@
+{% extends "circle/base_circle.html" %}
+
+{% block title %}Entrar — The Circle{% endblock %}
+
+{% block circle_body %}
+<div class="circle-shell">
+  <div class="circle-top">
+    <div class="circle-brand">
+      <span>The Circle</span>
+      <img src="{{ url_prefix }}/static/talent_network_mvp/pullso-logo.svg" alt="Pullso" />
+    </div>
+    <div class="circle-actions">
+      <a class="circle-btn circle-btn-ghost" href="{{ url_path('/circle/register') }}">Crear cuenta</a>
+    </div>
+  </div>
+
+  <div class="circle-grid">
+    <div class="circle-card circle-panel">
+      <h1 class="circle-h1">Inicia sesión</h1>
+      <div class="circle-sub">Accede a tu dashboard privado.</div>
+
+      {% if error %}
+        <div class="circle-empty" role="alert">{{ error }}</div>
+      {% endif %}
+
+      <form class="circle-form" method="post" action="{{ url_path('/circle/login') }}">
+        <label class="circle-field">
+          <span class="circle-label">Email</span>
+          <input class="circle-input" name="email" type="email" required placeholder="tu@email.com" autocomplete="email" />
+        </label>
+        <label class="circle-field">
+          <span class="circle-label">Contraseña</span>
+          <input class="circle-input" name="password" type="password" required placeholder="Tu contraseña" autocomplete="current-password" />
+        </label>
+        <div class="circle-form-actions">
+          <button class="circle-btn circle-btn-primary" type="submit">Entrar</button>
+        </div>
+      </form>
+    </div>
+
+    <aside class="circle-card circle-side">
+      <div class="circle-k">Marketplace</div>
+      <div class="circle-v">Perfiles verificados</div>
+      <div class="circle-note">
+        Tu dashboard muestra el estado de tu perfil y posibles matches de proyectos.
+      </div>
+    </aside>
+  </div>
+</div>
+{% endblock %}
+

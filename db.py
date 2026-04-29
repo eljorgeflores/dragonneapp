@@ -6,6 +6,7 @@ Deuda (Fase 2): migraciones versionadas; posible split de consultas por dominio 
 """
 from __future__ import annotations
 
+import json
 import sqlite3
 from contextlib import contextmanager
 
@@ -42,6 +43,7 @@ def init_db():
                 last_login_at TEXT,
                 login_count INTEGER NOT NULL DEFAULT 0,
                 is_admin INTEGER NOT NULL DEFAULT 0,
+                role TEXT NOT NULL DEFAULT 'hotel_lead',
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL
             );
@@ -121,6 +123,10 @@ def init_db():
                     conn.execute(f"ALTER TABLE users ADD COLUMN {col} TEXT")
             except sqlite3.OperationalError:
                 pass
+        try:
+            conn.execute("ALTER TABLE users ADD COLUMN role TEXT")
+        except sqlite3.OperationalError:
+            pass
         try:
             conn.execute("ALTER TABLE users ADD COLUMN manual_plan_updated_by INTEGER")
         except sqlite3.OperationalError:
@@ -202,6 +208,140 @@ def init_db():
             );
             """
         )
+
+        # The Circle — Revenue Manager marketplace (perfiles, proyectos y matches)
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS revenue_profiles (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL UNIQUE,
+                full_name TEXT,
+                phone TEXT,
+                city TEXT,
+                country TEXT,
+                photo_url TEXT,
+                professional_title TEXT,
+                bio TEXT,
+                how_help TEXT,
+                highlights TEXT,
+                years_experience INTEGER,
+                current_role TEXT,
+                hotel_types_json TEXT,
+                properties_managed INTEGER,
+                specialties_json TEXT,
+                tools_json TEXT,
+                languages_json TEXT,
+                hourly_rate_mxn INTEGER,
+                monthly_rate_mxn INTEGER,
+                availability_hours INTEGER,
+                work_models_json TEXT,
+                delivery_modes_json TEXT,
+                status TEXT NOT NULL DEFAULT 'draft',
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                FOREIGN KEY(user_id) REFERENCES users(id)
+            );
+            """
+        )
+        try:
+            conn.execute("ALTER TABLE revenue_profiles ADD COLUMN delivery_modes_json TEXT")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_revenue_profiles_status ON revenue_profiles(status)"
+            )
+        except sqlite3.OperationalError:
+            pass
+
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS circle_projects (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                hotel_name TEXT,
+                hotel_type TEXT,
+                city TEXT,
+                scope TEXT NOT NULL,
+                required_specialties_json TEXT,
+                required_tools_json TEXT,
+                work_model TEXT,
+                estimated_duration TEXT,
+                budget_range TEXT,
+                status TEXT NOT NULL DEFAULT 'open',
+                created_at TEXT NOT NULL
+            );
+            """
+        )
+        try:
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_circle_projects_status ON circle_projects(status)"
+            )
+        except sqlite3.OperationalError:
+            pass
+
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS circle_matches (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                project_id INTEGER NOT NULL,
+                revenue_profile_id INTEGER NOT NULL,
+                match_score REAL NOT NULL DEFAULT 0,
+                status TEXT NOT NULL DEFAULT 'potential',
+                created_at TEXT NOT NULL,
+                FOREIGN KEY(project_id) REFERENCES circle_projects(id),
+                FOREIGN KEY(revenue_profile_id) REFERENCES revenue_profiles(id)
+            );
+            """
+        )
+        try:
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_circle_matches_profile_status ON circle_matches(revenue_profile_id, status)"
+            )
+        except sqlite3.OperationalError:
+            pass
+
+        # Seed mínimo de proyectos mock (solo si no hay ninguno)
+        try:
+            row = conn.execute("SELECT COUNT(*) AS c FROM circle_projects").fetchone()
+            count = int(row["c"]) if row else 0
+        except Exception:
+            count = 0
+        if count == 0:
+            conn.executemany(
+                """
+                INSERT INTO circle_projects (
+                    hotel_name, hotel_type, city, scope, required_specialties_json,
+                    required_tools_json, work_model, estimated_duration, budget_range,
+                    status, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?)
+                """,
+                [
+                    (
+                        "Hotel Boutique (confidencial)",
+                        "Boutique",
+                        "CDMX",
+                        "Optimización de pricing y mix de canales + reportes ejecutivos",
+                        json.dumps(["Pricing", "Distribución", "Reportes comerciales"]),
+                        json.dumps(["Duetto", "Excel / Google Sheets"]),
+                        "Mensual",
+                        "3 meses",
+                        "$20k–$40k MXN/mes",
+                        "2026-04-25T00:00:00Z",
+                    ),
+                    (
+                        "Hotel Urbano (confidencial)",
+                        "Urbano",
+                        "Guadalajara",
+                        "Auditoría comercial + quick wins para ADR y ocupación",
+                        json.dumps(["Auditoría comercial", "Pricing"]),
+                        json.dumps(["Booking.com Extranet", "Expedia Partner Central"]),
+                        "Por alcance",
+                        "2 a 3 semanas",
+                        "$12k–$25k MXN",
+                        "2026-04-25T00:00:00Z",
+                    ),
+                ],
+            )
         conn.execute(
             """
             CREATE TABLE IF NOT EXISTS hospitality_diag_submissions (

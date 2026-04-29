@@ -1,0 +1,101 @@
+{% extends "circle/base_circle.html" %}
+
+{% block title %}Dashboard — The Circle{% endblock %}
+
+{% block circle_body %}
+<div class="circle-shell">
+  <div class="circle-top">
+    <div class="circle-brand">
+      <span>The Circle</span>
+      <img src="{{ url_prefix }}/static/talent_network_mvp/pullso-logo.svg" alt="Pullso" />
+    </div>
+    <div class="circle-actions">
+      <span class="circle-pill">{{ status_label }}</span>
+      <a class="circle-btn circle-btn-ghost" href="{{ url_path('/circle/onboarding') }}">Editar perfil</a>
+      <form method="post" action="{{ url_path('/circle/logout') }}">
+        <button class="circle-btn circle-btn-ghost" type="submit">Salir</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="circle-grid">
+    <div class="circle-card circle-panel">
+      <h1 class="circle-h1">Hola, {{ (profile.full_name or 'Revenue Manager') }}</h1>
+      <div class="circle-sub">Aquí ves el estado de tu perfil y posibles matches de proyectos.</div>
+
+      <div class="circle-card" style="margin-top:16px; padding:16px">
+        <div class="circle-k">Perfil</div>
+        <div class="circle-note">
+          <strong>{{ profile.full_name or '—' }}</strong> · {{ profile.current_role or 'Revenue Manager' }}
+        </div>
+        <div class="circle-note">
+          Ubicación: {{ (profile.city or '—') }}{% if profile.country %}, {{ profile.country }}{% endif %}
+        </div>
+        <div class="circle-note">
+          Especialidad: {{ specialties | join(', ') if specialties else '—' }}
+        </div>
+        <div class="circle-note">
+          Herramientas: {{ tools | join(', ') if tools else '—' }}
+        </div>
+        <div class="circle-note">
+          Tarifa: {% if profile.hourly_rate_mxn %}${{ profile.hourly_rate_mxn }} MXN/h{% else %}—{% endif %}
+          · Modelo: {{ work_models | join(', ') if work_models else '—' }}
+        </div>
+        <div class="circle-note">
+          Modalidad: {{ delivery_modes | join(', ') if delivery_modes else '—' }}
+        </div>
+      </div>
+
+      <div style="margin-top:18px">
+        <div class="circle-k">Matches</div>
+        {% if matches and matches|length %}
+          {% for m in matches %}
+            <div class="circle-match">
+              <div class="circle-match-title">{{ m.hotel_type }} · {{ m.city }}</div>
+              <div class="circle-match-meta">{{ m.scope }}</div>
+              <div class="circle-match-row">
+                <span class="circle-pill">{{ m.work_model }}</span>
+                <span class="circle-pill">{{ m.estimated_duration }}</span>
+                <span class="circle-pill">Compatibilidad {{ m.match_score }}%</span>
+                <form method="post" action="{{ url_path('/circle/matches/interest') }}">
+                  <input type="hidden" name="idx" value="{{ loop.index0 }}" />
+                  <button class="circle-btn circle-btn-primary" type="submit">Me interesa</button>
+                </form>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="circle-empty">
+            Todavía no hay proyectos compatibles con tu perfil. Te avisaremos cuando encontremos una oportunidad alineada con tu experiencia.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <aside class="circle-card circle-side">
+      <div class="circle-k">Acción principal</div>
+      {% if profile.status == 'draft' %}
+        <div class="circle-v">Completar perfil</div>
+        <div class="circle-note">Termina tu onboarding para poder enviar tu perfil a proceso de verificación.</div>
+        <a class="circle-btn circle-btn-primary" href="{{ url_path('/circle/onboarding') }}">Completar perfil</a>
+      {% elif profile.status == 'submitted' %}
+        <div class="circle-v">Perfil en verificación</div>
+        <div class="circle-note">Estamos validando tu experiencia. Te avisaremos cuando el perfil se active.</div>
+        <a class="circle-btn circle-btn-ghost" href="{{ url_path('/circle/onboarding?step=7') }}">Ver resumen</a>
+      {% elif profile.status == 'needs_changes' %}
+        <div class="circle-v">Necesitamos ajustes</div>
+        <div class="circle-note">Actualiza tu perfil y vuelve a enviarlo a proceso de verificación.</div>
+        <a class="circle-btn circle-btn-primary" href="{{ url_path('/circle/onboarding') }}">Actualizar perfil</a>
+      {% elif profile.status == 'verified' %}
+        <div class="circle-v">Perfil verificado</div>
+        <div class="circle-note">Mantén tu disponibilidad y tarifas actualizadas para mejorar el matching.</div>
+        <a class="circle-btn circle-btn-primary" href="{{ url_path('/circle/onboarding?step=5') }}">Actualizar disponibilidad</a>
+      {% else %}
+        <div class="circle-v">Perfil pausado</div>
+        <div class="circle-note">Tu perfil está pausado. Si necesitas reactivarlo, contáctanos.</div>
+      {% endif %}
+    </aside>
+  </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,67 @@
+{% extends "circle/base_circle.html" %}
+
+{% block title %}Regístrate — The Circle{% endblock %}
+
+{% block circle_body %}
+<div class="circle-shell">
+  <div class="circle-top">
+    <div class="circle-brand">
+      <span>The Circle</span>
+      <img src="{{ url_prefix }}/static/talent_network_mvp/pullso-logo.svg" alt="Pullso" />
+    </div>
+    <div class="circle-actions">
+      <a class="circle-btn circle-btn-ghost" href="{{ url_path('/circle/login') }}">Ya tengo cuenta</a>
+    </div>
+  </div>
+
+  <div class="circle-grid">
+    <div class="circle-card circle-panel">
+      <h1 class="circle-h1">Crea tu cuenta</h1>
+      <div class="circle-sub">Empieza tu perfil profesional y envíalo a proceso de verificación.</div>
+
+      {% if error %}
+        <div class="circle-empty" role="alert">{{ error }}</div>
+      {% endif %}
+
+      <form class="circle-form" method="post" action="{{ url_path('/circle/register') }}">
+        <div class="circle-row2">
+          <label class="circle-field">
+            <span class="circle-label">Email</span>
+            <input class="circle-input" name="email" type="email" required placeholder="tu@email.com" autocomplete="email" />
+          </label>
+          <label class="circle-field">
+            <span class="circle-label">Contraseña</span>
+            <input class="circle-input" name="password" type="password" minlength="8" required placeholder="Mínimo 8 caracteres" autocomplete="new-password" />
+          </label>
+        </div>
+
+        <label class="circle-field">
+          <span class="circle-label">Confirmar contraseña</span>
+          <input class="circle-input" name="password_confirm" type="password" minlength="8" required placeholder="Repite tu contraseña" autocomplete="new-password" />
+        </label>
+
+        <label class="circle-chip" style="cursor:pointer; user-select:none">
+          <input type="checkbox" name="accept_legal" value="1" required />
+          Acepto los Términos y condiciones y la Política de privacidad (v{{ legal_docs_version }}).
+        </label>
+
+        <div class="circle-form-actions">
+          <button class="circle-btn circle-btn-primary" type="submit">Crear cuenta</button>
+        </div>
+      </form>
+    </div>
+
+    <aside class="circle-card circle-side">
+      <div class="circle-k">Qué sigue</div>
+      <div class="circle-v">Onboarding en 7 pasos</div>
+      <div class="circle-note">
+        Lo básico primero: datos, experiencia, especialidad, herramientas, disponibilidad y una bio clara.
+      </div>
+      <div class="circle-note">
+        Cuando termines, envías tu perfil a <strong>proceso de verificación</strong>.
+      </div>
+    </aside>
+  </div>
+</div>
+{% endblock %}
+

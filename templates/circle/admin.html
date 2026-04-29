@@ -1,0 +1,47 @@
+{% extends "circle/base_circle.html" %}
+
+{% block title %}Admin — The Circle{% endblock %}
+
+{% block circle_body %}
+<div class="circle-shell">
+  <div class="circle-top">
+    <div class="circle-brand">
+      <span>The Circle</span>
+      <img src="{{ url_prefix }}/static/talent_network_mvp/pullso-logo.svg" alt="Pullso" />
+    </div>
+    <div class="circle-actions">
+      <a class="circle-btn circle-btn-ghost" href="{{ url_path('/circle/dashboard') }}">Volver</a>
+    </div>
+  </div>
+
+  <div class="circle-card circle-panel">
+    <h1 class="circle-h1">Perfiles</h1>
+    <div class="circle-sub">Revisión y cambios de estado.</div>
+
+    <div style="margin-top:16px; display:grid; gap:12px">
+      {% for p in profiles %}
+        <div class="circle-card" style="padding:14px">
+          <div class="circle-match-title">{{ p.full_name or '—' }} · <span style="color:rgba(31,41,55,.62)">{{ p.email }}</span></div>
+          <div class="circle-match-meta">{{ status_label(p.status) }} · actualizado {{ p.updated_at }}</div>
+          <div class="circle-match-row" style="justify-content:flex-start">
+            <form method="post" action="{{ url_path('/circle/admin/status') }}" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center">
+              <input type="hidden" name="profile_id" value="{{ p.id }}" />
+              <select class="circle-select" name="status">
+                {% for s in ["draft","submitted","verified","needs_changes","inactive"] %}
+                  <option value="{{ s }}" {% if p.status == s %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+              </select>
+              <button class="circle-btn circle-btn-primary" type="submit">Actualizar</button>
+            </form>
+          </div>
+        </div>
+      {% endfor %}
+
+      {% if not profiles or profiles|length == 0 %}
+        <div class="circle-empty">Aún no hay perfiles.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+

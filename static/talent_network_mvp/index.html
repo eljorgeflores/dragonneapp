@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title>The Circle by Pullso | Marketplace de Revenue Managers</title>
+    <meta
+      name="description"
+      content="The Circle by Pullso: marketplace de Revenue Managers para hoteles. Te conectamos con perfiles verificados para proyectos por hora, por alcance o de forma mensual."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Outfit:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body class="dn-landing">
+    <div class="bg"></div>
+    <header class="topbar">
+      <div class="shell topbar-inner">
+        <a class="brand" href="#" aria-label="The Circle by Pullso">
+          <span class="brand-row">
+            <span class="brand-mark">The Circle</span>
+            <span class="brand-sep" aria-hidden="true">|</span>
+            <img class="pullso-logo" src="./pullso-logo.svg" alt="Pullso" />
+          </span>
+        </a>
+        <nav class="top-actions" aria-label="Acciones">
+          <a class="link" href="#como-funciona">Cómo funciona</a>
+          <button class="btn btn-primary" type="button" id="openHotelTop">Soy un hotel</button>
+          <button class="btn btn-ghost" type="button" id="openRegisterTop">Soy Revenue Manager</button>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="shell hero">
+        <div class="hero-grid hero-grid-premium">
+          <div class="hero-copy">
+            <p class="eyebrow">Revenue Managers • Perfiles verificados • Marketplace</p>
+            <h1>Encuentra al Revenue Manager que tu hotel necesita.</h1>
+            <p class="lede">
+              <strong>The Circle by Pullso</strong> es un marketplace de Revenue Managers para hoteles independientes que necesitan mejorar tarifas, canales y
+              decisiones comerciales, sin contratar a alguien de tiempo completo.
+            </p>
+            <p class="lede lede-sub">
+              Accede a perfiles verificados con experiencia real en operación hotelera y disponibilidad para proyectos por hora, por alcance o de forma mensual.
+            </p>
+
+            <div class="hero-ctas">
+              <button class="btn btn-primary" type="button" id="openHotelHero">Soy un hotel</button>
+              <button class="btn btn-ghost" type="button" id="openRegisterHero">Soy Revenue Manager</button>
+              <a class="btn btn-ghost" href="#como-funciona">Cómo funciona</a>
+            </div>
+          </div>
+
+          <aside class="hero-card" aria-label="Simulación del producto">
+            <div class="product card">
+              <div class="product-top">
+                <div class="product-brand">
+                  <div class="dot" aria-hidden="true"></div>
+                  <div>
+                    <div class="product-title">The Circle</div>
+                    <div class="product-sub">Vista previa del perfil</div>
+                  </div>
+                </div>
+                <div class="product-actions">
+                  <span class="pill">Perfiles verificados</span>
+                </div>
+              </div>
+
+              <div class="product-body">
+                <div class="product-grid product-grid-single">
+                  <div class="pane pane-muted">
+                    <div class="pane-head">
+                      <div class="pane-title">Ejemplo de perfil</div>
+                      <div class="pane-sub">Información clara: especialidad, disponibilidad y enfoque operativo.</div>
+                    </div>
+
+                    <div class="profile-card profile-card-xl" id="profilePreview">
+                      <!-- A) Header -->
+                      <div class="profile-zone profile-zone-header">
+                        <div class="profile-card-head profile-card-head-xl">
+                          <div class="profile-photo profile-photo-xl has-img" aria-label="Foto">
+                            <img id="profilePhotoPreview" alt="Foto de perfil" src="./profile-mock.png" />
+                            <div class="profile-photo-fallback" id="profilePhotoFallback">Foto</div>
+                          </div>
+                          <div class="profile-id">
+                            <div class="profile-name profile-name-xl" data-bind="fullName">Andrea López</div>
+                            <div class="profile-role profile-role-xl" data-bind="role">Revenue Manager Senior</div>
+                            <div class="profile-meta">CDMX, MX • Remoto / Presencial</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- B) Métricas -->
+                      <div class="profile-zone profile-zone-metrics" aria-label="Métricas">
+                        <div class="metrics-grid">
+                          <div class="metric">
+                            <span class="metric-k">★</span>
+                            <span class="metric-v">4.9</span>
+                            <span class="metric-s">(18)</span>
+                          </div>
+                          <div class="metric">
+                            <span class="metric-v">18</span>
+                            <span class="metric-s">contrataciones</span>
+                          </div>
+                          <div class="metric">
+                            <span class="metric-v">24</span>
+                            <span class="metric-s">proyectos</span>
+                          </div>
+                          <div class="metric metric-price">
+                            <span class="metric-v">$800</span>
+                            <span class="metric-s">MXN/h</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- C) Especialidad -->
+                      <div class="profile-zone profile-zone-specialty" aria-label="Especialidad">
+                        <div class="chip-stack" data-bind="bio">
+                          <div class="chip-row chip-row-hotels">
+                            <span class="chip chip-hotel">Hoteles boutique</span>
+                            <span class="chip chip-hotel">Hoteles urbanos</span>
+                          </div>
+                          <div class="chip-row chip-row-tools">
+                            <span class="chip chip-tool">Duetto</span>
+                            <span class="chip chip-tool">Pricing</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- D) Experiencia -->
+                      <div class="profile-zone profile-zone-exp" aria-label="Experiencia">
+                        <span class="chip chip-exp">+5 años de experiencia</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section id="que-es" class="shell section">
+        <div class="section-head">
+          <h2>Qué es The Circle</h2>
+          <p class="muted">Un marketplace para encontrar talento especializado en revenue management hotelero.</p>
+        </div>
+        <div class="feature-row" role="list" aria-label="Qué es">
+          <div class="feature" role="listitem">
+            <div class="feature-title">Oportunidades</div>
+            <div class="feature-body">
+              Talento listo para apoyar en pricing, distribución, reportes, auditoría comercial o gestión continua.
+            </div>
+          </div>
+          <div class="feature" role="listitem">
+            <div class="feature-title">Marketplace</div>
+            <div class="feature-body">
+              Perfiles disponibles para proyectos: alcances claros, expectativas alineadas y matching con hoteles que sí necesitan apoyo.
+            </div>
+          </div>
+          <div class="feature" role="listitem">
+            <div class="feature-title">Visibilidad profesional</div>
+            <div class="feature-body">
+              Perfiles verificados que muestran especialidad, herramientas y disponibilidad.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="como-funciona" class="shell section">
+        <div class="section-head">
+          <h2>Cómo funciona</h2>
+          <p class="muted">Pensado para la operación diaria de un hotel.</p>
+        </div>
+        <div class="how-mock card" aria-label="Proceso visual">
+          <div class="how-mock-head">
+            <div>
+              <div class="how-mock-title">De solicitud a lista corta</div>
+              <div class="tiny muted">Alcance claro, perfiles verificados y match.</div>
+            </div>
+          </div>
+
+          <div class="how-grid" role="list">
+            <div class="how-step" role="listitem">
+              <div class="how-n">1</div>
+              <div class="how-b">
+                <div class="how-t">Cuéntanos qué necesitas</div>
+                <div class="how-s">Comparte hotel, ciudad y alcance del proyecto.</div>
+                <div class="how-mini">
+                  <div class="how-line w60"></div>
+                  <div class="how-line w80"></div>
+                  <div class="how-pill">2 min</div>
+                </div>
+              </div>
+            </div>
+            <div class="how-step" role="listitem">
+              <div class="how-n">2</div>
+              <div class="how-b">
+                <div class="how-t">Recibe perfiles compatibles</div>
+                  <div class="how-s">Lista corta con experiencia, herramientas y disponibilidad.</div>
+                <div class="how-mini">
+                  <div class="how-avatar" aria-hidden="true"></div>
+                  <div class="how-line w70"></div>
+                    <div class="how-pill">Lista corta</div>
+                </div>
+              </div>
+            </div>
+            <div class="how-step" role="listitem">
+              <div class="how-n">3</div>
+              <div class="how-b">
+                <div class="how-t">Validación de experiencia</div>
+                <div class="how-s">Trabajamos con perfiles verificados y experiencia real.</div>
+                <div class="how-mini">
+                  <div class="how-pill">Verificación</div>
+                  <div class="how-pill ok">Perfil verificado</div>
+                </div>
+              </div>
+            </div>
+            <div class="how-step" role="listitem">
+              <div class="how-n">4</div>
+              <div class="how-b">
+                <div class="how-t">Arranque del proyecto</div>
+                <div class="how-s">Coordinamos inicio, forma de trabajo y siguientes pasos.</div>
+                <div class="how-mini">
+                  <div class="how-pill">Kickoff</div>
+                  <div class="how-pill ok">Match</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="problema" class="shell section">
+        <div class="section-head">
+          <h2>El problema que resolvemos</h2>
+          <p class="muted">Hoteles que necesitan revenue management. Talento que puede apoyar. Faltaba el canal.</p>
+        </div>
+
+        <div class="feature-row" role="list" aria-label="Problema y solución">
+          <div class="feature" role="listitem">
+            <div class="feature-title">Hoteles independientes</div>
+            <div class="feature-body">
+              Equipos pequeños y presupuesto limitado: necesitan mejorar tarifas, canales y rentabilidad, sin abrir una posición de tiempo completo.
+            </div>
+          </div>
+          <div class="feature" role="listitem">
+            <div class="feature-title">Revenue Managers</div>
+            <div class="feature-body">
+              Talento con experiencia real en operación hotelera, disponible para proyectos por hora, por alcance o de forma mensual.
+            </div>
+          </div>
+          <div class="feature" role="listitem">
+            <div class="feature-title">La conexión</div>
+            <div class="feature-body">
+              Match con alcance claro, expectativas bien definidas y una forma de trabajo flexible desde el inicio.
+            </div>
+          </div>
+        </div>
+
+        <div class="how-mock how-mock-3 card" aria-label="Ejemplos de colaboración">
+          <div class="how-mock-head">
+            <div>
+              <div class="how-mock-title">Ejemplos de colaboración</div>
+              <div class="tiny muted">Alcances típicos (claros y accionables).</div>
+            </div>
+          </div>
+
+          <div class="how-grid" role="list">
+            <div class="how-step" role="listitem">
+              <div class="how-n">A</div>
+              <div class="how-b">
+                <div class="how-t">Implementación</div>
+                <div class="how-s">Setup de pricing, canales, reportes y estructura tarifaria.</div>
+                <div class="how-mini">
+                  <div class="how-pill">4 a 6 semanas</div>
+                  <div class="how-pill">Deliverables</div>
+                </div>
+              </div>
+            </div>
+            <div class="how-step" role="listitem">
+              <div class="how-n">B</div>
+              <div class="how-b">
+                <div class="how-t">Optimización</div>
+                <div class="how-s">Auditoría comercial + quick wins para ADR, ocupación, RevPAR y mix de canales.</div>
+                <div class="how-mini">
+                  <div class="how-pill">2 a 3 semanas</div>
+                  <div class="how-pill">Quick wins</div>
+                </div>
+              </div>
+            </div>
+            <div class="how-step" role="listitem">
+              <div class="how-n">C</div>
+              <div class="how-b">
+                <div class="how-t">Gestión continua</div>
+                <div class="how-s">Seguimiento semanal: pickup, tarifas, promos, canales y prioridades comerciales.</div>
+                <div class="how-mini">
+                  <div class="how-pill">Mensual</div>
+                  <div class="how-pill ok">Acompañamiento</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="beneficios" class="shell section">
+        <div class="section-head">
+          <h2>Qué obtienes</h2>
+          <p class="muted">Velocidad, claridad y apoyo experto sin crear una posición interna.</p>
+        </div>
+        <div class="feature-row" role="list" aria-label="Beneficios">
+          <div class="feature" role="listitem">
+            <div class="feature-title">Lista corta con intención</div>
+            <div class="feature-body">
+              Recibe perfiles compatibles con tu alcance y tu forma de trabajo (por hora, por alcance o mensual).
+            </div>
+          </div>
+          <div class="feature" role="listitem">
+            <div class="feature-title">Para el hotel</div>
+            <div class="feature-body">
+              Apoyo experto sin crear un puesto interno: acceso a Revenue Managers con experiencia validada, alcances claros desde el inicio y
+              acompañamiento práctico para mejores decisiones comerciales.
+            </div>
+          </div>
+          <div class="feature" role="listitem">
+            <div class="feature-title">Transparencia</div>
+            <div class="feature-body">
+              Proyectos claros, expectativas alineadas y una forma de trabajo flexible para que ambos lados sepan qué se entrega y cuándo.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="registro" class="shell section">
+        <div class="section-head">
+          <h2>¿Listo para unirte a The Circle?</h2>
+          <p class="muted">Solicita una lista corta y te conectamos con el Revenue Manager adecuado para tu alcance.</p>
+        </div>
+        <div style="margin-top:12px">
+          <button class="btn btn-primary" type="button" id="openHotelBottom">Soy un hotel</button>
+          <button class="btn btn-ghost" type="button" id="openRegisterBottom">Soy Revenue Manager</button>
+        </div>
+      </section>
+
+      <footer class="footer shell">
+        <div class="footer-grid">
+          <div class="footer-brand">
+            <div class="footer-title">The Circle</div>
+            <div class="tiny muted">Un marketplace para conectar hoteles con Revenue Managers en modalidad fraccional.</div>
+          </div>
+
+          <nav class="footer-links" aria-label="Navegación">
+            <a class="footer-link" href="#como-funciona">Cómo funciona</a>
+            <a class="footer-link" href="#problema">El problema</a>
+            <a class="footer-link" href="#beneficios">Qué obtienes</a>
+          </nav>
+
+          <div class="footer-cta" aria-label="Acciones">
+            <button class="btn btn-primary" type="button" id="openHotelFooter">Soy un hotel</button>
+            <button class="btn btn-ghost" type="button" id="openRegisterFooter">Soy Revenue Manager</button>
+          </div>
+        </div>
+
+        <div class="footer-bottom">
+          <div class="tiny muted">Perfiles con experiencia validada. La activación del perfil puede requerir ajustes.</div>
+          <div class="tiny muted">© <span id="footerYear"></span> Pullso</div>
+        </div>
+      </footer>
+    </main>
+
+    <dialog class="modal" id="hotelModal">
+      <div class="modal-card">
+        <div class="modal-head">
+          <div class="modal-title">Soy un hotel</div>
+          <button class="icon-btn" type="button" id="closeHotelModal" aria-label="Cerrar">✕</button>
+        </div>
+        <div class="modal-body">
+          <form class="mini-form" id="hotelForm" autocomplete="on">
+            <div class="grid-2">
+              <label class="field">
+                <span class="label">Nombre del hotel</span>
+                <input name="hotelName" required placeholder="Ej. Hotel Aurora" />
+              </label>
+              <label class="field">
+                <span class="label">Ciudad</span>
+                <input name="city" required placeholder="Ej. CDMX" />
+              </label>
+            </div>
+
+            <div class="grid-2">
+              <label class="field">
+                <span class="label">Tu nombre</span>
+                <input name="name" required placeholder="Ej. Ana Pérez" autocomplete="name" />
+              </label>
+              <label class="field">
+                <span class="label">Email</span>
+                <input name="email" type="email" required placeholder="tu@email.com" autocomplete="email" />
+              </label>
+            </div>
+
+            <label class="field">
+              <span class="label">Qué necesitas</span>
+              <textarea
+                name="need"
+                rows="3"
+                required
+                placeholder="Ej. Auditoría comercial, estructura tarifaria, setup de canales, reporting, acompañamiento mensual…"
+              ></textarea>
+            </label>
+
+            <div class="form-actions">
+              <button class="btn btn-primary" type="submit">Enviar solicitud</button>
+            </div>
+            <div class="tiny muted">Aún no hay contacto directo. Nosotros te conectamos con el perfil adecuado.</div>
+          </form>
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-ghost" type="button" id="dismissHotelModal">Cerrar</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog class="modal" id="modal">
+      <div class="modal-card">
+        <div class="modal-head">
+          <div class="modal-title" id="modalTitle">Listo</div>
+          <button class="icon-btn" type="button" id="closeModal" aria-label="Cerrar">✕</button>
+        </div>
+        <div class="modal-body" id="modalBody"></div>
+        <div class="modal-foot">
+          <button class="btn btn-primary" type="button" id="okModal">Entendido</button>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog class="modal" id="registerModal">
+      <div class="modal-card">
+        <div class="modal-head">
+          <div class="modal-title">Regístrate como Revenue Manager</div>
+          <button class="icon-btn" type="button" id="closeRegisterModal" aria-label="Cerrar">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="stepper" aria-label="Progreso">
+            <div class="stepdot is-active" data-stepdot="1">1</div>
+            <div class="stepline" aria-hidden="true"></div>
+            <div class="stepdot" data-stepdot="2">2</div>
+          </div>
+
+          <form class="mini-form" id="accountForm" autocomplete="on">
+            <label class="field">
+              <span class="label">Email</span>
+              <input name="email" type="email" required placeholder="tu@email.com" autocomplete="email" />
+            </label>
+            <label class="field">
+              <span class="label">Contraseña</span>
+              <input name="password" type="password" minlength="8" required placeholder="Mínimo 8 caracteres" autocomplete="new-password" />
+            </label>
+            <label class="check small">
+              <input type="checkbox" name="consent" required />
+              Acepto ser contactado(a) para selección y oportunidades.
+            </label>
+            <div class="form-actions">
+              <button class="btn btn-primary" type="submit">Crear cuenta</button>
+            </div>
+            <div class="tiny muted" id="accountHint">Después completas tu perfil y envías tu solicitud.</div>
+          </form>
+
+          <form class="mini-form is-disabled" id="profileForm" autocomplete="on">
+            <div class="tiny muted form-kicker">Completa tu perfil</div>
+            <div class="grid-2">
+              <label class="field">
+                <span class="label">Nombre</span>
+                <input name="fullName" required placeholder="Nombre y apellido" autocomplete="name" />
+              </label>
+              <label class="field">
+                <span class="label">Rol</span>
+                <select name="role" required>
+                  <option value="" selected disabled>Selecciona</option>
+                  <option>Revenue Manager</option>
+                  <option>Cluster Revenue Manager</option>
+                  <option>Director of Revenue</option>
+                  <option>Consultor/a Revenue</option>
+                </select>
+              </label>
+            </div>
+
+            <label class="field">
+              <span class="label">Bio (1–2 líneas)</span>
+              <textarea name="bio" rows="3" required placeholder="Ej. Hoteles boutique y urbanos. Duetto. Pricing. +5 años de experiencia."></textarea>
+            </label>
+
+            <label class="field">
+              <span class="label">Foto de perfil</span>
+              <input name="photo" type="file" accept="image/*" id="photoInput" />
+            </label>
+
+            <div class="form-actions">
+              <button class="btn btn-primary" type="submit">Enviar solicitud</button>
+            </div>
+          </form>
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-ghost" type="button" id="dismissRegisterModal">Cerrar</button>
+        </div>
+      </div>
+    </dialog>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
