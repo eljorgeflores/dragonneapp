@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from reportlab.lib.colors import HexColor
-from reportlab.lib.pagesizes import A4
+from reportlab.lib.pagesizes import A4, landscape
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.pdfgen import canvas
 
@@ -23,9 +23,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from paid_media_package_deck_i18n import get_paid_media_package_deck_copy  # noqa: E402
 
 
-PAGE_W, PAGE_H = A4
-MARGIN_X = 54
-MARGIN_Y = 64
+# El resto de los decks descargables de hospitality están diseñados “tipo slides”.
+# Para que Paid Media se sienta igual de “deck”, usamos A4 horizontal.
+PAGE_W, PAGE_H = landscape(A4)
+MARGIN_X = 64
+MARGIN_Y = 56
 
 INK = HexColor("#121110")
 MUTED = HexColor("#5c6169")
@@ -193,7 +195,7 @@ def generate(lang: str, out_path: Path) -> None:
     slides = [s for s in slides if (s or {}).get("variant") != "lead"]
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    c = canvas.Canvas(str(out_path), pagesize=A4)
+    c = canvas.Canvas(str(out_path), pagesize=(PAGE_W, PAGE_H))
     for i, s in enumerate(slides, start=1):
         _draw_slide(c, lang=lang, slide=s, idx=i, total=len(slides))
         c.showPage()
